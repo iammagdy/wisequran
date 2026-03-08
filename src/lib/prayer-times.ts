@@ -57,7 +57,7 @@ function toTimeString(hours: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
-import { toArabicNumerals } from "@/lib/utils";
+
 
 function toArabicTime(time24: string): string {
   const [hStr, mStr] = time24.split(":");
