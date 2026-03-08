@@ -274,7 +274,8 @@ export default function SurahReaderPage() {
                   </form>
                 </PopoverContent>
               </Popover>
-            )}
+              );
+            })()}
           </div>
           <div className="text-center flex-1">
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
