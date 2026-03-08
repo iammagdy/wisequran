@@ -7,6 +7,7 @@ export interface Ayah {
   number: number;
   text: string;
   numberInSurah: number;
+  page?: number;
 }
 
 export interface SurahMeta {
@@ -34,6 +35,7 @@ export async function fetchSurahAyahs(surahNumber: number): Promise<Ayah[]> {
     number: a.number,
     text: a.text,
     numberInSurah: a.numberInSurah,
+    page: a.page,
   }));
   // Cache for offline use
   await saveSurah(surahNumber, ayahs);
@@ -47,6 +49,7 @@ export async function downloadSurah(surahNumber: number): Promise<void> {
     number: a.number,
     text: a.text,
     numberInSurah: a.numberInSurah,
+    page: a.page,
   }));
   await saveSurah(surahNumber, ayahs);
 }
@@ -67,6 +70,7 @@ export async function downloadAllSurahs(
       number: ay.number,
       text: ay.text,
       numberInSurah: ay.numberInSurah,
+      page: ay.page,
     }));
     surahMap.set(a.number, ayahs);
   }
