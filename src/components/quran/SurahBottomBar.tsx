@@ -23,7 +23,7 @@ function formatTime(s: number) {
 
 const TIMER_PRESETS = [5, 10, 15, 20];
 
-export default function SurahBottomBar({ surahNumber, surahName }: Props) {
+export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props) {
   const player = useAudioPlayer();
   const isThisSurah = player.surahNumber === surahNumber;
 
