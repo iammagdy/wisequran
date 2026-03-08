@@ -31,6 +31,10 @@ interface DayData {
   completed: string[];
 }
 
+function toArabicNumerals(str: string): string {
+  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
 function formatHMS(totalSeconds: number): { h: string; m: string; s: string } {
   const abs = Math.max(0, totalSeconds);
   const h = Math.floor(abs / 3600);
