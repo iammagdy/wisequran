@@ -358,7 +358,7 @@ export default function SurahReaderPage() {
                         className="font-arabic text-foreground/90 leading-[2.2]"
                         style={{ fontSize: 17 }}
                       >
-                        {t.text}
+                        <HighlightText text={t.text} highlight={tafsirSearch.trim()} />
                       </p>
                     </div>
                   ));
