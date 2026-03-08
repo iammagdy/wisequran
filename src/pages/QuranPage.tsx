@@ -50,7 +50,6 @@ export default function QuranPage() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">القرآن الكريم</h1>
-          <p className="text-sm text-muted-foreground">The Noble Quran</p>
         </div>
         <div className="flex items-center gap-1">
           <button
