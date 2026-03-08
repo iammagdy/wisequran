@@ -182,40 +182,67 @@ export default function PrayerPage() {
 
       {/* Weekly View */}
       <div className="rounded-xl bg-card p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold">آخر 7 أيام</h2>
-        <ScrollArea className="w-full" dir="rtl">
-          <div className="flex items-end gap-2" style={{ minWidth: "480px" }}>
-            {last7.map((day) => {
-              const d = new Date(day.date);
-              const dayName = getArabicDayName(d.getDay());
-              const isToday = day.date === getTodayKey();
-              const pct = (day.count / 5) * 100;
-              const hijri = getHijriDate(d).split(" ").slice(0, 1).join("");
-              return (
-                <div
-                  key={day.date}
-                  className={cn(
-                    "flex flex-1 flex-col items-center gap-1 rounded-lg p-1.5 transition-colors",
-                    isToday && "bg-primary/5 ring-1 ring-primary/20"
-                  )}
-                >
-                  <div className="relative h-20 w-full rounded-md bg-muted overflow-hidden">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${pct}%` }}
-                      transition={{ delay: 0.3, duration: 0.5 }}
-                      className="absolute bottom-0 w-full rounded-md bg-primary/70"
+        <h2 className="mb-3 text-sm font-semibold text-right">آخر ٧ أيام</h2>
+        <div className="flex flex-row-reverse justify-between gap-1">
+          {last7.map((day) => {
+            const d = new Date(day.date);
+            const isToday = day.date === getTodayKey();
+            const pct = (day.count / 5) * 100;
+            const radius = 18;
+            const stroke = 3.5;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (pct / 100) * circumference;
+            return (
+              <div
+                key={day.date}
+                className="flex flex-1 flex-col items-center gap-1.5"
+              >
+                <div className={cn(
+                  "relative flex items-center justify-center rounded-full p-0.5 transition-all",
+                  isToday && "ring-2 ring-primary/40 bg-primary/10"
+                )}>
+                  <svg width="48" height="48" viewBox="0 0 48 48">
+                    <circle
+                      cx="24" cy="24" r={radius}
+                      fill="none"
+                      stroke="hsl(var(--muted))"
+                      strokeWidth={stroke}
                     />
-                  </div>
-                  <span className={cn("text-[11px] font-medium", isToday ? "text-primary" : "text-muted-foreground")}>{dayName}</span>
-                  <span className="text-[9px] text-muted-foreground">{d.getDate()}</span>
-                  <span className="text-[9px] text-muted-foreground">{hijri}</span>
+                    <motion.circle
+                      cx="24" cy="24" r={radius}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={stroke}
+                      strokeLinecap="round"
+                      strokeDasharray={circumference}
+                      initial={{ strokeDashoffset: circumference }}
+                      animate={{ strokeDashoffset: offset }}
+                      transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
+                      transform="rotate(-90 24 24)"
+                    />
+                    <text
+                      x="24" y="25"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className={cn(
+                        "text-xs font-bold",
+                        isToday ? "fill-primary" : "fill-foreground"
+                      )}
+                    >
+                      {day.count}
+                    </text>
+                  </svg>
                 </div>
-              );
-            })}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+                <span className={cn(
+                  "text-[11px] font-medium",
+                  isToday ? "text-primary font-bold" : "text-muted-foreground"
+                )}>
+                  {isToday ? "اليوم" : getArabicDayShort(d.getDay())}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
