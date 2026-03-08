@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -9,11 +9,15 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ayahResults, setAyahResults] = useState<SearchResult[]>([]);
+  const [searchingAyahs, setSearchingAyahs] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
