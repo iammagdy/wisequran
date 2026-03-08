@@ -16,12 +16,21 @@ interface WiseQuranDB extends DBSchema {
     };
   };
   audio: {
-    key: string; // composite key: "reciterId-surahNumber"
+    key: string;
     value: {
       id: string;
       reciterId: string;
       surahNumber: number;
       data: ArrayBuffer;
+    };
+  };
+  tafsir: {
+    key: string; // "editionId-surahNumber"
+    value: {
+      id: string;
+      editionId: string;
+      surahNumber: number;
+      ayahs: { numberInSurah: number; text: string }[];
     };
   };
 }
