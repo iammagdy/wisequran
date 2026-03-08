@@ -146,7 +146,7 @@ export default function SettingsPage() {
                   <Type className="h-4.5 w-4.5 text-primary" />
                   <span className="text-sm font-medium">حجم الخط</span>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{toArabicNumerals(fontSize)}px</span>
               </div>
               <Slider
                 value={[fontSize]}
