@@ -78,6 +78,16 @@ export interface NextPrayerInfo {
   id: string;
   name: string;
   minutesLeft: number;
+  secondsLeft: number;
+}
+
+/** Get seconds remaining until a specific prayer time. Negative if passed. */
+export function getSecondsUntilPrayer(prayerTime: string, now: Date): number {
+  const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+  const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
+  const [h, m] = prayerTime.split(":").map(Number);
+  const prayerSeconds = h * 3600 + m * 60;
+  return prayerSeconds - nowSeconds;
 }
 
 const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
@@ -124,20 +134,21 @@ export function formatArabicTime(time24: string): string {
 
 /** Get the next upcoming prayer and minutes remaining */
 export function getNextPrayer(times: PrayerTimes, now: Date): NextPrayerInfo | null {
-  // Get current time in Cairo
   const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
-  const nowMinutes = cairoNow.getHours() * 60 + cairoNow.getMinutes();
+
+  const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
 
   for (const id of PRAYER_ORDER) {
     const [h, m] = times[id].split(":").map(Number);
-    const prayerMinutes = h * 60 + m;
-    if (prayerMinutes > nowMinutes) {
-      return { id, name: PRAYER_NAMES[id], minutesLeft: prayerMinutes - nowMinutes };
+    const prayerSeconds = h * 3600 + m * 60;
+    if (prayerSeconds > nowSeconds) {
+      const secondsLeft = prayerSeconds - nowSeconds;
+      return { id, name: PRAYER_NAMES[id], minutesLeft: Math.ceil(secondsLeft / 60), secondsLeft };
     }
   }
   // All prayers passed — next is tomorrow's Fajr (approximate)
   const [fH, fM] = times.fajr.split(":").map(Number);
-  const fajrMinutes = fH * 60 + fM;
-  const minutesLeft = (24 * 60 - nowMinutes) + fajrMinutes;
-  return { id: "fajr", name: PRAYER_NAMES.fajr, minutesLeft };
+  const fajrSeconds = fH * 3600 + fM * 60;
+  const secondsLeft = (24 * 3600 - nowSeconds) + fajrSeconds;
+  return { id: "fajr", name: PRAYER_NAMES.fajr, minutesLeft: Math.ceil(secondsLeft / 60), secondsLeft };
 }

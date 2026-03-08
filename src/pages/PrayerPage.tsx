@@ -9,6 +9,7 @@ import {
   calculatePrayerTimes,
   formatArabicTime,
   getNextPrayer,
+  getSecondsUntilPrayer,
   type PrayerTimes,
   type NextPrayerInfo,
 } from "@/lib/prayer-times";
@@ -30,13 +31,24 @@ interface DayData {
   completed: string[];
 }
 
-function formatCountdown(minutes: number): string {
-  if (minutes >= 60) {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return m > 0 ? `${h} ساعة و ${m} دقيقة` : `${h} ساعة`;
-  }
-  return `${minutes} دقيقة`;
+function formatHMS(totalSeconds: number): { h: string; m: string; s: string } {
+  const abs = Math.max(0, totalSeconds);
+  const h = Math.floor(abs / 3600);
+  const m = Math.floor((abs % 3600) / 60);
+  const s = abs % 60;
+  return {
+    h: h.toString().padStart(2, "0"),
+    m: m.toString().padStart(2, "0"),
+    s: s.toString().padStart(2, "0"),
+  };
+}
+
+function formatCompactCountdown(totalSeconds: number): string {
+  if (totalSeconds <= 0) return "";
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}`;
+  return `${m} د`;
 }
 
 export default function PrayerPage() {
@@ -48,21 +60,13 @@ export default function PrayerPage() {
   const [weekData, setWeekData] = useLocalStorage<Record<string, string[]>>("wise-prayer-week", {});
   const { streak } = useStreak();
 
-  // Prayer times calculation
-  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes>(() => calculatePrayerTimes(new Date()));
-  const [nextPrayer, setNextPrayer] = useState<NextPrayerInfo | null>(() =>
-    getNextPrayer(calculatePrayerTimes(new Date()), new Date())
-  );
+  const [now, setNow] = useState(() => new Date());
+  const prayerTimes = useMemo(() => calculatePrayerTimes(now), [now]);
+  const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
+  // Update every second for live countdown
   useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const times = calculatePrayerTimes(now);
-      setPrayerTimes(times);
-      setNextPrayer(getNextPrayer(times, now));
-    };
-    update();
-    const interval = setInterval(update, 60_000); // every minute
+    const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -102,6 +106,10 @@ export default function PrayerPage() {
     return days;
   }, [todayData, weekData]);
 
+  // Hero countdown data
+  const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;
+  const heroPrayer = nextPrayer ? PRAYERS.find(p => p.id === nextPrayer.id) : null;
+
   return (
     <div className="px-4 pt-6">
       {/* Header */}
@@ -113,19 +121,37 @@ export default function PrayerPage() {
         <p className="text-sm text-muted-foreground">{getGregorianDateArabic(new Date())}</p>
       </div>
 
-      {/* Streak + Next prayer */}
-      <div className="mb-4 flex items-center justify-between">
-        {nextPrayer && (
-          <p className="text-sm text-muted-foreground">
-            متبقي {formatCountdown(nextPrayer.minutesLeft)} على {nextPrayer.name}
-          </p>
-        )}
-        {streak > 0 && (
-          <span className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
-            🔥 {streak} أيام
-          </span>
-        )}
-      </div>
+      {/* Hero Countdown Widget */}
+      {nextPrayer && heroPrayer && heroTime && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="mb-6 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5 shadow-md border border-primary/10"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-medium text-muted-foreground">الصلاة القادمة</span>
+            {streak > 0 && (
+              <span className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                🔥 {streak} أيام
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <span className="text-3xl">{heroPrayer.icon}</span>
+            <span className="text-2xl font-bold text-foreground">{heroPrayer.name}</span>
+          </div>
+
+          {/* Big countdown */}
+          <div className="flex items-center justify-center gap-1 font-mono" dir="ltr">
+            <CountdownUnit value={heroTime.h} label="ساعة" />
+            <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
+            <CountdownUnit value={heroTime.m} label="دقيقة" />
+            <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
+            <CountdownUnit value={heroTime.s} label="ثانية" />
+          </div>
+        </motion.div>
+      )}
 
       {/* Progress */}
       <div className="mb-6 rounded-xl bg-card p-4 shadow-sm">
@@ -144,6 +170,8 @@ export default function PrayerPage() {
           const done = todayData.completed.includes(prayer.id);
           const isNext = nextPrayer?.id === prayer.id && !done;
           const time = prayerTimes[prayer.id as keyof PrayerTimes];
+          const secsLeft = getSecondsUntilPrayer(time, now);
+          const isPassed = secsLeft <= 0;
           return (
             <motion.button
               key={prayer.id}
@@ -169,9 +197,20 @@ export default function PrayerPage() {
                   {formatArabicTime(time)}
                 </p>
               </div>
-              {isNext && (
+              {/* Countdown badge for upcoming prayers */}
+              {!done && !isPassed && (
+                <span className={cn(
+                  "rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
+                  isNext
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                )}>
+                  {formatCompactCountdown(secsLeft)}
+                </span>
+              )}
+              {done && (
                 <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                  التالية
+                  ✓
                 </span>
               )}
               <Checkbox checked={done} className="h-6 w-6" />
@@ -244,6 +283,24 @@ export default function PrayerPage() {
           })}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Single countdown digit unit */
+function CountdownUnit({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <motion.div
+        key={value}
+        initial={{ y: -8, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.2 }}
+        className="rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]"
+      >
+        <span className="text-3xl font-bold text-primary tabular-nums">{value}</span>
+      </motion.div>
+      <span className="text-[10px] text-muted-foreground mt-1">{label}</span>
     </div>
   );
 }
