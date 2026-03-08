@@ -8,7 +8,7 @@ import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
@@ -77,10 +77,10 @@ export default function QuranPage() {
       <div className="mb-4 rounded-xl bg-card p-3 shadow-sm" dir="rtl">
         <div className="flex items-center justify-between text-sm mb-1.5">
           <span className="text-muted-foreground">
-            اليوم: {todayCount} / {goal} آية
+            اليوم: {toArabicNumerals(todayCount)} / {toArabicNumerals(goal)} آية
           </span>
           {streak > 0 && (
-            <span className="text-sm font-semibold">🔥 {streak} أيام</span>
+            <span className="text-sm font-semibold">🔥 {toArabicNumerals(streak)} أيام</span>
           )}
         </div>
         <Progress value={progress} className="h-1.5" />
@@ -98,7 +98,7 @@ export default function QuranPage() {
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">متابعة القراءة</p>
             <p className="text-sm font-semibold">
-              سورة {surahs.find((s) => s.number === lastRead.surah)?.name || lastRead.surah} — آية {lastRead.ayah}
+              سورة {surahs.find((s) => s.number === lastRead.surah)?.name || lastRead.surah} — آية {toArabicNumerals(lastRead.ayah)}
             </p>
           </div>
         </motion.button>
@@ -133,7 +133,7 @@ export default function QuranPage() {
                   onClick={() => navigate(`/surah/${b.surah}`)}
                   className="flex w-full items-center justify-between rounded-lg bg-card p-3 shadow-sm"
                 >
-                  <span className="text-sm text-muted-foreground">آية {b.ayah}</span>
+                  <span className="text-sm text-muted-foreground">آية {toArabicNumerals(b.ayah)}</span>
                   <span className="font-semibold">
                     سورة {surahs.find((s) => s.number === b.surah)?.name || b.surah}
                   </span>
@@ -166,12 +166,12 @@ export default function QuranPage() {
                   className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                    {surah.number}
+                    {toArabicNumerals(surah.number)}
                   </div>
                   <div className="flex-1 text-right">
                     <p className="font-arabic text-lg font-bold">{surah.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {surah.numberOfAyahs} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
+                      {toArabicNumerals(surah.numberOfAyahs)} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
                     </p>
                   </div>
                   {favorites.includes(surah.number) && (

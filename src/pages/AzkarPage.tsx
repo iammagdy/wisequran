@@ -4,7 +4,7 @@ import { azkarData, type AzkarCategory, type Dhikr } from "@/data/azkar-data";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { ArrowRight, RotateCcw, Heart, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 
 function DhikrCounter({
   dhikr,
@@ -70,7 +70,7 @@ function DhikrCounter({
               : "bg-accent text-accent-foreground"
           )}
         >
-          {done ? "✓" : remaining}
+          {done ? "✓" : toArabicNumerals(remaining)}
         </motion.button>
       </div>
     </motion.div>
@@ -158,7 +158,7 @@ export default function AzkarPage() {
                   >
                     <span className="text-3xl">{cat.icon}</span>
                     <span className="font-semibold text-sm">{cat.nameAr}</span>
-                    <span className="text-xs text-muted-foreground">{cat.items.length} أذكار</span>
+                    <span className="text-xs text-muted-foreground">{toArabicNumerals(cat.items.length)} أذكار</span>
                   </motion.button>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function AzkarPage() {
               </button>
               <div>
                 <h1 className="text-xl font-bold">{selectedCategory.nameAr}</h1>
-                <p className="text-xs text-muted-foreground">{selectedCategory.items.length} أذكار</p>
+                <p className="text-xs text-muted-foreground">{toArabicNumerals(selectedCategory.items.length)} أذكار</p>
               </div>
             </div>
 

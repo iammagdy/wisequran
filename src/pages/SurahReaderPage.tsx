@@ -6,7 +6,7 @@ import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/li
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 
 export default function SurahReaderPage() {
@@ -87,7 +87,7 @@ export default function SurahReaderPage() {
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
             <p className="text-[11px] text-muted-foreground">
               {surahInfo && (
-                <span>{surahInfo.numberOfAyahs} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
+                <span>{toArabicNumerals(surahInfo.numberOfAyahs)} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
               )}
             </p>
           </div>
@@ -161,7 +161,7 @@ export default function SurahReaderPage() {
                     </button>
                     <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                       <span className="-rotate-45 text-xs font-bold text-primary">
-                        {ayah.numberInSurah}
+                        {toArabicNumerals(ayah.numberInSurah)}
                       </span>
                     </span>
                   </div>

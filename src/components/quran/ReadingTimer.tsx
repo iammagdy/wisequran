@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { toArabicNumerals } from "@/lib/utils";
 
 const PRESETS = [5, 10, 15, 20]; // minutes
 
@@ -51,7 +52,7 @@ export default function ReadingTimer() {
   const formatRemaining = () => {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
+    return toArabicNumerals(`${m}:${s.toString().padStart(2, "0")}`);
   };
 
   return (
@@ -70,7 +71,7 @@ export default function ReadingTimer() {
               onClick={() => start(m)}
               className="flex-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              {m} د
+              {toArabicNumerals(m)} د
             </button>
           ))}
         </motion.div>

@@ -1,3 +1,5 @@
+import { toArabicNumerals } from "@/lib/utils";
+
 /**
  * Prayer time calculator for Egypt (Cairo)
  * Egyptian General Authority of Survey method: Fajr 19.5°, Isha 17.5°
@@ -57,9 +59,7 @@ function toTimeString(hours: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
-function toArabicNumerals(str: string): string {
-  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
-}
+
 
 function toArabicTime(time24: string): string {
   const [hStr, mStr] = time24.split(":");

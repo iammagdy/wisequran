@@ -4,7 +4,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic } from "@/lib/utils";
+import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -31,9 +31,6 @@ interface DayData {
   completed: string[];
 }
 
-function toArabicNumerals(str: string): string {
-  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
-}
 
 function formatHMS(totalSeconds: number): { h: string; m: string; s: string } {
   const abs = Math.max(0, totalSeconds);

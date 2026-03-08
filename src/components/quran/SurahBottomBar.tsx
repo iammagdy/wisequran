@@ -4,7 +4,7 @@ import { Play, Pause, Download, Loader2, WifiOff, Check, X, Timer } from "lucide
 import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 
 interface Props {
   surahNumber: number;
@@ -14,7 +14,7 @@ interface Props {
 function formatTime(s: number) {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, "0")}`;
+  return toArabicNumerals(`${m}:${sec.toString().padStart(2, "0")}`);
 }
 
 const TIMER_PRESETS = [5, 10, 15, 20];
@@ -274,7 +274,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
               {downloading && (
                 <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  {dlProgress}%
+                  {toArabicNumerals(`${dlProgress}%`)}
                 </span>
               )}
               {cached && !downloading && (
@@ -304,7 +304,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
                           onClick={() => startTimer(m)}
                           className="flex-1 rounded-full bg-muted px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         >
-                          {m} د
+                          {toArabicNumerals(m)} د
                         </button>
                       ))}
                     </div>

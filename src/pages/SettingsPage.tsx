@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -145,7 +146,7 @@ export default function SettingsPage() {
                   <Type className="h-4.5 w-4.5 text-primary" />
                   <span className="text-sm font-medium">حجم الخط</span>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{toArabicNumerals(fontSize)}px</span>
               </div>
               <Slider
                 value={[fontSize]}
@@ -229,7 +230,7 @@ export default function SettingsPage() {
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium">عدد الآيات يومياً</span>
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{goal} آية</span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{toArabicNumerals(goal)} آية</span>
             </div>
             <div className="flex gap-2 mb-3">
               {[10, 20, 50].map((v) => (
@@ -242,7 +243,7 @@ export default function SettingsPage() {
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {v}
+                  {toArabicNumerals(v)}
                 </button>
               ))}
             </div>
@@ -273,7 +274,7 @@ export default function SettingsPage() {
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium">نصوص القرآن</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {downloadedSurahs.length}/114
+                  {toArabicNumerals(`${downloadedSurahs.length}/114`)}
                 </span>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">تحميل نصوص السور للقراءة بدون إنترنت</p>
@@ -287,7 +288,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ التحميل... {downloadProgress}%
+                    جارٍ التحميل... {toArabicNumerals(`${downloadProgress}%`)}
                   </p>
                 </div>
               ) : (
@@ -332,7 +333,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium">التلاوات الصوتية</span>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {downloadedAudio.length}/114
+                  {toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">تحميل التلاوات للاستماع بدون إنترنت</p>
@@ -346,7 +347,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ تحميل التلاوات... {audioDownloadProgress}%
+                    جارٍ تحميل التلاوات... {toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
                 </div>
               ) : (
@@ -415,7 +416,7 @@ export default function SettingsPage() {
                             className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground w-6 text-center">{s.number}</span>
+                              <span className="text-xs text-muted-foreground w-6 text-center">{toArabicNumerals(s.number)}</span>
                               <span className="font-arabic text-sm">{s.name}</span>
                               {isDownloaded && <Check className="h-3 w-3 text-primary" />}
                             </div>

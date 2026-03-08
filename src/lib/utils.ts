@@ -5,6 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Convert Western digits 0-9 to Arabic-Indic ٠-٩ */
+export function toArabicNumerals(str: string | number): string {
+  return String(str).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
 /** JS getDay(): 0=Sunday … 6=Saturday → full Arabic name */
 export function getArabicDayName(dayIndex: number): string {
   const names = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
