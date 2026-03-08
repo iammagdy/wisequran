@@ -70,7 +70,7 @@ function DhikrCounter({
               : "bg-accent text-accent-foreground"
           )}
         >
-          {done ? "✓" : remaining}
+          {done ? "✓" : toArabicNumerals(remaining)}
         </motion.button>
       </div>
     </motion.div>
