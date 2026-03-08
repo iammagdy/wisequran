@@ -38,7 +38,7 @@ export async function fetchChapterRecitation(
   const cached = cache.get(key);
   if (cached) return cached;
 
-  const url = `https://api.quran.com/api/v4/chapter_recitations/${reciter.qfApiId}/${surahNumber}`;
+  const url = `https://api.quran.com/api/v4/chapter_recitations/${reciter.qfApiId}/${surahNumber}?segments=true`;
   const res = await fetch(url);
   if (!res.ok) return null;
 
