@@ -6,7 +6,7 @@ import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/li
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 
 export default function SurahReaderPage() {

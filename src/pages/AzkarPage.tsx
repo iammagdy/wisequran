@@ -4,7 +4,7 @@ import { azkarData, type AzkarCategory, type Dhikr } from "@/data/azkar-data";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { ArrowRight, RotateCcw, Heart, Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 
 function DhikrCounter({
   dhikr,

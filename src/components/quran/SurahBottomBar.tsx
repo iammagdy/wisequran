@@ -4,7 +4,7 @@ import { Play, Pause, Download, Loader2, WifiOff, Check, X, Timer } from "lucide
 import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 
 interface Props {
   surahNumber: number;
