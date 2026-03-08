@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search } from "lucide-react";
