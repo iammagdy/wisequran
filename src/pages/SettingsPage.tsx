@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +13,7 @@ import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAu
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
+import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -30,6 +31,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
+  const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -197,6 +199,42 @@ export default function SettingsPage() {
                     {reciterId === r.id && <Check className="h-3 w-3 text-primary-foreground" />}
                   </div>
                   <span className="font-arabic">{r.name}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ─── Tafsir Selection ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5" />
+            التفسير
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.025 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">اختر التفسير المفضل لعرضه عند الضغط على الآية</p>
+            <div className="space-y-1.5">
+              {TAFSIR_EDITIONS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTafsirId(t.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    tafsirId === t.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {tafsirId === t.id && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  <span className="font-arabic">{t.name}</span>
                 </button>
               ))}
             </div>

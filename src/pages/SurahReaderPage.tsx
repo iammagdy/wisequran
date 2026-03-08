@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen } from "lucide-react";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
+import TafsirPanel from "@/components/quran/TafsirPanel";
+import { DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +24,11 @@ export default function SurahReaderPage() {
   const [, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
+  const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+
+  // Tafsir state
+  const [tafsirOpen, setTafsirOpen] = useState(false);
+  const [tafsirAyah, setTafsirAyah] = useState(1);
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
@@ -71,6 +78,11 @@ export default function SurahReaderPage() {
     } else {
       setBookmarks([...bookmarks, { surah: surahNumber, ayah: ayahNum }]);
     }
+  };
+
+  const openTafsir = (ayahNum: number) => {
+    setTafsirAyah(ayahNum);
+    setTafsirOpen(true);
   };
 
   return (
@@ -149,16 +161,25 @@ export default function SurahReaderPage() {
                   className="group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm"
                 >
                   <div className="mb-2 flex items-center justify-between">
-                    <button
-                      onClick={() => toggleBookmark(ayah.numberInSurah)}
-                      className="rounded-lg p-1.5 transition-colors hover:bg-muted"
-                    >
-                      {isBookmarked(ayah.numberInSurah) ? (
-                        <BookmarkCheck className="h-4 w-4 text-accent" />
-                      ) : (
-                        <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
-                      )}
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => toggleBookmark(ayah.numberInSurah)}
+                        className="rounded-lg p-1.5 transition-colors hover:bg-muted"
+                      >
+                        {isBookmarked(ayah.numberInSurah) ? (
+                          <BookmarkCheck className="h-4 w-4 text-accent" />
+                        ) : (
+                          <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => openTafsir(ayah.numberInSurah)}
+                        className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
+                        title="تفسير"
+                      >
+                        <BookOpen className="h-4 w-4" />
+                      </button>
+                    </div>
                     <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                       <span className="-rotate-45 text-xs font-bold text-primary">
                         {toArabicNumerals(ayah.numberInSurah)}
@@ -182,6 +203,15 @@ export default function SurahReaderPage() {
       <SurahBottomBar
         surahNumber={surahNumber}
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
+      />
+
+      {/* Tafsir Panel */}
+      <TafsirPanel
+        open={tafsirOpen}
+        onClose={() => setTafsirOpen(false)}
+        surahNumber={surahNumber}
+        ayahNumber={tafsirAyah}
+        editionId={tafsirEdition}
       />
     </div>
   );

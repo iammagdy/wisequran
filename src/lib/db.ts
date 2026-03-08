@@ -16,7 +16,7 @@ interface WiseQuranDB extends DBSchema {
     };
   };
   audio: {
-    key: string; // composite key: "reciterId-surahNumber"
+    key: string;
     value: {
       id: string;
       reciterId: string;
@@ -24,13 +24,26 @@ interface WiseQuranDB extends DBSchema {
       data: ArrayBuffer;
     };
   };
+  tafsir: {
+    key: string; // "editionId-surahNumber"
+    value: {
+      id: string;
+      editionId: string;
+      surahNumber: number;
+      ayahs: { numberInSurah: number; text: string }[];
+    };
+  };
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 function audioKey(reciterId: string, surahNumber: number): string {
   return `${reciterId}-${surahNumber}`;
+}
+
+function tafsirKey(editionId: string, surahNumber: number): string {
+  return `${editionId}-${surahNumber}`;
 }
 
 export async function getDB() {
@@ -48,6 +61,9 @@ export async function getDB() {
       }
       if (!db.objectStoreNames.contains("audio")) {
         db.createObjectStore("audio", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("tafsir")) {
+        db.createObjectStore("tafsir", { keyPath: "id" });
       }
     },
   });
@@ -105,4 +121,14 @@ export async function clearAllData() {
   await db.clear("surahs");
   await db.clear("azkar");
   await db.clear("audio");
+}
+
+export async function saveTafsir(editionId: string, surahNumber: number, ayahs: { numberInSurah: number; text: string }[]) {
+  const db = await getDB();
+  await db.put("tafsir", { id: tafsirKey(editionId, surahNumber), editionId, surahNumber, ayahs });
+}
+
+export async function getTafsir(editionId: string, surahNumber: number) {
+  const db = await getDB();
+  return db.get("tafsir", tafsirKey(editionId, surahNumber));
 }
