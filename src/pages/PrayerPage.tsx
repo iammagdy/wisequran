@@ -89,21 +89,6 @@ export default function PrayerPage() {
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
 
-  const last7 = useMemo(() => {
-    const days: { date: string; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const count =
-        key === getTodayKey()
-          ? todayData.completed.length
-          : (weekData[key]?.length || 0);
-      days.push({ date: key, count });
-    }
-    // Newest first so RTL flex puts today on the right
-    return days.reverse();
-  }, [todayData, weekData]);
 
   // Hero countdown data
   const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;
