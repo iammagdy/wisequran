@@ -25,6 +25,9 @@ export default function SurahReaderPage() {
   const targetAyah = searchParams.get("ayah") ? Number(searchParams.get("ayah")) : null;
   const [highlightedAyah, setHighlightedAyah] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
+  const [goToPageInput, setGoToPageInput] = useState("");
+  const [goToPageOpen, setGoToPageOpen] = useState(false);
+  const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
