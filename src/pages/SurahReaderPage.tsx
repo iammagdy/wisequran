@@ -21,6 +21,8 @@ export default function SurahReaderPage() {
   const [searchParams] = useSearchParams();
   const targetAyah = searchParams.get("ayah") ? Number(searchParams.get("ayah")) : null;
   const [highlightedAyah, setHighlightedAyah] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState<number | null>(null);
+  const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
