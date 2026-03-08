@@ -24,6 +24,7 @@ const TIMER_PRESETS = [5, 10, 15, 20];
 export default function SurahBottomBar({ surahNumber, surahName }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   // Audio state
   const [playing, setPlaying] = useState(false);
