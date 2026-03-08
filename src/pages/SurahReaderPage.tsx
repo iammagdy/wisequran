@@ -18,6 +18,9 @@ export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
   const surahNumber = Number(id);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetAyah = searchParams.get("ayah") ? Number(searchParams.get("ayah")) : null;
+  const [highlightedAyah, setHighlightedAyah] = useState<number | null>(null);
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
