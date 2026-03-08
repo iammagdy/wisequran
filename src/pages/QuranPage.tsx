@@ -11,6 +11,9 @@ import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
+import { juzData, hizbData } from "@/data/juz-hizb-data";
+
+type ViewMode = "surahs" | "juz" | "hizb";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
@@ -24,6 +27,7 @@ export default function QuranPage() {
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("surahs");
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
@@ -68,6 +72,17 @@ export default function QuranPage() {
   const bookmarkedSurahs = [...new Set(bookmarks.map((b) => b.surah))];
   const progress = Math.min((todayCount / goal) * 100, 100);
 
+  const getSurahName = (num: number) => surahs.find((s) => s.number === num)?.name || String(num);
+
+  const formatRange = (startSurah: number, startAyah: number, endSurah: number, endAyah: number) => {
+    if (startSurah === endSurah) {
+      return `${getSurahName(startSurah)} ${toArabicNumerals(startAyah)} — ${toArabicNumerals(endAyah)}`;
+    }
+    return `${getSurahName(startSurah)} ${toArabicNumerals(startAyah)} — ${getSurahName(endSurah)} ${toArabicNumerals(endAyah)}`;
+  };
+
+  const isSurahMode = viewMode === "surahs";
+
   return (
     <div className="px-4 pt-6">
       {/* Header */}
@@ -77,7 +92,7 @@ export default function QuranPage() {
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); }}
+            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showFavorites ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -86,7 +101,7 @@ export default function QuranPage() {
             <Star className="h-5 w-5" />
           </button>
           <button
-            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); }}
+            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showBookmarks ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -111,7 +126,7 @@ export default function QuranPage() {
       </div>
 
       {/* Last Read */}
-      {lastRead && !showBookmarks && !showFavorites && (
+      {lastRead && !showBookmarks && !showFavorites && isSurahMode && (
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -122,23 +137,49 @@ export default function QuranPage() {
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">متابعة القراءة</p>
             <p className="text-sm font-semibold">
-              سورة {surahs.find((s) => s.number === lastRead.surah)?.name || lastRead.surah} — آية {toArabicNumerals(lastRead.ayah)}
+              سورة {getSurahName(lastRead.surah)} — آية {toArabicNumerals(lastRead.ayah)}
             </p>
           </div>
         </motion.button>
       )}
 
       {/* Search */}
-      <div className="relative mb-4">
-        <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="بحث بالاسم، الرقم، أو نص الآية..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pr-10 text-right"
-          dir="rtl"
-        />
-      </div>
+      {isSurahMode && (
+        <div className="relative mb-4">
+          <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="بحث بالاسم، الرقم، أو نص الآية..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pr-10 text-right"
+            dir="rtl"
+          />
+        </div>
+      )}
+
+      {/* View Mode Tabs */}
+      {!showBookmarks && !showFavorites && (
+        <div className="mb-4 flex gap-2" dir="rtl">
+          {([
+            { key: "surahs" as ViewMode, label: "السور" },
+            { key: "juz" as ViewMode, label: "الأجزاء" },
+            { key: "hizb" as ViewMode, label: "الأحزاب" },
+          ]).map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setViewMode(tab.key)}
+              className={cn(
+                "flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
+                viewMode === tab.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Bookmarks View */}
       {showBookmarks && (
@@ -159,7 +200,7 @@ export default function QuranPage() {
                 >
                   <span className="text-sm text-muted-foreground">آية {toArabicNumerals(b.ayah)}</span>
                   <span className="font-semibold">
-                    سورة {surahs.find((s) => s.number === b.surah)?.name || b.surah}
+                    سورة {getSurahName(b.surah)}
                   </span>
                 </motion.button>
               ))}
@@ -174,7 +215,7 @@ export default function QuranPage() {
       )}
 
       {/* Ayah Search Results */}
-      {search.trim().length >= 3 && !showBookmarks && !showFavorites && (
+      {search.trim().length >= 3 && !showBookmarks && !showFavorites && isSurahMode && (
         <div className="mb-4" dir="rtl">
           <h2 className="mb-2 text-lg font-semibold">نتائج البحث في الآيات</h2>
           {searchingAyahs ? (
@@ -212,7 +253,7 @@ export default function QuranPage() {
       )}
 
       {/* Surah List */}
-      {!showBookmarks && (
+      {!showBookmarks && isSurahMode && (
         <div className="space-y-2">
           {loading
             ? Array.from({ length: 10 }).map((_, i) => (
@@ -244,6 +285,60 @@ export default function QuranPage() {
                   )}
                 </motion.button>
               ))}
+        </div>
+      )}
+
+      {/* Juz List */}
+      {!showBookmarks && !showFavorites && viewMode === "juz" && (
+        <div className="space-y-2">
+          {juzData.map((juz, i) => (
+            <motion.button
+              key={juz.juzNumber}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.02 }}
+              onClick={() => navigate(`/surah/${juz.startSurah}`)}
+              className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
+              dir="rtl"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                {toArabicNumerals(juz.juzNumber)}
+              </div>
+              <div className="flex-1 text-right">
+                <p className="text-base font-bold">{juz.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatRange(juz.startSurah, juz.startAyah, juz.endSurah, juz.endAyah)}
+                </p>
+              </div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {/* Hizb List */}
+      {!showBookmarks && !showFavorites && viewMode === "hizb" && (
+        <div className="space-y-2">
+          {hizbData.map((hizb, i) => (
+            <motion.button
+              key={hizb.hizbNumber}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.02 }}
+              onClick={() => navigate(`/surah/${hizb.startSurah}`)}
+              className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
+              dir="rtl"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                {toArabicNumerals(hizb.hizbNumber)}
+              </div>
+              <div className="flex-1 text-right">
+                <p className="text-base font-bold">{hizb.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatRange(hizb.startSurah, hizb.startAyah, hizb.endSurah, hizb.endAyah)}
+                </p>
+              </div>
+            </motion.button>
+          ))}
         </div>
       )}
     </div>
