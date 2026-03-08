@@ -134,9 +134,7 @@ export function formatArabicTime(time24: string): string {
 
 /** Get the next upcoming prayer and minutes remaining */
 export function getNextPrayer(times: PrayerTimes, now: Date): NextPrayerInfo | null {
-  // Get current time in Cairo
   const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
-  const nowMinutes = cairoNow.getHours() * 60 + cairoNow.getMinutes();
 
   const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
 
