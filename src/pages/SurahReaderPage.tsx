@@ -16,6 +16,7 @@ import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -52,6 +53,7 @@ export default function SurahReaderPage() {
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
+  const { addToHistory } = useReadingHistory();
   const hasTracked = useRef(false);
 
   const isFavorite = favorites.includes(surahNumber);
@@ -76,8 +78,10 @@ export default function SurahReaderPage() {
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()])
       .then(([ayahData, surahList]) => {
         setAyahs(ayahData);
-        setSurahInfo(surahList.find((s) => s.number === surahNumber) || null);
+        const info = surahList.find((s) => s.number === surahNumber) || null;
+        setSurahInfo(info);
         setLastRead({ surah: surahNumber, ayah: 1 });
+        if (info) addToHistory(surahNumber, info.name);
         setLoading(false);
       })
       .catch(() => {

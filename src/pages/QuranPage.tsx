@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star, Loader2 } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader2, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
@@ -32,6 +33,8 @@ export default function QuranPage() {
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
+  const { history } = useReadingHistory();
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     fetchSurahList().then((data) => {
@@ -93,7 +96,16 @@ export default function QuranPage() {
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setViewMode("surahs"); }}
+            onClick={() => { setShowHistory(!showHistory); setShowFavorites(false); setShowBookmarks(false); setViewMode("surahs"); }}
+            className={cn(
+              "rounded-lg p-2 transition-colors",
+              showHistory ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            )}
+          >
+            <History className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setShowHistory(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showFavorites ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -102,7 +114,7 @@ export default function QuranPage() {
             <Star className="h-5 w-5" />
           </button>
           <button
-            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); setViewMode("surahs"); }}
+            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); setShowHistory(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showBookmarks ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -127,7 +139,7 @@ export default function QuranPage() {
       </div>
 
       {/* Last Read */}
-      {lastRead && !showBookmarks && !showFavorites && isSurahMode && (
+      {lastRead && !showBookmarks && !showFavorites && !showHistory && isSurahMode && (
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -159,7 +171,7 @@ export default function QuranPage() {
       )}
 
       {/* View Mode Tabs */}
-      {!showBookmarks && !showFavorites && (
+      {!showBookmarks && !showFavorites && !showHistory && (
         <div className="mb-4 flex gap-2" dir="rtl">
           {([
             { key: "surahs" as ViewMode, label: "السور" },
@@ -209,6 +221,42 @@ export default function QuranPage() {
         </div>
       )}
 
+      {/* Reading History View */}
+      {showHistory && (
+        <div className="mb-4" dir="rtl">
+          <h2 className="mb-2 text-lg font-semibold">سجل القراءة</h2>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">لا يوجد سجل قراءة بعد</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map((entry, i) => {
+                const date = new Date(entry.timestamp);
+                const timeStr = date.toLocaleDateString("ar-EG", { day: "numeric", month: "short" }) +
+                  " · " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <motion.button
+                    key={`${entry.surah}-${entry.timestamp}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => navigate(`/surah/${entry.surah}`)}
+                    className="flex w-full items-center justify-between rounded-lg bg-card p-3 shadow-sm transition-colors active:bg-muted"
+                  >
+                    <span className="text-xs text-muted-foreground">{timeStr}</span>
+                    <div className="text-right">
+                      <span className="font-semibold">{entry.surahName}</span>
+                      {entry.ayahReached > 1 && (
+                        <span className="mr-2 text-xs text-muted-foreground">آية {toArabicNumerals(entry.ayahReached)}</span>
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Favorites empty state */}
       {showFavorites && displayList.length === 0 && !loading && (
         <p className="text-center text-sm text-muted-foreground py-8">لا توجد سور مفضلة بعد</p>
@@ -253,7 +301,7 @@ export default function QuranPage() {
       )}
 
       {/* Surah List */}
-      {!showBookmarks && isSurahMode && (
+      {!showBookmarks && !showHistory && isSurahMode && (
         <div className="space-y-2">
           {loading
             ? Array.from({ length: 10 }).map((_, i) => (
@@ -289,7 +337,7 @@ export default function QuranPage() {
       )}
 
       {/* Juz List */}
-      {!showBookmarks && !showFavorites && viewMode === "juz" && (
+      {!showBookmarks && !showFavorites && !showHistory && viewMode === "juz" && (
         <div className="space-y-2">
           {juzData.map((juz, i) => {
             const isExpanded = expandedJuz === juz.juzNumber;
