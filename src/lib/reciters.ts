@@ -37,7 +37,20 @@ const CUSTOM_CDN_RECITERS: Record<string, string> = {
   baleela: "https://server8.mp3quran.net/bndrlh",
 };
 
+export function getReciterAyahAudioUrl(reciterId: string, globalAyahNumber: number): string {
+  const reciter = getReciterById(reciterId);
+  return `https://cdn.islamic.network/quran/audio/128/${reciter.folder}/${globalAyahNumber}.mp3`;
+}
+
 export function getReciterAudioUrl(reciterId: string, surahNumber: number): string {
+  const customBase = CUSTOM_CDN_RECITERS[reciterId];
+  if (customBase) {
+    const padded = surahNumber.toString().padStart(3, "0");
+    return `${customBase}/${padded}.mp3`;
+  }
+  const reciter = getReciterById(reciterId);
+  return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
+}
   const customBase = CUSTOM_CDN_RECITERS[reciterId];
   if (customBase) {
     const padded = surahNumber.toString().padStart(3, "0");

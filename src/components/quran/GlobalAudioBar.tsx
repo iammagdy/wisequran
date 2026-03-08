@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Play, Pause, Loader2, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
@@ -11,12 +12,17 @@ function formatTime(s: number) {
 }
 
 export default function GlobalAudioBar() {
-  const { surahNumber, surahName, playing, loading, currentTime, duration, reciterId, togglePlayPause, stop } =
+  const { surahNumber, surahName, playing, loading, currentTime, duration, playingReciterId, togglePlayPause, stop } =
     useAudioPlayer();
+  const navigate = useNavigate();
 
   if (!surahNumber) return null;
 
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const handleNavigate = () => {
+    navigate(`/surah/${surahNumber}`);
+  };
 
   return (
     <motion.div
@@ -50,16 +56,16 @@ export default function GlobalAudioBar() {
             )}
           </button>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0">
+          {/* Info — clickable to navigate to surah */}
+          <button onClick={handleNavigate} className="flex-1 min-w-0 text-right">
             <p className="font-arabic text-sm font-semibold text-foreground truncate">{surahName}</p>
             <p className="text-[10px] text-muted-foreground truncate">
-              {getReciterById(reciterId).name}
+              {getReciterById(playingReciterId).name}
               {duration > 0 && (
                 <span className="mr-2 tabular-nums">{formatTime(currentTime)} / {formatTime(duration)}</span>
               )}
             </p>
-          </div>
+          </button>
 
           {/* Close */}
           <button
