@@ -34,6 +34,25 @@ export default function QuranPage() {
     });
   }, []);
 
+  // Debounced ayah text search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = search.trim();
+    if (trimmed.length < 3 || /^\d+$/.test(trimmed)) {
+      setAyahResults([]);
+      setSearchingAyahs(false);
+      return;
+    }
+    setSearchingAyahs(true);
+    debounceRef.current = setTimeout(() => {
+      searchAyahs(trimmed).then((results) => {
+        setAyahResults(results);
+        setSearchingAyahs(false);
+      });
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
+
   const filtered = surahs.filter(
     (s) =>
       s.name.includes(search) ||
