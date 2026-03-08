@@ -4,8 +4,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic } from "@/lib/utils";
+import { cn, getArabicDayName, getArabicDayShort, getHijriDate, getGregorianDateArabic } from "@/lib/utils";
 import {
   calculatePrayerTimes,
   formatArabicTime,
