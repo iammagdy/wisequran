@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
@@ -13,6 +13,7 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
+import MushafPageView from "@/components/quran/MushafPageView";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,7 @@ export default function SurahReaderPage() {
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+  const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
 
   // Tab & tafsir state
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
@@ -194,7 +196,17 @@ export default function SurahReaderPage() {
               )}
             </p>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
+              className={cn(
+                "rounded-lg p-2 transition-colors",
+                readerMode === "mushaf" ? "text-primary" : "text-muted-foreground hover:bg-muted"
+              )}
+              title={readerMode === "ayah" ? "عرض المصحف" : "عرض الآيات"}
+            >
+              <Layers className="h-4 w-4" />
+            </button>
             <button
               onClick={toggleFavorite}
               className={cn("rounded-lg p-2 transition-colors", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}
@@ -263,67 +275,80 @@ export default function SurahReaderPage() {
               </div>
             )}
 
-            <div className="space-y-3" dir="rtl">
-              {ayahs.map((ayah, i) => {
-                const showPageSep = i > 0 && ayah.page && ayahs[i - 1]?.page && ayah.page !== ayahs[i - 1].page;
-                return (
-                  <div key={ayah.number}>
-                    {showPageSep && (
-                      <div className="flex items-center gap-3 py-2 text-muted-foreground">
-                        <div className="h-px flex-1 bg-border" />
-                        <span className="text-xs font-medium">صفحة {toArabicNumerals(ayah.page!)}</span>
-                        <div className="h-px flex-1 bg-border" />
-                      </div>
-                    )}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: Math.min(i * 0.02, 1) }}
-                      id={`ayah-${ayah.numberInSurah}`}
-                      data-ayah={ayah.numberInSurah}
-                      ref={(el) => setAyahRef(el, ayah.numberInSurah)}
-                      className={cn(
-                        "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
-                        highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
-                      )}
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => toggleBookmark(ayah.numberInSurah)}
-                            className="rounded-lg p-1.5 transition-colors hover:bg-muted"
-                          >
-                            {isBookmarked(ayah.numberInSurah) ? (
-                              <BookmarkCheck className="h-4 w-4 text-accent" />
-                            ) : (
-                              <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
-                            )}
-                          </button>
-                          <button
-                            onClick={() => handleAyahTafsir(ayah.numberInSurah)}
-                            className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
-                            title="تفسير"
-                          >
-                            <BookOpen className="h-4 w-4" />
-                          </button>
+            {readerMode === "mushaf" ? (
+              <MushafPageView
+                ayahs={ayahs}
+                fontSize={fontSize}
+                surahNumber={surahNumber}
+                highlightedAyah={highlightedAyah}
+                isBookmarked={isBookmarked}
+                toggleBookmark={toggleBookmark}
+                onAyahTafsir={handleAyahTafsir}
+                setAyahRef={setAyahRef}
+              />
+            ) : (
+              <div className="space-y-3" dir="rtl">
+                {ayahs.map((ayah, i) => {
+                  const showPageSep = i > 0 && ayah.page && ayahs[i - 1]?.page && ayah.page !== ayahs[i - 1].page;
+                  return (
+                    <div key={ayah.number}>
+                      {showPageSep && (
+                        <div className="flex items-center gap-3 py-2 text-muted-foreground">
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-xs font-medium">صفحة {toArabicNumerals(ayah.page!)}</span>
+                          <div className="h-px flex-1 bg-border" />
                         </div>
-                        <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                          <span className="-rotate-45 text-xs font-bold text-primary">
-                            {toArabicNumerals(ayah.numberInSurah)}
-                          </span>
-                        </span>
-                      </div>
-                      <p
-                        className="font-arabic text-foreground"
-                        style={{ fontSize, lineHeight: 2.2 }}
+                      )}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: Math.min(i * 0.02, 1) }}
+                        id={`ayah-${ayah.numberInSurah}`}
+                        data-ayah={ayah.numberInSurah}
+                        ref={(el) => setAyahRef(el, ayah.numberInSurah)}
+                        className={cn(
+                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
+                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
+                        )}
                       >
-                        {ayah.text}
-                      </p>
-                    </motion.div>
-                  </div>
-                );
-              })}
-            </div>
+                        <div className="mb-2 flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => toggleBookmark(ayah.numberInSurah)}
+                              className="rounded-lg p-1.5 transition-colors hover:bg-muted"
+                            >
+                              {isBookmarked(ayah.numberInSurah) ? (
+                                <BookmarkCheck className="h-4 w-4 text-accent" />
+                              ) : (
+                                <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => handleAyahTafsir(ayah.numberInSurah)}
+                              className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
+                              title="تفسير"
+                            >
+                              <BookOpen className="h-4 w-4" />
+                            </button>
+                          </div>
+                          <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
+                            <span className="-rotate-45 text-xs font-bold text-primary">
+                              {toArabicNumerals(ayah.numberInSurah)}
+                            </span>
+                          </span>
+                        </div>
+                        <p
+                          className="font-arabic text-foreground"
+                          style={{ fontSize, lineHeight: 2.2 }}
+                        >
+                          {ayah.text}
+                        </p>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         ) : (
           /* ===== التفسير Tab ===== */
