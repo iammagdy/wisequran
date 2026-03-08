@@ -58,6 +58,7 @@ export default function SurahReaderPage() {
     setActiveTab("text");
     setFocusedAyah(null);
     setTafsirAyahs([]);
+    setTafsirSearch("");
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()])
       .then(([ayahData, surahList]) => {
         setAyahs(ayahData);
