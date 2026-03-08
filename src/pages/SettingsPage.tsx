@@ -31,6 +31,7 @@ export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
+  const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
