@@ -301,24 +301,50 @@ export default function SurahReaderPage() {
                   <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
                 </div>
 
-                {tafsirAyahs.map((t) => (
-                  <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                        <span className="-rotate-45 text-[10px] font-bold text-primary">
-                          {toArabicNumerals(t.numberInSurah)}
+                {/* Search input */}
+                <div className="relative mb-2">
+                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="ابحث في التفسير..."
+                    value={tafsirSearch}
+                    onChange={(e) => setTafsirSearch(e.target.value)}
+                    className="pr-10 text-right"
+                    dir="rtl"
+                  />
+                </div>
+
+                {(() => {
+                  const filteredTafsir = tafsirSearch.trim()
+                    ? tafsirAyahs.filter((t) => t.text.includes(tafsirSearch.trim()))
+                    : tafsirAyahs;
+
+                  if (filteredTafsir.length === 0) {
+                    return (
+                      <p className="text-center text-sm text-muted-foreground py-8">
+                        لا توجد نتائج لـ "{tafsirSearch}"
+                      </p>
+                    );
+                  }
+
+                  return filteredTafsir.map((t) => (
+                    <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
+                          <span className="-rotate-45 text-[10px] font-bold text-primary">
+                            {toArabicNumerals(t.numberInSurah)}
+                          </span>
                         </span>
-                      </span>
-                      <span className="text-xs text-muted-foreground">الآية {toArabicNumerals(t.numberInSurah)}</span>
+                        <span className="text-xs text-muted-foreground">الآية {toArabicNumerals(t.numberInSurah)}</span>
+                      </div>
+                      <p
+                        className="font-arabic text-foreground/90 leading-[2.2]"
+                        style={{ fontSize: 17 }}
+                      >
+                        {t.text}
+                      </p>
                     </div>
-                    <p
-                      className="font-arabic text-foreground/90 leading-[2.2]"
-                      style={{ fontSize: 17 }}
-                    >
-                      {t.text}
-                    </p>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             )}
           </div>
