@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Timer, X } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 
 const PRESETS = [5, 10, 15, 20]; // minutes
 
 export default function ReadingTimer() {
   const [active, setActive] = useState(false);
-  const [remaining, setRemaining] = useState(0); // seconds
+  const [remaining, setRemaining] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -55,60 +55,53 @@ export default function ReadingTimer() {
   };
 
   return (
-    <div className="rounded-xl bg-card p-3 shadow-sm">
-      <div className="mb-2 flex items-center gap-2" dir="rtl">
-        <Timer className="h-4 w-4 text-primary" />
-        <span className="text-sm font-semibold">مؤقت القراءة</span>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {!active ? (
-          <motion.div
-            key="presets"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex gap-2" dir="rtl"
-          >
-            {PRESETS.map((m) => (
-              <button
-                key={m}
-                onClick={() => start(m)}
-                className="flex-1 rounded-lg bg-muted py-2 text-xs font-medium text-foreground transition-colors hover:bg-primary/10"
-              >
-                {m} د
-              </button>
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="timer"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-2"
-          >
-            <div className="flex items-center justify-between" dir="rtl">
-              <span className="font-arabic text-lg font-bold tabular-nums text-foreground">
-                {formatRemaining()}
-              </span>
-              <button
-                onClick={stop}
-                className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <motion.div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${pct}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <AnimatePresence mode="wait">
+      {!active ? (
+        <motion.div
+          key="presets"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="flex gap-2" dir="rtl"
+        >
+          {PRESETS.map((m) => (
+            <button
+              key={m}
+              onClick={() => start(m)}
+              className="flex-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {m} د
+            </button>
+          ))}
+        </motion.div>
+      ) : (
+        <motion.div
+          key="timer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="space-y-1.5"
+        >
+          <div className="flex items-center justify-between" dir="rtl">
+            <span className="font-arabic text-base font-bold tabular-nums text-foreground">
+              {formatRemaining()}
+            </span>
+            <button
+              onClick={stop}
+              className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              style={{ width: `${pct}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -97,4 +97,23 @@
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  .card-accent {
+    border-right-width: 2px;
+    border-right-color: hsl(var(--primary) / 0.2);
+  }
+
+  .section-title {
+    @apply text-xs font-semibold text-muted-foreground tracking-wide mb-2 px-1;
+  }
+
+  .ornamental-divider {
+    @apply flex items-center gap-3 my-2;
+  }
+
+  .ornamental-divider::before,
+  .ornamental-divider::after {
+    content: "";
+    @apply flex-1 h-px bg-border;
+  }
 }

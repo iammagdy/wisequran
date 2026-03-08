@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
@@ -105,279 +107,311 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6">
+    <div className="px-4 pt-6 pb-8" dir="rtl">
       <h1 className="mb-1 text-2xl font-bold">الإعدادات</h1>
       <p className="mb-6 text-sm text-muted-foreground">Settings</p>
 
-      <div className="space-y-4">
-        {/* Theme */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between rounded-xl bg-card p-4 shadow-sm"
-        >
-          <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
-          <div className="flex items-center gap-3">
-            <span className="font-semibold">الوضع الليلي</span>
-            {theme === "dark" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+      <div className="space-y-6">
+        {/* ─── Appearance & Reading ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Palette className="h-3.5 w-3.5" />
+            المظهر والقراءة
           </div>
-        </motion.div>
-
-        {/* Font Size */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="rounded-xl bg-card p-4 shadow-sm"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{fontSize}px</span>
-            <span className="font-semibold">حجم الخط</span>
-          </div>
-          <Slider
-            value={[fontSize]}
-            onValueChange={([v]) => setFontSize(v)}
-            min={16}
-            max={40}
-            step={2}
-          />
-          <p
-            className="mt-3 text-center font-arabic text-muted-foreground"
-            style={{ fontSize }}
-            dir="rtl"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl bg-card p-4 shadow-sm space-y-0"
           >
-            بِسْمِ اللَّهِ
-          </p>
-        </motion.div>
-
-        {/* Text Download Manager */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-xl bg-card p-4 shadow-sm"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              {downloadedSurahs.length}/114 سورة
-            </span>
-            <span className="font-semibold">المحتوى المحمّل</span>
-          </div>
-
-          {downloading ? (
-            <div className="space-y-2">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${downloadProgress}%` }}
-                />
+            {/* Theme toggle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {theme === "dark" ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
+                <span className="text-sm font-medium">الوضع الليلي</span>
               </div>
-              <p className="text-center text-xs text-muted-foreground">
-                جارٍ التحميل... {downloadProgress}%
+              <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* Font size */}
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Type className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">حجم الخط</span>
+                </div>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
+              </div>
+              <Slider
+                value={[fontSize]}
+                onValueChange={([v]) => setFontSize(v)}
+                min={16}
+                max={40}
+                step={2}
+              />
+              <p
+                className="mt-3 text-center font-arabic text-muted-foreground"
+                style={{ fontSize }}
+              >
+                بِسْمِ اللَّهِ
               </p>
             </div>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={handleClear}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive transition-colors hover:bg-destructive/20"
-              >
-                <Trash2 className="h-4 w-4" />
-                مسح الكل
-              </button>
-              <button
-                onClick={handleDownloadAll}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary p-3 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {downloadedSurahs.length === 114 ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    مكتمل
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    تحميل الكل
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-        </motion.div>
+          </motion.div>
+        </section>
 
-        {/* Audio Download Manager */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="rounded-xl bg-card p-4 shadow-sm"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              {downloadedAudio.length}/114 سورة
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">الصوت المحمّل</span>
-              <Volume2 className="h-5 w-5 text-primary" />
-            </div>
+        {/* ─── Daily Goal ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Target className="h-3.5 w-3.5" />
+            الهدف اليومي
           </div>
-
-          {audioDownloading ? (
-            <div className="space-y-2">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${audioDownloadProgress}%` }}
-                />
-              </div>
-              <p className="text-center text-xs text-muted-foreground">
-                جارٍ تحميل التلاوات... {audioDownloadProgress}%
-              </p>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive transition-colors hover:bg-destructive/20"
-                    disabled={downloadedAudio.length === 0}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    مسح الصوت
-                  </button>
-                </AlertDialogTrigger>
-                <AlertDialogContent dir="rtl">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>مسح جميع التلاوات؟</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      سيتم حذف جميع ملفات الصوت المحملة. يمكنك إعادة تحميلها لاحقاً.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="flex-row-reverse gap-2">
-                    <AlertDialogAction onClick={handleClearAllAudio} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      نعم، مسح الكل
-                    </AlertDialogAction>
-                    <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-              <button
-                onClick={handleDownloadAllAudio}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary p-3 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                {downloadedAudio.length === 114 ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    مكتمل
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-4 w-4" />
-                    تحميل الكل
-                  </>
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Expandable surah list */}
-          <button
-            onClick={() => setShowAudioList(!showAudioList)}
-            className="mt-3 flex w-full items-center justify-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
           >
-            {showAudioList ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {showAudioList ? "إخفاء التفاصيل" : "عرض التفاصيل"}
-          </button>
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-medium">عدد الآيات يومياً</span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{goal} آية</span>
+            </div>
+            <div className="flex gap-2 mb-3">
+              {[10, 20, 50].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setGoal(v)}
+                  className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                    goal === v
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+            <Slider
+              value={[goal]}
+              onValueChange={([v]) => setGoal(v)}
+              min={5}
+              max={100}
+              step={5}
+            />
+          </motion.div>
+        </section>
 
-          {showAudioList && surahs.length > 0 && (
-            <div className="mt-3 max-h-64 space-y-1 overflow-y-auto rounded-lg bg-muted/50 p-2">
-              {surahs.map((s) => {
-                const isDownloaded = downloadedAudio.includes(s.number);
-                const isLoading = singleAudioDownloading === s.number;
-                return (
-                  <div
-                    key={s.number}
-                    className="flex items-center justify-between rounded-lg px-3 py-2 text-sm"
-                  >
-                    <div>
-                      {isLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                      ) : isDownloaded ? (
-                        <button
-                          onClick={() => handleDeleteSingleAudio(s.number)}
-                          className="text-destructive/60 transition-colors hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleDownloadSingleAudio(s.number)}
-                          className="text-primary/60 transition-colors hover:text-primary"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {isDownloaded && <Check className="h-3 w-3 text-primary" />}
-                      <span className="font-arabic">{s.name}</span>
-                      <span className="text-xs text-muted-foreground">{s.number}</span>
-                    </div>
+        {/* ─── Downloads ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            التحميلات
+          </div>
+          <div className="space-y-3">
+            {/* Quran Text Download */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="rounded-xl bg-card p-4 shadow-sm"
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-sm font-medium">نصوص القرآن</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {downloadedSurahs.length}/114
+                </span>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground">تحميل نصوص السور للقراءة بدون إنترنت</p>
+
+              {downloading ? (
+                <div className="space-y-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${downloadProgress}%` }}
+                    />
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </motion.div>
+                  <p className="text-center text-xs text-muted-foreground">
+                    جارٍ التحميل... {downloadProgress}%
+                  </p>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleClear}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    مسح الكل
+                  </button>
+                  <button
+                    onClick={handleDownloadAll}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    {downloadedSurahs.length === 114 ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        مكتمل
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5" />
+                        تحميل الكل
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+            </motion.div>
 
-        {/* Daily Quran Goal */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-xl bg-card p-4 shadow-sm"
-        >
-          <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{goal} آية</span>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">الهدف اليومي</span>
-              <Target className="h-5 w-5 text-primary" />
-            </div>
-          </div>
-          <div className="flex gap-2 mb-3">
-            {[10, 20, 50].map((v) => (
-              <button
-                key={v}
-                onClick={() => setGoal(v)}
-                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                  goal === v
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-          <Slider
-            value={[goal]}
-            onValueChange={([v]) => setGoal(v)}
-            min={5}
-            max={100}
-            step={5}
-          />
-        </motion.div>
+            {/* Audio Download */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-xl bg-card p-4 shadow-sm"
+            >
+              <div className="mb-1 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Volume2 className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">التلاوات الصوتية</span>
+                </div>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                  {downloadedAudio.length}/114
+                </span>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground">تحميل التلاوات للاستماع بدون إنترنت</p>
 
-        {/* App Info */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="rounded-xl bg-card p-4 text-center shadow-sm"
-        >
-          <p className="font-arabic text-lg font-bold text-primary">Wise QURAN</p>
-          <p className="text-xs text-muted-foreground">v1.0.0 · Made with ❤️</p>
-        </motion.div>
+              {audioDownloading ? (
+                <div className="space-y-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${audioDownloadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground">
+                    جارٍ تحميل التلاوات... {audioDownloadProgress}%
+                  </p>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                        disabled={downloadedAudio.length === 0}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        مسح الصوت
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent dir="rtl">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>مسح جميع التلاوات؟</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          سيتم حذف جميع ملفات الصوت المحملة. يمكنك إعادة تحميلها لاحقاً.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter className="flex-row-reverse gap-2">
+                        <AlertDialogAction onClick={handleClearAllAudio} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          نعم، مسح الكل
+                        </AlertDialogAction>
+                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                  <button
+                    onClick={handleDownloadAllAudio}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    {downloadedAudio.length === 114 ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        مكتمل
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5" />
+                        تحميل الكل
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Collapsible surah list */}
+              <Collapsible open={showAudioList} onOpenChange={setShowAudioList}>
+                <CollapsibleTrigger asChild>
+                  <button className="mt-3 flex w-full items-center justify-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
+                    {showAudioList ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    {showAudioList ? "إخفاء التفاصيل" : "عرض التفاصيل"}
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  {surahs.length > 0 && (
+                    <div className="mt-3 max-h-64 space-y-0.5 overflow-y-auto rounded-lg bg-muted/30 p-1.5">
+                      {surahs.map((s, idx) => {
+                        const isDownloaded = downloadedAudio.includes(s.number);
+                        const isLoading = singleAudioDownloading === s.number;
+                        return (
+                          <div
+                            key={s.number}
+                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground w-6 text-center">{s.number}</span>
+                              <span className="font-arabic text-sm">{s.name}</span>
+                              {isDownloaded && <Check className="h-3 w-3 text-primary" />}
+                            </div>
+                            <div>
+                              {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                              ) : isDownloaded ? (
+                                <button
+                                  onClick={() => handleDeleteSingleAudio(s.number)}
+                                  className="text-destructive/50 transition-colors hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleDownloadSingleAudio(s.number)}
+                                  className="text-primary/50 transition-colors hover:text-primary"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Collapsible>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ─── About ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5" />
+            حول التطبيق
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="rounded-xl bg-card p-5 text-center shadow-sm"
+          >
+            <p className="font-arabic text-xl font-bold text-primary mb-1">Wise QURAN</p>
+            <p className="text-xs text-muted-foreground">v1.0.0</p>
+            <Separator className="my-3" />
+            <p className="text-xs text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
+          </motion.div>
+        </section>
       </div>
     </div>
   );
