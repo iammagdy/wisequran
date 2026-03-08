@@ -161,7 +161,7 @@ export default function SurahReaderPage() {
                     </button>
                     <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                       <span className="-rotate-45 text-xs font-bold text-primary">
-                        {ayah.numberInSurah}
+                        {toArabicNumerals(ayah.numberInSurah)}
                       </span>
                     </span>
                   </div>

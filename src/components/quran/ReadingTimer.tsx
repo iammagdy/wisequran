@@ -71,7 +71,7 @@ export default function ReadingTimer() {
               onClick={() => start(m)}
               className="flex-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              {m} د
+              {toArabicNumerals(m)} د
             </button>
           ))}
         </motion.div>

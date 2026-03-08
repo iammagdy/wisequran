@@ -180,7 +180,7 @@ export default function AzkarPage() {
               </button>
               <div>
                 <h1 className="text-xl font-bold">{selectedCategory.nameAr}</h1>
-                <p className="text-xs text-muted-foreground">{selectedCategory.items.length} أذكار</p>
+                <p className="text-xs text-muted-foreground">{toArabicNumerals(selectedCategory.items.length)} أذكار</p>
               </div>
             </div>
 

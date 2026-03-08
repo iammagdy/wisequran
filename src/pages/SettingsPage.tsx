@@ -416,7 +416,7 @@ export default function SettingsPage() {
                             className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}
                           >
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground w-6 text-center">{s.number}</span>
+                              <span className="text-xs text-muted-foreground w-6 text-center">{toArabicNumerals(s.number)}</span>
                               <span className="font-arabic text-sm">{s.name}</span>
                               {isDownloaded && <Check className="h-3 w-3 text-primary" />}
                             </div>

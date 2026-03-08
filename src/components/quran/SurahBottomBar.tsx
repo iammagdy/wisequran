@@ -304,7 +304,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
                           onClick={() => startTimer(m)}
                           className="flex-1 rounded-full bg-muted px-2 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                         >
-                          {m} د
+                          {toArabicNumerals(m)} د
                         </button>
                       ))}
                     </div>
