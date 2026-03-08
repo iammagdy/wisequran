@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
+import InstallBanner from "@/components/InstallBanner";
 import QuranPage from "@/pages/QuranPage";
 import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
@@ -17,16 +18,19 @@ const queryClient = new QueryClient();
 const AppContent = () => {
   usePrayerNotifications();
   return (
-    <AppShell>
-      <Routes>
-        <Route path="/" element={<QuranPage />} />
-        <Route path="/surah/:id" element={<SurahReaderPage />} />
-        <Route path="/azkar" element={<AzkarPage />} />
-        <Route path="/prayer" element={<PrayerPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </AppShell>
+    <>
+      <AppShell>
+        <Routes>
+          <Route path="/" element={<QuranPage />} />
+          <Route path="/surah/:id" element={<SurahReaderPage />} />
+          <Route path="/azkar" element={<AzkarPage />} />
+          <Route path="/prayer" element={<PrayerPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AppShell>
+      <InstallBanner />
+    </>
   );
 };
 
