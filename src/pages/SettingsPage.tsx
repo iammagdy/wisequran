@@ -27,6 +27,10 @@ import {
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
+  const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    "Notification" in window ? Notification.permission : "denied"
+  );
   const { goal, setGoal } = useDailyReading();
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
   const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
