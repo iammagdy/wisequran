@@ -195,7 +195,7 @@ export default function QuranPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  onClick={() => navigate(`/surah/${b.surah}`)}
+                  onClick={() => navigate(`/surah/${b.surah}?ayah=${b.ayah}`)}
                   className="flex w-full items-center justify-between rounded-lg bg-card p-3 shadow-sm"
                 >
                   <span className="text-sm text-muted-foreground">آية {toArabicNumerals(b.ayah)}</span>
@@ -234,7 +234,7 @@ export default function QuranPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.03 }}
-                  onClick={() => navigate(`/surah/${r.surahNumber}`)}
+                  onClick={() => navigate(`/surah/${r.surahNumber}?ayah=${r.ayahNumber}`)}
                   className="flex w-full flex-col gap-1 rounded-xl bg-card p-4 text-right shadow-sm transition-colors active:bg-muted"
                 >
                   <div className="flex items-center justify-between">

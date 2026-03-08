@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,9 @@ export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
   const surahNumber = Number(id);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const targetAyah = searchParams.get("ayah") ? Number(searchParams.get("ayah")) : null;
+  const [highlightedAyah, setHighlightedAyah] = useState<number | null>(null);
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
@@ -81,6 +84,20 @@ export default function SurahReaderPage() {
       increment(ayahs.length);
     }
   }, [loading, ayahs.length]);
+
+  // Scroll to target ayah from query param
+  useEffect(() => {
+    if (!loading && ayahs.length > 0 && targetAyah) {
+      const el = document.getElementById(`ayah-${targetAyah}`);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setHighlightedAyah(targetAyah);
+          setTimeout(() => setHighlightedAyah(null), 2000);
+        }, 300);
+      }
+    }
+  }, [loading, ayahs.length, targetAyah]);
 
   // Fetch tafsir when switching to tafsir tab or edition changes
   useEffect(() => {
@@ -215,7 +232,11 @@ export default function SurahReaderPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: Math.min(i * 0.02, 1) }}
-                  className="group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm"
+                  id={`ayah-${ayah.numberInSurah}`}
+                  className={cn(
+                    "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
+                    highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
+                  )}
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center gap-1">
