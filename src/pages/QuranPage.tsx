@@ -131,7 +131,7 @@ export default function QuranPage() {
       <div className="relative mb-4">
         <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="بحث بالاسم أو الرقم..."
+          placeholder="بحث بالاسم، الرقم، أو نص الآية..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pr-10 text-right"
