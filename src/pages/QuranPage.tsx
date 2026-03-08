@@ -10,6 +10,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
+import { HighlightText } from "@/components/HighlightText";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
@@ -199,7 +200,7 @@ export default function QuranPage() {
                     <span className="text-xs text-muted-foreground">آية {toArabicNumerals(r.ayahNumber)}</span>
                     <span className="text-sm font-semibold text-primary">{r.surahName}</span>
                   </div>
-                  <p className="font-arabic text-sm leading-relaxed line-clamp-2">{r.text}</p>
+                  <p className="font-arabic text-sm leading-relaxed line-clamp-2"><HighlightText text={r.text} highlight={search.trim()} /></p>
                 </motion.button>
               ))}
               {ayahResults.length >= 50 && (

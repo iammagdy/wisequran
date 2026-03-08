@@ -12,6 +12,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
+import { HighlightText } from "@/components/HighlightText";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -358,7 +359,7 @@ export default function SurahReaderPage() {
                         className="font-arabic text-foreground/90 leading-[2.2]"
                         style={{ fontSize: 17 }}
                       >
-                        {t.text}
+                        <HighlightText text={t.text} highlight={tafsirSearch.trim()} />
                       </p>
                     </div>
                   ));
