@@ -183,7 +183,7 @@ export default function SurahReaderPage() {
       {currentPage && activeTab === "text" && (
         <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
           <PopoverTrigger asChild>
-            <button className="fixed bottom-40 left-4 z-20 rounded-lg bg-primary/90 px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg backdrop-blur-sm hover:bg-primary transition-colors">
+            <button className="fixed top-28 left-4 z-20 rounded-lg bg-primary/90 px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg backdrop-blur-sm hover:bg-primary transition-colors">
               صفحة {toArabicNumerals(currentPage)}
             </button>
           </PopoverTrigger>
