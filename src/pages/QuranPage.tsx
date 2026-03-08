@@ -96,7 +96,16 @@ export default function QuranPage() {
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setViewMode("surahs"); }}
+            onClick={() => { setShowHistory(!showHistory); setShowFavorites(false); setShowBookmarks(false); setViewMode("surahs"); }}
+            className={cn(
+              "rounded-lg p-2 transition-colors",
+              showHistory ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            )}
+          >
+            <History className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setShowHistory(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showFavorites ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
@@ -105,7 +114,7 @@ export default function QuranPage() {
             <Star className="h-5 w-5" />
           </button>
           <button
-            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); setViewMode("surahs"); }}
+            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); setShowHistory(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-lg p-2 transition-colors",
               showBookmarks ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
