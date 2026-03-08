@@ -115,6 +115,17 @@ export default function SurahReaderPage() {
     }
   }, [loading, ayahs.length, targetAyah]);
 
+  // Auto-scroll to currently playing ayah
+  useEffect(() => {
+    if (playingAyahInSurah && readerMode === "ayah") {
+      const el = document.getElementById(`ayah-${playingAyahInSurah}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [playingAyahInSurah, readerMode]);
+  }, [loading, ayahs.length, targetAyah]);
+
   // Track current Mushaf page via IntersectionObserver
   useEffect(() => {
     if (loading || ayahs.length === 0 || !ayahs[0]?.page) return;
