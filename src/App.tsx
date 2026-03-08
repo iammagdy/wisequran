@@ -34,16 +34,7 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
-        <AppShell>
-          <Routes>
-            <Route path="/" element={<QuranPage />} />
-            <Route path="/surah/:id" element={<SurahReaderPage />} />
-            <Route path="/azkar" element={<AzkarPage />} />
-            <Route path="/prayer" element={<PrayerPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppShell>
+        <AppContent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
