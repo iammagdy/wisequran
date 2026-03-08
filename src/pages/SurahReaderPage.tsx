@@ -179,70 +179,6 @@ export default function SurahReaderPage() {
 
   return (
     <div className="min-h-screen pb-36">
-      {/* Floating Mushaf page indicator with go-to-page */}
-      {currentPage && activeTab === "text" && (
-        <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
-          <PopoverTrigger asChild>
-            <button className="fixed top-28 left-4 z-20 rounded-lg bg-primary/90 px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg backdrop-blur-sm hover:bg-primary transition-colors">
-              صفحة {toArabicNumerals(currentPage)}
-            </button>
-          </PopoverTrigger>
-          <PopoverContent side="top" align="start" className="w-56 p-3" dir="rtl">
-            <p className="text-xs font-medium text-foreground mb-2">انتقل إلى صفحة</p>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const pageNum = Number(goToPageInput);
-                if (!pageNum || pageNum < 1 || pageNum > 604) {
-                  toast({ title: "رقم صفحة غير صالح", description: "أدخل رقمًا بين ١ و ٦٠٤" });
-                  return;
-                }
-                // Check if page is in current surah
-                const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
-                const minPage = Math.min(...surahPages);
-                const maxPage = Math.max(...surahPages);
-                if (pageNum < minPage || pageNum > maxPage) {
-                  toast({
-                    title: "صفحة خارج نطاق السورة",
-                    description: `هذه السورة تقع في الصفحات ${toArabicNumerals(minPage)} - ${toArabicNumerals(maxPage)}`,
-                  });
-                  return;
-                }
-                if (readerMode === "mushaf") {
-                  setMushafTargetPage(pageNum);
-                } else {
-                  // Scroll to first ayah on that page
-                  const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
-                  if (targetAyahOnPage) {
-                    const el = document.getElementById(`ayah-${targetAyahOnPage.numberInSurah}`);
-                    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }
-                }
-                setGoToPageInput("");
-                setGoToPageOpen(false);
-              }}
-              className="flex gap-2"
-            >
-              <Input
-                type="number"
-                min={1}
-                max={604}
-                value={goToPageInput}
-                onChange={(e) => setGoToPageInput(e.target.value)}
-                placeholder="رقم الصفحة"
-                className="text-center text-sm h-8"
-                autoFocus
-              />
-              <button
-                type="submit"
-                className="shrink-0 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                انتقل
-              </button>
-            </form>
-          </PopoverContent>
-        </Popover>
-      )}
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-2">
@@ -250,6 +186,68 @@ export default function SurahReaderPage() {
             <button onClick={() => navigate("/")} className="rounded-lg p-2 hover:bg-muted transition-colors">
               <ArrowRight className="h-5 w-5" />
             </button>
+            {/* Page indicator in header */}
+            {currentPage && activeTab === "text" && (
+              <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
+                <PopoverTrigger asChild>
+                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-bold text-primary hover:bg-primary/20 transition-colors">
+                    صفحة {toArabicNumerals(currentPage)}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent side="bottom" align="start" className="w-56 p-3" dir="rtl">
+                  <p className="text-xs font-medium text-foreground mb-2">انتقل إلى صفحة</p>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const pageNum = Number(goToPageInput);
+                      if (!pageNum || pageNum < 1 || pageNum > 604) {
+                        toast({ title: "رقم صفحة غير صالح", description: "أدخل رقمًا بين ١ و ٦٠٤" });
+                        return;
+                      }
+                      const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
+                      const minPage = Math.min(...surahPages);
+                      const maxPage = Math.max(...surahPages);
+                      if (pageNum < minPage || pageNum > maxPage) {
+                        toast({
+                          title: "صفحة خارج نطاق السورة",
+                          description: `هذه السورة تقع في الصفحات ${toArabicNumerals(minPage)} - ${toArabicNumerals(maxPage)}`,
+                        });
+                        return;
+                      }
+                      if (readerMode === "mushaf") {
+                        setMushafTargetPage(pageNum);
+                      } else {
+                        const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
+                        if (targetAyahOnPage) {
+                          const el = document.getElementById(`ayah-${targetAyahOnPage.numberInSurah}`);
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                        }
+                      }
+                      setGoToPageInput("");
+                      setGoToPageOpen(false);
+                    }}
+                    className="flex gap-2"
+                  >
+                    <Input
+                      type="number"
+                      min={1}
+                      max={604}
+                      value={goToPageInput}
+                      onChange={(e) => setGoToPageInput(e.target.value)}
+                      placeholder="رقم الصفحة"
+                      className="text-center text-sm h-8"
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      انتقل
+                    </button>
+                  </form>
+                </PopoverContent>
+              </Popover>
+            )}
           </div>
           <div className="text-center flex-1">
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
