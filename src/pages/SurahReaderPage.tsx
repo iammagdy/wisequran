@@ -124,7 +124,6 @@ export default function SurahReaderPage() {
       }
     }
   }, [playingAyahInSurah, readerMode]);
-  }, [loading, ayahs.length, targetAyah]);
 
   // Track current Mushaf page via IntersectionObserver
   useEffect(() => {
