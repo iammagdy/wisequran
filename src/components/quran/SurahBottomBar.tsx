@@ -115,7 +115,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
 
     setLoading(true);
     setOffline(false);
-    const source = await resolveAudioSource(surahNumber);
+    const source = await resolveAudioSource(reciterId, surahNumber);
 
     if (!source) {
       setOffline(true);
