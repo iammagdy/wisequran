@@ -109,7 +109,7 @@ export default function SettingsPage() {
   return (
     <div className="px-4 pt-6 pb-8" dir="rtl">
       <h1 className="mb-1 text-2xl font-bold">الإعدادات</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Settings</p>
+      <p className="mb-6 text-sm text-muted-foreground">إعدادات التطبيق</p>
 
       <div className="space-y-6">
         {/* ─── Appearance & Reading ─── */}

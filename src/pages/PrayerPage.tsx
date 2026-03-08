@@ -105,18 +105,22 @@ export default function PrayerPage() {
 
   return (
     <div className="px-4 pt-6">
+      {/* Header */}
+      <h1 className="mb-3 text-center text-2xl font-bold">صلواتي اليوم</h1>
+
+      <div className="mb-4 rounded-xl bg-card p-4 shadow-sm text-center space-y-1">
+        <p className="text-lg font-bold">{getArabicDayName(new Date().getDay())}</p>
+        <p className="text-base font-medium">{getHijriDate(new Date())}</p>
+        <p className="text-sm text-muted-foreground">{getGregorianDateArabic(new Date())}</p>
+      </div>
+
+      {/* Streak + Next prayer */}
       <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="mb-1 text-2xl font-bold">صلواتي اليوم</h1>
-          <p className="text-xs text-muted-foreground">
-            {getGregorianDateArabic(new Date())} — {getHijriDate(new Date())}
+        {nextPrayer && (
+          <p className="text-sm text-muted-foreground">
+            متبقي {formatCountdown(nextPrayer.minutesLeft)} على {nextPrayer.name}
           </p>
-          {nextPrayer && (
-            <p className="text-sm text-muted-foreground mt-1">
-              متبقي {formatCountdown(nextPrayer.minutesLeft)} على {nextPrayer.name}
-            </p>
-          )}
-        </div>
+        )}
         {streak > 0 && (
           <span className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
             🔥 {streak} أيام
