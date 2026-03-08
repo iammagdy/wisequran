@@ -180,26 +180,39 @@ export default function PrayerPage() {
       {/* Weekly View */}
       <div className="rounded-xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold">آخر 7 أيام</h2>
-        <div className="flex items-end justify-between gap-1">
-          {last7.map((day) => {
-            const d = new Date(day.date);
-            const dayName = getArabicDayShort(d.getDay());
-            const pct = (day.count / 5) * 100;
-            return (
-              <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
-                <div className="relative h-20 w-full rounded-md bg-muted overflow-hidden">
-                  <motion.div
-                    initial={{ height: 0 }}
-                    animate={{ height: `${pct}%` }}
-                    transition={{ delay: 0.3, duration: 0.5 }}
-                    className="absolute bottom-0 w-full rounded-md bg-primary/70"
-                  />
+        <ScrollArea className="w-full" dir="rtl">
+          <div className="flex items-end gap-2" style={{ minWidth: "480px" }}>
+            {last7.map((day) => {
+              const d = new Date(day.date);
+              const dayName = getArabicDayName(d.getDay());
+              const isToday = day.date === getTodayKey();
+              const pct = (day.count / 5) * 100;
+              const hijri = getHijriDate(d).split(" ").slice(0, 1).join("");
+              return (
+                <div
+                  key={day.date}
+                  className={cn(
+                    "flex flex-1 flex-col items-center gap-1 rounded-lg p-1.5 transition-colors",
+                    isToday && "bg-primary/5 ring-1 ring-primary/20"
+                  )}
+                >
+                  <div className="relative h-20 w-full rounded-md bg-muted overflow-hidden">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${pct}%` }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                      className="absolute bottom-0 w-full rounded-md bg-primary/70"
+                    />
+                  </div>
+                  <span className={cn("text-[11px] font-medium", isToday ? "text-primary" : "text-muted-foreground")}>{dayName}</span>
+                  <span className="text-[9px] text-muted-foreground">{d.getDate()}</span>
+                  <span className="text-[9px] text-muted-foreground">{hijri}</span>
                 </div>
-                <span className="text-[10px] text-muted-foreground">{dayName}</span>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </div>
   );
