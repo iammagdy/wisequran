@@ -164,7 +164,6 @@ export default function QuranPage() {
           {([
             { key: "surahs" as ViewMode, label: "السور" },
             { key: "juz" as ViewMode, label: "الأجزاء" },
-            { key: "hizb" as ViewMode, label: "الأحزاب" },
           ]).map((tab) => (
             <button
               key={tab.key}
