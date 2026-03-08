@@ -16,6 +16,7 @@ import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
