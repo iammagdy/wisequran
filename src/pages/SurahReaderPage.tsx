@@ -34,6 +34,7 @@ export default function SurahReaderPage() {
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+  const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
 
   // Tab & tafsir state
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
