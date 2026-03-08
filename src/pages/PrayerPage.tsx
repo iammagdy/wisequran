@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -28,14 +29,12 @@ export default function PrayerPage() {
     completed: [],
   });
 
-  // Weekly data
   const [weekData, setWeekData] = useLocalStorage<Record<string, string[]>>("wise-prayer-week", {});
+  const { streak } = useStreak();
 
-  // Auto-reset if day changed
   const todayData = useMemo(() => {
     const today = getTodayKey();
     if (data.date !== today) {
-      // Save yesterday's data to week
       const newWeek = { ...weekData, [data.date]: data.completed };
       setWeekData(newWeek);
       const fresh = { date: today, completed: [] };
@@ -54,7 +53,6 @@ export default function PrayerPage() {
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
 
-  // Last 7 days
   const last7 = useMemo(() => {
     const days: { date: string; count: number }[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -74,8 +72,17 @@ export default function PrayerPage() {
 
   return (
     <div className="px-4 pt-6">
-      <h1 className="mb-1 text-2xl font-bold">صلواتي اليوم</h1>
-      <p className="mb-4 text-sm text-muted-foreground">Daily Prayer Checklist</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="mb-1 text-2xl font-bold">صلواتي اليوم</h1>
+          <p className="text-sm text-muted-foreground">Daily Prayer Checklist</p>
+        </div>
+        {streak > 0 && (
+          <span className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
+            🔥 {streak} أيام
+          </span>
+        )}
+      </div>
 
       {/* Progress */}
       <div className="mb-6 rounded-xl bg-card p-4 shadow-sm">

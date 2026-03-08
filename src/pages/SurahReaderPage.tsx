@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Volume2, Timer } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Volume2, Timer, Star } from "lucide-react";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useDailyReading } from "@/hooks/useDailyReading";
+import { useStreak } from "@/hooks/useStreak";
 import { cn } from "@/lib/utils";
 import SurahAudioPlayer from "@/components/quran/SurahAudioPlayer";
 import ReadingTimer from "@/components/quran/ReadingTimer";
@@ -20,11 +22,27 @@ export default function SurahReaderPage() {
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
+  const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
 
   const [showAudio, setShowAudio] = useState(false);
   const [showTimer, setShowTimer] = useState(false);
 
+  const { increment } = useDailyReading();
+  const { markActive } = useStreak();
+  const hasTracked = useRef(false);
+
+  const isFavorite = favorites.includes(surahNumber);
+
+  const toggleFavorite = () => {
+    if (isFavorite) {
+      setFavorites(favorites.filter((n) => n !== surahNumber));
+    } else {
+      setFavorites([...favorites, surahNumber]);
+    }
+  };
+
   useEffect(() => {
+    hasTracked.current = false;
     setLoading(true);
     setError("");
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()])
@@ -39,6 +57,15 @@ export default function SurahReaderPage() {
         setLoading(false);
       });
   }, [surahNumber]);
+
+  // Track reading once ayahs load
+  useEffect(() => {
+    if (!loading && ayahs.length > 0 && !hasTracked.current) {
+      hasTracked.current = true;
+      markActive();
+      increment(ayahs.length);
+    }
+  }, [loading, ayahs.length]);
 
   const isBookmarked = (ayahNum: number) =>
     bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
@@ -66,6 +93,12 @@ export default function SurahReaderPage() {
             <p className="text-xs text-muted-foreground">{surahInfo?.englishName}</p>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={toggleFavorite}
+              className={cn("rounded-lg p-2 transition-colors", isFavorite ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground")}
+            >
+              <Star className={cn("h-4 w-4", isFavorite && "fill-primary")} />
+            </button>
             <button
               onClick={() => setShowTimer((v) => !v)}
               className={cn("rounded-lg p-2 transition-colors", showTimer ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground")}

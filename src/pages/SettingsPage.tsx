@@ -330,11 +330,49 @@ export default function SettingsPage() {
           )}
         </motion.div>
 
-        {/* App Info */}
+        {/* Daily Quran Goal */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="rounded-xl bg-card p-4 shadow-sm"
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">{goal} آية</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">الهدف اليومي</span>
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+          </div>
+          <div className="flex gap-2 mb-3">
+            {[10, 20, 50].map((v) => (
+              <button
+                key={v}
+                onClick={() => setGoal(v)}
+                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                  goal === v
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+          <Slider
+            value={[goal]}
+            onValueChange={([v]) => setGoal(v)}
+            min={5}
+            max={100}
+            step={5}
+          />
+        </motion.div>
+
+        {/* App Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
           className="rounded-xl bg-card p-4 text-center shadow-sm"
         >
           <p className="font-arabic text-lg font-bold text-primary">Wise QURAN</p>

@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useDailyReading } from "@/hooks/useDailyReading";
+import { useStreak } from "@/hooks/useStreak";
 import { cn } from "@/lib/utils";
 
 export default function QuranPage() {
@@ -13,8 +16,12 @@ export default function QuranPage() {
   const [loading, setLoading] = useState(true);
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
+  const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
   const navigate = useNavigate();
+  const { goal, todayCount } = useDailyReading();
+  const { streak } = useStreak();
 
   useEffect(() => {
     fetchSurahList().then((data) => {
@@ -30,29 +37,58 @@ export default function QuranPage() {
       s.number.toString() === search
   );
 
+  const displayList = showFavorites
+    ? filtered.filter((s) => favorites.includes(s.number))
+    : filtered;
+
   const bookmarkedSurahs = [...new Set(bookmarks.map((b) => b.surah))];
+  const progress = Math.min((todayCount / goal) * 100, 100);
 
   return (
     <div className="px-4 pt-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">القرآن الكريم</h1>
           <p className="text-sm text-muted-foreground">The Noble Quran</p>
         </div>
-        <button
-          onClick={() => setShowBookmarks(!showBookmarks)}
-          className={cn(
-            "rounded-lg p-2 transition-colors",
-            showBookmarks ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); }}
+            className={cn(
+              "rounded-lg p-2 transition-colors",
+              showFavorites ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            )}
+          >
+            <Star className="h-5 w-5" />
+          </button>
+          <button
+            onClick={() => { setShowBookmarks(!showBookmarks); setShowFavorites(false); }}
+            className={cn(
+              "rounded-lg p-2 transition-colors",
+              showBookmarks ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            )}
+          >
+            <Bookmark className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Daily Goal + Streak */}
+      <div className="mb-4 rounded-xl bg-card p-3 shadow-sm" dir="rtl">
+        <div className="flex items-center justify-between text-sm mb-1.5">
+          <span className="text-muted-foreground">
+            اليوم: {todayCount} / {goal} آية
+          </span>
+          {streak > 0 && (
+            <span className="text-sm font-semibold">🔥 {streak} أيام</span>
           )}
-        >
-          <Bookmark className="h-5 w-5" />
-        </button>
+        </div>
+        <Progress value={progress} className="h-1.5" />
       </div>
 
       {/* Last Read */}
-      {lastRead && !showBookmarks && (
+      {lastRead && !showBookmarks && !showFavorites && (
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -109,6 +145,11 @@ export default function QuranPage() {
         </div>
       )}
 
+      {/* Favorites empty state */}
+      {showFavorites && displayList.length === 0 && !loading && (
+        <p className="text-center text-sm text-muted-foreground py-8">لا توجد سور مفضلة بعد</p>
+      )}
+
       {/* Surah List */}
       {!showBookmarks && (
         <div className="space-y-2">
@@ -116,7 +157,7 @@ export default function QuranPage() {
             ? Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />
               ))
-            : filtered.map((surah, i) => (
+            : displayList.map((surah, i) => (
                 <motion.button
                   key={surah.number}
                   initial={{ opacity: 0, y: 10 }}
@@ -134,6 +175,9 @@ export default function QuranPage() {
                       {surah.englishName} · {surah.numberOfAyahs} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
                     </p>
                   </div>
+                  {favorites.includes(surah.number) && (
+                    <Star className="h-4 w-4 fill-primary text-primary" />
+                  )}
                   {bookmarkedSurahs.includes(surah.number) && (
                     <Bookmark className="h-4 w-4 text-accent" />
                   )}
