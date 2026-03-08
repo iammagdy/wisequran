@@ -120,7 +120,7 @@ export default function PrayerPage() {
             <span className="text-sm font-medium text-muted-foreground">الصلاة القادمة</span>
             {streak > 0 && (
               <span className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                🔥 {streak} أيام
+                🔥 {toArabicNumerals(String(streak))} أيام
               </span>
             )}
           </div>
