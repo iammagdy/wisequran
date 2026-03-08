@@ -57,13 +57,17 @@ function toTimeString(hours: number): string {
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
 
+function toArabicNumerals(str: string): string {
+  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
 function toArabicTime(time24: string): string {
   const [hStr, mStr] = time24.split(":");
   let h = parseInt(hStr);
   const period = h >= 12 ? "م" : "ص";
   if (h > 12) h -= 12;
   if (h === 0) h = 12;
-  return `${h}:${mStr} ${period}`;
+  return toArabicNumerals(`${h}:${mStr} ${period}`);
 }
 
 export interface PrayerTimes {

@@ -144,7 +144,7 @@ export default function PrayerPage() {
       {/* Progress */}
       <div className="mb-6 rounded-xl bg-card p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{todayData.completed.length}/{PRAYERS.length}</span>
+          <span className="text-muted-foreground">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
           <span className="font-semibold">
             {progress === 100 ? "ما شاء الله! 🎉" : "أكمل صلواتك"}
           </span>
