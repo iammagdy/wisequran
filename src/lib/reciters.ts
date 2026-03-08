@@ -4,16 +4,18 @@ export interface Reciter {
   folder: string;
   /** Whether per-ayah audio is available on cdn.islamic.network */
   hasAyahAudio: boolean;
+  /** Quran Foundation API reciter ID (for timestamp-based highlighting) */
+  qfApiId?: number;
 }
 
 export const RECITERS: Reciter[] = [
-  { id: "alafasy", name: "مشاري العفاسي", folder: "ar.alafasy", hasAyahAudio: true },
-  { id: "husary", name: "محمود خليل الحصري", folder: "ar.husary", hasAyahAudio: true },
-  { id: "minshawi", name: "محمد صديق المنشاوي", folder: "ar.minshawi", hasAyahAudio: true },
-  { id: "abdulbasit", name: "عبد الباسط عبد الصمد", folder: "ar.abdulbasitmurattal", hasAyahAudio: true },
-  { id: "sudais", name: "عبد الرحمن السديس", folder: "ar.abdurrahmaansudais", hasAyahAudio: true },
-  { id: "shuraym", name: "سعود الشريم", folder: "ar.saoodshuraym", hasAyahAudio: true },
-  { id: "rifai", name: "هاني الرفاعي", folder: "ar.hanirifai", hasAyahAudio: true },
+  { id: "alafasy", name: "مشاري العفاسي", folder: "ar.alafasy", hasAyahAudio: true, qfApiId: 7 },
+  { id: "husary", name: "محمود خليل الحصري", folder: "ar.husary", hasAyahAudio: true, qfApiId: 6 },
+  { id: "minshawi", name: "محمد صديق المنشاوي", folder: "ar.minshawi", hasAyahAudio: true, qfApiId: 9 },
+  { id: "abdulbasit", name: "عبد الباسط عبد الصمد", folder: "ar.abdulbasitmurattal", hasAyahAudio: true, qfApiId: 2 },
+  { id: "sudais", name: "عبد الرحمن السديس", folder: "ar.abdurrahmaansudais", hasAyahAudio: true, qfApiId: 3 },
+  { id: "shuraym", name: "سعود الشريم", folder: "ar.saoodshuraym", hasAyahAudio: true, qfApiId: 10 },
+  { id: "rifai", name: "هاني الرفاعي", folder: "ar.hanirifai", hasAyahAudio: true, qfApiId: 5 },
   { id: "ajamy", name: "أحمد العجمي", folder: "ar.ahmedajamy", hasAyahAudio: true },
   { id: "mahermuaiqly", name: "ماهر المعيقلي", folder: "ar.mahermuaiqly", hasAyahAudio: true },
   // Reciters without per-ayah CDN audio (full-surah only via mp3quran.net)

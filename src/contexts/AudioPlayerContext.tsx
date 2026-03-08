@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useRef, useCallback, useEffect, ty
 import { resolveAudioSource } from "@/lib/quran-audio";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl } from "@/lib/reciters";
+import { fetchChapterRecitation, findCurrentAyahByTime, type AyahTimestamp } from "@/lib/ayah-timestamps";
 import { toast } from "sonner";
 import type { Ayah } from "@/lib/quran-api";
 
@@ -55,14 +56,12 @@ const INITIAL_STATE: AudioPlayerState = {
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const nextAudioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
-  // Per-ayah playback refs
+  // Ayah timestamp refs for highlighting
+  const timestampsRef = useRef<AyahTimestamp[]>([]);
   const ayahsRef = useRef<Ayah[]>([]);
-  const ayahIndexRef = useRef<number>(0);
-  const isAyahModeRef = useRef(false);
   const stoppedRef = useRef(false);
 
   const [state, setState] = useState<AudioPlayerState>(INITIAL_STATE);
@@ -78,7 +77,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     return () => {
       audioRef.current?.pause();
       audioRef.current = null;
-      nextAudioRef.current = null;
       cleanupBlobUrl();
     };
   }, []);
@@ -103,150 +101,28 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [state.playing, state.surahName, state.playingReciterId]);
 
-  /** Advance to next ayah — called from ended handler on pre-loaded audio */
-  const advanceToNextAyah = useCallback((nextIndex: number, recId: string) => {
-    const ayahs = ayahsRef.current;
-    if (nextIndex >= ayahs.length || stoppedRef.current) {
-      setState((s) => ({ ...s, playing: false, currentAyahNumber: null, currentAyahInSurah: null }));
-      return;
-    }
-    // This is the recursive forward reference — we need it for preloadNextAyah's ended handler
-    const selfAdvance = advanceToNextAyah;
-
-    const nextAyah = ayahs[nextIndex];
-    ayahIndexRef.current = nextIndex;
-
-    const audio = nextAudioRef.current;
-    nextAudioRef.current = null;
-
-    if (!audio || audio.readyState < 2) {
-      // Fallback: pre-loaded audio not ready, use full path
-      playAyahFallback(nextIndex, recId);
-      return;
-    }
-
-    // Fast path: audio is already buffered, just swap and play
-    audioRef.current = audio;
-
-    // Single atomic state update — no loading flash
-    setState((s) => ({
-      ...s,
-      currentAyahNumber: nextAyah.number,
-      currentAyahInSurah: nextAyah.numberInSurah,
-      currentAyahIndex: nextIndex,
-      totalAyahs: ayahs.length,
-      isAyahMode: true,
-      playing: true,
-      currentTime: 0,
-      duration: audio.duration || 0,
-      loading: false,
-    }));
-
-    audio.play().catch(() => {
-      setState((s) => ({ ...s, loading: false, playing: false }));
-    });
-
-    // Pre-load N+2
-    preloadNextAyahWithListeners(nextIndex + 1, recId, selfAdvance);
-  }, []);
-
-  /** Pre-load the next ayah with all listeners pre-attached for gapless swap */
-  const preloadNextAyahWithListeners = useCallback(
-    (nextIndex: number, recId: string, onAdvance: (idx: number, r: string) => void) => {
-      const ayahs = ayahsRef.current;
-      if (nextIndex < 0 || nextIndex >= ayahs.length) {
-        nextAudioRef.current = null;
-        return;
-      }
-      const nextAyah = ayahs[nextIndex];
-      const url = getReciterAyahAudioUrl(recId, nextAyah.number);
-      const nextAudio = new Audio();
-      nextAudio.preload = "auto";
-      nextAudio.src = url;
-
-      // Pre-attach all listeners so swap is instant
-      nextAudio.addEventListener("timeupdate", () => {
-        setState((s) => ({ ...s, currentTime: nextAudio.currentTime }));
-      });
-      nextAudio.addEventListener("ended", () => {
-        onAdvance(nextIndex + 1, recId);
-      });
-      nextAudio.addEventListener("error", () => {
-        setState((s) => ({ ...s, loading: false }));
-        toast.error("تعذر تشغيل الصوت");
-      });
-
-      nextAudio.load();
-      nextAudioRef.current = nextAudio;
-    },
-    []
-  );
-
-  /** Fallback: full setup for an ayah (used for first ayah or when preload failed) */
-  const playAyahFallback = useCallback(async (index: number, recId: string) => {
-    const ayahs = ayahsRef.current;
-    if (index < 0 || index >= ayahs.length) {
-      setState((s) => ({ ...s, playing: false, currentAyahNumber: null, currentAyahInSurah: null }));
-      return;
-    }
-    if (stoppedRef.current) return;
-
-    const ayah = ayahs[index];
-    ayahIndexRef.current = index;
-
-    setState((s) => ({
-      ...s,
-      loading: true,
-      currentAyahNumber: ayah.number,
-      currentAyahInSurah: ayah.numberInSurah,
-      currentAyahIndex: index,
-      totalAyahs: ayahs.length,
-      isAyahMode: true,
-    }));
-
-    audioRef.current?.pause();
-    cleanupBlobUrl();
-    const url = getReciterAyahAudioUrl(recId, ayah.number);
-    const audio = new Audio(url);
-    audioRef.current = audio;
-
-    audio.addEventListener("loadedmetadata", () => {
-      setState((s) => ({ ...s, duration: audio.duration, loading: false }));
-    });
-    if (audio.readyState >= 1) {
-      setState((s) => ({ ...s, duration: audio.duration, loading: false }));
-    }
-    audio.addEventListener("timeupdate", () => {
-      setState((s) => ({ ...s, currentTime: audio.currentTime }));
-    });
-    audio.addEventListener("ended", () => {
-      advanceToNextAyah(ayahIndexRef.current + 1, recId);
-    });
-    audio.addEventListener("error", () => {
-      setState((s) => ({ ...s, loading: false }));
-      toast.error("تعذر تشغيل الصوت");
-    });
-
-    // Pre-load next ayah with listeners
-    preloadNextAyahWithListeners(index + 1, recId, advanceToNextAyah);
-
-    try {
-      await audio.play();
-      setState((s) => ({ ...s, playing: true }));
-    } catch {
-      setState((s) => ({ ...s, loading: false }));
-    }
-  }, [cleanupBlobUrl, advanceToNextAyah, preloadNextAyahWithListeners]);
-
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
       setState((s) => ({ ...s, duration: audio.duration, loading: false }));
     });
     audio.addEventListener("timeupdate", () => {
-      setState((s) => ({ ...s, currentTime: audio.currentTime }));
+      const currentTime = audio.currentTime;
+      const timestamps = timestampsRef.current;
+
+      // Update ayah highlighting if we have timestamps
+      let ayahInSurah: number | null = null;
+      if (timestamps.length > 0) {
+        ayahInSurah = findCurrentAyahByTime(timestamps, currentTime * 1000);
+      }
+
+      setState((s) => ({
+        ...s,
+        currentTime,
+        currentAyahInSurah: ayahInSurah,
+      }));
     });
     audio.addEventListener("ended", () => {
-      setState((s) => ({ ...s, playing: false }));
+      setState((s) => ({ ...s, playing: false, currentAyahInSurah: null }));
     });
     audio.addEventListener("error", () => {
       setState((s) => ({ ...s, loading: false }));
@@ -256,10 +132,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const play = useCallback(async (surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
     stoppedRef.current = false;
-
-    // Always use full-surah audio for gapless playback
-    isAyahModeRef.current = false;
     ayahsRef.current = ayahs || [];
+    timestampsRef.current = [];
 
     // Resume if same surah
     if (audioRef.current && state.surahNumber === surahNumber) {
@@ -270,7 +144,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     audioRef.current?.pause();
     audioRef.current = null;
-    nextAudioRef.current = null;
     cleanupBlobUrl();
 
     setState((s) => ({
@@ -289,19 +162,42 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       totalAyahs: 0,
     }));
 
-    const source = await resolveAudioSource(reciterId, surahNumber);
-    if (!source) {
-      setState((s) => ({ ...s, offline: true, loading: false }));
-      return;
+    // Try to get QF API data (audio URL + timestamps) for supported reciters
+    let audioUrl: string | null = null;
+
+    try {
+      const qfData = await fetchChapterRecitation(reciterId, surahNumber);
+      if (qfData) {
+        timestampsRef.current = qfData.timestamps;
+        audioUrl = qfData.audioUrl;
+      }
+    } catch {
+      // QF API failed, fall back to normal source
     }
 
-    const audio = new Audio(source.url);
-    if (source.cached) blobUrlRef.current = source.url;
+    // If no QF audio URL, use the regular source
+    if (!audioUrl) {
+      const source = await resolveAudioSource(reciterId, surahNumber);
+      if (!source) {
+        setState((s) => ({ ...s, offline: true, loading: false }));
+        return;
+      }
+      audioUrl = source.url;
+      if (source.cached) blobUrlRef.current = source.url;
+    }
+
+    if (stoppedRef.current) return;
+
+    const audio = new Audio(audioUrl);
     audioRef.current = audio;
     setupAudioListeners(audio);
 
-    audio.play();
-    setState((s) => ({ ...s, playing: true }));
+    try {
+      await audio.play();
+      setState((s) => ({ ...s, playing: true }));
+    } catch {
+      setState((s) => ({ ...s, loading: false }));
+    }
   }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners]);
 
   const togglePlayPause = useCallback(async () => {
@@ -327,9 +223,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     stoppedRef.current = true;
     audioRef.current?.pause();
     audioRef.current = null;
-    nextAudioRef.current = null;
     cleanupBlobUrl();
-    isAyahModeRef.current = false;
+    timestampsRef.current = [];
     ayahsRef.current = [];
     setState(INITIAL_STATE);
   }, [cleanupBlobUrl]);
