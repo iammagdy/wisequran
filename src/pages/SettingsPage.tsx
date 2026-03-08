@@ -333,7 +333,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium">التلاوات الصوتية</span>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
-                  {downloadedAudio.length}/114
+                  {toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">تحميل التلاوات للاستماع بدون إنترنت</p>
