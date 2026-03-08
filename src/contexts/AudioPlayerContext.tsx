@@ -18,6 +18,12 @@ interface AudioPlayerState {
   currentAyahNumber: number | null;
   /** numberInSurah of the currently playing ayah */
   currentAyahInSurah: number | null;
+  /** Whether playing in per-ayah mode */
+  isAyahMode: boolean;
+  /** Current ayah index (0-based) in per-ayah mode */
+  currentAyahIndex: number;
+  /** Total ayahs in per-ayah mode */
+  totalAyahs: number;
 }
 
 interface AudioPlayerContextType extends AudioPlayerState {
@@ -47,6 +53,9 @@ const INITIAL_STATE: AudioPlayerState = {
   playingReciterId: DEFAULT_RECITER,
   currentAyahNumber: null,
   currentAyahInSurah: null,
+  isAyahMode: false,
+  currentAyahIndex: 0,
+  totalAyahs: 0,
 };
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
@@ -117,6 +126,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       loading: true,
       currentAyahNumber: ayah.number,
       currentAyahInSurah: ayah.numberInSurah,
+      currentAyahIndex: index,
+      totalAyahs: ayahs.length,
+      isAyahMode: true,
     }));
 
     // Cleanup previous

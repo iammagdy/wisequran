@@ -9,6 +9,7 @@ interface MushafPageViewProps {
   fontSize: number;
   surahNumber: number;
   highlightedAyah: number | null;
+  playingAyah?: number | null;
   isBookmarked: (ayahNum: number) => boolean;
   toggleBookmark: (ayahNum: number) => void;
   onAyahTafsir: (ayahNum: number) => void;
@@ -22,6 +23,7 @@ export default function MushafPageView({
   fontSize,
   surahNumber,
   highlightedAyah,
+  playingAyah,
   isBookmarked,
   toggleBookmark,
   onAyahTafsir,
@@ -91,6 +93,17 @@ export default function MushafPageView({
     }
   }, [emblaApi, highlightedAyah, pages]);
 
+  // Navigate to playing ayah's page
+  useEffect(() => {
+    if (!emblaApi || !playingAyah || pages.length === 0) return;
+    const idx = pages.findIndex(([, pageAyahs]) =>
+      pageAyahs.some((a) => a.numberInSurah === playingAyah)
+    );
+    if (idx >= 0) {
+      emblaApi.scrollTo(idx);
+    }
+  }, [emblaApi, playingAyah, pages]);
+
   return (
     <div className="relative" dir="rtl">
       {/* Page counter */}
@@ -133,7 +146,8 @@ export default function MushafPageView({
                       ref={(el) => setAyahRef(el as HTMLDivElement | null, ayah.numberInSurah)}
                       className={cn(
                         "transition-colors",
-                        highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm"
+                        highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm",
+                        playingAyah === ayah.numberInSurah && "bg-primary/15 rounded-sm"
                       )}
                     >
                       {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}

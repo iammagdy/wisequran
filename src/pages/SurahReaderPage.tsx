@@ -204,11 +204,20 @@ export default function SurahReaderPage() {
               <ArrowRight className="h-5 w-5" />
             </button>
             {/* Page indicator in header */}
-            {currentPage && activeTab === "text" && (
+            {currentPage && activeTab === "text" && (() => {
+              const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
+              const minPage = surahPages.length > 0 ? Math.min(...surahPages) : null;
+              const maxPage = surahPages.length > 0 ? Math.max(...surahPages) : null;
+              return (
               <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
                   <button className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-bold text-primary hover:bg-primary/20 transition-colors">
                     صفحة {toArabicNumerals(currentPage)}
+                    {minPage && maxPage && minPage !== maxPage && (
+                      <span className="text-primary/60 mr-1">
+                        ({toArabicNumerals(minPage)}–{toArabicNumerals(maxPage)})
+                      </span>
+                    )}
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="bottom" align="start" className="w-56 p-3" dir="rtl">
@@ -265,7 +274,8 @@ export default function SurahReaderPage() {
                   </form>
                 </PopoverContent>
               </Popover>
-            )}
+              );
+            })()}
           </div>
           <div className="text-center flex-1">
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
@@ -360,6 +370,7 @@ export default function SurahReaderPage() {
                 fontSize={fontSize}
                 surahNumber={surahNumber}
                 highlightedAyah={highlightedAyah}
+                playingAyah={playingAyahInSurah}
                 isBookmarked={isBookmarked}
                 toggleBookmark={toggleBookmark}
                 onAyahTafsir={handleAyahTafsir}
