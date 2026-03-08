@@ -70,6 +70,7 @@ export async function downloadAllSurahs(
       number: ay.number,
       text: ay.text,
       numberInSurah: ay.numberInSurah,
+      page: ay.page,
     }));
     surahMap.set(a.number, ayahs);
   }
