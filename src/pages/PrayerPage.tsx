@@ -103,7 +103,8 @@ export default function PrayerPage() {
           : (weekData[key]?.length || 0);
       days.push({ date: key, count });
     }
-    return days;
+    // Newest first so RTL flex puts today on the right
+    return days.reverse();
   }, [todayData, weekData]);
 
   // Hero countdown data
@@ -222,7 +223,7 @@ export default function PrayerPage() {
       {/* Weekly View */}
       <div className="rounded-xl bg-card p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-semibold text-right">آخر ٧ أيام</h2>
-        <div className="flex flex-row-reverse justify-between gap-1">
+        <div className="flex justify-between gap-1">
           {last7.map((day) => {
             const d = new Date(day.date);
             const isToday = day.date === getTodayKey();
