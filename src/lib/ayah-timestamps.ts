@@ -38,7 +38,7 @@ export async function fetchChapterRecitation(
   const cached = cache.get(key);
   if (cached) return cached;
 
-  const url = `https://api.quran.com/api/v4/chapter_recitations/${reciter.qfApiId}/${surahNumber}`;
+  const url = `https://api.quran.com/api/v4/chapter_recitations/${reciter.qfApiId}/${surahNumber}?segments=true`;
   const res = await fetch(url);
   if (!res.ok) return null;
 
@@ -48,7 +48,7 @@ export async function fetchChapterRecitation(
 
   // Parse timestamps from the verse_timings array
   const timings: { verse_key: string; timestamp_from: number; timestamp_to: number }[] =
-    recitation.verse_timings || [];
+    recitation.timestamps || [];
 
   const timestamps: AyahTimestamp[] = timings.map((t) => {
     const parts = t.verse_key.split(":");
