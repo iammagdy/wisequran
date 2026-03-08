@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { toArabicNumerals } from "@/lib/utils";
 
 const PRESETS = [5, 10, 15, 20]; // minutes
 
