@@ -33,6 +33,7 @@ export default function SurahReaderPage() {
   const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
   const [tafsirLoading, setTafsirLoading] = useState(false);
   const [tafsirError, setTafsirError] = useState("");
+  const [tafsirSearch, setTafsirSearch] = useState("");
   const tafsirEditionRef = useRef(tafsirEdition);
 
   const { increment } = useDailyReading();
