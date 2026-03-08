@@ -4,7 +4,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { cn, getArabicDayName, getArabicDayShort, getHijriDate, getGregorianDateArabic } from "@/lib/utils";
+import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic } from "@/lib/utils";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -57,7 +57,7 @@ export default function PrayerPage() {
     completed: [],
   });
 
-  const [weekData, setWeekData] = useLocalStorage<Record<string, string[]>>("wise-prayer-week", {});
+  
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
@@ -73,8 +73,6 @@ export default function PrayerPage() {
   const todayData = useMemo(() => {
     const today = getTodayKey();
     if (data.date !== today) {
-      const newWeek = { ...weekData, [data.date]: data.completed };
-      setWeekData(newWeek);
       const fresh = { date: today, completed: [] };
       setData(fresh);
       return fresh;
@@ -91,21 +89,6 @@ export default function PrayerPage() {
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
 
-  const last7 = useMemo(() => {
-    const days: { date: string; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const count =
-        key === getTodayKey()
-          ? todayData.completed.length
-          : (weekData[key]?.length || 0);
-      days.push({ date: key, count });
-    }
-    // Newest first so RTL flex puts today on the right
-    return days.reverse();
-  }, [todayData, weekData]);
 
   // Hero countdown data
   const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;
@@ -220,70 +203,6 @@ export default function PrayerPage() {
         })}
       </div>
 
-      {/* Weekly View */}
-      <div className="rounded-xl bg-card p-4 shadow-sm">
-        <h2 className="mb-3 text-sm font-semibold text-right">آخر ٧ أيام</h2>
-        <div className="flex justify-between gap-1">
-          {last7.map((day) => {
-            const d = new Date(day.date);
-            const isToday = day.date === getTodayKey();
-            const pct = (day.count / 5) * 100;
-            const radius = 18;
-            const stroke = 3.5;
-            const circumference = 2 * Math.PI * radius;
-            const offset = circumference - (pct / 100) * circumference;
-            return (
-              <div
-                key={day.date}
-                className="flex flex-1 flex-col items-center gap-1.5"
-              >
-                <div className={cn(
-                  "relative flex items-center justify-center rounded-full p-0.5 transition-all",
-                  isToday && "ring-2 ring-primary/40 bg-primary/10"
-                )}>
-                  <svg width="48" height="48" viewBox="0 0 48 48">
-                    <circle
-                      cx="24" cy="24" r={radius}
-                      fill="none"
-                      stroke="hsl(var(--muted))"
-                      strokeWidth={stroke}
-                    />
-                    <motion.circle
-                      cx="24" cy="24" r={radius}
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={stroke}
-                      strokeLinecap="round"
-                      strokeDasharray={circumference}
-                      initial={{ strokeDashoffset: circumference }}
-                      animate={{ strokeDashoffset: offset }}
-                      transition={{ delay: 0.2, duration: 0.6, ease: "easeOut" }}
-                      transform="rotate(-90 24 24)"
-                    />
-                    <text
-                      x="24" y="25"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className={cn(
-                        "text-xs font-bold",
-                        isToday ? "fill-primary" : "fill-foreground"
-                      )}
-                    >
-                      {day.count}
-                    </text>
-                  </svg>
-                </div>
-                <span className={cn(
-                  "text-[11px] font-medium",
-                  isToday ? "text-primary font-bold" : "text-muted-foreground"
-                )}>
-                  {getArabicDayShort(d.getDay())}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }
