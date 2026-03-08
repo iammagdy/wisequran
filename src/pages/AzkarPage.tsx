@@ -158,7 +158,7 @@ export default function AzkarPage() {
                   >
                     <span className="text-3xl">{cat.icon}</span>
                     <span className="font-semibold text-sm">{cat.nameAr}</span>
-                    <span className="text-xs text-muted-foreground">{cat.items.length} أذكار</span>
+                    <span className="text-xs text-muted-foreground">{toArabicNumerals(cat.items.length)} أذكار</span>
                   </motion.button>
                 ))}
               </div>
