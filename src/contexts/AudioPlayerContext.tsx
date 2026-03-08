@@ -180,9 +180,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const play = useCallback(async (surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
     stoppedRef.current = false;
+    const reciter = getReciterById(reciterId);
 
-    // Per-ayah mode when ayahs are provided
-    if (ayahs && ayahs.length > 0) {
+    // Per-ayah mode when ayahs are provided AND reciter supports it
+    if (ayahs && ayahs.length > 0 && reciter.hasAyahAudio) {
       // If same surah already playing in ayah mode, just resume
       if (audioRef.current && state.surahNumber === surahNumber && isAyahModeRef.current) {
         audioRef.current.play();
