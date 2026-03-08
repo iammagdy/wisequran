@@ -256,44 +256,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const play = useCallback(async (surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
     stoppedRef.current = false;
-    const reciter = getReciterById(reciterId);
 
-    // Per-ayah mode when ayahs are provided AND reciter supports it
-    if (ayahs && ayahs.length > 0 && reciter.hasAyahAudio) {
-      // If same surah already playing in ayah mode, just resume
-      if (audioRef.current && state.surahNumber === surahNumber && isAyahModeRef.current) {
-        audioRef.current.play();
-        setState((s) => ({ ...s, playing: true }));
-        return;
-      }
-
-      audioRef.current?.pause();
-      audioRef.current = null;
-      nextAudioRef.current = null;
-      cleanupBlobUrl();
-
-      ayahsRef.current = ayahs;
-      isAyahModeRef.current = true;
-
-      setState((s) => ({
-        ...s,
-        surahNumber,
-        surahName,
-        playing: false,
-        currentTime: 0,
-        duration: 0,
-        offline: false,
-        playingReciterId: reciterId,
-      }));
-
-      await playAyahFallback(0, reciterId);
-      return;
-    }
-
-    // Full-surah mode (fallback)
+    // Always use full-surah audio for gapless playback
     isAyahModeRef.current = false;
-    ayahsRef.current = [];
+    ayahsRef.current = ayahs || [];
 
+    // Resume if same surah
     if (audioRef.current && state.surahNumber === surahNumber) {
       audioRef.current.play();
       setState((s) => ({ ...s, playing: true }));
@@ -316,6 +284,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       playingReciterId: reciterId,
       currentAyahNumber: null,
       currentAyahInSurah: null,
+      isAyahMode: false,
+      currentAyahIndex: 0,
+      totalAyahs: 0,
     }));
 
     const source = await resolveAudioSource(reciterId, surahNumber);
@@ -331,7 +302,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     audio.play();
     setState((s) => ({ ...s, playing: true }));
-  }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners, playAyahFallback]);
+  }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners]);
 
   const togglePlayPause = useCallback(async () => {
     if (!audioRef.current) return;

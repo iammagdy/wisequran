@@ -151,8 +151,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   className="absolute inset-y-0 right-0 rounded-full bg-primary transition-[width] duration-300"
                   style={{ width: `${pct}%` }}
                 />
-                {!isAyahMode && (
-                  <input
+                <input
                     type="range"
                     min={0}
                     max={duration || 1}
@@ -161,20 +160,10 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                     className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                     dir="rtl"
                   />
-                )}
               </div>
               <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums" dir="rtl">
-                {isAyahMode && totalAyahs > 0 ? (
-                  <>
-                    <span>آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
-                    <span>{formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}</span>
-                  </>
-                ) : (
-                  <>
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
-                  </>
-                )}
+                <span>{formatTime(currentTime)}</span>
+                <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
               </div>
             </div>
 
