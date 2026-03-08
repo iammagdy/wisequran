@@ -624,6 +624,58 @@ export default function SettingsPage() {
           </section>
         )}
 
+        {/* ─── Reset Progress ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            إعادة تعيين التقدم
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">
+              سيتم مسح سجل القراءة والعلامات المرجعية والمفضلة والأهداف اليومية. لن يتم حذف البيانات المحملة.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20">
+                  <RotateCcw className="h-4 w-4" />
+                  إعادة تعيين التقدم
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent dir="rtl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>إعادة تعيين جميع التقدم؟</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم مسح: آخر قراءة، العلامات المرجعية، السور المفضلة، الهدف اليومي، سجل القراءة، وسلسلة الأيام. هل أنت متأكد؟
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row-reverse gap-2">
+                  <AlertDialogAction
+                    onClick={() => {
+                      localStorage.removeItem("wise-last-read");
+                      localStorage.removeItem("wise-bookmarks");
+                      localStorage.removeItem("wise-favorite-surahs");
+                      localStorage.removeItem("wise-daily-reading");
+                      localStorage.removeItem("wise-streak");
+                      localStorage.removeItem("wise-reading-history");
+                      toast.success("تم إعادة تعيين التقدم بنجاح");
+                      setTimeout(() => window.location.reload(), 500);
+                    }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    نعم، إعادة تعيين
+                  </AlertDialogAction>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </motion.div>
+        </section>
+
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />

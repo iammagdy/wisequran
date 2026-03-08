@@ -337,7 +337,7 @@ export default function QuranPage() {
       )}
 
       {/* Juz List */}
-      {!showBookmarks && !showFavorites && viewMode === "juz" && (
+      {!showBookmarks && !showFavorites && !showHistory && viewMode === "juz" && (
         <div className="space-y-2">
           {juzData.map((juz, i) => {
             const isExpanded = expandedJuz === juz.juzNumber;
