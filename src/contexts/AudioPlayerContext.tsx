@@ -18,6 +18,12 @@ interface AudioPlayerState {
   currentAyahNumber: number | null;
   /** numberInSurah of the currently playing ayah */
   currentAyahInSurah: number | null;
+  /** Whether playing in per-ayah mode */
+  isAyahMode: boolean;
+  /** Current ayah index (0-based) in per-ayah mode */
+  currentAyahIndex: number;
+  /** Total ayahs in per-ayah mode */
+  totalAyahs: number;
 }
 
 interface AudioPlayerContextType extends AudioPlayerState {
