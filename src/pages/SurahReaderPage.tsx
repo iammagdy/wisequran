@@ -172,6 +172,12 @@ export default function SurahReaderPage() {
 
   return (
     <div className="min-h-screen pb-36">
+      {/* Floating Mushaf page indicator */}
+      {currentPage && activeTab === "text" && (
+        <div className="fixed bottom-40 left-4 z-20 rounded-lg bg-primary/90 px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-lg backdrop-blur-sm">
+          صفحة {toArabicNumerals(currentPage)}
+        </div>
+      )}
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-2">
