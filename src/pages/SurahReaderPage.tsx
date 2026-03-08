@@ -553,6 +553,7 @@ export default function SurahReaderPage() {
       <SurahBottomBar
         surahNumber={surahNumber}
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
+        ayahs={ayahs}
       />
     </div>
   );

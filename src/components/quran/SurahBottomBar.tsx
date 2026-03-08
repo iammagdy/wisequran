@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
+import type { Ayah } from "@/lib/quran-api";
 
 interface Props {
   surahNumber: number;
   surahName: string;
+  ayahs?: Ayah[];
 }
 
 function formatTime(s: number) {
