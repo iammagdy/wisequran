@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { Bookmark, BookmarkCheck, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { type Ayah } from "@/lib/quran-api";
-import { cn, toArabicNumerals } from "@/lib/utils";
+import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 
 interface MushafPageViewProps {
   ayahs: Ayah[];
@@ -136,7 +136,7 @@ export default function MushafPageView({
                         highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm"
                       )}
                     >
-                      {ayah.text}{" "}
+                      {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                       <button
                         onClick={() =>
                           setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah)
