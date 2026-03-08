@@ -1,17 +1,25 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { getArabicDayShort } from "@/lib/utils";
+import {
+  calculatePrayerTimes,
+  formatArabicTime,
+  getNextPrayer,
+  type PrayerTimes,
+  type NextPrayerInfo,
+} from "@/lib/prayer-times";
 
 const PRAYERS = [
-  { id: "fajr", name: "الفجر", nameEn: "Fajr", icon: "🌅" },
-  { id: "dhuhr", name: "الظهر", nameEn: "Dhuhr", icon: "☀️" },
-  { id: "asr", name: "العصر", nameEn: "Asr", icon: "🌤" },
-  { id: "maghrib", name: "المغرب", nameEn: "Maghrib", icon: "🌅" },
-  { id: "isha", name: "العشاء", nameEn: "Isha", icon: "🌙" },
+  { id: "fajr", name: "الفجر", icon: "🌅" },
+  { id: "dhuhr", name: "الظهر", icon: "☀️" },
+  { id: "asr", name: "العصر", icon: "🌤" },
+  { id: "maghrib", name: "المغرب", icon: "🌅" },
+  { id: "isha", name: "العشاء", icon: "🌙" },
 ];
 
 function getTodayKey() {
@@ -23,6 +31,15 @@ interface DayData {
   completed: string[];
 }
 
+function formatCountdown(minutes: number): string {
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h} ساعة و ${m} دقيقة` : `${h} ساعة`;
+  }
+  return `${minutes} دقيقة`;
+}
+
 export default function PrayerPage() {
   const [data, setData] = useLocalStorage<DayData>("wise-prayer-today", {
     date: getTodayKey(),
@@ -31,6 +48,24 @@ export default function PrayerPage() {
 
   const [weekData, setWeekData] = useLocalStorage<Record<string, string[]>>("wise-prayer-week", {});
   const { streak } = useStreak();
+
+  // Prayer times calculation
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTimes>(() => calculatePrayerTimes(new Date()));
+  const [nextPrayer, setNextPrayer] = useState<NextPrayerInfo | null>(() =>
+    getNextPrayer(calculatePrayerTimes(new Date()), new Date())
+  );
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const times = calculatePrayerTimes(now);
+      setPrayerTimes(times);
+      setNextPrayer(getNextPrayer(times, now));
+    };
+    update();
+    const interval = setInterval(update, 60_000); // every minute
+    return () => clearInterval(interval);
+  }, []);
 
   const todayData = useMemo(() => {
     const today = getTodayKey();
@@ -68,14 +103,16 @@ export default function PrayerPage() {
     return days;
   }, [todayData, weekData]);
 
-  const dayNames = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
-
   return (
     <div className="px-4 pt-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="mb-1 text-2xl font-bold">صلواتي اليوم</h1>
-          <p className="text-sm text-muted-foreground">Daily Prayer Checklist</p>
+          {nextPrayer && (
+            <p className="text-sm text-muted-foreground">
+              متبقي {formatCountdown(nextPrayer.minutesLeft)} على {nextPrayer.name}
+            </p>
+          )}
         </div>
         {streak > 0 && (
           <span className="rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-semibold text-primary">
@@ -99,6 +136,8 @@ export default function PrayerPage() {
       <div className="space-y-3 mb-8">
         {PRAYERS.map((prayer, i) => {
           const done = todayData.completed.includes(prayer.id);
+          const isNext = nextPrayer?.id === prayer.id && !done;
+          const time = prayerTimes[prayer.id as keyof PrayerTimes];
           return (
             <motion.button
               key={prayer.id}
@@ -108,7 +147,11 @@ export default function PrayerPage() {
               onClick={() => togglePrayer(prayer.id)}
               className={cn(
                 "flex w-full items-center gap-4 rounded-xl p-4 shadow-sm transition-all",
-                done ? "bg-primary/10" : "bg-card"
+                done
+                  ? "bg-primary/10"
+                  : isNext
+                    ? "bg-card ring-2 ring-primary/30"
+                    : "bg-card"
               )}
             >
               <span className="text-2xl">{prayer.icon}</span>
@@ -116,8 +159,15 @@ export default function PrayerPage() {
                 <p className={cn("font-semibold", done && "line-through text-muted-foreground")}>
                   {prayer.name}
                 </p>
-                <p className="text-xs text-muted-foreground">{prayer.nameEn}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatArabicTime(time)}
+                </p>
               </div>
+              {isNext && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                  التالية
+                </span>
+              )}
               <Checkbox checked={done} className="h-6 w-6" />
             </motion.button>
           );
@@ -130,7 +180,7 @@ export default function PrayerPage() {
         <div className="flex items-end justify-between gap-1">
           {last7.map((day) => {
             const d = new Date(day.date);
-            const dayName = dayNames[d.getDay()];
+            const dayName = getArabicDayShort(d.getDay());
             const pct = (day.count / 5) * 100;
             return (
               <div key={day.date} className="flex flex-1 flex-col items-center gap-1">
