@@ -49,6 +49,7 @@ export async function downloadSurah(surahNumber: number): Promise<void> {
     number: a.number,
     text: a.text,
     numberInSurah: a.numberInSurah,
+    page: a.page,
   }));
   await saveSurah(surahNumber, ayahs);
 }
