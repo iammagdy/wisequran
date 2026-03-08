@@ -301,7 +301,7 @@ export default function QuranPage() {
       )}
 
       {/* Surah List */}
-      {!showBookmarks && isSurahMode && (
+      {!showBookmarks && !showHistory && isSurahMode && (
         <div className="space-y-2">
           {loading
             ? Array.from({ length: 10 }).map((_, i) => (
