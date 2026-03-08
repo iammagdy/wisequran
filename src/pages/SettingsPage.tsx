@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -12,6 +12,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio } from "@/lib/db";
 import { downloadSurah, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
+import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -28,6 +29,7 @@ import {
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
+  const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -45,9 +47,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     getAllDownloadedSurahs().then(setDownloadedSurahs);
-    getAllDownloadedAudio().then(setDownloadedAudio);
+    getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
     fetchSurahList().then(setSurahs);
-  }, []);
+  }, [reciterId]);
 
   const handleDownloadAll = async () => {
     setDownloading(true);
@@ -76,11 +78,11 @@ export default function SettingsPage() {
     const total = 114;
     for (let i = 1; i <= total; i++) {
       if (!downloadedAudio.includes(i)) {
-        try { await downloadSurahAudio(i); } catch { /* continue */ }
+        try { await downloadSurahAudio(reciterId, i); } catch { /* continue */ }
       }
       setAudioDownloadProgress(Math.round((i / total) * 100));
     }
-    const updated = await getAllDownloadedAudio();
+    const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
     setAudioDownloading(false);
     toast.success("تم تحميل جميع التلاوات");
@@ -95,8 +97,8 @@ export default function SettingsPage() {
   const handleDownloadSingleAudio = async (num: number) => {
     setSingleAudioDownloading(num);
     try {
-      await downloadSurahAudio(num);
-      const updated = await getAllDownloadedAudio();
+      await downloadSurahAudio(reciterId, num);
+      const updated = await getAllDownloadedAudio(reciterId);
       setDownloadedAudio(updated);
       toast.success("تم تحميل التلاوة");
     } catch {
@@ -106,8 +108,8 @@ export default function SettingsPage() {
   };
 
   const handleDeleteSingleAudio = async (num: number) => {
-    await deleteAudio(num);
-    const updated = await getAllDownloadedAudio();
+    await deleteAudio(reciterId, num);
+    const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
   };
 
@@ -161,6 +163,42 @@ export default function SettingsPage() {
               >
                 بِسْمِ اللَّهِ
               </p>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ─── Reciter Selection ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Mic className="h-3.5 w-3.5" />
+            صوت القارئ
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.02 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">اختر صوت القارئ المفضل لتلاوة القرآن</p>
+            <div className="space-y-1.5">
+              {RECITERS.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setReciterId(r.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    reciterId === r.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {reciterId === r.id && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  <span className="font-arabic">{r.name}</span>
+                </button>
+              ))}
             </div>
           </motion.div>
         </section>
