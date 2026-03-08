@@ -139,7 +139,7 @@ export default function QuranPage() {
       </div>
 
       {/* Last Read */}
-      {lastRead && !showBookmarks && !showFavorites && isSurahMode && (
+      {lastRead && !showBookmarks && !showFavorites && !showHistory && isSurahMode && (
         <motion.button
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
