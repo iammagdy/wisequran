@@ -215,7 +215,8 @@ export default function SurahReaderPage() {
                         return;
                       }
                       if (readerMode === "mushaf") {
-                        setMushafTargetPage(pageNum);
+                        setMushafTargetPage(null);
+                        setTimeout(() => setMushafTargetPage(pageNum), 0);
                       } else {
                         const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
                         if (targetAyahOnPage) {
