@@ -13,6 +13,7 @@ import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAu
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
+import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import {
   AlertDialog,
