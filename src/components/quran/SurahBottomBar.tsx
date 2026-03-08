@@ -274,7 +274,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
               {downloading && (
                 <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  {dlProgress}%
+                  {toArabicNumerals(`${dlProgress}%`)}
                 </span>
               )}
               {cached && !downloading && (
