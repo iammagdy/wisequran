@@ -15,10 +15,17 @@ interface WiseQuranDB extends DBSchema {
       items: { id: string; text: string; translation: string; count: number }[];
     };
   };
+  audio: {
+    key: number;
+    value: {
+      surahNumber: number;
+      data: ArrayBuffer;
+    };
+  };
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export async function getDB() {
   return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
@@ -28,6 +35,9 @@ export async function getDB() {
       }
       if (!db.objectStoreNames.contains("azkar")) {
         db.createObjectStore("azkar", { keyPath: "category" });
+      }
+      if (!db.objectStoreNames.contains("audio")) {
+        db.createObjectStore("audio", { keyPath: "surahNumber" });
       }
     },
   });
