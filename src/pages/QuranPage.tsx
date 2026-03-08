@@ -172,6 +172,44 @@ export default function QuranPage() {
         <p className="text-center text-sm text-muted-foreground py-8">لا توجد سور مفضلة بعد</p>
       )}
 
+      {/* Ayah Search Results */}
+      {search.trim().length >= 3 && !showBookmarks && !showFavorites && (
+        <div className="mb-4" dir="rtl">
+          <h2 className="mb-2 text-lg font-semibold">نتائج البحث في الآيات</h2>
+          {searchingAyahs ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : ayahResults.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-6">
+              لا توجد نتائج — تأكد من تحميل السور أولاً للبحث في النصوص
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {ayahResults.map((r, i) => (
+                <motion.button
+                  key={`${r.surahNumber}-${r.ayahNumber}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => navigate(`/surah/${r.surahNumber}`)}
+                  className="flex w-full flex-col gap-1 rounded-xl bg-card p-4 text-right shadow-sm transition-colors active:bg-muted"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">آية {toArabicNumerals(r.ayahNumber)}</span>
+                    <span className="text-sm font-semibold text-primary">{r.surahName}</span>
+                  </div>
+                  <p className="font-arabic text-sm leading-relaxed line-clamp-2">{r.text}</p>
+                </motion.button>
+              ))}
+              {ayahResults.length >= 50 && (
+                <p className="text-center text-xs text-muted-foreground py-2">تم عرض أول ٥٠ نتيجة</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Surah List */}
       {!showBookmarks && (
         <div className="space-y-2">
