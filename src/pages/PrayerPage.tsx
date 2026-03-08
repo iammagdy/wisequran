@@ -51,8 +51,8 @@ function formatCompactCountdown(totalSeconds: number): string {
   if (totalSeconds <= 0) return "";
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}`;
-  return `${m} د`;
+  if (h > 0) return toArabicNumerals(`${h}:${m.toString().padStart(2, "0")}`);
+  return `${toArabicNumerals(String(m))} د`;
 }
 
 export default function PrayerPage() {
@@ -120,7 +120,7 @@ export default function PrayerPage() {
             <span className="text-sm font-medium text-muted-foreground">الصلاة القادمة</span>
             {streak > 0 && (
               <span className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                🔥 {streak} أيام
+                🔥 {toArabicNumerals(String(streak))} أيام
               </span>
             )}
           </div>
@@ -144,7 +144,7 @@ export default function PrayerPage() {
       {/* Progress */}
       <div className="mb-6 rounded-xl bg-card p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{todayData.completed.length}/{PRAYERS.length}</span>
+          <span className="text-muted-foreground">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
           <span className="font-semibold">
             {progress === 100 ? "ما شاء الله! 🎉" : "أكمل صلواتك"}
           </span>
