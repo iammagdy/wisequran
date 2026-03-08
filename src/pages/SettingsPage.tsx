@@ -243,7 +243,7 @@ export default function SettingsPage() {
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
                 >
-                  {v}
+                  {toArabicNumerals(v)}
                 </button>
               ))}
             </div>
