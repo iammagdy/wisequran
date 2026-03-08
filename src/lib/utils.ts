@@ -13,7 +13,7 @@ export function getArabicDayName(dayIndex: number): string {
 
 /** Short Arabic day name for compact views */
 export function getArabicDayShort(dayIndex: number): string {
-  const names = ["أحد", "إثن", "ثلا", "أرب", "خمي", "جمع", "سبت"];
+  const names = ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"];
   return names[dayIndex];
 }
 
