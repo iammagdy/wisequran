@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Download, Loader2, WifiOff, Check, X, Timer } from "lucide-react";
-import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
+import { downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
+import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { getReciterById } from "@/lib/reciters";
 
 interface Props {
   surahNumber: number;
@@ -22,16 +22,10 @@ function formatTime(s: number) {
 const TIMER_PRESETS = [5, 10, 15, 20];
 
 export default function SurahBottomBar({ surahNumber, surahName }: Props) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const blobUrlRef = useRef<string | null>(null);
-  const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
+  const player = useAudioPlayer();
+  const isThisSurah = player.surahNumber === surahNumber;
 
-  // Audio state
-  const [playing, setPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [offline, setOffline] = useState(false);
+  // Download state
   const [cached, setCached] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [dlProgress, setDlProgress] = useState(0);
@@ -39,46 +33,13 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
   // Timer state
   const [timerActive, setTimerActive] = useState(false);
   const [timerRemaining, setTimerRemaining] = useState(0);
-  const [timerTotal, setTimerTotal] = useState(0);
   const [showTimer, setShowTimer] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Check cached status
   useEffect(() => {
-    getAudio(reciterId, surahNumber).then((r) => setCached(!!r));
-  }, [surahNumber, reciterId]);
-
-  // Cleanup audio on unmount or surah change
-  useEffect(() => {
-    return () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
-      blobUrlRef.current = null;
-    };
-  }, [surahNumber]);
-
-  // Media Session API for lock screen controls
-  useEffect(() => {
-    if (!("mediaSession" in navigator)) return;
-
-    if (playing) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: surahName,
-        artist: getReciterById(reciterId).name,
-        album: "القرآن الكريم",
-      });
-      navigator.mediaSession.setActionHandler("play", () => handlePlayPause());
-      navigator.mediaSession.setActionHandler("pause", () => handlePlayPause());
-    }
-
-    return () => {
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setActionHandler("play", null);
-        navigator.mediaSession.setActionHandler("pause", null);
-      }
-    };
-  }, [playing, surahName]);
+    getAudio(player.reciterId, surahNumber).then((r) => setCached(!!r));
+  }, [surahNumber, player.reciterId]);
 
   // Timer logic
   useEffect(() => {
@@ -101,60 +62,23 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
   }, [timerActive]);
 
   const handlePlayPause = useCallback(async () => {
-    if (playing && audioRef.current) {
-      audioRef.current.pause();
-      setPlaying(false);
-      return;
+    if (isThisSurah) {
+      player.togglePlayPause();
+    } else {
+      player.play(surahNumber, surahName);
     }
-
-    if (audioRef.current && audioRef.current.src) {
-      audioRef.current.play();
-      setPlaying(true);
-      return;
-    }
-
-    setLoading(true);
-    setOffline(false);
-    const source = await resolveAudioSource(reciterId, surahNumber);
-
-    if (!source) {
-      setOffline(true);
-      setLoading(false);
-      return;
-    }
-
-    const audio = new Audio(source.url);
-    if (source.cached) blobUrlRef.current = source.url;
-    audioRef.current = audio;
-
-    audio.addEventListener("loadedmetadata", () => {
-      setDuration(audio.duration);
-      setLoading(false);
-    });
-    audio.addEventListener("timeupdate", () => setCurrentTime(audio.currentTime));
-    audio.addEventListener("ended", () => setPlaying(false));
-    audio.addEventListener("error", () => {
-      setLoading(false);
-      toast.error("تعذر تشغيل الصوت");
-    });
-
-    audio.play();
-    setPlaying(true);
-  }, [playing, surahNumber]);
+  }, [isThisSurah, surahNumber, surahName, player]);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = val;
-      setCurrentTime(val);
-    }
+    player.seek(val);
   };
 
   const handleDownload = async () => {
     setDownloading(true);
     setDlProgress(0);
     try {
-      await downloadSurahAudio(reciterId, surahNumber, setDlProgress);
+      await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress);
       setCached(true);
       toast.success("تم تحميل الصوت للاستخدام بدون إنترنت");
     } catch {
@@ -165,7 +89,6 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
 
   const startTimer = (minutes: number) => {
     const secs = minutes * 60;
-    setTimerTotal(secs);
     setTimerRemaining(secs);
     setTimerActive(true);
   };
@@ -177,6 +100,11 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     timerRef.current = null;
   };
 
+  const playing = isThisSurah && player.playing;
+  const loading = isThisSurah && player.loading;
+  const currentTime = isThisSurah ? player.currentTime : 0;
+  const duration = isThisSurah ? player.duration : 0;
+  const offline = isThisSurah && player.offline;
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -216,7 +144,6 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
             </button>
 
             <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-              {/* Progress track + seek */}
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
                   className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-300"
@@ -237,7 +164,6 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
               </div>
             </div>
 
-            {/* Timer toggle */}
             <button
               onClick={() => setShowTimer(!showTimer)}
               className={cn(
@@ -251,11 +177,14 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
             </button>
           </div>
 
-          {/* Row 2: Surah name + status + download */}
+          {/* Row 2: Surah name + reciter + status + download */}
           <div className="flex items-center justify-between" dir="rtl">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-arabic text-sm font-semibold text-foreground truncate">
                 {surahName}
+              </span>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {getReciterById(player.reciterId).name}
               </span>
               {playing && (
                 <span className="text-[10px] text-primary font-medium whitespace-nowrap">
@@ -289,7 +218,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
             </div>
           </div>
 
-          {/* Timer section (expandable) */}
+          {/* Timer section */}
           <AnimatePresence>
             {showTimer && (
               <motion.div
@@ -333,7 +262,6 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
           </AnimatePresence>
         </div>
 
-        {/* Browser limitation note */}
         <div className="px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
           <p className="text-center text-[9px] text-muted-foreground/60" dir="rtl">
             قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح

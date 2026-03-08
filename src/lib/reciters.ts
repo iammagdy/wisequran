@@ -18,6 +18,11 @@ export function getReciterById(id: string): Reciter {
 }
 
 export function getReciterAudioUrl(reciterId: string, surahNumber: number): string {
+  // Islam Sobhi uses a different CDN with zero-padded surah numbers
+  if (reciterId === "islamsobhi") {
+    const padded = surahNumber.toString().padStart(3, "0");
+    return `https://server14.mp3quran.net/islam/Rewayat-Hafs-A-n-Assem/${padded}.mp3`;
+  }
   const reciter = getReciterById(reciterId);
   return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
 }
