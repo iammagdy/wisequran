@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -9,11 +9,15 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [ayahResults, setAyahResults] = useState<SearchResult[]>([]);
+  const [searchingAyahs, setSearchingAyahs] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
@@ -29,6 +33,25 @@ export default function QuranPage() {
       setLoading(false);
     });
   }, []);
+
+  // Debounced ayah text search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const trimmed = search.trim();
+    if (trimmed.length < 3 || /^\d+$/.test(trimmed)) {
+      setAyahResults([]);
+      setSearchingAyahs(false);
+      return;
+    }
+    setSearchingAyahs(true);
+    debounceRef.current = setTimeout(() => {
+      searchAyahs(trimmed).then((results) => {
+        setAyahResults(results);
+        setSearchingAyahs(false);
+      });
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
 
   const filtered = surahs.filter(
     (s) =>
@@ -108,7 +131,7 @@ export default function QuranPage() {
       <div className="relative mb-4">
         <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="بحث بالاسم أو الرقم..."
+          placeholder="بحث بالاسم، الرقم، أو نص الآية..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pr-10 text-right"
@@ -147,6 +170,44 @@ export default function QuranPage() {
       {/* Favorites empty state */}
       {showFavorites && displayList.length === 0 && !loading && (
         <p className="text-center text-sm text-muted-foreground py-8">لا توجد سور مفضلة بعد</p>
+      )}
+
+      {/* Ayah Search Results */}
+      {search.trim().length >= 3 && !showBookmarks && !showFavorites && (
+        <div className="mb-4" dir="rtl">
+          <h2 className="mb-2 text-lg font-semibold">نتائج البحث في الآيات</h2>
+          {searchingAyahs ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : ayahResults.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-6">
+              لا توجد نتائج — تأكد من تحميل السور أولاً للبحث في النصوص
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {ayahResults.map((r, i) => (
+                <motion.button
+                  key={`${r.surahNumber}-${r.ayahNumber}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => navigate(`/surah/${r.surahNumber}`)}
+                  className="flex w-full flex-col gap-1 rounded-xl bg-card p-4 text-right shadow-sm transition-colors active:bg-muted"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">آية {toArabicNumerals(r.ayahNumber)}</span>
+                    <span className="text-sm font-semibold text-primary">{r.surahName}</span>
+                  </div>
+                  <p className="font-arabic text-sm leading-relaxed line-clamp-2">{r.text}</p>
+                </motion.button>
+              ))}
+              {ayahResults.length >= 50 && (
+                <p className="text-center text-xs text-muted-foreground py-2">تم عرض أول ٥٠ نتيجة</p>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Surah List */}
