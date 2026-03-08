@@ -331,7 +331,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     audio.play();
     setState((s) => ({ ...s, playing: true }));
-  }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners, playAyahAtIndex]);
+  }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners, playAyahFallback]);
 
   const togglePlayPause = useCallback(async () => {
     if (!audioRef.current) return;
