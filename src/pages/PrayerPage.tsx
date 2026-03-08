@@ -57,7 +57,7 @@ export default function PrayerPage() {
     completed: [],
   });
 
-  const [weekData, setWeekData] = useLocalStorage<Record<string, string[]>>("wise-prayer-week", {});
+  
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
