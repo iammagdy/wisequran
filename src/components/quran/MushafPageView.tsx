@@ -9,6 +9,7 @@ interface MushafPageViewProps {
   fontSize: number;
   surahNumber: number;
   highlightedAyah: number | null;
+  playingAyah?: number | null;
   isBookmarked: (ayahNum: number) => boolean;
   toggleBookmark: (ayahNum: number) => void;
   onAyahTafsir: (ayahNum: number) => void;
