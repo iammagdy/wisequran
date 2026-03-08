@@ -5,6 +5,8 @@ import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 
 interface Props {
   surahNumber: number;
@@ -22,6 +24,7 @@ const TIMER_PRESETS = [5, 10, 15, 20];
 export default function SurahBottomBar({ surahNumber, surahName }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   // Audio state
   const [playing, setPlaying] = useState(false);
@@ -42,8 +45,8 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
 
   // Check cached status
   useEffect(() => {
-    getAudio(surahNumber).then((r) => setCached(!!r));
-  }, [surahNumber]);
+    getAudio(reciterId, surahNumber).then((r) => setCached(!!r));
+  }, [surahNumber, reciterId]);
 
   // Cleanup audio on unmount or surah change
   useEffect(() => {
@@ -62,7 +65,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     if (playing) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: surahName,
-        artist: "مشاري العفاسي",
+        artist: getReciterById(reciterId).name,
         album: "القرآن الكريم",
       });
       navigator.mediaSession.setActionHandler("play", () => handlePlayPause());
@@ -112,7 +115,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
 
     setLoading(true);
     setOffline(false);
-    const source = await resolveAudioSource(surahNumber);
+    const source = await resolveAudioSource(reciterId, surahNumber);
 
     if (!source) {
       setOffline(true);
@@ -151,7 +154,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     setDownloading(true);
     setDlProgress(0);
     try {
-      await downloadSurahAudio(surahNumber, setDlProgress);
+      await downloadSurahAudio(reciterId, surahNumber, setDlProgress);
       setCached(true);
       toast.success("تم تحميل الصوت للاستخدام بدون إنترنت");
     } catch {

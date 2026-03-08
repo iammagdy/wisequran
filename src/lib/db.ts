@@ -16,8 +16,10 @@ interface WiseQuranDB extends DBSchema {
     };
   };
   audio: {
-    key: number;
+    key: string; // composite key: "reciterId-surahNumber"
     value: {
+      id: string;
+      reciterId: string;
       surahNumber: number;
       data: ArrayBuffer;
     };
@@ -25,19 +27,27 @@ interface WiseQuranDB extends DBSchema {
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
+
+function audioKey(reciterId: string, surahNumber: number): string {
+  return `${reciterId}-${surahNumber}`;
+}
 
 export async function getDB() {
   return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains("surahs")) {
         db.createObjectStore("surahs", { keyPath: "number" });
       }
       if (!db.objectStoreNames.contains("azkar")) {
         db.createObjectStore("azkar", { keyPath: "category" });
       }
+      // v2->v3: recreate audio store with string key
+      if (db.objectStoreNames.contains("audio") && oldVersion < 3) {
+        db.deleteObjectStore("audio");
+      }
       if (!db.objectStoreNames.contains("audio")) {
-        db.createObjectStore("audio", { keyPath: "surahNumber" });
+        db.createObjectStore("audio", { keyPath: "id" });
       }
     },
   });
@@ -64,25 +74,25 @@ export async function deleteSurah(number: number) {
   await db.delete("surahs", number);
 }
 
-export async function saveAudio(surahNumber: number, data: ArrayBuffer) {
+export async function saveAudio(reciterId: string, surahNumber: number, data: ArrayBuffer) {
   const db = await getDB();
-  await db.put("audio", { surahNumber, data });
+  await db.put("audio", { id: audioKey(reciterId, surahNumber), reciterId, surahNumber, data });
 }
 
-export async function getAudio(surahNumber: number) {
+export async function getAudio(reciterId: string, surahNumber: number) {
   const db = await getDB();
-  return db.get("audio", surahNumber);
+  return db.get("audio", audioKey(reciterId, surahNumber));
 }
 
-export async function deleteAudio(surahNumber: number) {
+export async function deleteAudio(reciterId: string, surahNumber: number) {
   const db = await getDB();
-  await db.delete("audio", surahNumber);
+  await db.delete("audio", audioKey(reciterId, surahNumber));
 }
 
-export async function getAllDownloadedAudio(): Promise<number[]> {
+export async function getAllDownloadedAudio(reciterId: string): Promise<number[]> {
   const db = await getDB();
-  const keys = await db.getAllKeys("audio");
-  return keys as number[];
+  const all = await db.getAll("audio");
+  return all.filter((a) => a.reciterId === reciterId).map((a) => a.surahNumber);
 }
 
 export async function clearAllAudio() {
