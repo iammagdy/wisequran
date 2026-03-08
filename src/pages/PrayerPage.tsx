@@ -73,8 +73,6 @@ export default function PrayerPage() {
   const todayData = useMemo(() => {
     const today = getTodayKey();
     if (data.date !== today) {
-      const newWeek = { ...weekData, [data.date]: data.completed };
-      setWeekData(newWeek);
       const fresh = { date: today, completed: [] };
       setData(fresh);
       return fresh;
