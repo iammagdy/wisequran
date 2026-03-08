@@ -10,7 +10,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio } from "@/lib/db";
-import { downloadSurah, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
+import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { toast } from "sonner";
@@ -53,17 +53,17 @@ export default function SettingsPage() {
 
   const handleDownloadAll = async () => {
     setDownloading(true);
-    const total = 114;
-    for (let i = 1; i <= total; i++) {
-      if (!downloadedSurahs.includes(i)) {
-        try { await downloadSurah(i); } catch { /* continue */ }
-      }
-      setDownloadProgress(Math.round((i / total) * 100));
+    try {
+      await downloadAllSurahs((percent) => setDownloadProgress(percent));
+    } catch {
+      toast.error("فشل تحميل القرآن، تحقق من الاتصال بالإنترنت");
     }
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
-    toast.success("تم تحميل القرآن الكريم بالكامل");
+    if (updated.length === 114) {
+      toast.success("تم تحميل القرآن الكريم بالكامل");
+    }
   };
 
   const handleClear = async () => {
