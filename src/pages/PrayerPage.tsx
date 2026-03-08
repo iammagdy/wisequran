@@ -103,7 +103,8 @@ export default function PrayerPage() {
           : (weekData[key]?.length || 0);
       days.push({ date: key, count });
     }
-    return days;
+    // Newest first so RTL flex puts today on the right
+    return days.reverse();
   }, [todayData, weekData]);
 
   // Hero countdown data
