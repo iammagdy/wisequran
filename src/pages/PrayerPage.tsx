@@ -218,7 +218,7 @@ function CountdownUnit({ value, label }: { value: string; label: string }) {
         transition={{ duration: 0.2 }}
         className="rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]"
       >
-        <span className="text-3xl font-bold text-primary tabular-nums">{value}</span>
+        <span className="text-3xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
       </motion.div>
       <span className="text-[10px] text-muted-foreground mt-1">{label}</span>
     </div>
