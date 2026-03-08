@@ -53,6 +53,9 @@ const INITIAL_STATE: AudioPlayerState = {
   playingReciterId: DEFAULT_RECITER,
   currentAyahNumber: null,
   currentAyahInSurah: null,
+  isAyahMode: false,
+  currentAyahIndex: 0,
+  totalAyahs: 0,
 };
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
