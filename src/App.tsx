@@ -9,8 +9,25 @@ import AzkarPage from "@/pages/AzkarPage";
 import PrayerPage from "@/pages/PrayerPage";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFound from "@/pages/NotFound";
+import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 
 const queryClient = new QueryClient();
+
+const AppContent = () => {
+  usePrayerNotifications();
+  return (
+    <AppShell>
+      <Routes>
+        <Route path="/" element={<QuranPage />} />
+        <Route path="/surah/:id" element={<SurahReaderPage />} />
+        <Route path="/azkar" element={<AzkarPage />} />
+        <Route path="/prayer" element={<PrayerPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AppShell>
+  );
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
