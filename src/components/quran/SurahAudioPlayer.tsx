@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Download, Loader2, WifiOff, Volume2 } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Play, Pause, Download, Loader2, WifiOff, Check } from "lucide-react";
 import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
@@ -28,12 +28,10 @@ export default function SurahAudioPlayer({ surahNumber }: Props) {
   const [downloading, setDownloading] = useState(false);
   const [dlProgress, setDlProgress] = useState(0);
 
-  // Check cache status on mount
   useEffect(() => {
     getAudio(surahNumber).then((r) => setCached(!!r));
   }, [surahNumber]);
 
-  // Cleanup blob URLs and audio on unmount / surah change
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
@@ -50,14 +48,12 @@ export default function SurahAudioPlayer({ surahNumber }: Props) {
       return;
     }
 
-    // If we already have an audio element ready, just resume
     if (audioRef.current && audioRef.current.src) {
       audioRef.current.play();
       setPlaying(true);
       return;
     }
 
-    // Resolve source
     setLoading(true);
     setOffline(false);
     const source = await resolveAudioSource(surahNumber);
@@ -108,41 +104,17 @@ export default function SurahAudioPlayer({ surahNumber }: Props) {
     setDownloading(false);
   };
 
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
-    <div className="rounded-xl bg-card p-3 shadow-sm">
-      <div className="mb-2 flex items-center justify-between" dir="rtl">
-        <div className="flex items-center gap-2">
-          <Volume2 className="h-4 w-4 text-primary" />
-          <span className="text-sm font-semibold">الاستماع</span>
-        </div>
-
-        {!cached && !downloading && (
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <Download className="h-3.5 w-3.5" />
-            تحميل
-          </button>
-        )}
-        {downloading && (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            {dlProgress}%
-          </span>
-        )}
-        {cached && !downloading && (
-          <span className="text-xs text-primary">✓ محمّل</span>
-        )}
-      </div>
-
+    <div className="space-y-2">
       <AnimatePresence>
         {offline && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-2 flex items-center justify-center gap-2 rounded-lg bg-muted p-2 text-xs text-muted-foreground"
+            className="flex items-center justify-center gap-2 rounded-lg bg-muted p-2 text-xs text-muted-foreground"
             dir="rtl"
           >
             <WifiOff className="h-3.5 w-3.5" />
@@ -151,35 +123,68 @@ export default function SurahAudioPlayer({ surahNumber }: Props) {
         )}
       </AnimatePresence>
 
+      {/* Compact recitation bar */}
       <div className="flex items-center gap-3">
         <button
           onClick={handlePlayPause}
           disabled={loading}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform active:scale-95 disabled:opacity-50"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-95 disabled:opacity-50"
         >
           {loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : playing ? (
-            <Pause className="h-4 w-4" />
+            <Pause className="h-3.5 w-3.5" />
           ) : (
-            <Play className="h-4 w-4 translate-x-[1px]" />
+            <Play className="h-3.5 w-3.5 translate-x-[1px]" />
           )}
         </button>
 
-        <div className="flex flex-1 flex-col gap-1">
+        <div className="flex flex-1 flex-col gap-0.5">
+          {/* Progress track */}
+          <div className="relative h-1 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {/* Seekbar (invisible, overlaid) */}
           <input
             type="range"
             min={0}
             max={duration || 1}
             value={currentTime}
             onChange={handleSeek}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+            className="absolute inset-0 h-1 w-full cursor-pointer opacity-0"
+            style={{ position: "relative", marginTop: "-4px" }}
           />
           <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums">
             <span>{formatTime(currentTime)}</span>
             <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
           </div>
         </div>
+
+        {/* Download badge */}
+        {!cached && !downloading && (
+          <button
+            onClick={handleDownload}
+            className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+          >
+            <Download className="h-3 w-3" />
+            تحميل
+          </button>
+        )}
+        {downloading && (
+          <span className="flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            {dlProgress}%
+          </span>
+        )}
+        {cached && !downloading && (
+          <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-medium text-primary">
+            <Check className="h-3 w-3" />
+            محمّل
+          </span>
+        )}
       </div>
     </div>
   );
