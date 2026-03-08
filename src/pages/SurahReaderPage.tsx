@@ -13,6 +13,7 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
+import MushafPageView from "@/components/quran/MushafPageView";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
