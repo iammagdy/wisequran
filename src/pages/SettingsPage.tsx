@@ -10,7 +10,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio } from "@/lib/db";
-import { downloadSurah, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
+import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { toast } from "sonner";
