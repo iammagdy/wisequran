@@ -348,6 +348,8 @@ export default function SurahReaderPage() {
                 toggleBookmark={toggleBookmark}
                 onAyahTafsir={handleAyahTafsir}
                 setAyahRef={setAyahRef}
+                targetPage={mushafTargetPage}
+                onPageChange={(page) => setCurrentPage(page)}
               />
             ) : (
               <div className="space-y-3" dir="rtl">
