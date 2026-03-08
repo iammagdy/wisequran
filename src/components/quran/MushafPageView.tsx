@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Bookmark, BookmarkCheck, BookOpen } from "lucide-react";
 import { type Ayah } from "@/lib/quran-api";
 import { cn, toArabicNumerals } from "@/lib/utils";
@@ -24,7 +24,8 @@ export default function MushafPageView({
   onAyahTafsir,
   setAyahRef,
 }: MushafPageViewProps) {
-  // Group ayahs by page number
+  const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
+
   const pages = useMemo(() => {
     const map = new Map<number, Ayah[]>();
     for (const ayah of ayahs) {
@@ -35,8 +36,6 @@ export default function MushafPageView({
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
   }, [ayahs]);
 
-  const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
-
   return (
     <div className="space-y-6" dir="rtl">
       {pages.map(([pageNum, pageAyahs]) => (
@@ -44,7 +43,6 @@ export default function MushafPageView({
           key={pageNum}
           className="rounded-2xl border border-border bg-card p-5 shadow-sm"
         >
-          {/* Page header */}
           {pageNum > 0 && (
             <div className="mb-4 flex items-center justify-center gap-3">
               <div className="h-px flex-1 bg-border" />
@@ -55,7 +53,6 @@ export default function MushafPageView({
             </div>
           )}
 
-          {/* Continuous text */}
           <p
             className="font-arabic text-foreground text-justify"
             style={{ fontSize, lineHeight: 2.4 }}
@@ -85,7 +82,6 @@ export default function MushafPageView({
             ))}
           </p>
 
-          {/* Inline action popup for selected ayah */}
           {selectedAyah !== null &&
             pageAyahs.some((a) => a.numberInSurah === selectedAyah) && (
               <div className="mt-3 flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-2">
@@ -118,6 +114,3 @@ export default function MushafPageView({
     </div>
   );
 }
-
-// Need useState import
-import { useState } from "react";
