@@ -45,8 +45,8 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
 
   // Check cached status
   useEffect(() => {
-    getAudio(surahNumber).then((r) => setCached(!!r));
-  }, [surahNumber]);
+    getAudio(reciterId, surahNumber).then((r) => setCached(!!r));
+  }, [surahNumber, reciterId]);
 
   // Cleanup audio on unmount or surah change
   useEffect(() => {
