@@ -31,6 +31,8 @@ export default function SurahReaderPage() {
   const [goToPageOpen, setGoToPageOpen] = useState(false);
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const audioPlayer = useAudioPlayer();
+  const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioPlayer.currentAyahInSurah : null;
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
