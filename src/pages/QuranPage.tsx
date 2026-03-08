@@ -11,9 +11,9 @@ import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
-import { juzData, hizbData } from "@/data/juz-hizb-data";
+import { juzData } from "@/data/juz-hizb-data";
 
-type ViewMode = "surahs" | "juz" | "hizb";
+type ViewMode = "surahs" | "juz";
 
 export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
