@@ -281,7 +281,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
           </AnimatePresence>
         </div>
 
-        <div className="px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="px-4 pb-1">
           <p className="text-center text-[9px] text-muted-foreground/60" dir="rtl">
             قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح
           </p>

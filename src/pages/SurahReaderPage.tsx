@@ -195,7 +195,7 @@ export default function SurahReaderPage() {
   };
 
   return (
-    <div className="min-h-screen pb-44">
+    <div className="min-h-screen pb-72">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-2">

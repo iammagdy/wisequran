@@ -14,15 +14,10 @@ interface AudioPlayerState {
   loading: boolean;
   offline: boolean;
   playingReciterId: string;
-  /** Global ayah number currently playing (for highlighting) */
   currentAyahNumber: number | null;
-  /** numberInSurah of the currently playing ayah */
   currentAyahInSurah: number | null;
-  /** Whether playing in per-ayah mode */
   isAyahMode: boolean;
-  /** Current ayah index (0-based) in per-ayah mode */
   currentAyahIndex: number;
-  /** Total ayahs in per-ayah mode */
   totalAyahs: number;
 }
 
@@ -60,6 +55,7 @@ const INITIAL_STATE: AudioPlayerState = {
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const nextAudioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
@@ -71,7 +67,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const [state, setState] = useState<AudioPlayerState>(INITIAL_STATE);
 
-  // Cleanup blob URL helper
   const cleanupBlobUrl = useCallback(() => {
     if (blobUrlRef.current) {
       URL.revokeObjectURL(blobUrlRef.current);
@@ -79,11 +74,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
       audioRef.current = null;
+      nextAudioRef.current = null;
       cleanupBlobUrl();
     };
   }, []);
@@ -108,10 +103,25 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [state.playing, state.surahName, state.playingReciterId]);
 
+  /** Pre-load the next ayah's audio to eliminate gaps */
+  const preloadNextAyah = useCallback((nextIndex: number, recId: string) => {
+    const ayahs = ayahsRef.current;
+    if (nextIndex < 0 || nextIndex >= ayahs.length) {
+      nextAudioRef.current = null;
+      return;
+    }
+    const nextAyah = ayahs[nextIndex];
+    const url = getReciterAyahAudioUrl(recId, nextAyah.number);
+    const nextAudio = new Audio();
+    nextAudio.preload = "auto";
+    nextAudio.src = url;
+    nextAudio.load();
+    nextAudioRef.current = nextAudio;
+  }, []);
+
   const playAyahAtIndex = useCallback(async (index: number, recId: string) => {
     const ayahs = ayahsRef.current;
     if (index < 0 || index >= ayahs.length) {
-      // Surah finished
       setState((s) => ({ ...s, playing: false, currentAyahNumber: null, currentAyahInSurah: null }));
       return;
     }
@@ -131,22 +141,34 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       isAyahMode: true,
     }));
 
-    // Cleanup previous
-    audioRef.current?.pause();
-    cleanupBlobUrl();
+    // Use pre-loaded audio if available, otherwise create new
+    let audio: HTMLAudioElement;
+    if (nextAudioRef.current && index > 0) {
+      audio = nextAudioRef.current;
+      nextAudioRef.current = null;
+    } else {
+      // Cleanup previous
+      audioRef.current?.pause();
+      cleanupBlobUrl();
+      const url = getReciterAyahAudioUrl(recId, ayah.number);
+      audio = new Audio(url);
+    }
 
-    const url = getReciterAyahAudioUrl(recId, ayah.number);
-    const audio = new Audio(url);
     audioRef.current = audio;
 
     audio.addEventListener("loadedmetadata", () => {
       setState((s) => ({ ...s, duration: audio.duration, loading: false }));
     });
+    // If already loaded (pre-loaded), fire manually
+    if (audio.readyState >= 1) {
+      setState((s) => ({ ...s, duration: audio.duration, loading: false }));
+    }
+
     audio.addEventListener("timeupdate", () => {
       setState((s) => ({ ...s, currentTime: audio.currentTime }));
     });
     audio.addEventListener("ended", () => {
-      // Auto-advance to next ayah
+      // Auto-advance to next ayah using pre-loaded audio
       playAyahAtIndex(ayahIndexRef.current + 1, recId);
     });
     audio.addEventListener("error", () => {
@@ -154,13 +176,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       toast.error("تعذر تشغيل الصوت");
     });
 
+    // Pre-load the NEXT ayah while this one plays
+    preloadNextAyah(index + 1, recId);
+
     try {
       await audio.play();
       setState((s) => ({ ...s, playing: true }));
     } catch {
       setState((s) => ({ ...s, loading: false }));
     }
-  }, [cleanupBlobUrl]);
+  }, [cleanupBlobUrl, preloadNextAyah]);
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
@@ -193,6 +218,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       audioRef.current?.pause();
       audioRef.current = null;
+      nextAudioRef.current = null;
       cleanupBlobUrl();
 
       ayahsRef.current = ayahs;
@@ -225,6 +251,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     audioRef.current?.pause();
     audioRef.current = null;
+    nextAudioRef.current = null;
     cleanupBlobUrl();
 
     setState((s) => ({
@@ -278,6 +305,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     stoppedRef.current = true;
     audioRef.current?.pause();
     audioRef.current = null;
+    nextAudioRef.current = null;
     cleanupBlobUrl();
     isAyahModeRef.current = false;
     ayahsRef.current = [];
