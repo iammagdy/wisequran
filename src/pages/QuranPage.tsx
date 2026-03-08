@@ -77,10 +77,10 @@ export default function QuranPage() {
       <div className="mb-4 rounded-xl bg-card p-3 shadow-sm" dir="rtl">
         <div className="flex items-center justify-between text-sm mb-1.5">
           <span className="text-muted-foreground">
-            اليوم: {todayCount} / {goal} آية
+            اليوم: {toArabicNumerals(todayCount)} / {toArabicNumerals(goal)} آية
           </span>
           {streak > 0 && (
-            <span className="text-sm font-semibold">🔥 {streak} أيام</span>
+            <span className="text-sm font-semibold">🔥 {toArabicNumerals(streak)} أيام</span>
           )}
         </div>
         <Progress value={progress} className="h-1.5" />
