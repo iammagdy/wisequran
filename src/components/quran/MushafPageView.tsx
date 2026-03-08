@@ -93,6 +93,17 @@ export default function MushafPageView({
     }
   }, [emblaApi, highlightedAyah, pages]);
 
+  // Navigate to playing ayah's page
+  useEffect(() => {
+    if (!emblaApi || !playingAyah || pages.length === 0) return;
+    const idx = pages.findIndex(([, pageAyahs]) =>
+      pageAyahs.some((a) => a.numberInSurah === playingAyah)
+    );
+    if (idx >= 0) {
+      emblaApi.scrollTo(idx);
+    }
+  }, [emblaApi, playingAyah, pages]);
+
   return (
     <div className="relative" dir="rtl">
       {/* Page counter */}
