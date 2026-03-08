@@ -31,6 +31,10 @@ interface DayData {
   completed: string[];
 }
 
+function toArabicNumerals(str: string): string {
+  return str.replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
 function formatHMS(totalSeconds: number): { h: string; m: string; s: string } {
   const abs = Math.max(0, totalSeconds);
   const h = Math.floor(abs / 3600);
@@ -127,12 +131,12 @@ export default function PrayerPage() {
           </div>
 
           {/* Big countdown */}
-          <div className="flex items-center justify-center gap-1 font-mono" dir="ltr">
-            <CountdownUnit value={heroTime.h} label="ساعة" />
+          <div className="flex items-center justify-center gap-1 font-mono">
+            <CountdownUnit value={heroTime.s} label="ثانية" />
             <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
             <CountdownUnit value={heroTime.m} label="دقيقة" />
             <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
-            <CountdownUnit value={heroTime.s} label="ثانية" />
+            <CountdownUnit value={heroTime.h} label="ساعة" />
           </div>
         </motion.div>
       )}
@@ -218,7 +222,7 @@ function CountdownUnit({ value, label }: { value: string; label: string }) {
         transition={{ duration: 0.2 }}
         className="rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]"
       >
-        <span className="text-3xl font-bold text-primary tabular-nums">{value}</span>
+        <span className="text-3xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
       </motion.div>
       <span className="text-[10px] text-muted-foreground mt-1">{label}</span>
     </div>
