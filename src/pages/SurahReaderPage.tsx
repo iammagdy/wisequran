@@ -232,7 +232,11 @@ export default function SurahReaderPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: Math.min(i * 0.02, 1) }}
-                  className="group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm"
+                  id={`ayah-${ayah.numberInSurah}`}
+                  className={cn(
+                    "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
+                    highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
+                  )}
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <div className="flex items-center gap-1">
