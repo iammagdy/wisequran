@@ -302,16 +302,33 @@ export default function SurahReaderPage() {
                   <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
                 </div>
 
-                {/* Search input */}
-                <div className="relative mb-2">
-                  <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="ابحث في التفسير..."
-                    value={tafsirSearch}
-                    onChange={(e) => setTafsirSearch(e.target.value)}
-                    className="pr-10 text-right"
-                    dir="rtl"
-                  />
+                {/* Ayah picker + Search input */}
+                <div className="flex gap-2 mb-2">
+                  <Select
+                    value=""
+                    onValueChange={(val) => setFocusedAyah(Number(val))}
+                  >
+                    <SelectTrigger className="w-40 shrink-0 text-right">
+                      <SelectValue placeholder="انتقل إلى آية..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tafsirAyahs.map((t) => (
+                        <SelectItem key={t.numberInSurah} value={String(t.numberInSurah)}>
+                          الآية {toArabicNumerals(t.numberInSurah)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="relative flex-1">
+                    <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="ابحث في التفسير..."
+                      value={tafsirSearch}
+                      onChange={(e) => setTafsirSearch(e.target.value)}
+                      className="pr-10 text-right"
+                      dir="rtl"
+                    />
+                  </div>
                 </div>
 
                 {(() => {
