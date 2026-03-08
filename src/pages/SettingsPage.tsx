@@ -205,6 +205,42 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
+        {/* ─── Tafsir Selection ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5" />
+            التفسير
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.025 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">اختر التفسير المفضل لعرضه عند الضغط على الآية</p>
+            <div className="space-y-1.5">
+              {TAFSIR_EDITIONS.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setTafsirId(t.id)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    tafsirId === t.id
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {tafsirId === t.id && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  <span className="font-arabic">{t.name}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </section>
+
         {/* ─── Prayer Notifications ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
