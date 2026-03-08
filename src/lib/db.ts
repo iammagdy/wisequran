@@ -79,6 +79,17 @@ export async function deleteAudio(surahNumber: number) {
   await db.delete("audio", surahNumber);
 }
 
+export async function getAllDownloadedAudio(): Promise<number[]> {
+  const db = await getDB();
+  const keys = await db.getAllKeys("audio");
+  return keys as number[];
+}
+
+export async function clearAllAudio() {
+  const db = await getDB();
+  await db.clear("audio");
+}
+
 export async function clearAllData() {
   const db = await getDB();
   await db.clear("surahs");
