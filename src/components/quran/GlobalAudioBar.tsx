@@ -5,20 +5,20 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
 
-function formatTime(s: number) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return toArabicNumerals(`${m}:${sec.toString().padStart(2, "0")}`);
-}
-
 export default function GlobalAudioBar() {
-  const { surahNumber, surahName, playing, loading, currentTime, duration, playingReciterId, togglePlayPause, stop } =
-    useAudioPlayer();
+  const {
+    surahNumber, surahName, playing, loading, playingReciterId,
+    togglePlayPause, stop, isAyahMode, currentAyahIndex, totalAyahs,
+    currentTime, duration,
+  } = useAudioPlayer();
   const navigate = useNavigate();
 
   if (!surahNumber) return null;
 
-  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  // In ayah mode: progress = ayah index / total. Otherwise: time-based.
+  const pct = isAyahMode
+    ? totalAyahs > 0 ? ((currentAyahIndex + (duration > 0 ? currentTime / duration : 0)) / totalAyahs) * 100 : 0
+    : duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleNavigate = () => {
     navigate(`/surah/${surahNumber}`);
@@ -32,10 +32,10 @@ export default function GlobalAudioBar() {
       className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] inset-x-0 z-40 px-3"
     >
       <div className="rounded-2xl border border-border/50 bg-card/95 backdrop-blur-md shadow-lg overflow-hidden">
-        {/* Progress bar */}
+        {/* Progress bar — RTL: fills from right */}
         <div className="h-0.5 w-full bg-muted">
           <div
-            className="h-full bg-primary transition-[width] duration-300"
+            className="h-full bg-primary transition-[width] duration-300 mr-auto"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -61,8 +61,8 @@ export default function GlobalAudioBar() {
             <p className="font-arabic text-sm font-semibold text-foreground truncate">{surahName}</p>
             <p className="text-[10px] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
-              {duration > 0 && (
-                <span className="mr-2 tabular-nums">{formatTime(currentTime)} / {formatTime(duration)}</span>
+              {isAyahMode && totalAyahs > 0 && (
+                <span className="mr-2">آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
               )}
             </p>
           </button>

@@ -8,9 +8,19 @@ export function cn(...inputs: ClassValue[]) {
 /** Strip Bismillah prefix from ayah 1 text (surahs other than 1 & 9) */
 export function stripBismillah(text: string, surahNumber: number, ayahNumber: number): string {
   if (ayahNumber !== 1 || surahNumber === 1 || surahNumber === 9) return text;
-  return text
-    .replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, "")
-    .replace(/^بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\s*/, "");
+  // Strip any leading Bismillah regardless of diacritics/Unicode forms
+  // Match: بسم + whitespace + الله/ٱلله + whitespace + الرحمن/ٱلرحمن + whitespace + الرحيم/ٱلرحيم
+  // with optional diacritics (Unicode range \u0610-\u065F, \u06D6-\u06ED)
+  const diac = "[\\u0610-\\u065F\\u06D6-\\u06ED]*";
+  const pattern = new RegExp(
+    `^بِ${diac}سْ${diac}مِ${diac}\\s+[ٱا]${diac}ل${diac}ل${diac}[ّ]?${diac}هِ${diac}\\s+[ٱا]${diac}ل${diac}ر${diac}[ّ]?${diac}حْ${diac}مَ${diac}[ٰ]?${diac}نِ${diac}\\s+[ٱا]${diac}ل${diac}ر${diac}[ّ]?${diac}حِ${diac}يمِ${diac}\\s*`
+  );
+  let result = text.replace(pattern, "");
+  // Fallback: strip first 4 words if they contain بسم and الله
+  if (result === text && text.includes("بسم") && text.includes("الله")) {
+    result = text.replace(/^[^\s]+\s+[^\s]+\s+[^\s]+\s+[^\s]+\s*/, "");
+  }
+  return result;
 }
 
 /** Convert Western digits 0-9 to Arabic-Indic ٠-٩ */

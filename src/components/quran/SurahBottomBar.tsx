@@ -153,21 +153,32 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
             <div className="flex flex-1 flex-col gap-0.5 min-w-0">
               <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-300"
+                  className="absolute inset-y-0 right-0 rounded-full bg-primary transition-[width] duration-300"
                   style={{ width: `${pct}%` }}
                 />
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 1}
-                  value={currentTime}
-                  onChange={handleSeek}
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                />
+                {!isAyahMode && (
+                  <input
+                    type="range"
+                    min={0}
+                    max={duration || 1}
+                    value={currentTime}
+                    onChange={handleSeek}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    dir="rtl"
+                  />
+                )}
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums">
-                <span>{formatTime(currentTime)}</span>
-                <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
+              <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums" dir="rtl">
+                {isAyahMode && totalAyahs > 0 ? (
+                  <>
+                    <span>آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
+                  </>
+                )}
               </div>
             </div>
 

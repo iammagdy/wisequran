@@ -126,6 +126,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       loading: true,
       currentAyahNumber: ayah.number,
       currentAyahInSurah: ayah.numberInSurah,
+      currentAyahIndex: index,
+      totalAyahs: ayahs.length,
+      isAyahMode: true,
     }));
 
     // Cleanup previous

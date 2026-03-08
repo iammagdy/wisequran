@@ -146,7 +146,8 @@ export default function MushafPageView({
                       ref={(el) => setAyahRef(el as HTMLDivElement | null, ayah.numberInSurah)}
                       className={cn(
                         "transition-colors",
-                        highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm"
+                        highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm",
+                        playingAyah === ayah.numberInSurah && "bg-primary/15 rounded-sm"
                       )}
                     >
                       {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}

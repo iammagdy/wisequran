@@ -370,6 +370,7 @@ export default function SurahReaderPage() {
                 fontSize={fontSize}
                 surahNumber={surahNumber}
                 highlightedAyah={highlightedAyah}
+                playingAyah={playingAyahInSurah}
                 isBookmarked={isBookmarked}
                 toggleBookmark={toggleBookmark}
                 onAyahTafsir={handleAyahTafsir}
