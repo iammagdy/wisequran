@@ -196,7 +196,17 @@ export default function SurahReaderPage() {
               )}
             </p>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
+              className={cn(
+                "rounded-lg p-2 transition-colors",
+                readerMode === "mushaf" ? "text-primary" : "text-muted-foreground hover:bg-muted"
+              )}
+              title={readerMode === "ayah" ? "عرض المصحف" : "عرض الآيات"}
+            >
+              <Layers className="h-4 w-4" />
+            </button>
             <button
               onClick={toggleFavorite}
               className={cn("rounded-lg p-2 transition-colors", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}
