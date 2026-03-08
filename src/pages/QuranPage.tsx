@@ -171,7 +171,7 @@ export default function QuranPage() {
       )}
 
       {/* View Mode Tabs */}
-      {!showBookmarks && !showFavorites && (
+      {!showBookmarks && !showFavorites && !showHistory && (
         <div className="mb-4 flex gap-2" dir="rtl">
           {([
             { key: "surahs" as ViewMode, label: "السور" },
