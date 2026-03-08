@@ -1,4 +1,5 @@
 import { getSurah, saveSurah } from "./db";
+import { SURAH_META } from "@/data/surah-meta";
 
 const API_BASE = "https://api.alquran.cloud/v1";
 
@@ -17,28 +18,9 @@ export interface SurahMeta {
   revelationType: string;
 }
 
-// Bundled surah metadata so we don't need an API call for the list
-export const SURAHS: SurahMeta[] = Array.from({ length: 114 }, (_, i) => ({
-  number: i + 1,
-  name: "",
-  englishName: "",
-  englishNameTranslation: "",
-  numberOfAyahs: 0,
-  revelationType: "",
-}));
-
-let surahListCache: SurahMeta[] | null = null;
-
+// Returns static bundled metadata — instant, works offline
 export async function fetchSurahList(): Promise<SurahMeta[]> {
-  if (surahListCache) return surahListCache;
-  try {
-    const res = await fetch(`${API_BASE}/surah`);
-    const data = await res.json();
-    surahListCache = data.data as SurahMeta[];
-    return surahListCache;
-  } catch {
-    return SURAHS;
-  }
+  return SURAH_META;
 }
 
 export async function fetchSurahAyahs(surahNumber: number): Promise<Ayah[]> {
@@ -67,4 +49,34 @@ export async function downloadSurah(surahNumber: number): Promise<void> {
     numberInSurah: a.numberInSurah,
   }));
   await saveSurah(surahNumber, ayahs);
+}
+
+// Bulk download entire Quran in a single API call (~2.5MB)
+export async function downloadAllSurahs(
+  onProgress?: (percent: number) => void
+): Promise<void> {
+  onProgress?.(0);
+  const res = await fetch(`${API_BASE}/quran/quran-uthmani`);
+  if (!res.ok) throw new Error("Failed to fetch full Quran");
+  const data = await res.json();
+
+  // Group ayahs by surah
+  const surahMap = new Map<number, Ayah[]>();
+  for (const a of data.data.surahs) {
+    const ayahs: Ayah[] = a.ayahs.map((ay: any) => ({
+      number: ay.number,
+      text: ay.text,
+      numberInSurah: ay.numberInSurah,
+    }));
+    surahMap.set(a.number, ayahs);
+  }
+
+  // Save each surah to IndexedDB
+  let saved = 0;
+  const total = surahMap.size;
+  for (const [num, ayahs] of surahMap) {
+    await saveSurah(num, ayahs);
+    saved++;
+    onProgress?.(Math.round((saved / total) * 100));
+  }
 }
