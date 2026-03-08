@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Volume2, Timer, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Bookmark, BookmarkCheck, Star } from "lucide-react";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import SurahAudioPlayer from "@/components/quran/SurahAudioPlayer";
-import ReadingTimer from "@/components/quran/ReadingTimer";
+import SurahBottomBar from "@/components/quran/SurahBottomBar";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -24,9 +22,6 @@ export default function SurahReaderPage() {
   const [, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
-
-  const [showToolbar, setShowToolbar] = useState(false);
-  const [toolbarTab, setToolbarTab] = useState<"audio" | "timer">("audio");
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
@@ -78,17 +73,8 @@ export default function SurahReaderPage() {
     }
   };
 
-  const toggleToolbar = (tab: "audio" | "timer") => {
-    if (showToolbar && toolbarTab === tab) {
-      setShowToolbar(false);
-    } else {
-      setToolbarTab(tab);
-      setShowToolbar(true);
-    }
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-36">
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="flex items-center justify-between px-4 py-2">
@@ -101,32 +87,18 @@ export default function SurahReaderPage() {
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
             <p className="text-[11px] text-muted-foreground">
               {surahInfo?.englishName}
-              {surahInfo && (
-                <span className="mx-1">·</span>
-              )}
+              {surahInfo && <span className="mx-1">·</span>}
               {surahInfo && (
                 <span>{surahInfo.numberOfAyahs} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
               )}
             </p>
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center">
             <button
               onClick={toggleFavorite}
               className={cn("rounded-lg p-2 transition-colors", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}
             >
               <Star className={cn("h-4 w-4", isFavorite && "fill-primary")} />
-            </button>
-            <button
-              onClick={() => toggleToolbar("timer")}
-              className={cn("rounded-lg p-2 transition-colors", showToolbar && toolbarTab === "timer" ? "text-primary" : "text-muted-foreground hover:bg-muted")}
-            >
-              <Timer className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => toggleToolbar("audio")}
-              className={cn("rounded-lg p-2 transition-colors", showToolbar && toolbarTab === "audio" ? "text-primary" : "text-muted-foreground hover:bg-muted")}
-            >
-              <Volume2 className="h-4 w-4" />
             </button>
           </div>
         </div>
@@ -136,50 +108,6 @@ export default function SurahReaderPage() {
           <span className="h-1.5 w-1.5 rotate-45 bg-primary/30" />
         </div>
       </div>
-
-      {/* Unified Toolbar */}
-      <AnimatePresence>
-        {showToolbar && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mx-4 mt-3 rounded-xl border border-border/50 bg-card/80 backdrop-blur-sm p-3 shadow-sm card-accent">
-              {/* Tab switcher */}
-              <div className="flex gap-1 mb-2.5" dir="rtl">
-                <button
-                  onClick={() => setToolbarTab("audio")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    toolbarTab === "audio" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  <Volume2 className="h-3 w-3" />
-                  الاستماع
-                </button>
-                <button
-                  onClick={() => setToolbarTab("timer")}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                    toolbarTab === "timer" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                  )}
-                >
-                  <Timer className="h-3 w-3" />
-                  مؤقت
-                </button>
-              </div>
-
-              {toolbarTab === "audio" ? (
-                <SurahAudioPlayer surahNumber={surahNumber} />
-              ) : (
-                <ReadingTimer />
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Content */}
       <div className="px-4 py-6">
@@ -201,7 +129,7 @@ export default function SurahReaderPage() {
           </div>
         ) : (
           <>
-            {/* Bismillah with decorative lines */}
+            {/* Bismillah */}
             {surahNumber !== 1 && surahNumber !== 9 && (
               <div className="ornamental-divider mb-8 px-4">
                 <p
@@ -233,7 +161,6 @@ export default function SurahReaderPage() {
                         <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
                       )}
                     </button>
-                    {/* Diamond-shaped ayah number */}
                     <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                       <span className="-rotate-45 text-xs font-bold text-primary">
                         {ayah.numberInSurah}
@@ -252,6 +179,12 @@ export default function SurahReaderPage() {
           </>
         )}
       </div>
+
+      {/* Bottom player bar */}
+      <SurahBottomBar
+        surahNumber={surahNumber}
+        surahName={surahInfo?.name || `سورة ${surahNumber}`}
+      />
     </div>
   );
 }
