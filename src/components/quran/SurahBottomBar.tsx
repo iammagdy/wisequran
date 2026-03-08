@@ -5,6 +5,8 @@ import { resolveAudioSource, downloadSurahAudio } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 
 interface Props {
   surahNumber: number;
