@@ -13,6 +13,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
+import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
@@ -30,6 +31,8 @@ export default function SurahReaderPage() {
   const [goToPageOpen, setGoToPageOpen] = useState(false);
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const audioPlayer = useAudioPlayer();
+  const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioPlayer.currentAyahInSurah : null;
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
@@ -111,6 +114,16 @@ export default function SurahReaderPage() {
       }
     }
   }, [loading, ayahs.length, targetAyah]);
+
+  // Auto-scroll to currently playing ayah
+  useEffect(() => {
+    if (playingAyahInSurah && readerMode === "ayah") {
+      const el = document.getElementById(`ayah-${playingAyahInSurah}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  }, [playingAyahInSurah, readerMode]);
 
   // Track current Mushaf page via IntersectionObserver
   useEffect(() => {
@@ -375,8 +388,9 @@ export default function SurahReaderPage() {
                         data-ayah={ayah.numberInSurah}
                         ref={(el) => setAyahRef(el, ayah.numberInSurah)}
                         className={cn(
-                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
-                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
+                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all duration-300",
+                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5",
+                          playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 border-primary/20"
                         )}
                       >
                         <div className="mb-2 flex items-center justify-between">
@@ -539,6 +553,7 @@ export default function SurahReaderPage() {
       <SurahBottomBar
         surahNumber={surahNumber}
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
+        ayahs={ayahs}
       />
     </div>
   );

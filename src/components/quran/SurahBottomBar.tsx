@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
+import type { Ayah } from "@/lib/quran-api";
 
 interface Props {
   surahNumber: number;
   surahName: string;
+  ayahs?: Ayah[];
 }
 
 function formatTime(s: number) {
@@ -21,7 +23,7 @@ function formatTime(s: number) {
 
 const TIMER_PRESETS = [5, 10, 15, 20];
 
-export default function SurahBottomBar({ surahNumber, surahName }: Props) {
+export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props) {
   const player = useAudioPlayer();
   const isThisSurah = player.surahNumber === surahNumber;
 
@@ -65,9 +67,9 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     if (isThisSurah) {
       player.togglePlayPause();
     } else {
-      player.play(surahNumber, surahName);
+      player.play(surahNumber, surahName, ayahs);
     }
-  }, [isThisSurah, surahNumber, surahName, player]);
+  }, [isThisSurah, surahNumber, surahName, ayahs, player]);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -184,7 +186,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
                 {surahName}
               </span>
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                {getReciterById(player.reciterId).name}
+                {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
               {playing && (
                 <span className="text-[10px] text-primary font-medium whitespace-nowrap">
