@@ -101,6 +101,36 @@ export default function SurahReaderPage() {
     }
   }, [loading, ayahs.length, targetAyah]);
 
+  // Track current Mushaf page via IntersectionObserver
+  useEffect(() => {
+    if (loading || ayahs.length === 0 || !ayahs[0]?.page) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const ayahNum = Number(entry.target.getAttribute("data-ayah"));
+            const ayah = ayahs.find((a) => a.numberInSurah === ayahNum);
+            if (ayah?.page) setCurrentPage(ayah.page);
+            break;
+          }
+        }
+      },
+      { rootMargin: "-40% 0px -40% 0px", threshold: 0 }
+    );
+
+    ayahRefs.current.forEach((el) => observer.observe(el));
+    // Set initial page
+    if (ayahs[0]?.page) setCurrentPage(ayahs[0].page);
+
+    return () => observer.disconnect();
+  }, [loading, ayahs]);
+
+  const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
+    if (el) ayahRefs.current.set(num, el);
+    else ayahRefs.current.delete(num);
+  }, []);
+
   // Fetch tafsir when switching to tafsir tab or edition changes
   useEffect(() => {
     if (activeTab !== "tafsir") return;
