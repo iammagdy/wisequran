@@ -154,7 +154,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     setDownloading(true);
     setDlProgress(0);
     try {
-      await downloadSurahAudio(surahNumber, setDlProgress);
+      await downloadSurahAudio(reciterId, surahNumber, setDlProgress);
       setCached(true);
       toast.success("تم تحميل الصوت للاستخدام بدون إنترنت");
     } catch {
