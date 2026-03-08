@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2 } from "lucide-react";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
+import { fetchTafsir, type TafsirAyah } from "@/lib/tafsir-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
-import TafsirPanel from "@/components/quran/TafsirPanel";
-import { DEFAULT_TAFSIR } from "@/data/tafsir-editions";
+import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,15 +26,20 @@ export default function SurahReaderPage() {
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
 
-  // Tafsir state
-  const [tafsirOpen, setTafsirOpen] = useState(false);
-  const [tafsirAyah, setTafsirAyah] = useState(1);
+  // Tab & tafsir state
+  const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
+  const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
+  const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
+  const [tafsirLoading, setTafsirLoading] = useState(false);
+  const [tafsirError, setTafsirError] = useState("");
+  const tafsirEditionRef = useRef(tafsirEdition);
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
   const hasTracked = useRef(false);
 
   const isFavorite = favorites.includes(surahNumber);
+  const editionName = TAFSIR_EDITIONS.find((e) => e.id === tafsirEdition)?.name || tafsirEdition;
 
   const toggleFavorite = () => {
     if (isFavorite) {
@@ -48,6 +53,9 @@ export default function SurahReaderPage() {
     hasTracked.current = false;
     setLoading(true);
     setError("");
+    setActiveTab("text");
+    setFocusedAyah(null);
+    setTafsirAyahs([]);
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()])
       .then(([ayahData, surahList]) => {
         setAyahs(ayahData);
@@ -69,6 +77,29 @@ export default function SurahReaderPage() {
     }
   }, [loading, ayahs.length]);
 
+  // Fetch tafsir when switching to tafsir tab or edition changes
+  useEffect(() => {
+    if (activeTab !== "tafsir") return;
+    // If edition changed, clear old data
+    if (tafsirEditionRef.current !== tafsirEdition) {
+      setTafsirAyahs([]);
+      tafsirEditionRef.current = tafsirEdition;
+    }
+    if (tafsirAyahs.length > 0 && tafsirEditionRef.current === tafsirEdition) return;
+
+    setTafsirLoading(true);
+    setTafsirError("");
+    fetchTafsir(surahNumber, tafsirEdition)
+      .then((data) => {
+        setTafsirAyahs(data);
+        setTafsirLoading(false);
+      })
+      .catch(() => {
+        setTafsirError("تعذر تحميل التفسير. تحقق من الاتصال بالإنترنت.");
+        setTafsirLoading(false);
+      });
+  }, [activeTab, surahNumber, tafsirEdition]);
+
   const isBookmarked = (ayahNum: number) =>
     bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
 
@@ -80,9 +111,9 @@ export default function SurahReaderPage() {
     }
   };
 
-  const openTafsir = (ayahNum: number) => {
-    setTafsirAyah(ayahNum);
-    setTafsirOpen(true);
+  const handleAyahTafsir = (ayahNum: number) => {
+    setFocusedAyah(ayahNum);
+    setActiveTab("tafsir");
   };
 
   return (
@@ -113,9 +144,30 @@ export default function SurahReaderPage() {
           </div>
         </div>
 
-        {/* Ornamental divider */}
-        <div className="ornamental-divider px-8 pb-1">
-          <span className="h-1.5 w-1.5 rotate-45 bg-primary/30" />
+        {/* Tab switcher */}
+        <div className="flex justify-center gap-2 px-4 pb-2" dir="rtl">
+          <button
+            onClick={() => { setActiveTab("text"); setFocusedAyah(null); }}
+            className={cn(
+              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
+              activeTab === "text"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            )}
+          >
+            النص
+          </button>
+          <button
+            onClick={() => setActiveTab("tafsir")}
+            className={cn(
+              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
+              activeTab === "tafsir"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            )}
+          >
+            التفسير
+          </button>
         </div>
       </div>
 
@@ -137,9 +189,9 @@ export default function SurahReaderPage() {
               إعادة المحاولة
             </button>
           </div>
-        ) : (
+        ) : activeTab === "text" ? (
+          /* ===== النص Tab ===== */
           <>
-            {/* Bismillah */}
             {surahNumber !== 1 && surahNumber !== 9 && (
               <div className="ornamental-divider mb-8 px-4">
                 <p
@@ -173,7 +225,7 @@ export default function SurahReaderPage() {
                         )}
                       </button>
                       <button
-                        onClick={() => openTafsir(ayah.numberInSurah)}
+                        onClick={() => handleAyahTafsir(ayah.numberInSurah)}
                         className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
                         title="تفسير"
                       >
@@ -196,6 +248,77 @@ export default function SurahReaderPage() {
               ))}
             </div>
           </>
+        ) : (
+          /* ===== التفسير Tab ===== */
+          <div dir="rtl">
+            {tafsirLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : tafsirError ? (
+              <div className="rounded-xl bg-destructive/10 p-6 text-center">
+                <p className="text-destructive text-sm">{tafsirError}</p>
+              </div>
+            ) : focusedAyah !== null ? (
+              /* Single ayah tafsir */
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                    <h2 className="font-arabic text-base font-bold text-foreground">
+                      تفسير الآية {toArabicNumerals(focusedAyah)}
+                    </h2>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{editionName}</span>
+                </div>
+
+                <div className="rounded-xl bg-card p-5 shadow-sm border border-border">
+                  <p
+                    className="font-arabic text-foreground/90 leading-[2.2]"
+                    style={{ fontSize: 18 }}
+                  >
+                    {tafsirAyahs.find((a) => a.numberInSurah === focusedAyah)?.text ||
+                      "لم يتم العثور على التفسير"}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setFocusedAyah(null)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  ← عرض تفسير السورة بالكامل
+                </button>
+              </div>
+            ) : (
+              /* Full surah tafsir */
+              <div className="space-y-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                  <h2 className="font-arabic text-base font-bold text-foreground">تفسير السورة</h2>
+                  <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
+                </div>
+
+                {tafsirAyahs.map((t) => (
+                  <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
+                        <span className="-rotate-45 text-[10px] font-bold text-primary">
+                          {toArabicNumerals(t.numberInSurah)}
+                        </span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">الآية {toArabicNumerals(t.numberInSurah)}</span>
+                    </div>
+                    <p
+                      className="font-arabic text-foreground/90 leading-[2.2]"
+                      style={{ fontSize: 17 }}
+                    >
+                      {t.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -203,15 +326,6 @@ export default function SurahReaderPage() {
       <SurahBottomBar
         surahNumber={surahNumber}
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
-      />
-
-      {/* Tafsir Panel */}
-      <TafsirPanel
-        open={tafsirOpen}
-        onClose={() => setTafsirOpen(false)}
-        surahNumber={surahNumber}
-        ayahNumber={tafsirAyah}
-        editionId={tafsirEdition}
       />
     </div>
   );
