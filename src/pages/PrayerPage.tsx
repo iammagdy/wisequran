@@ -131,12 +131,12 @@ export default function PrayerPage() {
           </div>
 
           {/* Big countdown */}
-          <div className="flex items-center justify-center gap-1 font-mono">
-            <CountdownUnit value={heroTime.s} label="ثانية" />
+          <div className="flex items-center justify-center gap-1 font-mono" dir="ltr">
+            <CountdownUnit value={heroTime.h} label="ساعة" />
             <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
             <CountdownUnit value={heroTime.m} label="دقيقة" />
             <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
-            <CountdownUnit value={heroTime.h} label="ساعة" />
+            <CountdownUnit value={heroTime.s} label="ثانية" />
           </div>
         </motion.div>
       )}
