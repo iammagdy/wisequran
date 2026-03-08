@@ -35,6 +35,7 @@ export async function fetchSurahAyahs(surahNumber: number): Promise<Ayah[]> {
     number: a.number,
     text: a.text,
     numberInSurah: a.numberInSurah,
+    page: a.page,
   }));
   // Cache for offline use
   await saveSurah(surahNumber, ayahs);
