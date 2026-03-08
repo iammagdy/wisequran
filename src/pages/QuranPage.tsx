@@ -291,54 +291,64 @@ export default function QuranPage() {
       {/* Juz List */}
       {!showBookmarks && !showFavorites && viewMode === "juz" && (
         <div className="space-y-2">
-          {juzData.map((juz, i) => (
-            <motion.button
-              key={juz.juzNumber}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
-              onClick={() => navigate(`/surah/${juz.startSurah}`)}
-              className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
-              dir="rtl"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                {toArabicNumerals(juz.juzNumber)}
+          {juzData.map((juz, i) => {
+            const isExpanded = expandedJuz === juz.juzNumber;
+            const juzSurahs = surahs.filter(
+              (s) => s.number >= juz.startSurah && s.number <= juz.endSurah
+            );
+            return (
+              <div key={juz.juzNumber}>
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  onClick={() => setExpandedJuz(isExpanded ? null : juz.juzNumber)}
+                  className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
+                  dir="rtl"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
+                    {toArabicNumerals(juz.juzNumber)}
+                  </div>
+                  <div className="flex-1 text-right">
+                    <p className="text-base font-bold">{juz.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatRange(juz.startSurah, juz.startAyah, juz.endSurah, juz.endAyah)}
+                    </p>
+                  </div>
+                  <svg
+                    className={cn("h-4 w-4 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </motion.button>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    className="mr-6 mt-1 space-y-1 overflow-hidden"
+                  >
+                    {juzSurahs.map((surah) => (
+                      <button
+                        key={surah.number}
+                        onClick={() => navigate(`/surah/${surah.number}`)}
+                        className="flex w-full items-center gap-3 rounded-lg bg-muted/50 p-3 text-right transition-colors active:bg-muted"
+                        dir="rtl"
+                      >
+                        <span className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-xs font-bold text-primary">
+                          {toArabicNumerals(surah.number)}
+                        </span>
+                        <span className="font-arabic text-sm font-semibold">{surah.name}</span>
+                        <span className="mr-auto text-xs text-muted-foreground">
+                          {toArabicNumerals(surah.numberOfAyahs)} آية
+                        </span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
               </div>
-              <div className="flex-1 text-right">
-                <p className="text-base font-bold">{juz.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatRange(juz.startSurah, juz.startAyah, juz.endSurah, juz.endAyah)}
-                </p>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      )}
-
-      {/* Hizb List */}
-      {!showBookmarks && !showFavorites && viewMode === "hizb" && (
-        <div className="space-y-2">
-          {hizbData.map((hizb, i) => (
-            <motion.button
-              key={hizb.hizbNumber}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02 }}
-              onClick={() => navigate(`/surah/${hizb.startSurah}`)}
-              className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
-              dir="rtl"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                {toArabicNumerals(hizb.hizbNumber)}
-              </div>
-              <div className="flex-1 text-right">
-                <p className="text-base font-bold">{hizb.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatRange(hizb.startSurah, hizb.startAyah, hizb.endSurah, hizb.endAyah)}
-                </p>
-              </div>
-            </motion.button>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
