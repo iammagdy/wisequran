@@ -115,7 +115,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     : duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-50">
+    <div className="fixed bottom-14 inset-x-0 z-50">
       <div className="rounded-t-2xl border-t border-border/50 bg-card/95 backdrop-blur-md shadow-[0_-4px_20px_-4px_hsl(var(--foreground)/0.08)]">
         <div className="px-4 pt-3 pb-1 space-y-2">
           {/* Offline warning */}
@@ -172,6 +172,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 {isAyahMode && totalAyahs > 0 ? (
                   <>
                     <span>آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
+                    <span>{formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}</span>
                   </>
                 ) : (
                   <>
@@ -280,7 +281,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
           </AnimatePresence>
         </div>
 
-        <div className="px-4 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="px-4 pb-1">
           <p className="text-center text-[9px] text-muted-foreground/60" dir="rtl">
             قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح
           </p>
