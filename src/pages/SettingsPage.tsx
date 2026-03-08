@@ -230,7 +230,7 @@ export default function SettingsPage() {
           >
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium">عدد الآيات يومياً</span>
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{goal} آية</span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{toArabicNumerals(goal)} آية</span>
             </div>
             <div className="flex gap-2 mb-3">
               {[10, 20, 50].map((v) => (
