@@ -78,8 +78,10 @@ export default function SurahReaderPage() {
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()])
       .then(([ayahData, surahList]) => {
         setAyahs(ayahData);
-        setSurahInfo(surahList.find((s) => s.number === surahNumber) || null);
+        const info = surahList.find((s) => s.number === surahNumber) || null;
+        setSurahInfo(info);
         setLastRead({ surah: surahNumber, ayah: 1 });
+        if (info) addToHistory(surahNumber, info.name);
         setLoading(false);
       })
       .catch(() => {
