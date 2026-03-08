@@ -107,12 +107,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   const currentTime = isThisSurah ? player.currentTime : 0;
   const duration = isThisSurah ? player.duration : 0;
   const offline = isThisSurah && player.offline;
-  const isAyahMode = isThisSurah && player.isAyahMode;
-  const currentAyahIndex = isThisSurah ? player.currentAyahIndex : 0;
-  const totalAyahs = isThisSurah ? player.totalAyahs : 0;
-  const pct = isAyahMode && totalAyahs > 0
-    ? ((currentAyahIndex + (duration > 0 ? currentTime / duration : 0)) / totalAyahs) * 100
-    : duration > 0 ? (currentTime / duration) * 100 : 0;
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className="fixed bottom-14 inset-x-0 z-50">
