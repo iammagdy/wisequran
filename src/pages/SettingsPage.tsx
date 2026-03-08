@@ -47,6 +47,36 @@ export default function SettingsPage() {
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
 
+  // PWA Install
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+
+  useEffect(() => {
+    if (isStandalone) {
+      setIsInstalled(true);
+      return;
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setIsInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, [isStandalone]);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstalled(true);
+    }
+    setDeferredPrompt(null);
+  };
+
   useEffect(() => {
     getAllDownloadedSurahs().then(setDownloadedSurahs);
     getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
