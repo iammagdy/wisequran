@@ -276,7 +276,7 @@ export default function PrayerPage() {
                   "text-[11px] font-medium",
                   isToday ? "text-primary font-bold" : "text-muted-foreground"
                 )}>
-                  {isToday ? "اليوم" : getArabicDayShort(d.getDay())}
+                  {getArabicDayShort(d.getDay())}
                 </span>
               </div>
             );
