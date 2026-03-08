@@ -4,6 +4,7 @@ import { AnimatePresence } from "framer-motion";
 import BottomNav from "./BottomNav";
 import GlobalAudioBar from "@/components/quran/GlobalAudioBar";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Props {
   children: ReactNode;
@@ -14,6 +15,9 @@ export default function AppShell({ children }: Props) {
   const { surahNumber } = useAudioPlayer();
   const onSurahPage = location.pathname.startsWith("/surah/");
   const showGlobalBar = surahNumber !== null && !onSurahPage;
+
+  // Persist dark mode across all pages
+  useTheme();
 
   return (
     <div className="min-h-screen bg-background">

@@ -13,8 +13,7 @@ const tabs = [
 export default function BottomNav() {
   const location = useLocation();
 
-  // Hide nav on surah reader
-  if (location.pathname.startsWith("/surah/")) return null;
+  // Bottom nav is always visible on all pages
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-bottom">
