@@ -53,6 +53,7 @@ export default function SurahReaderPage() {
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
+  const { addToHistory } = useReadingHistory();
   const hasTracked = useRef(false);
 
   const isFavorite = favorites.includes(surahNumber);
