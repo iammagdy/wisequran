@@ -122,3 +122,13 @@ export async function clearAllData() {
   await db.clear("azkar");
   await db.clear("audio");
 }
+
+export async function saveTafsir(editionId: string, surahNumber: number, ayahs: { numberInSurah: number; text: string }[]) {
+  const db = await getDB();
+  await db.put("tafsir", { id: tafsirKey(editionId, surahNumber), editionId, surahNumber, ayahs });
+}
+
+export async function getTafsir(editionId: string, surahNumber: number) {
+  const db = await getDB();
+  return db.get("tafsir", tafsirKey(editionId, surahNumber));
+}
