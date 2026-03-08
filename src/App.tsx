@@ -3,6 +3,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
+import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import QuranPage from "@/pages/QuranPage";
 import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
@@ -34,7 +35,9 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
-        <AppContent />
+        <AudioPlayerProvider>
+          <AppContent />
+        </AudioPlayerProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
