@@ -288,7 +288,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ التحميل... {downloadProgress}%
+                    جارٍ التحميل... {toArabicNumerals(`${downloadProgress}%`)}
                   </p>
                 </div>
               ) : (
