@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
