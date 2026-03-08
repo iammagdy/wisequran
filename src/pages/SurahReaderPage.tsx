@@ -87,7 +87,7 @@ export default function SurahReaderPage() {
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
             <p className="text-[11px] text-muted-foreground">
               {surahInfo && (
-                <span>{surahInfo.numberOfAyahs} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
+                <span>{toArabicNumerals(surahInfo.numberOfAyahs)} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
               )}
             </p>
           </div>
