@@ -556,7 +556,74 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ─── About ─── */}
+        {/* ─── Install PWA ─── */}
+        {!isInstalled && (
+          <section>
+            <div className="section-title flex items-center gap-1.5">
+              <Smartphone className="h-3.5 w-3.5" />
+              تثبيت التطبيق
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-xl bg-card p-5 shadow-sm"
+            >
+              {isIOS ? (
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
+                  <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">١.</span>
+                      <span>اضغط على زر المشاركة</span>
+                      <Share className="h-4 w-4" />
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">٢.</span>
+                      <span>اختر "إضافة إلى الشاشة الرئيسية"</span>
+                    </div>
+                  </div>
+                </div>
+              ) : deferredPrompt ? (
+                <div className="text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">ثبّت التطبيق على جهازك للوصول السريع والعمل بدون إنترنت</p>
+                  <button
+                    onClick={handleInstall}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    <Download className="h-4 w-4" />
+                    تثبيت التطبيق
+                  </button>
+                </div>
+              ) : (
+                <p className="text-center text-sm text-muted-foreground">
+                  افتح التطبيق من متصفح Chrome أو Safari لتتمكن من تثبيته
+                </p>
+              )}
+            </motion.div>
+          </section>
+        )}
+
+        {isInstalled && (
+          <section>
+            <div className="section-title flex items-center gap-1.5">
+              <Smartphone className="h-3.5 w-3.5" />
+              تثبيت التطبيق
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="rounded-xl bg-card p-5 shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-2 text-sm text-primary">
+                <CheckCircle className="h-4 w-4" />
+                <span>التطبيق مثبّت بالفعل</span>
+              </div>
+            </motion.div>
+          </section>
+        )}
+
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />
