@@ -160,7 +160,58 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
-        {/* ─── Daily Goal ─── */}
+        {/* ─── Prayer Notifications ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Bell className="h-3.5 w-3.5" />
+            إشعارات الصلاة
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="rounded-xl bg-card p-4 shadow-sm space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {notificationsEnabled ? (
+                  <Bell className="h-4.5 w-4.5 text-primary" />
+                ) : (
+                  <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
+                )}
+                <span className="text-sm font-medium">تذكير بأوقات الصلاة</span>
+              </div>
+              <Switch
+                checked={notificationsEnabled}
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    if (!("Notification" in window)) {
+                      toast.error("المتصفح لا يدعم الإشعارات");
+                      return;
+                    }
+                    const perm = await Notification.requestPermission();
+                    setNotificationPermission(perm);
+                    if (perm === "granted") {
+                      setNotificationsEnabled(true);
+                      toast.success("تم تفعيل إشعارات الصلاة");
+                    } else {
+                      toast.error("تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح");
+                    }
+                  } else {
+                    setNotificationsEnabled(false);
+                    toast.success("تم إيقاف إشعارات الصلاة");
+                  }
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {notificationPermission === "denied"
+                ? "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح"
+                : "ستصلك إشعارات عند دخول وقت كل صلاة"}
+            </p>
+          </motion.div>
+        </section>
+
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5" />
