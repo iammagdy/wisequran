@@ -28,6 +28,7 @@ export default function QuranPage() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("surahs");
+  const [expandedJuz, setExpandedJuz] = useState<number | null>(null);
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
