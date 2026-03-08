@@ -172,6 +172,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 {isAyahMode && totalAyahs > 0 ? (
                   <>
                     <span>آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
+                    <span>{formatTime(currentTime)} / {duration > 0 ? formatTime(duration) : "--:--"}</span>
                   </>
                 ) : (
                   <>
