@@ -48,7 +48,7 @@ export async function fetchChapterRecitation(
 
   // Parse timestamps from the verse_timings array
   const timings: { verse_key: string; timestamp_from: number; timestamp_to: number }[] =
-    recitation.verse_timings || [];
+    recitation.timestamps || [];
 
   const timestamps: AyahTimestamp[] = timings.map((t) => {
     const parts = t.verse_key.split(":");
