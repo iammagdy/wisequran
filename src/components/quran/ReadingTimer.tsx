@@ -52,7 +52,7 @@ export default function ReadingTimer() {
   const formatRemaining = () => {
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
+    return toArabicNumerals(`${m}:${s.toString().padStart(2, "0")}`);
   };
 
   return (
