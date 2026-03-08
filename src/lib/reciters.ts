@@ -51,11 +51,3 @@ export function getReciterAudioUrl(reciterId: string, surahNumber: number): stri
   const reciter = getReciterById(reciterId);
   return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
 }
-  const customBase = CUSTOM_CDN_RECITERS[reciterId];
-  if (customBase) {
-    const padded = surahNumber.toString().padStart(3, "0");
-    return `${customBase}/${padded}.mp3`;
-  }
-  const reciter = getReciterById(reciterId);
-  return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
-}

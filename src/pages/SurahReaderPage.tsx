@@ -13,6 +13,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
+import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
