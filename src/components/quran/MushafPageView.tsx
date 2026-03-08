@@ -23,6 +23,7 @@ export default function MushafPageView({
   fontSize,
   surahNumber,
   highlightedAyah,
+  playingAyah,
   isBookmarked,
   toggleBookmark,
   onAyahTafsir,
