@@ -98,7 +98,7 @@ export default function QuranPage() {
           <div className="flex-1">
             <p className="text-xs text-muted-foreground">متابعة القراءة</p>
             <p className="text-sm font-semibold">
-              سورة {surahs.find((s) => s.number === lastRead.surah)?.name || lastRead.surah} — آية {lastRead.ayah}
+              سورة {surahs.find((s) => s.number === lastRead.surah)?.name || lastRead.surah} — آية {toArabicNumerals(lastRead.ayah)}
             </p>
           </div>
         </motion.button>
