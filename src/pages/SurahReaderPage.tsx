@@ -409,7 +409,7 @@ export default function SurahReaderPage() {
                           className="font-arabic text-foreground"
                           style={{ fontSize, lineHeight: 2.2 }}
                         >
-                          {ayah.text}
+                          {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
                       </motion.div>
                     </div>

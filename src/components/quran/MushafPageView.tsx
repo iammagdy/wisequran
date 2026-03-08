@@ -136,7 +136,7 @@ export default function MushafPageView({
                         highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm"
                       )}
                     >
-                      {ayah.text}{" "}
+                      {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                       <button
                         onClick={() =>
                           setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah)

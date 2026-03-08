@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Strip Bismillah prefix from ayah 1 text (surahs other than 1 & 9) */
+export function stripBismillah(text: string, surahNumber: number, ayahNumber: number): string {
+  if (ayahNumber !== 1 || surahNumber === 1 || surahNumber === 9) return text;
+  return text
+    .replace(/^بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ\s*/, "")
+    .replace(/^بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ\s*/, "");
+}
+
 /** Convert Western digits 0-9 to Arabic-Indic ٠-٩ */
 export function toArabicNumerals(str: string | number): string {
   return String(str).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
