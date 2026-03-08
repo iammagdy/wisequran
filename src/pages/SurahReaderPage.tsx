@@ -85,6 +85,20 @@ export default function SurahReaderPage() {
     }
   }, [loading, ayahs.length]);
 
+  // Scroll to target ayah from query param
+  useEffect(() => {
+    if (!loading && ayahs.length > 0 && targetAyah) {
+      const el = document.getElementById(`ayah-${targetAyah}`);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          setHighlightedAyah(targetAyah);
+          setTimeout(() => setHighlightedAyah(null), 2000);
+        }, 300);
+      }
+    }
+  }, [loading, ayahs.length, targetAyah]);
+
   // Fetch tafsir when switching to tafsir tab or edition changes
   useEffect(() => {
     if (activeTab !== "tafsir") return;
