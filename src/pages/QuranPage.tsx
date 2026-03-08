@@ -133,7 +133,7 @@ export default function QuranPage() {
                   onClick={() => navigate(`/surah/${b.surah}`)}
                   className="flex w-full items-center justify-between rounded-lg bg-card p-3 shadow-sm"
                 >
-                  <span className="text-sm text-muted-foreground">آية {b.ayah}</span>
+                  <span className="text-sm text-muted-foreground">آية {toArabicNumerals(b.ayah)}</span>
                   <span className="font-semibold">
                     سورة {surahs.find((s) => s.number === b.surah)?.name || b.surah}
                   </span>
