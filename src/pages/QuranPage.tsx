@@ -166,7 +166,7 @@ export default function QuranPage() {
                   className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-sm transition-colors active:bg-muted"
                 >
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary">
-                    {surah.number}
+                    {toArabicNumerals(surah.number)}
                   </div>
                   <div className="flex-1 text-right">
                     <p className="font-arabic text-lg font-bold">{surah.name}</p>
