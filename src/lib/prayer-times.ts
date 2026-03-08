@@ -1,3 +1,5 @@
+import { toArabicNumerals } from "@/lib/utils";
+
 /**
  * Prayer time calculator for Egypt (Cairo)
  * Egyptian General Authority of Survey method: Fajr 19.5°, Isha 17.5°
