@@ -67,9 +67,9 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     if (isThisSurah) {
       player.togglePlayPause();
     } else {
-      player.play(surahNumber, surahName);
+      player.play(surahNumber, surahName, ayahs);
     }
-  }, [isThisSurah, surahNumber, surahName, player]);
+  }, [isThisSurah, surahNumber, surahName, ayahs, player]);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
