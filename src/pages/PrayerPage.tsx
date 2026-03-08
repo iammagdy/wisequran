@@ -108,8 +108,11 @@ export default function PrayerPage() {
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h1 className="mb-1 text-2xl font-bold">صلواتي اليوم</h1>
+          <p className="text-xs text-muted-foreground">
+            {getGregorianDateArabic(new Date())} — {getHijriDate(new Date())}
+          </p>
           {nextPrayer && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mt-1">
               متبقي {formatCountdown(nextPrayer.minutesLeft)} على {nextPrayer.name}
             </p>
           )}
