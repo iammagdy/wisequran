@@ -347,7 +347,7 @@ export default function SettingsPage() {
                     />
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ تحميل التلاوات... {audioDownloadProgress}%
+                    جارٍ تحميل التلاوات... {toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
                 </div>
               ) : (
