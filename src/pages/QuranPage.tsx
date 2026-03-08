@@ -221,6 +221,42 @@ export default function QuranPage() {
         </div>
       )}
 
+      {/* Reading History View */}
+      {showHistory && (
+        <div className="mb-4" dir="rtl">
+          <h2 className="mb-2 text-lg font-semibold">سجل القراءة</h2>
+          {history.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">لا يوجد سجل قراءة بعد</p>
+          ) : (
+            <div className="space-y-2">
+              {history.map((entry, i) => {
+                const date = new Date(entry.timestamp);
+                const timeStr = date.toLocaleDateString("ar-EG", { day: "numeric", month: "short" }) +
+                  " · " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+                return (
+                  <motion.button
+                    key={`${entry.surah}-${entry.timestamp}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03 }}
+                    onClick={() => navigate(`/surah/${entry.surah}`)}
+                    className="flex w-full items-center justify-between rounded-lg bg-card p-3 shadow-sm transition-colors active:bg-muted"
+                  >
+                    <span className="text-xs text-muted-foreground">{timeStr}</span>
+                    <div className="text-right">
+                      <span className="font-semibold">{entry.surahName}</span>
+                      {entry.ayahReached > 1 && (
+                        <span className="mr-2 text-xs text-muted-foreground">آية {toArabicNumerals(entry.ayahReached)}</span>
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Favorites empty state */}
       {showFavorites && displayList.length === 0 && !loading && (
         <p className="text-center text-sm text-muted-foreground py-8">لا توجد سور مفضلة بعد</p>
