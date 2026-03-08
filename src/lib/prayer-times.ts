@@ -78,6 +78,16 @@ export interface NextPrayerInfo {
   id: string;
   name: string;
   minutesLeft: number;
+  secondsLeft: number;
+}
+
+/** Get seconds remaining until a specific prayer time. Negative if passed. */
+export function getSecondsUntilPrayer(prayerTime: string, now: Date): number {
+  const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+  const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
+  const [h, m] = prayerTime.split(":").map(Number);
+  const prayerSeconds = h * 3600 + m * 60;
+  return prayerSeconds - nowSeconds;
 }
 
 const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
