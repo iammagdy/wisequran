@@ -286,7 +286,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         playingReciterId: reciterId,
       }));
 
-      await playAyahAtIndex(0, reciterId);
+      await playAyahFallback(0, reciterId);
       return;
     }
 
