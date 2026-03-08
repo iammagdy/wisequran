@@ -33,6 +33,8 @@ export default function QuranPage() {
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
+  const { history } = useReadingHistory();
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
     fetchSurahList().then((data) => {
