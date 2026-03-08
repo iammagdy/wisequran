@@ -19,7 +19,7 @@ export function getArabicDayShort(dayIndex: number): string {
 
 /** Hijri date string for a given Date */
 export function getHijriDate(date: Date): string {
-  return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", { day: "numeric", month: "long" }).format(date);
+  return new Intl.DateTimeFormat("ar-SA-u-ca-islamic", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
 
 /** Full Gregorian date in Arabic */

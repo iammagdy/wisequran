@@ -171,7 +171,7 @@ export default function QuranPage() {
                   <div className="flex-1 text-right">
                     <p className="font-arabic text-lg font-bold">{surah.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {surah.englishName} · {surah.numberOfAyahs} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
+                      {surah.numberOfAyahs} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
                     </p>
                   </div>
                   {favorites.includes(surah.number) && (

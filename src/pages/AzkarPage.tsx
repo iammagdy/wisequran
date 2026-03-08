@@ -110,7 +110,7 @@ export default function AzkarPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h1 className="mb-1 text-2xl font-bold">الأذكار</h1>
-                <p className="text-sm text-muted-foreground">Daily Remembrance</p>
+                <p className="text-sm text-muted-foreground">أذكار يومية</p>
               </div>
               <button
                 onClick={() => setShowFavorites(!showFavorites)}
@@ -180,7 +180,7 @@ export default function AzkarPage() {
               </button>
               <div>
                 <h1 className="text-xl font-bold">{selectedCategory.nameAr}</h1>
-                <p className="text-xs text-muted-foreground">{selectedCategory.name}</p>
+                <p className="text-xs text-muted-foreground">{selectedCategory.items.length} أذكار</p>
               </div>
             </div>
 
