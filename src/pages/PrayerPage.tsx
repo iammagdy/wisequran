@@ -51,8 +51,8 @@ function formatCompactCountdown(totalSeconds: number): string {
   if (totalSeconds <= 0) return "";
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
-  if (h > 0) return `${h}:${m.toString().padStart(2, "0")}`;
-  return `${m} د`;
+  if (h > 0) return toArabicNumerals(`${h}:${m.toString().padStart(2, "0")}`);
+  return `${toArabicNumerals(String(m))} د`;
 }
 
 export default function PrayerPage() {
