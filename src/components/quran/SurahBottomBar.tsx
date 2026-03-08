@@ -65,7 +65,7 @@ export default function SurahBottomBar({ surahNumber, surahName }: Props) {
     if (playing) {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: surahName,
-        artist: "مشاري العفاسي",
+        artist: getReciterById(reciterId).name,
         album: "القرآن الكريم",
       });
       navigator.mediaSession.setActionHandler("play", () => handlePlayPause());
