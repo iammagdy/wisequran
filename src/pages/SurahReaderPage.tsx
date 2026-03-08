@@ -389,8 +389,9 @@ export default function SurahReaderPage() {
                         data-ayah={ayah.numberInSurah}
                         ref={(el) => setAyahRef(el, ayah.numberInSurah)}
                         className={cn(
-                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all",
-                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5"
+                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all duration-300",
+                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5",
+                          playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 border-primary/20"
                         )}
                       >
                         <div className="mb-2 flex items-center justify-between">
