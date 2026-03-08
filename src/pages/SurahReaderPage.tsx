@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2 } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
 import { fetchTafsir, type TafsirAyah } from "@/lib/tafsir-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
