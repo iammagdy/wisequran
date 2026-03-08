@@ -14,7 +14,7 @@ interface Props {
 function formatTime(s: number) {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, "0")}`;
+  return toArabicNumerals(`${m}:${sec.toString().padStart(2, "0")}`);
 }
 
 const TIMER_PRESETS = [5, 10, 15, 20];
