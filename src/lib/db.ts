@@ -36,10 +36,14 @@ interface WiseQuranDB extends DBSchema {
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 function audioKey(reciterId: string, surahNumber: number): string {
   return `${reciterId}-${surahNumber}`;
+}
+
+function tafsirKey(editionId: string, surahNumber: number): string {
+  return `${editionId}-${surahNumber}`;
 }
 
 export async function getDB() {
@@ -57,6 +61,9 @@ export async function getDB() {
       }
       if (!db.objectStoreNames.contains("audio")) {
         db.createObjectStore("audio", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("tafsir")) {
+        db.createObjectStore("tafsir", { keyPath: "id" });
       }
     },
   });
