@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Minus, Plus } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Volume2, Timer } from "lucide-react";
 import { fetchSurahAyahs, fetchSurahList, type Ayah, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn } from "@/lib/utils";
+import SurahAudioPlayer from "@/components/quran/SurahAudioPlayer";
+import ReadingTimer from "@/components/quran/ReadingTimer";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +20,9 @@ export default function SurahReaderPage() {
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [, setLastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
+
+  const [showAudio, setShowAudio] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -51,15 +56,44 @@ export default function SurahReaderPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md px-4 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate("/")} className="rounded-lg p-2 hover:bg-muted">
-            <ArrowRight className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => navigate("/")} className="rounded-lg p-2 hover:bg-muted">
+              <ArrowRight className="h-5 w-5" />
+            </button>
+          </div>
           <div className="text-center">
             <h1 className="font-arabic text-lg font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
             <p className="text-xs text-muted-foreground">{surahInfo?.englishName}</p>
           </div>
-          <div className="w-9" />
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowTimer((v) => !v)}
+              className={cn("rounded-lg p-2 transition-colors", showTimer ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground")}
+            >
+              <Timer className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setShowAudio((v) => !v)}
+              className={cn("rounded-lg p-2 transition-colors", showAudio ? "bg-primary/10 text-primary" : "hover:bg-muted text-muted-foreground")}
+            >
+              <Volume2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+      </div>
+
+      {/* Audio & Timer toolbar */}
+      <div className="px-4 pt-3 space-y-2">
+        {showAudio && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <SurahAudioPlayer surahNumber={surahNumber} />
+          </motion.div>
+        )}
+        {showTimer && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+            <ReadingTimer />
+          </motion.div>
+        )}
       </div>
 
       {/* Content */}
