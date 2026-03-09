@@ -147,6 +147,13 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     audioRef.current = null;
     cleanupBlobUrl();
 
+    // Create Audio element IMMEDIATELY to preserve user gesture context
+    const audio = new Audio();
+    audioRef.current = audio;
+    setupAudioListeners(audio);
+    // Silent unlock for iOS/Safari — ignore the expected error
+    audio.play().catch(() => {});
+
     setState((s) => ({
       ...s,
       surahNumber,
@@ -182,38 +189,43 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       const source = await resolveAudioSource(reciterId, surahNumber);
       if (!source) {
         setState((s) => ({ ...s, offline: true, loading: false }));
+        audioRef.current = null;
         return;
       }
       audioUrl = source.url;
       if (source.cached) blobUrlRef.current = source.url;
     }
 
-    if (stoppedRef.current) return;
+    if (stoppedRef.current) {
+      audioRef.current = null;
+      return;
+    }
 
-    const tryPlay = async (url: string): Promise<boolean> => {
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      setupAudioListeners(audio);
+    // Now set the src and play using the already-unlocked audio element
+    audio.src = audioUrl;
+    try {
+      await audio.play();
+      setState((s) => ({ ...s, playing: true }));
+      return;
+    } catch {
+      // Primary source failed, try fallback
+    }
+
+    // Fallback: try resolveAudioSource (uses CUSTOM_CDN)
+    const fallback = await resolveAudioSource(reciterId, surahNumber);
+    if (fallback) {
+      if (fallback.cached) blobUrlRef.current = fallback.url;
+      audio.src = fallback.url;
       try {
         await audio.play();
         setState((s) => ({ ...s, playing: true }));
-        return true;
+        return;
       } catch {
-        return false;
-      }
-    };
-
-    if (await tryPlay(audioUrl)) return;
-
-    // Fallback: if QF URL failed, try resolveAudioSource (uses CUSTOM_CDN)
-    if (audioUrl) {
-      const fallback = await resolveAudioSource(reciterId, surahNumber);
-      if (fallback) {
-        if (fallback.cached) blobUrlRef.current = fallback.url;
-        if (await tryPlay(fallback.url)) return;
+        // Fallback also failed
       }
     }
 
+    audioRef.current = null;
     setState((s) => ({ ...s, loading: false }));
   }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners]);
 
