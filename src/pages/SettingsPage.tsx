@@ -77,12 +77,9 @@ export default function SettingsPage() {
 
     setPreviewLoading(r.id);
 
-    // Smart source selection:
-    // Use per-ayah CDN only if reciter has a real folder (not fallback "ar.alafasy")
-    const hasRealAyahAudio = r.hasAyahAudio && r.folder !== "ar.alafasy";
-    const url = hasRealAyahAudio
-      ? getReciterAyahAudioUrl(r.id, 1)
-      : await getReciterAudioUrl(r.id, 1);
+    // Always use full-surah URL for preview (Surah 1 is tiny ~200KB)
+    // This uses CUSTOM_CDN or mp3quran API which are reliable for all reciters
+    const url = await getReciterAudioUrl(r.id, 1);
 
     const audio = new Audio(url);
     audio.preload = "auto";
