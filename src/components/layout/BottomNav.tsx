@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Circle, Compass, Settings } from "lucide-react";
+import { Book, Moon, CheckSquare, Circle, Compass, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { isRamadanNow } from "@/hooks/useRamadan";
 
-const tabs = [
+const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
