@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, CheckCircle2, Circle, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, BookOpen, CheckCircle2, Circle, Loader2, RotateCcw, Check, Clock, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
+import { useHifzReview } from "@/hooks/useHifzReview";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "@/hooks/use-toast";
 
 type FilterMode = "all" | "memorized" | "reading" | "none";
 
@@ -15,12 +17,56 @@ const STATUS_CONFIG: Record<HifzStatus, { label: string; color: string; bg: stri
   none: { label: "لم تبدأ", color: "text-muted-foreground", bg: "bg-card border-border/50", icon: Circle },
 };
 
+function getStrengthColor(level: number): string {
+  if (level <= 1) return "bg-destructive";
+  if (level <= 3) return "bg-accent";
+  return "bg-primary";
+}
+
+function getStrengthLabel(level: number): string {
+  if (level <= 1) return "ضعيف";
+  if (level <= 3) return "متوسط";
+  return "قوي";
+}
+
 export default function HifzPage() {
   const navigate = useNavigate();
   const { getStatus, cycleStatus, stats } = useHifz();
+  const review = useHifzReview();
   const [filter, setFilter] = useState<FilterMode>("all");
 
   const filtered = SURAH_META.filter((s) => filter === "all" || getStatus(s.number) === filter);
+  const todayQueue = review.getTodayQueue();
+
+  // Sync: when cycling status to memorized, add to review
+  const handleCycleStatus = (surahNumber: number) => {
+    const current = getStatus(surahNumber);
+    cycleStatus(surahNumber);
+    // If cycling from reading → memorized, add to review
+    if (current === "reading") {
+      review.addToReview(surahNumber);
+    }
+    // If cycling from memorized → none, remove from review
+    if (current === "memorized") {
+      review.removeFromReview(surahNumber);
+    }
+  };
+
+  const handleMarkReviewed = (surahNumber: number, quality: "good" | "hard") => {
+    const meta = SURAH_META.find((s) => s.number === surahNumber);
+    review.markReviewed(surahNumber, quality);
+    if (quality === "good") {
+      toast({
+        title: "أحسنت! ✨",
+        description: `تمت مراجعة سورة ${meta?.name || ""}`,
+      });
+    } else {
+      toast({
+        title: "ستتحسن إن شاء الله",
+        description: `ستظهر سورة ${meta?.name || ""} في مراجعة الغد`,
+      });
+    }
+  };
 
   return (
     <div className="px-4 pt-6 pb-24">
@@ -60,6 +106,120 @@ export default function HifzPage() {
         </div>
       </motion.div>
 
+      {/* Today's Review Section */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir="rtl">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-bold">المراجعة اليوم</h2>
+          </div>
+          {review.stats.reviewedToday > 0 && (
+            <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1">
+              تمت مراجعة {toArabicNumerals(review.stats.reviewedToday)}
+            </span>
+          )}
+        </div>
+
+        {todayQueue.length === 0 ? (
+          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-6 text-center">
+            <Sparkles className="h-8 w-8 text-primary/50 mx-auto mb-2" />
+            <p className="text-sm font-semibold text-foreground">لا توجد مراجعات اليوم</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {review.stats.totalInReview > 0 ? "أحسنت! أكملت جميع المراجعات 🎉" : "ضع سوراً كمحفوظة لبدء المراجعة"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            <AnimatePresence mode="popLayout">
+              {todayQueue.map((item) => (
+                <motion.div
+                  key={item.surahNumber}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50, scale: 0.9 }}
+                  transition={{ duration: 0.3 }}
+                  className={cn(
+                    "rounded-2xl bg-card p-4 border shadow-soft",
+                    item.overdueDays > 2 ? "border-destructive/30" : "border-border/50"
+                  )}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <span className="font-arabic text-base font-bold">{item.surahName}</span>
+                      {item.overdueDays > 0 && (
+                        <span className="text-[10px] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
+                          متأخرة {toArabicNumerals(item.overdueDays)} يوم
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-muted-foreground">{getStrengthLabel(item.level)}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full transition-colors",
+                              i <= item.level ? getStrengthColor(item.level) : "bg-muted"
+                            )}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Strength bar */}
+                  <div className="h-1 w-full rounded-full bg-muted mb-3 overflow-hidden">
+                    <div
+                      className={cn("h-full rounded-full transition-all", getStrengthColor(item.level))}
+                      style={{ width: `${((item.level + 1) / 7) * 100}%` }}
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleMarkReviewed(item.surahNumber, "good")}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-2.5 text-sm font-semibold hover:bg-primary/20 transition-colors"
+                    >
+                      <Check className="h-4 w-4" />
+                      أتقنتها
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleMarkReviewed(item.surahNumber, "hard")}
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-2.5 text-sm font-semibold hover:bg-muted/80 transition-colors"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      تحتاج مراجعة
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Review Stats */}
+        {review.stats.totalInReview > 0 && (
+          <div className="mt-3 flex gap-3 text-center">
+            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalInReview)}</p>
+              <p className="text-[10px] text-muted-foreground">في المراجعة</p>
+            </div>
+            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.dueToday)}</p>
+              <p className="text-[10px] text-muted-foreground">مستحقة اليوم</p>
+            </div>
+            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalReviewsDone)}</p>
+              <p className="text-[10px] text-muted-foreground">إجمالي المراجعات</p>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* Filter Tabs */}
       <div className="mb-5 flex gap-1.5 p-1 rounded-2xl bg-muted/50" dir="rtl">
         {([
@@ -87,6 +247,7 @@ export default function HifzPage() {
           const status = getStatus(surah.number);
           const config = STATUS_CONFIG[status];
           const Icon = config.icon;
+          const reviewItem = review.getReviewItem(surah.number);
           return (
             <motion.button
               key={surah.number}
@@ -94,15 +255,29 @@ export default function HifzPage() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: Math.min(i * 0.01, 0.3) }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => cycleStatus(surah.number)}
+              onClick={() => handleCycleStatus(surah.number)}
               className={cn(
-                "flex flex-col items-center gap-1.5 rounded-xl p-3 border transition-all",
+                "relative flex flex-col items-center gap-1.5 rounded-xl p-3 border transition-all",
                 config.bg
               )}
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
               <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
               <span className="text-[10px] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
+              {/* Review strength indicator for memorized surahs */}
+              {reviewItem && (
+                <div className="flex gap-0.5 mt-0.5">
+                  {Array.from({ length: 7 }).map((_, j) => (
+                    <div
+                      key={j}
+                      className={cn(
+                        "h-1 w-1 rounded-full",
+                        j <= reviewItem.level ? getStrengthColor(reviewItem.level) : "bg-muted"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </motion.button>
           );
         })}
