@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Share } from "lucide-react";
+import { X, Download, Share, MoreVertical, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
