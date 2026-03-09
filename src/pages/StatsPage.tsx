@@ -7,6 +7,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { StatCard } from "@/components/stats/StatCard";
 import { WeeklyChart } from "@/components/stats/WeeklyChart";
 import { StreakCalendar } from "@/components/stats/StreakCalendar";
+import { AchievementsSheet } from "@/components/AchievementsSheet";
 import { Progress } from "@/components/ui/progress";
 import { toArabicNumerals } from "@/lib/utils";
 
