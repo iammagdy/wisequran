@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Book, Moon, CheckSquare, Circle, Compass, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { isRamadanNow } from "@/hooks/useRamadan";
+import { isRamadanTabVisible } from "@/hooks/useRamadan";
 
 const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
@@ -17,7 +17,7 @@ const baseTabs = [
 
 export default function BottomNav() {
   const location = useLocation();
-  const showRamadan = useMemo(() => isRamadanNow(), []);
+  const showRamadan = useMemo(() => isRamadanTabVisible(), []);
   const tabs = useMemo(() => {
     if (!showRamadan) return baseTabs;
     // Insert Ramadan tab before settings

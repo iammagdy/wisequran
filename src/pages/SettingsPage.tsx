@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +15,7 @@ import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
+import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -715,6 +716,44 @@ export default function SettingsPage() {
             </AlertDialog>
           </motion.div>
         </section>
+
+        {/* ─── Ramadan Tab Visibility ─── */}
+        {isRamadanNow() && (
+          <section>
+            <div className="section-title flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5" />
+              رمضان
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.17 }}
+              className="rounded-xl bg-card p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🌙</span>
+                  <span className="text-sm font-medium">إظهار تبويب رمضان</span>
+                </div>
+                <Switch
+                  checked={isRamadanTabVisible()}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      showRamadanTab();
+                    } else {
+                      hideRamadanTab();
+                    }
+                    toast.success(checked ? "تم إظهار تبويب رمضان" : "تم إخفاء تبويب رمضان");
+                    setTimeout(() => window.location.reload(), 500);
+                  }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                يظهر التبويب تلقائياً خلال شهر رمضان فقط
+              </p>
+            </motion.div>
+          </section>
+        )}
 
         <section>
           <div className="section-title flex items-center gap-1.5">
