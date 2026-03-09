@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Circle, Compass, Settings } from "lucide-react";
+import { Book, Moon, CheckSquare, Circle, Compass, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { isRamadanNow } from "@/hooks/useRamadan";
 
-const tabs = [
+const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
@@ -14,6 +16,16 @@ const tabs = [
 
 export default function BottomNav() {
   const location = useLocation();
+  const showRamadan = useMemo(() => isRamadanNow(), []);
+  const tabs = useMemo(() => {
+    if (!showRamadan) return baseTabs;
+    // Insert Ramadan tab before settings
+    return [
+      ...baseTabs.slice(0, -1),
+      { path: "/ramadan", icon: Star, label: "رمضان" },
+      baseTabs[baseTabs.length - 1],
+    ];
+  }, [showRamadan]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
