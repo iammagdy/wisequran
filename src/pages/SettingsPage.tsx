@@ -139,7 +139,9 @@ export default function SettingsPage() {
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const browserType = detectBrowser();
+  const installInstructions = getInstallInstructions(browserType);
+  const isIOS = browserType === "ios-safari";
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 
   useEffect(() => {
