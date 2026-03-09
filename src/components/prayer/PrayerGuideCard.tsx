@@ -158,6 +158,10 @@ export default function PrayerGuideCard() {
           </div>
         </GuideSection>
       </div>
+
+      <p className="mt-3 text-center text-[10px] text-muted-foreground">
+        المصدر: صفة صلاة النبي ﷺ — الشيخ الألباني | islamqa.info
+      </p>
     </motion.div>
   );
 }
