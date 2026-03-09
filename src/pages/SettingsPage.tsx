@@ -725,12 +725,12 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-xl bg-card p-5 text-center shadow-sm"
+            className="rounded-2xl gradient-hero p-6 text-center shadow-elevated border border-primary/10"
           >
-            <p className="font-arabic text-xl font-bold text-primary mb-1">Wise QURAN</p>
-            <p className="text-xs text-muted-foreground">v1.0.0</p>
+            <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
+            <p className="text-xs text-muted-foreground mb-3">v1.0.0</p>
             <Separator className="my-3" />
-            <p className="text-xs text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
+            <p className="text-sm text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
           </motion.div>
         </section>
       </div>

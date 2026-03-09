@@ -310,29 +310,31 @@ export default function SurahReaderPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex justify-center gap-2 px-4 pb-2" dir="rtl">
-          <button
-            onClick={() => { setActiveTab("text"); setFocusedAyah(null); }}
-            className={cn(
-              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
-              activeTab === "text"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
-          >
-            النص
-          </button>
-          <button
-            onClick={() => setActiveTab("tafsir")}
-            className={cn(
-              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
-              activeTab === "tafsir"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
-          >
-            التفسير
-          </button>
+        <div className="flex justify-center gap-2 px-4 pb-3 pt-1" dir="rtl">
+          <div className="flex gap-1.5 p-1 rounded-2xl bg-muted/50">
+            <button
+              onClick={() => { setActiveTab("text"); setFocusedAyah(null); }}
+              className={cn(
+                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
+                activeTab === "text"
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              النص
+            </button>
+            <button
+              onClick={() => setActiveTab("tafsir")}
+              className={cn(
+                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
+                activeTab === "tafsir"
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              التفسير
+            </button>
+          </div>
         </div>
       </div>
 
