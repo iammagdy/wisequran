@@ -100,6 +100,7 @@ export default function AzkarPage() {
   const [favoriteAzkar, setFavoriteAzkar] = useLocalStorage<string[]>("wise-favorite-azkar", []);
   const [showFavorites, setShowFavorites] = useState(false);
   const { markActive } = useStreak();
+  const { isCategoryDone, toggleCategory } = useAzkarCompletion();
 
   const toggleFavorite = (id: string) => {
     setFavoriteAzkar(
