@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { Book, Moon, CheckSquare, Circle, Compass, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { isRamadanNow } from "@/hooks/useRamadan";
+import { isRamadanTabVisible } from "@/hooks/useRamadan";
 
 const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
