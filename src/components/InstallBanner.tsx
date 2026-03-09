@@ -12,20 +12,14 @@ interface BeforeInstallPromptEvent extends Event {
 export default function InstallBanner() {
   const [show, setShow] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isIOS, setIsIOS] = useState(false);
+  const browserType = detectBrowser();
+  const instructions = getInstallInstructions(browserType);
 
   useEffect(() => {
     // Already installed or dismissed
     if (window.matchMedia("(display-mode: standalone)").matches) return;
+    if ((navigator as any).standalone === true) return;
     if (localStorage.getItem("wise-install-dismissed")) return;
-
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(ios);
-
-    if (ios) {
-      setShow(true);
-      return;
-    }
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -34,7 +28,15 @@ export default function InstallBanner() {
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Show banner for all browsers (with manual instructions if no prompt)
+    // Small delay to avoid flash
+    const timer = setTimeout(() => setShow(true), 2000);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      clearTimeout(timer);
+    };
   }, []);
 
   const dismiss = useCallback(() => {
