@@ -797,9 +797,21 @@ export default function SettingsPage() {
                   </button>
                 </div>
               ) : (
-                <p className="text-center text-sm text-muted-foreground">
-                  افتح التطبيق من متصفح Chrome أو Safari لتتمكن من تثبيته
-                </p>
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
+                  <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">١.</span>
+                      <span>{installInstructions.step1}</span>
+                      {browserType === "chromium" && <MoreVertical className="h-4 w-4" />}
+                      {browserType === "firefox" && <Menu className="h-4 w-4" />}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">٢.</span>
+                      <span>{installInstructions.step2}</span>
+                    </div>
+                  </div>
+                </div>
               )}
             </motion.div>
           </section>
