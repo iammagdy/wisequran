@@ -56,9 +56,9 @@ export function useAchievements() {
   });
   const [newUnlock, setNewUnlock] = useState<Achievement | null>(null);
   
-  const { streak, maxStreak } = useStreak();
+  const { streak } = useStreak();
   const { todayCount, goal } = useDailyReading();
-  const { getSurahsByStatus, getProgress } = useHifz();
+  const { stats: hifzStats } = useHifz();
   
   // Get total reading stats from localStorage
   const getTotalAyahs = useCallback(() => {
