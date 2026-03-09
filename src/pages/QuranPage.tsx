@@ -99,6 +99,13 @@ export default function QuranPage() {
         <div className="flex items-center gap-1.5">
           <motion.button
             whileTap={{ scale: 0.9 }}
+            onClick={() => navigate("/hifz")}
+            className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
+          >
+            <GraduationCap className="h-5 w-5" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => navigate("/stats")}
             className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
           >
