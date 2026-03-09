@@ -755,7 +755,7 @@ export default function SettingsPage() {
           </section>
         )}
 
-
+        <section>
           <div className="section-title flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />
             حول التطبيق
