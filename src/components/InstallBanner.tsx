@@ -78,16 +78,18 @@ export default function InstallBanner() {
               <p className="text-sm font-semibold text-foreground">ثبّت التطبيق</p>
               <p className="text-xs text-muted-foreground">للوصول السريع بدون متصفح</p>
             </div>
-            {isIOS ? (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                <Share className="h-3.5 w-3.5" />
-                <span>شارك ← أضف للشاشة</span>
-              </div>
-            ) : deferredPrompt ? (
+            {deferredPrompt ? (
               <Button size="sm" onClick={handleInstall} className="shrink-0">
                 تثبيت
               </Button>
-            ) : null}
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                {browserType === "ios-safari" && <Share className="h-3.5 w-3.5" />}
+                {browserType === "chromium" && <MoreVertical className="h-3.5 w-3.5" />}
+                {browserType === "firefox" && <Menu className="h-3.5 w-3.5" />}
+                <span>{instructions.step1}</span>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
