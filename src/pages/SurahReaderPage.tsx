@@ -18,6 +18,7 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
+import FocusMode from "@/components/quran/FocusMode";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export default function SurahReaderPage() {
