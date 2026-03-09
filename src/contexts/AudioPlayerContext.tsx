@@ -27,6 +27,7 @@ interface AudioPlayerContextType extends AudioPlayerState {
   play: (surahNumber: number, surahName: string, ayahs?: Ayah[]) => Promise<void>;
   togglePlayPause: () => Promise<void>;
   seek: (time: number) => void;
+  seekToAyah: (ayahNumber: number) => void;
   stop: () => void;
 }
 
