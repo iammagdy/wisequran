@@ -197,12 +197,16 @@ export default function SurahReaderPage() {
   return (
     <div className="min-h-screen pb-72">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-1">
-            <button onClick={() => navigate("/")} className="rounded-lg p-2 hover:bg-muted transition-colors">
+      <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate("/")} 
+              className="rounded-xl p-2.5 hover:bg-muted transition-colors"
+            >
               <ArrowRight className="h-5 w-5" />
-            </button>
+            </motion.button>
             {/* Page indicator in header */}
             {currentPage && activeTab === "text" && (() => {
               const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
