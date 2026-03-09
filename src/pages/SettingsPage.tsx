@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
+  const [azkarNotificationsEnabled, setAzkarNotificationsEnabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
   );
@@ -319,6 +320,45 @@ export default function SettingsPage() {
               {notificationPermission === "denied"
                 ? "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح"
                 : "ستصلك إشعارات عند دخول وقت كل صلاة"}
+            </p>
+
+            <Separator className="my-4" />
+
+            {/* Azkar Notifications */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {azkarNotificationsEnabled ? (
+                  <Bell className="h-4.5 w-4.5 text-primary" />
+                ) : (
+                  <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
+                )}
+                <span className="text-sm font-medium">تذكير بأذكار الصباح والمساء</span>
+              </div>
+              <Switch
+                checked={azkarNotificationsEnabled}
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    if (!("Notification" in window)) {
+                      toast.error("المتصفح لا يدعم الإشعارات");
+                      return;
+                    }
+                    const perm = await Notification.requestPermission();
+                    setNotificationPermission(perm);
+                    if (perm === "granted") {
+                      setAzkarNotificationsEnabled(true);
+                      toast.success("تم تفعيل تذكير الأذكار");
+                    } else {
+                      toast.error("تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح");
+                    }
+                  } else {
+                    setAzkarNotificationsEnabled(false);
+                    toast.success("تم إيقاف تذكير الأذكار");
+                  }
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              تذكير عند الفجر والمغرب لقراءة الأذكار
             </p>
           </motion.div>
         </section>

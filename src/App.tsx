@@ -13,11 +13,13 @@ import SettingsPage from "@/pages/SettingsPage";
 import TasbeehPage from "@/pages/TasbeehPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
+import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   usePrayerNotifications();
+  useAzkarNotifications();
   return (
     <>
       <AppShell>
