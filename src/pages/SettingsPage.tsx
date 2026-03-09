@@ -147,8 +147,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6 pb-8" dir="rtl">
-      <h1 className="mb-1 text-2xl font-bold">الإعدادات</h1>
+    <div className="px-4 pt-6 pb-24" dir="rtl">
+      <h1 className="mb-1 text-2xl font-bold heading-decorated">الإعدادات</h1>
       <p className="mb-6 text-sm text-muted-foreground">إعدادات التطبيق</p>
 
       <div className="space-y-6">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl bg-card p-4 shadow-sm space-y-4"
+            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4"
           >
             {/* Theme toggle */}
             <div className="flex items-center justify-between">
