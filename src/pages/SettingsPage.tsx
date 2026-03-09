@@ -66,7 +66,7 @@ export default function SettingsPage() {
     setPreviewLoading(null);
   }, []);
 
-  const togglePreview = useCallback((r: typeof RECITERS[0]) => {
+  const togglePreview = useCallback(async (r: typeof RECITERS[0]) => {
     // If already previewing this reciter, stop
     if (previewingReciter === r.id) {
       stopPreview();
