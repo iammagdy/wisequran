@@ -24,6 +24,14 @@ export const RECITERS: Reciter[] = [
   { id: "baleela", name: "بندر بليلة", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "khalilaljalil", name: "خالد الجليل", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "qatami", name: "ناصر القطامي", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "juhany", name: "عبدالله الجهني", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "faresabbad", name: "فارس عباد", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "alousi", name: "عبدالرحمن العوسي", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "luhaidan", name: "محمد اللحيدان", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "abdullahmousa", name: "عبدالله الموسى", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "nufais", name: "أحمد النفيس", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "ayyub", name: "محمد أيوب", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "idrisabkar", name: "إدريس أبكر", folder: "ar.alafasy", hasAyahAudio: false },
 ];
 
 export const DEFAULT_RECITER = "alafasy";
