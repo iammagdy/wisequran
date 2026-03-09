@@ -19,6 +19,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   usePrayerNotifications();
+  useAzkarNotifications();
   return (
     <>
       <AppShell>
