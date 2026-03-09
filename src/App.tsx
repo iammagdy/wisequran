@@ -10,6 +10,7 @@ import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
 import PrayerPage from "@/pages/PrayerPage";
 import SettingsPage from "@/pages/SettingsPage";
+import TasbeehPage from "@/pages/TasbeehPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 
@@ -25,6 +26,7 @@ const AppContent = () => {
           <Route path="/surah/:id" element={<SurahReaderPage />} />
           <Route path="/azkar" element={<AzkarPage />} />
           <Route path="/prayer" element={<PrayerPage />} />
+          <Route path="/tasbeeh" element={<TasbeehPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

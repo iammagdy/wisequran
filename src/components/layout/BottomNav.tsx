@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Settings } from "lucide-react";
+import { Book, Moon, CheckSquare, Circle, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -7,6 +7,7 @@ const tabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
+  { path: "/tasbeeh", icon: Circle, label: "التسبيح" },
   { path: "/settings", icon: Settings, label: "الإعدادات" },
 ];
 
