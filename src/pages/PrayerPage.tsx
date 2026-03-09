@@ -5,6 +5,8 @@ import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { Compass } from "lucide-react";
 import {
   calculatePrayerTimes,
   formatArabicTime,
