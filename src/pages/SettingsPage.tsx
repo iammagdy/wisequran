@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock } from "lucide-react";
+import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
@@ -33,6 +34,7 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+  const [calcMethod, setCalcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [azkarNotificationsEnabled, setAzkarNotificationsEnabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
@@ -364,7 +366,40 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
+        {/* ─── Prayer Calculation Method ─── */}
         <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            طريقة حساب المواقيت
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.035 }}
+            className="rounded-xl bg-card p-4 shadow-sm"
+          >
+            <p className="mb-3 text-xs text-muted-foreground">اختر طريقة حساب مواقيت الصلاة المناسبة لمنطقتك</p>
+            <div className="space-y-1.5">
+              {(Object.entries(CALCULATION_METHODS) as [CalculationMethod, typeof CALCULATION_METHODS[CalculationMethod]][]).map(([key, method]) => (
+                <button
+                  key={key}
+                  onClick={() => setCalcMethod(key)}
+                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    calcMethod === key
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted"
+                  }`}
+                >
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    calcMethod === key ? "border-primary bg-primary" : "border-muted-foreground/30"
+                  }`}>
+                    {calcMethod === key && <Check className="h-3 w-3 text-primary-foreground" />}
+                  </div>
+                  <span className="font-arabic">{method.name}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
           <div className="section-title flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5" />
             الهدف اليومي
