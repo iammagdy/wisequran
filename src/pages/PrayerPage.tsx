@@ -55,6 +55,7 @@ function formatCompactCountdown(totalSeconds: number): string {
 }
 
 export default function PrayerPage() {
+  const navigate = useNavigate();
   const [data, setData] = useLocalStorage<DayData>("wise-prayer-today", {
     date: getTodayKey(),
     completed: [],
