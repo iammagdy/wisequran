@@ -1,21 +1,29 @@
 
 
-# Ramadan Page Verification Report
+# Fix Prayer Times Accuracy — Use GPS + Browser Timezone
 
-## Status: Mostly Working
+## Problem
+Prayer times are inaccurate because:
+1. **Timezone is guessed** via `Math.round(longitude / 15)` — this can be off by 1+ hours for many countries (e.g., Egypt is UTC+2 but the formula may yield UTC+2 or UTC+3 depending on exact longitude)
+2. **Notification hooks** (`usePrayerNotifications`, `useAzkarNotifications`) hardcode Cairo timezone and don't pass user GPS coordinates — so they always compute times for Cairo defaults
+3. The browser already knows the **exact local timezone offset** via `new Date().getTimezoneOffset()`
 
-### What's working
-1. **Iftar Countdown** — Timer is active and counting down correctly in Arabic numerals
-2. **Daily Dua** — Rendering with share button (Share2/Copy icon based on `navigator.share` support)
-3. **Daily Checklist** — Items rendering with toggle functionality
-4. **Khatmah Plan** — Juz grid and progress bar visible
-5. **Settings Toggle** — Ramadan tab visibility toggle exists in SettingsPage with `hideRamadanTab()`/`showRamadanTab()` working via localStorage
+## Fix
 
-### Non-critical Warning to Fix
-**AnimatePresence ref warning** — `framer-motion`'s `AnimatePresence` is wrapping `motion.div` children directly in the checklist section. With React 18, this causes a "Function components cannot be given refs" warning. 
+### `src/lib/prayer-times.ts`
+- Change `getTimezoneOffset(lng)` to use the **browser's actual timezone**: `-(new Date().getTimezoneOffset() / 60)` as the default when no explicit timezone is provided
+- This single change fixes accuracy for all components that call `calculatePrayerTimes`
 
-**Fix:** Wrap the `motion.div` children inside `AnimatePresence` with proper key handling — the current code already uses `key={item.id}` so this is just a framer-motion version compatibility noise. No functional impact.
+### `src/hooks/usePrayerNotifications.ts`
+- Use `useLocation()` hook to get GPS coordinates and pass them to `calculatePrayerTimes(now, { latitude, longitude })`
+- Remove hardcoded Cairo timezone — compare against local time instead of `cairoNow`
 
-### Recommendation
-The page is fully functional. The console warning is cosmetic and does not affect behavior. No code changes needed unless the user wants to suppress the warning.
+### `src/hooks/useAzkarNotifications.ts`
+- Same fix: use `useLocation()` and pass coordinates to `calculatePrayerTimes`
+- Remove Cairo timezone hardcoding
+
+## Files to modify
+- `src/lib/prayer-times.ts` — fix timezone default (1 line change)
+- `src/hooks/usePrayerNotifications.ts` — add location, remove Cairo hardcode
+- `src/hooks/useAzkarNotifications.ts` — add location, remove Cairo hardcode
 
