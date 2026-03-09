@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
+import { useLocation as useUserLocation } from "@/hooks/useLocation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "lucide-react";
+import { Compass, MapPin } from "lucide-react";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -14,6 +15,7 @@ import {
   getSecondsUntilPrayer,
   type PrayerTimes,
   type NextPrayerInfo,
+  type CalculationMethod,
 } from "@/lib/prayer-times";
 
 const PRAYERS = [
