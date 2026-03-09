@@ -16,7 +16,8 @@ export async function resolveAudioSource(
   }
 
   if (navigator.onLine) {
-    return { url: getReciterAudioUrl(reciterId, surahNumber), cached: false };
+    const url = await getReciterAudioUrl(reciterId, surahNumber);
+    return { url, cached: false };
   }
 
   return null;
@@ -30,7 +31,7 @@ export async function downloadSurahAudio(
   surahNumber: number,
   onProgress?: (pct: number) => void
 ): Promise<void> {
-  const url = getReciterAudioUrl(reciterId, surahNumber);
+  const url = await getReciterAudioUrl(reciterId, surahNumber);
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to fetch audio");
 
