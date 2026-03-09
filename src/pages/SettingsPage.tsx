@@ -77,13 +77,14 @@ export default function SettingsPage() {
 
     setPreviewLoading(r.id);
 
-    // Always use full-surah URL for preview (Surah 1 is tiny ~200KB)
-    // This uses CUSTOM_CDN or mp3quran API which are reliable for all reciters
-    const url = await getReciterAudioUrl(r.id, 1);
-
-    const audio = new Audio(url);
-    audio.preload = "auto";
+    // Create Audio IMMEDIATELY to preserve user gesture context
+    const audio = new Audio();
     previewAudioRef.current = audio;
+    // Silent unlock for iOS/Safari
+    audio.play().catch(() => {});
+
+    // Now fetch the URL asynchronously
+    const url = await getReciterAudioUrl(r.id, 1);
 
     // Timeout: abort if audio doesn't start within 10s
     const timeoutId = setTimeout(() => {
@@ -97,7 +98,6 @@ export default function SettingsPage() {
       }
     }, 10000);
 
-    // Start playing as soon as enough data is buffered (streaming)
     audio.addEventListener("canplay", () => {
       clearTimeout(timeoutId);
       setPreviewLoading(null);
@@ -117,6 +117,10 @@ export default function SettingsPage() {
       setPreviewingReciter(null);
       toast.error("تعذر تشغيل المعاينة");
     }, { once: true });
+
+    // Set src after listeners are attached
+    audio.src = url;
+    audio.preload = "auto";
 
     audio.load();
   }, [previewingReciter, stopPreview]);
