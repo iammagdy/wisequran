@@ -16,6 +16,7 @@ import TasbeehPage from "@/pages/TasbeehPage";
 import StatsPage from "@/pages/StatsPage";
 import HifzPage from "@/pages/HifzPage";
 import QiblaPage from "@/pages/QiblaPage";
+import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
