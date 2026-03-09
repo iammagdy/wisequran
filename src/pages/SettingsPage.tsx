@@ -717,7 +717,45 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
-        <section>
+        {/* ─── Ramadan Tab Visibility ─── */}
+        {isRamadanNow() && (
+          <section>
+            <div className="section-title flex items-center gap-1.5">
+              <Star className="h-3.5 w-3.5" />
+              رمضان
+            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.17 }}
+              className="rounded-xl bg-card p-4 shadow-sm"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-lg">🌙</span>
+                  <span className="text-sm font-medium">إظهار تبويب رمضان</span>
+                </div>
+                <Switch
+                  checked={isRamadanTabVisible()}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      showRamadanTab();
+                    } else {
+                      hideRamadanTab();
+                    }
+                    toast.success(checked ? "تم إظهار تبويب رمضان" : "تم إخفاء تبويب رمضان");
+                    setTimeout(() => window.location.reload(), 500);
+                  }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                يظهر التبويب تلقائياً خلال شهر رمضان فقط
+              </p>
+            </motion.div>
+          </section>
+        )}
+
+
           <div className="section-title flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />
             حول التطبيق
