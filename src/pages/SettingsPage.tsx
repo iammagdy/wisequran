@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause } from "lucide-react";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -13,7 +13,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio } from "@/lib/quran-audio";
-import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
+import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
@@ -50,6 +50,69 @@ export default function SettingsPage() {
   const [audioDownloadProgress, setAudioDownloadProgress] = useState(0);
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
+
+  // Preview reciter audio
+  const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopPreview = useCallback(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = "";
+      previewAudioRef.current = null;
+    }
+    setPreviewingReciter(null);
+    setPreviewLoading(null);
+  }, []);
+
+  const togglePreview = useCallback((r: typeof RECITERS[0]) => {
+    // If already previewing this reciter, stop
+    if (previewingReciter === r.id) {
+      stopPreview();
+      return;
+    }
+    // Stop any current preview
+    stopPreview();
+
+    setPreviewLoading(r.id);
+    const url = r.hasAyahAudio
+      ? getReciterAyahAudioUrl(r.id, 1)
+      : getReciterAudioUrl(r.id, 1);
+
+    const audio = new Audio(url);
+    previewAudioRef.current = audio;
+
+    audio.addEventListener("canplay", () => {
+      setPreviewLoading(null);
+      setPreviewingReciter(r.id);
+      audio.play().catch(() => {
+        setPreviewingReciter(null);
+      });
+    }, { once: true });
+
+    audio.addEventListener("ended", () => {
+      setPreviewingReciter(null);
+    }, { once: true });
+
+    audio.addEventListener("error", () => {
+      setPreviewLoading(null);
+      setPreviewingReciter(null);
+      toast.error("تعذر تشغيل المعاينة");
+    }, { once: true });
+
+    audio.load();
+  }, [previewingReciter, stopPreview]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+    };
+  }, []);
 
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -223,22 +286,39 @@ export default function SettingsPage() {
               <CollapsibleContent>
                 <div className="border-t border-border/50 px-2 py-2 max-h-64 overflow-y-auto space-y-0.5">
                   {RECITERS.map((r) => (
-                    <button
+                    <div
                       key={r.id}
-                      onClick={() => setReciterId(r.id)}
                       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                         reciterId === r.id
                           ? "bg-primary/10 text-primary"
                           : "text-foreground hover:bg-muted"
                       }`}
                     >
-                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"
-                      }`}>
-                        {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
-                      </div>
-                      <span className="font-arabic">{r.name}</span>
-                    </button>
+                      <button
+                        onClick={() => setReciterId(r.id)}
+                        className="flex flex-1 items-center gap-3 min-w-0"
+                      >
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                          reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                        </div>
+                        <span className="font-arabic truncate">{r.name}</span>
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); togglePreview(r); }}
+                        className="shrink-0 p-1.5 rounded-full hover:bg-muted-foreground/10 transition-colors"
+                        title="معاينة الصوت"
+                      >
+                        {previewLoading === r.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : previewingReciter === r.id ? (
+                          <Pause className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Volume2 className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    </div>
                   ))}
                 </div>
               </CollapsibleContent>
