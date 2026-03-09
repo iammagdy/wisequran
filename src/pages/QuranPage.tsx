@@ -14,6 +14,7 @@ import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
 import { juzData } from "@/data/juz-hizb-data";
 import { DailyAyah } from "@/components/quran/DailyAyah";
+import { DailyWird } from "@/components/quran/DailyWird";
 
 type ViewMode = "surahs" | "juz";
 
