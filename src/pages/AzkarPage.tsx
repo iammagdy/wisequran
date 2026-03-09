@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { azkarData, type AzkarCategory, type Dhikr } from "@/data/azkar-data";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
-import { ArrowRight, RotateCcw, Heart, Star } from "lucide-react";
+import { useAzkarCompletion } from "@/hooks/useAzkarCompletion";
+import { ArrowRight, RotateCcw, Heart, Star, CheckCircle2 } from "lucide-react";
 import { cn, toArabicNumerals } from "@/lib/utils";
 
 function DhikrCounter({
