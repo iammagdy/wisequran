@@ -380,7 +380,7 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
-        {/* ─── Prayer Calculation Method ─── */}
+        {/* ─── Prayer Calculation Method (Collapsible) ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
@@ -390,29 +390,36 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.035 }}
-            className="rounded-xl bg-card p-4 shadow-sm"
+            className="rounded-xl bg-card shadow-sm overflow-hidden"
           >
-            <p className="mb-3 text-xs text-muted-foreground">اختر طريقة حساب مواقيت الصلاة المناسبة لمنطقتك</p>
-            <div className="space-y-1.5">
-              {(Object.entries(CALCULATION_METHODS) as [CalculationMethod, typeof CALCULATION_METHODS[CalculationMethod]][]).map(([key, method]) => (
-                <button
-                  key={key}
-                  onClick={() => setCalcMethod(key)}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    calcMethod === key
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground hover:bg-muted"
-                  }`}
-                >
-                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    calcMethod === key ? "border-primary bg-primary" : "border-muted-foreground/30"
-                  }`}>
-                    {calcMethod === key && <Check className="h-3 w-3 text-primary-foreground" />}
-                  </div>
-                  <span className="font-arabic">{method.name}</span>
-                </button>
-              ))}
-            </div>
+            <Collapsible>
+              <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
+                <span className="font-arabic">{CALCULATION_METHODS[calcMethod]?.name ?? "الهيئة المصرية"}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="border-t border-border/50 px-2 py-2 space-y-0.5">
+                  {(Object.entries(CALCULATION_METHODS) as [CalculationMethod, typeof CALCULATION_METHODS[CalculationMethod]][]).map(([key, method]) => (
+                    <button
+                      key={key}
+                      onClick={() => setCalcMethod(key)}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                        calcMethod === key
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                        calcMethod === key ? "border-primary bg-primary" : "border-muted-foreground/30"
+                      }`}>
+                        {calcMethod === key && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                      </div>
+                      <span className="font-arabic">{method.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </motion.div>
           <div className="section-title flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5" />
