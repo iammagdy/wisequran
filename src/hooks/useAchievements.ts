@@ -138,9 +138,9 @@ export function useAchievements() {
 
   const getAchievements = useCallback((): Achievement[] => {
     const totalAyahs = getTotalAyahs();
-    const memorizedCount = getSurahsByStatus("memorized").length;
+    const memorizedCount = hifzStats.memorized;
     const goalCompletions = getGoalCompletions();
-    const currentStreak = Math.max(streak, maxStreak);
+    const currentStreak = streak;
     
     return ACHIEVEMENT_DEFINITIONS.map((def) => {
       let progress = 0;
@@ -167,7 +167,7 @@ export function useAchievements() {
         progress,
       };
     });
-  }, [state.unlocked, streak, maxStreak, getTotalAyahs, getSurahsByStatus, getGoalCompletions]);
+  }, [state.unlocked, streak, hifzStats.memorized, getTotalAyahs, getGoalCompletions]);
 
   const dismissNewUnlock = useCallback(() => {
     setNewUnlock(null);
