@@ -5,6 +5,8 @@ import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { Compass } from "lucide-react";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -53,6 +55,7 @@ function formatCompactCountdown(totalSeconds: number): string {
 }
 
 export default function PrayerPage() {
+  const navigate = useNavigate();
   const [data, setData] = useLocalStorage<DayData>("wise-prayer-today", {
     date: getTodayKey(),
     completed: [],
@@ -98,7 +101,17 @@ export default function PrayerPage() {
   return (
     <div className="px-4 pt-6 pb-24">
       {/* Header */}
-      <h1 className="mb-4 text-center text-2xl font-bold heading-decorated mx-auto w-fit">صلواتي اليوم</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <div />
+        <h1 className="text-2xl font-bold heading-decorated">صلواتي اليوم</h1>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate("/qibla")}
+          className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
+        >
+          <Compass className="h-5 w-5" />
+        </motion.button>
+      </div>
 
       {/* Date Card */}
       <motion.div 

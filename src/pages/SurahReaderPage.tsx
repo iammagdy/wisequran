@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers, Share2 } from "lucide-react";
+import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -432,6 +433,12 @@ export default function SurahReaderPage() {
                             >
                               <BookOpen className="h-4 w-4" />
                             </motion.button>
+                            <ShareAyahCard
+                              ayahText={ayah.text}
+                              surahName={surahInfo?.name || ""}
+                              ayahNumber={ayah.numberInSurah}
+                              surahNumber={surahNumber}
+                            />
                           </div>
                           <div className="number-badge h-8 w-8 text-xs">
                             {toArabicNumerals(ayah.numberInSurah)}

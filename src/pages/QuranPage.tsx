@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star, Loader2, History, Flame, BarChart3 } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader2, History, Flame, BarChart3, GraduationCap } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -14,6 +14,7 @@ import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
 import { juzData } from "@/data/juz-hizb-data";
 import { DailyAyah } from "@/components/quran/DailyAyah";
+import { DailyWird } from "@/components/quran/DailyWird";
 
 type ViewMode = "surahs" | "juz";
 
@@ -98,6 +99,13 @@ export default function QuranPage() {
         <div className="flex items-center gap-1.5">
           <motion.button
             whileTap={{ scale: 0.9 }}
+            onClick={() => navigate("/hifz")}
+            className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
+          >
+            <GraduationCap className="h-5 w-5" />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={() => navigate("/stats")}
             className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
           >
@@ -162,6 +170,11 @@ export default function QuranPage() {
           <p className="text-xs text-primary font-medium mt-2 text-center">🎉 ما شاء الله! أكملت هدفك اليوم</p>
         )}
       </motion.div>
+
+      {/* Daily Wird */}
+      {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
+        <DailyWird />
+      )}
 
       {/* Daily Ayah */}
       {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
