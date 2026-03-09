@@ -1,17 +1,29 @@
 import { toArabicNumerals } from "@/lib/utils";
 
 /**
- * Prayer time calculator for Egypt (Cairo)
- * Egyptian General Authority of Survey method: Fajr 19.5°, Isha 17.5°
- * Zero dependencies — pure astronomical math.
+ * Prayer time calculator with support for any coordinates
+ * Supports multiple calculation methods
  */
 
-const CAIRO_LAT = 30.0444;
-const CAIRO_LNG = 31.2357;
-const CAIRO_TZ = 2; // UTC+2 (EET); note: Egypt no longer observes DST
+// Default coordinates (Cairo)
+const DEFAULT_LAT = 30.0444;
+const DEFAULT_LNG = 31.2357;
+const DEFAULT_TZ = 2;
 
 const DEG = Math.PI / 180;
 const RAD = 180 / Math.PI;
+
+// Calculation methods with their Fajr and Isha angles
+export const CALCULATION_METHODS = {
+  egyptian: { name: "الهيئة المصرية", fajrAngle: 19.5, ishaAngle: 17.5 },
+  mwl: { name: "رابطة العالم الإسلامي", fajrAngle: 18, ishaAngle: 17 },
+  isna: { name: "أمريكا الشمالية", fajrAngle: 15, ishaAngle: 15 },
+  umm_al_qura: { name: "أم القرى", fajrAngle: 18.5, ishaAngle: 0, ishaMinutes: 90 },
+  karachi: { name: "جامعة كراتشي", fajrAngle: 18, ishaAngle: 18 },
+  tehran: { name: "طهران", fajrAngle: 17.7, ishaAngle: 14 },
+} as const;
+
+export type CalculationMethod = keyof typeof CALCULATION_METHODS;
 
 function julianDate(year: number, month: number, day: number): number {
   if (month <= 2) { year--; month += 12; }
@@ -28,11 +40,10 @@ function sunPosition(jd: number) {
   const e = 23.439 - 0.00000036 * D;
   const RA = Math.atan2(Math.cos(e * DEG) * Math.sin(L * DEG), Math.cos(L * DEG)) * RAD;
   const decl = Math.asin(Math.sin(e * DEG) * Math.sin(L * DEG)) * RAD;
-  // Equation of time in minutes
   let EqT = (q - RA) % 360;
   if (EqT > 180) EqT -= 360;
   if (EqT < -180) EqT += 360;
-  return { decl, EqT: EqT * 4 }; // *4 to convert degrees to minutes
+  return { decl, EqT: EqT * 4 };
 }
 
 function hourAngle(lat: number, decl: number, angle: number): number {
@@ -42,9 +53,8 @@ function hourAngle(lat: number, decl: number, angle: number): number {
   return Math.acos(cosHA) * RAD;
 }
 
-function asrHourAngle(lat: number, decl: number): number {
-  // Shafi'i: shadow = object length + noon shadow
-  const a = Math.atan(1 / (1 + Math.tan(Math.abs(lat - decl) * DEG)));
+function asrHourAngle(lat: number, decl: number, shadowFactor: number = 1): number {
+  const a = Math.atan(1 / (shadowFactor + Math.tan(Math.abs(lat - decl) * DEG)));
   return Math.acos(
     (Math.sin(a) - Math.sin(lat * DEG) * Math.sin(decl * DEG)) /
     (Math.cos(lat * DEG) * Math.cos(decl * DEG))
@@ -52,14 +62,11 @@ function asrHourAngle(lat: number, decl: number): number {
 }
 
 function toTimeString(hours: number): string {
-  // Clamp to 0-24 range
   hours = ((hours % 24) + 24) % 24;
   const h = Math.floor(hours);
   const m = Math.round((hours - h) * 60);
   return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
 }
-
-
 
 function toArabicTime(time24: string): string {
   const [hStr, mStr] = time24.split(":");
@@ -70,8 +77,16 @@ function toArabicTime(time24: string): string {
   return toArabicNumerals(`${h}:${mStr} ${period}`);
 }
 
+// Get timezone offset for a location (simplified)
+function getTimezoneOffset(lng: number): number {
+  // Approximate timezone based on longitude
+  // This is a simplification; real implementation would use a timezone database
+  return Math.round(lng / 15);
+}
+
 export interface PrayerTimes {
   fajr: string;
+  sunrise: string;
   dhuhr: string;
   asr: string;
   maghrib: string;
@@ -85,49 +100,55 @@ export interface NextPrayerInfo {
   secondsLeft: number;
 }
 
-/** Get seconds remaining until a specific prayer time. Negative if passed. */
-export function getSecondsUntilPrayer(prayerTime: string, now: Date): number {
-  const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
-  const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
-  const [h, m] = prayerTime.split(":").map(Number);
-  const prayerSeconds = h * 3600 + m * 60;
-  return prayerSeconds - nowSeconds;
+export interface CalculationOptions {
+  latitude?: number;
+  longitude?: number;
+  timezone?: number;
+  method?: CalculationMethod;
+  asrJuristic?: "shafii" | "hanafi"; // Shafii: shadow = 1x, Hanafi: shadow = 2x
 }
 
-const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
-const PRAYER_NAMES: Record<string, string> = {
-  fajr: "الفجر",
-  dhuhr: "الظهر",
-  asr: "العصر",
-  maghrib: "المغرب",
-  isha: "العشاء",
-};
-
 /**
- * Calculate prayer times for a given date using Cairo coordinates
- * and the Egyptian General Authority method.
+ * Calculate prayer times for a given date and location
  */
-export function calculatePrayerTimes(date: Date): PrayerTimes {
+export function calculatePrayerTimes(date: Date, options: CalculationOptions = {}): PrayerTimes {
+  const lat = options.latitude ?? DEFAULT_LAT;
+  const lng = options.longitude ?? DEFAULT_LNG;
+  const tz = options.timezone ?? getTimezoneOffset(lng);
+  const method = options.method ?? "egyptian";
+  const asrFactor = options.asrJuristic === "hanafi" ? 2 : 1;
+  
+  const methodConfig = CALCULATION_METHODS[method];
+  
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const jd = julianDate(year, month, day);
   const { decl, EqT } = sunPosition(jd);
 
-  const transit = 12 + (CAIRO_LNG * -1) / 15 - EqT / 60 + CAIRO_TZ;
+  const transit = 12 + (lng * -1) / 15 - EqT / 60 + tz;
 
-  const fajrHA = hourAngle(CAIRO_LAT, decl, -19.5);
-  const sunriseHA = hourAngle(CAIRO_LAT, decl, -0.833);
-  const asrHA = asrHourAngle(CAIRO_LAT, decl);
-  const sunsetHA = hourAngle(CAIRO_LAT, decl, -0.833);
-  const ishaHA = hourAngle(CAIRO_LAT, decl, -17.5);
+  const fajrHA = hourAngle(lat, decl, -methodConfig.fajrAngle);
+  const sunriseHA = hourAngle(lat, decl, -0.833);
+  const asrHA = asrHourAngle(lat, decl, asrFactor);
+  const sunsetHA = hourAngle(lat, decl, -0.833);
+  
+  let ishaTime: number;
+  if ("ishaMinutes" in methodConfig && methodConfig.ishaMinutes) {
+    // Umm Al-Qura: Isha is fixed minutes after Maghrib
+    ishaTime = transit + sunsetHA / 15 + methodConfig.ishaMinutes / 60;
+  } else {
+    const ishaHA = hourAngle(lat, decl, -methodConfig.ishaAngle);
+    ishaTime = transit + ishaHA / 15;
+  }
 
   return {
     fajr: toTimeString(transit - fajrHA / 15),
-    dhuhr: toTimeString(transit + 2 / 60), // 2 min after solar noon
+    sunrise: toTimeString(transit - sunriseHA / 15),
+    dhuhr: toTimeString(transit + 2 / 60),
     asr: toTimeString(transit + asrHA / 15),
     maghrib: toTimeString(transit + sunsetHA / 15),
-    isha: toTimeString(transit + ishaHA / 15),
+    isha: toTimeString(ishaTime),
   };
 }
 
@@ -136,13 +157,38 @@ export function formatArabicTime(time24: string): string {
   return toArabicTime(time24);
 }
 
-/** Get the next upcoming prayer and minutes remaining */
-export function getNextPrayer(times: PrayerTimes, now: Date): NextPrayerInfo | null {
-  const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
+/** Get seconds remaining until a specific prayer time. Negative if passed. */
+export function getSecondsUntilPrayer(prayerTime: string, now: Date, timezone?: string): number {
+  const localNow = timezone 
+    ? new Date(now.toLocaleString("en-US", { timeZone: timezone }))
+    : now;
+  
+  const nowSeconds = localNow.getHours() * 3600 + localNow.getMinutes() * 60 + localNow.getSeconds();
+  const [h, m] = prayerTime.split(":").map(Number);
+  const prayerSeconds = h * 3600 + m * 60;
+  return prayerSeconds - nowSeconds;
+}
 
-  const nowSeconds = cairoNow.getHours() * 3600 + cairoNow.getMinutes() * 60 + cairoNow.getSeconds();
+const PRAYER_ORDER = ["fajr", "sunrise", "dhuhr", "asr", "maghrib", "isha"] as const;
+const PRAYER_NAMES: Record<string, string> = {
+  fajr: "الفجر",
+  sunrise: "الشروق",
+  dhuhr: "الظهر",
+  asr: "العصر",
+  maghrib: "المغرب",
+  isha: "العشاء",
+};
+
+/** Get the next upcoming prayer and seconds remaining */
+export function getNextPrayer(times: PrayerTimes, now: Date, timezone?: string): NextPrayerInfo | null {
+  const localNow = timezone
+    ? new Date(now.toLocaleString("en-US", { timeZone: timezone }))
+    : now;
+
+  const nowSeconds = localNow.getHours() * 3600 + localNow.getMinutes() * 60 + localNow.getSeconds();
 
   for (const id of PRAYER_ORDER) {
+    if (id === "sunrise") continue; // Skip sunrise for "next prayer"
     const [h, m] = times[id].split(":").map(Number);
     const prayerSeconds = h * 3600 + m * 60;
     if (prayerSeconds > nowSeconds) {
@@ -150,9 +196,15 @@ export function getNextPrayer(times: PrayerTimes, now: Date): NextPrayerInfo | n
       return { id, name: PRAYER_NAMES[id], minutesLeft: Math.ceil(secondsLeft / 60), secondsLeft };
     }
   }
-  // All prayers passed — next is tomorrow's Fajr (approximate)
+  
+  // All prayers passed — next is tomorrow's Fajr
   const [fH, fM] = times.fajr.split(":").map(Number);
   const fajrSeconds = fH * 3600 + fM * 60;
   const secondsLeft = (24 * 3600 - nowSeconds) + fajrSeconds;
   return { id: "fajr", name: PRAYER_NAMES.fajr, minutesLeft: Math.ceil(secondsLeft / 60), secondsLeft };
+}
+
+/** Get method name in Arabic */
+export function getMethodName(method: CalculationMethod): string {
+  return CALCULATION_METHODS[method].name;
 }
