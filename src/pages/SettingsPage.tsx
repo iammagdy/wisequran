@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu } from "lucide-react";
+import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
@@ -138,7 +139,9 @@ export default function SettingsPage() {
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const browserType = detectBrowser();
+  const installInstructions = getInstallInstructions(browserType);
+  const isIOS = browserType === "ios-safari";
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 
   useEffect(() => {
@@ -794,9 +797,21 @@ export default function SettingsPage() {
                   </button>
                 </div>
               ) : (
-                <p className="text-center text-sm text-muted-foreground">
-                  افتح التطبيق من متصفح Chrome أو Safari لتتمكن من تثبيته
-                </p>
+                <div className="space-y-3 text-center">
+                  <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
+                  <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">١.</span>
+                      <span>{installInstructions.step1}</span>
+                      {browserType === "chromium" && <MoreVertical className="h-4 w-4" />}
+                      {browserType === "firefox" && <Menu className="h-4 w-4" />}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">٢.</span>
+                      <span>{installInstructions.step2}</span>
+                    </div>
+                  </div>
+                </div>
               )}
             </motion.div>
           </section>

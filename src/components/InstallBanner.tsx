@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Share } from "lucide-react";
+import { X, Download, Share, MoreVertical, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,20 +12,14 @@ interface BeforeInstallPromptEvent extends Event {
 export default function InstallBanner() {
   const [show, setShow] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [isIOS, setIsIOS] = useState(false);
+  const browserType = detectBrowser();
+  const instructions = getInstallInstructions(browserType);
 
   useEffect(() => {
     // Already installed or dismissed
     if (window.matchMedia("(display-mode: standalone)").matches) return;
+    if ((navigator as any).standalone === true) return;
     if (localStorage.getItem("wise-install-dismissed")) return;
-
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as any).MSStream;
-    setIsIOS(ios);
-
-    if (ios) {
-      setShow(true);
-      return;
-    }
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -33,7 +28,15 @@ export default function InstallBanner() {
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Show banner for all browsers (with manual instructions if no prompt)
+    // Small delay to avoid flash
+    const timer = setTimeout(() => setShow(true), 2000);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      clearTimeout(timer);
+    };
   }, []);
 
   const dismiss = useCallback(() => {
@@ -75,16 +78,18 @@ export default function InstallBanner() {
               <p className="text-sm font-semibold text-foreground">ثبّت التطبيق</p>
               <p className="text-xs text-muted-foreground">للوصول السريع بدون متصفح</p>
             </div>
-            {isIOS ? (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                <Share className="h-3.5 w-3.5" />
-                <span>شارك ← أضف للشاشة</span>
-              </div>
-            ) : deferredPrompt ? (
+            {deferredPrompt ? (
               <Button size="sm" onClick={handleInstall} className="shrink-0">
                 تثبيت
               </Button>
-            ) : null}
+            ) : (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                {browserType === "ios-safari" && <Share className="h-3.5 w-3.5" />}
+                {browserType === "chromium" && <MoreVertical className="h-3.5 w-3.5" />}
+                {browserType === "firefox" && <Menu className="h-3.5 w-3.5" />}
+                <span>{instructions.step1}</span>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
