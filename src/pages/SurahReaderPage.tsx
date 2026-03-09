@@ -377,6 +377,7 @@ export default function SurahReaderPage() {
                 setAyahRef={setAyahRef}
                 targetPage={mushafTargetPage}
                 onPageChange={(page) => setCurrentPage(page)}
+                onSeekToAyah={audioPlayer.seekToAyah}
               />
             ) : (
               <div className="space-y-3" dir="rtl">
@@ -431,8 +432,16 @@ export default function SurahReaderPage() {
                           </span>
                         </div>
                         <p
-                          className="font-arabic text-foreground"
+                          className={cn(
+                            "font-arabic text-foreground",
+                            playingAyahInSurah !== null && "cursor-pointer hover:text-primary/80 transition-colors"
+                          )}
                           style={{ fontSize, lineHeight: 2.2 }}
+                          onClick={() => {
+                            if (playingAyahInSurah !== null) {
+                              audioPlayer.seekToAyah(ayah.numberInSurah);
+                            }
+                          }}
                         >
                           {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
