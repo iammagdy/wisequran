@@ -13,6 +13,7 @@ import AzkarPage from "@/pages/AzkarPage";
 import PrayerPage from "@/pages/PrayerPage";
 import SettingsPage from "@/pages/SettingsPage";
 import TasbeehPage from "@/pages/TasbeehPage";
+import StatsPage from "@/pages/StatsPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
