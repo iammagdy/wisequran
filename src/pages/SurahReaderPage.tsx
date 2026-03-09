@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers, Share2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers, Share2, Maximize2 } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
+import FocusMode from "@/components/quran/FocusMode";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export default function SurahReaderPage() {
@@ -45,6 +46,7 @@ export default function SurahReaderPage() {
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
+  const [focusModeActive, setFocusModeActive] = useState(false);
 
   // Tab & tafsir state
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
@@ -291,6 +293,13 @@ export default function SurahReaderPage() {
             </p>
           </div>
           <div className="flex items-center gap-0.5">
+            <button
+              onClick={() => setFocusModeActive(true)}
+              className="rounded-lg p-2 transition-colors text-muted-foreground hover:bg-muted"
+              title="وضع التركيز"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
             <button
               onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
               className={cn(
@@ -588,6 +597,20 @@ export default function SurahReaderPage() {
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
         ayahs={ayahs}
       />
+      {/* Focus Mode Overlay */}
+      <AnimatePresence>
+        {focusModeActive && ayahs.length > 0 && (
+          <FocusMode
+            ayahs={ayahs}
+            fontSize={fontSize}
+            surahNumber={surahNumber}
+            surahName={surahInfo?.name || `سورة ${surahNumber}`}
+            playingAyah={playingAyahInSurah}
+            onSeekToAyah={audioPlayer.seekToAyah}
+            onClose={() => setFocusModeActive(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
