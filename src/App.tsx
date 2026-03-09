@@ -10,6 +10,7 @@ import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
 import PrayerPage from "@/pages/PrayerPage";
 import SettingsPage from "@/pages/SettingsPage";
+import TasbeehPage from "@/pages/TasbeehPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 
