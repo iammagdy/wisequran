@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Compass, MapPin } from "lucide-react";
+import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -248,6 +249,9 @@ export default function PrayerPage() {
           );
         })}
       </div>
+
+      {/* Prayer Guide */}
+      <PrayerGuideCard />
 
     </div>
   );
