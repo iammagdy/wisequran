@@ -99,7 +99,13 @@ export default function PrayerPage() {
   };
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
-
+      {/* Location indicator */}
+      {location?.city && (
+        <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          <span>{location.city}</span>
+        </div>
+      )}
 
   // Hero countdown data
   const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;
