@@ -76,14 +76,33 @@ export default function SettingsPage() {
     stopPreview();
 
     setPreviewLoading(r.id);
-    const url = r.hasAyahAudio
+
+    // Smart source selection:
+    // Use per-ayah CDN only if reciter has a real folder (not fallback "ar.alafasy")
+    const hasRealAyahAudio = r.hasAyahAudio && r.folder !== "ar.alafasy";
+    const url = hasRealAyahAudio
       ? getReciterAyahAudioUrl(r.id, 1)
       : await getReciterAudioUrl(r.id, 1);
 
     const audio = new Audio(url);
+    audio.preload = "auto";
     previewAudioRef.current = audio;
 
+    // Timeout: abort if audio doesn't start within 10s
+    const timeoutId = setTimeout(() => {
+      if (previewAudioRef.current === audio) {
+        audio.pause();
+        audio.src = "";
+        previewAudioRef.current = null;
+        setPreviewLoading(null);
+        setPreviewingReciter(null);
+        toast.error("انتهت مهلة تحميل المعاينة");
+      }
+    }, 10000);
+
+    // Start playing as soon as enough data is buffered (streaming)
     audio.addEventListener("canplay", () => {
+      clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(r.id);
       audio.play().catch(() => {
@@ -96,6 +115,7 @@ export default function SettingsPage() {
     }, { once: true });
 
     audio.addEventListener("error", () => {
+      clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(null);
       toast.error("تعذر تشغيل المعاينة");
