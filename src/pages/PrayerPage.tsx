@@ -249,6 +249,9 @@ export default function PrayerPage() {
         })}
       </div>
 
+      {/* Prayer Guide */}
+      <PrayerGuideCard />
+
     </div>
   );
 }
