@@ -24,6 +24,14 @@ export const RECITERS: Reciter[] = [
   { id: "baleela", name: "بندر بليلة", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "khalilaljalil", name: "خالد الجليل", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "qatami", name: "ناصر القطامي", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "juhany", name: "عبدالله الجهني", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "faresabbad", name: "فارس عباد", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "alousi", name: "عبدالرحمن العوسي", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "luhaidan", name: "محمد اللحيدان", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "abdullahmousa", name: "عبدالله الموسى", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "nufais", name: "أحمد النفيس", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "ayyub", name: "محمد أيوب", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "idrisabkar", name: "إدريس أبكر", folder: "ar.alafasy", hasAyahAudio: false },
 ];
 
 export const DEFAULT_RECITER = "alafasy";
@@ -40,6 +48,14 @@ const CUSTOM_CDN_RECITERS: Record<string, string> = {
   khalilaljalil: "https://server6.mp3quran.net/jalil/Rewayat-Hafs-A-n-Assem",
   qatami: "https://server6.mp3quran.net/qtm/Rewayat-Hafs-A-n-Assem",
   baleela: "https://server8.mp3quran.net/bndrlh",
+  juhany: "https://server8.mp3quran.net/jhn/Rewayat-Hafs-A-n-Assem",
+  faresabbad: "https://server6.mp3quran.net/frs_a/Rewayat-Hafs-A-n-Assem",
+  alousi: "https://server6.mp3quran.net/3oosi/Rewayat-Hafs-A-n-Assem",
+  luhaidan: "https://server8.mp3quran.net/lhdan/Rewayat-Hafs-A-n-Assem",
+  abdullahmousa: "https://server14.mp3quran.net/mousa",
+  nufais: "https://server8.mp3quran.net/nfs/Rewayat-Hafs-A-n-Assem",
+  ayyub: "https://server8.mp3quran.net/ayyub/Rewayat-Hafs-A-n-Assem",
+  idrisabkar: "https://server6.mp3quran.net/abkr/Rewayat-Hafs-A-n-Assem",
 };
 
 export function getReciterAyahAudioUrl(reciterId: string, globalAyahNumber: number): string {
