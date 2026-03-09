@@ -7,6 +7,7 @@ const tabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
+  { path: "/tasbeeh", icon: Circle, label: "التسبيح" },
   { path: "/settings", icon: Settings, label: "الإعدادات" },
 ];
 

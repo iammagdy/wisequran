@@ -26,6 +26,7 @@ const AppContent = () => {
           <Route path="/surah/:id" element={<SurahReaderPage />} />
           <Route path="/azkar" element={<AzkarPage />} />
           <Route path="/prayer" element={<PrayerPage />} />
+          <Route path="/tasbeeh" element={<TasbeehPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
