@@ -9,7 +9,7 @@ import { toArabicNumerals } from "@/lib/utils";
 export default function GlobalAudioBar() {
   const {
     surahNumber, surahName, playing, loading, playingReciterId,
-    togglePlayPause, stop, isAyahMode, currentAyahIndex, totalAyahs,
+    togglePlayPause, stop, totalAyahs, currentAyahInSurah,
     currentTime, duration,
   } = useAudioPlayer();
   const navigate = useNavigate();
