@@ -78,10 +78,9 @@ function toArabicTime(time24: string): string {
 }
 
 // Get timezone offset for a location (simplified)
-function getTimezoneOffset(lng: number): number {
-  // Approximate timezone based on longitude
-  // This is a simplification; real implementation would use a timezone database
-  return Math.round(lng / 15);
+function getTimezoneOffset(_lng: number): number {
+  // Use browser's actual timezone offset instead of guessing from longitude
+  return -(new Date().getTimezoneOffset() / 60);
 }
 
 export interface PrayerTimes {

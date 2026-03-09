@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { calculatePrayerTimes, type PrayerTimes } from "@/lib/prayer-times";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useLocation } from "@/hooks/useLocation";
 
 const AZKAR_TIMES = {
   fajr: { id: "morning", name: "أذكار الصباح", icon: "🌅" },
@@ -14,6 +15,7 @@ function todayKey() {
 
 export function useAzkarNotifications() {
   const [enabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
+  const { location } = useLocation();
   const notifiedRef = useRef<Set<string>>(new Set());
   const lastDayRef = useRef(todayKey());
 
@@ -29,14 +31,15 @@ export function useAzkarNotifications() {
       }
 
       const now = new Date();
-      const cairoNow = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Cairo" }));
-      const nowHH = cairoNow.getHours().toString().padStart(2, "0");
-      const nowMM = cairoNow.getMinutes().toString().padStart(2, "0");
+      const nowHH = now.getHours().toString().padStart(2, "0");
+      const nowMM = now.getMinutes().toString().padStart(2, "0");
       const nowTime = `${nowHH}:${nowMM}`;
 
-      const times: PrayerTimes = calculatePrayerTimes(now);
+      const options = location
+        ? { latitude: location.latitude, longitude: location.longitude }
+        : {};
+      const times: PrayerTimes = calculatePrayerTimes(now, options);
 
-      // Check Fajr for morning azkar
       if (times.fajr === nowTime && !notifiedRef.current.has("morning")) {
         notifiedRef.current.add("morning");
         new Notification(`حان وقت ${AZKAR_TIMES.fajr.name} ${AZKAR_TIMES.fajr.icon}`, {
@@ -47,7 +50,6 @@ export function useAzkarNotifications() {
         });
       }
 
-      // Check Maghrib for evening azkar
       if (times.maghrib === nowTime && !notifiedRef.current.has("evening")) {
         notifiedRef.current.add("evening");
         new Notification(`حان وقت ${AZKAR_TIMES.maghrib.name} ${AZKAR_TIMES.maghrib.icon}`, {
@@ -62,5 +64,5 @@ export function useAzkarNotifications() {
     check();
     const interval = setInterval(check, 30_000);
     return () => clearInterval(interval);
-  }, [enabled]);
+  }, [enabled, location]);
 }
