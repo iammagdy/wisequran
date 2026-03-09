@@ -31,6 +31,7 @@ export default function MushafPageView({
   setAyahRef,
   targetPage,
   onPageChange,
+  onSeekToAyah,
 }: MushafPageViewProps) {
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
 
