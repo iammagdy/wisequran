@@ -139,6 +139,11 @@ export default function QuranPage() {
         <Progress value={progress} className="h-1.5" />
       </div>
 
+      {/* Daily Ayah */}
+      {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
+        <DailyAyah />
+      )}
+
       {/* Last Read */}
       {lastRead && !showBookmarks && !showFavorites && !showHistory && isSurahMode && (
         <motion.button
