@@ -154,10 +154,19 @@ export default function MushafPageView({
                     >
                       {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                       <button
-                        onClick={() =>
-                          setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah)
-                        }
-                        className="inline-flex items-baseline text-primary/70 hover:text-primary transition-colors"
+                        onClick={() => {
+                          if (playingAyah !== null && onSeekToAyah) {
+                            onSeekToAyah(ayah.numberInSurah);
+                          } else {
+                            setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah);
+                          }
+                        }}
+                        className={cn(
+                          "inline-flex items-baseline transition-colors",
+                          playingAyah !== null
+                            ? "text-primary hover:text-primary/80 cursor-pointer"
+                            : "text-primary/70 hover:text-primary"
+                        )}
                         style={{ fontSize: fontSize * 0.65 }}
                       >
                         ﴿{toArabicNumerals(ayah.numberInSurah)}﴾

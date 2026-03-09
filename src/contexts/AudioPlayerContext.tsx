@@ -231,6 +231,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setState(INITIAL_STATE);
   }, [cleanupBlobUrl]);
 
+  const seekToAyah = useCallback((ayahNumber: number) => {
+    const ts = timestampsRef.current.find((t) => t.numberInSurah === ayahNumber);
+    if (ts && audioRef.current) {
+      const timeInSeconds = ts.from / 1000;
+      audioRef.current.currentTime = timeInSeconds;
+      setState((s) => ({ ...s, currentTime: timeInSeconds }));
+    }
+  }, []);
+
   return (
     <AudioPlayerContext.Provider
       value={{
@@ -239,6 +248,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         play,
         togglePlayPause,
         seek,
+        seekToAyah,
         stop,
       }}
     >

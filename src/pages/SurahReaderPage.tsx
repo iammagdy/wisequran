@@ -377,6 +377,7 @@ export default function SurahReaderPage() {
                 setAyahRef={setAyahRef}
                 targetPage={mushafTargetPage}
                 onPageChange={(page) => setCurrentPage(page)}
+                onSeekToAyah={audioPlayer.seekToAyah}
               />
             ) : (
               <div className="space-y-3" dir="rtl">
