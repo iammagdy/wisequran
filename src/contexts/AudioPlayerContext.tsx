@@ -190,16 +190,31 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     if (stoppedRef.current) return;
 
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    setupAudioListeners(audio);
+    const tryPlay = async (url: string): Promise<boolean> => {
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setupAudioListeners(audio);
+      try {
+        await audio.play();
+        setState((s) => ({ ...s, playing: true }));
+        return true;
+      } catch {
+        return false;
+      }
+    };
 
-    try {
-      await audio.play();
-      setState((s) => ({ ...s, playing: true }));
-    } catch {
-      setState((s) => ({ ...s, loading: false }));
+    if (await tryPlay(audioUrl)) return;
+
+    // Fallback: if QF URL failed, try resolveAudioSource (uses CUSTOM_CDN)
+    if (audioUrl) {
+      const fallback = await resolveAudioSource(reciterId, surahNumber);
+      if (fallback) {
+        if (fallback.cached) blobUrlRef.current = fallback.url;
+        if (await tryPlay(fallback.url)) return;
+      }
     }
+
+    setState((s) => ({ ...s, loading: false }));
   }, [state.surahNumber, reciterId, cleanupBlobUrl, setupAudioListeners]);
 
   const togglePlayPause = useCallback(async () => {
