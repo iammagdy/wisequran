@@ -5,6 +5,7 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
 
+
 export default function GlobalAudioBar() {
   const {
     surahNumber, surahName, playing, loading, playingReciterId,
