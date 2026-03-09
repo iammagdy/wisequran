@@ -147,8 +147,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6 pb-8" dir="rtl">
-      <h1 className="mb-1 text-2xl font-bold">الإعدادات</h1>
+    <div className="px-4 pt-6 pb-24" dir="rtl">
+      <h1 className="mb-1 text-2xl font-bold heading-decorated">الإعدادات</h1>
       <p className="mb-6 text-sm text-muted-foreground">إعدادات التطبيق</p>
 
       <div className="space-y-6">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl bg-card p-4 shadow-sm space-y-4"
+            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4"
           >
             {/* Theme toggle */}
             <div className="flex items-center justify-between">
@@ -725,12 +725,12 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-xl bg-card p-5 text-center shadow-sm"
+            className="rounded-2xl gradient-hero p-6 text-center shadow-elevated border border-primary/10"
           >
-            <p className="font-arabic text-xl font-bold text-primary mb-1">Wise QURAN</p>
-            <p className="text-xs text-muted-foreground">v1.0.0</p>
+            <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
+            <p className="text-xs text-muted-foreground mb-3">v1.0.0</p>
             <Separator className="my-3" />
-            <p className="text-xs text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
+            <p className="text-sm text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
           </motion.div>
         </section>
       </div>

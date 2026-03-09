@@ -58,13 +58,13 @@ export function DailyAyah() {
 
   if (loading) {
     return (
-      <div className="mb-4 rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Skeleton className="h-4 w-4 rounded-full" />
+      <div className="mb-5 rounded-2xl gradient-hero p-5 shadow-elevated ornamental-corner">
+        <div className="flex items-center gap-2 mb-3">
+          <Skeleton className="h-5 w-5 rounded-full" />
           <Skeleton className="h-4 w-20" />
         </div>
-        <Skeleton className="h-16 w-full mb-2" />
-        <Skeleton className="h-3 w-24 mr-auto" />
+        <Skeleton className="h-20 w-full mb-3 rounded-xl" />
+        <Skeleton className="h-3 w-28 mr-auto" />
       </div>
     );
   }
@@ -75,20 +75,47 @@ export function DailyAyah() {
     <motion.button
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
       onClick={() => navigate(`/surah/${data.surah}?ayah=${data.ayah}`)}
-      className="mb-4 w-full rounded-xl bg-gradient-to-br from-primary/10 to-accent/10 p-4 text-right transition-all active:scale-[0.98]"
+      className="mb-5 w-full rounded-2xl gradient-hero p-5 text-right shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group"
       dir="rtl"
     >
-      <div className="flex items-center gap-2 mb-2 text-primary">
-        <Sparkles className="h-4 w-4" />
-        <span className="text-xs font-medium">آية اليوم</span>
+      {/* Decorative background pattern */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <pattern id="islamic-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="20" cy="20" r="1" fill="currentColor" />
+            <circle cx="0" cy="0" r="1" fill="currentColor" />
+            <circle cx="40" cy="0" r="1" fill="currentColor" />
+            <circle cx="0" cy="40" r="1" fill="currentColor" />
+            <circle cx="40" cy="40" r="1" fill="currentColor" />
+          </pattern>
+          <rect width="100%" height="100%" fill="url(#islamic-pattern)" />
+        </svg>
       </div>
-      <p className="font-arabic text-base leading-loose mb-2 line-clamp-3">
-        {data.text}
-      </p>
-      <p className="text-xs text-muted-foreground">
-        {data.surahName} · آية {toArabicNumerals(data.ayah)}
-      </p>
+
+      <div className="relative z-10">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10">
+            <Sparkles className="h-4 w-4 text-primary icon-glow" />
+          </div>
+          <span className="text-xs font-semibold text-primary">آية اليوم</span>
+        </div>
+        
+        <p className="font-arabic text-lg leading-loose mb-4 text-foreground/90 line-clamp-3">
+          {data.text}
+        </p>
+        
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground font-medium">
+            {data.surahName} · آية {toArabicNumerals(data.ayah)}
+          </p>
+          <span className="text-[10px] text-primary/70 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+            اضغط للقراءة ←
+          </span>
+        </div>
+      </div>
     </motion.button>
   );
 }

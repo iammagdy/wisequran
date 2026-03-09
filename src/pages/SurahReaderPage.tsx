@@ -197,12 +197,16 @@ export default function SurahReaderPage() {
   return (
     <div className="min-h-screen pb-72">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-1">
-            <button onClick={() => navigate("/")} className="rounded-lg p-2 hover:bg-muted transition-colors">
+      <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-1.5">
+            <motion.button 
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate("/")} 
+              className="rounded-xl p-2.5 hover:bg-muted transition-colors"
+            >
               <ArrowRight className="h-5 w-5" />
-            </button>
+            </motion.button>
             {/* Page indicator in header */}
             {currentPage && activeTab === "text" && (() => {
               const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
@@ -306,29 +310,31 @@ export default function SurahReaderPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex justify-center gap-2 px-4 pb-2" dir="rtl">
-          <button
-            onClick={() => { setActiveTab("text"); setFocusedAyah(null); }}
-            className={cn(
-              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
-              activeTab === "text"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
-          >
-            النص
-          </button>
-          <button
-            onClick={() => setActiveTab("tafsir")}
-            className={cn(
-              "rounded-full px-5 py-1.5 text-sm font-medium transition-colors",
-              activeTab === "tafsir"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
-          >
-            التفسير
-          </button>
+        <div className="flex justify-center gap-2 px-4 pb-3 pt-1" dir="rtl">
+          <div className="flex gap-1.5 p-1 rounded-2xl bg-muted/50">
+            <button
+              onClick={() => { setActiveTab("text"); setFocusedAyah(null); }}
+              className={cn(
+                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
+                activeTab === "text"
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              النص
+            </button>
+            <button
+              onClick={() => setActiveTab("tafsir")}
+              className={cn(
+                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
+                activeTab === "tafsir"
+                  ? "bg-card text-foreground shadow-soft"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              التفسير
+            </button>
+          </div>
         </div>
       </div>
 
@@ -393,43 +399,43 @@ export default function SurahReaderPage() {
                         </div>
                       )}
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.02, 1) }}
                         id={`ayah-${ayah.numberInSurah}`}
                         data-ayah={ayah.numberInSurah}
                         ref={(el) => setAyahRef(el, ayah.numberInSurah)}
                         className={cn(
-                          "group relative rounded-xl border-t-2 border-primary/5 bg-card p-4 shadow-sm transition-all duration-300",
-                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5",
-                          playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 border-primary/20"
+                          "group relative rounded-2xl bg-card p-5 shadow-soft border border-border/50 transition-all duration-300",
+                          highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
+                          playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 shadow-glow animate-glow-pulse"
                         )}
                       >
-                        <div className="mb-2 flex items-center justify-between">
+                        <div className="mb-3 flex items-center justify-between">
                           <div className="flex items-center gap-1">
-                            <button
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
                               onClick={() => toggleBookmark(ayah.numberInSurah)}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-muted"
+                              className="rounded-xl p-2 transition-colors hover:bg-muted"
                             >
                               {isBookmarked(ayah.numberInSurah) ? (
-                                <BookmarkCheck className="h-4 w-4 text-accent" />
+                                <BookmarkCheck className="h-4 w-4 text-gold" />
                               ) : (
                                 <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
                               )}
-                            </button>
-                            <button
+                            </motion.button>
+                            <motion.button
+                              whileTap={{ scale: 0.9 }}
                               onClick={() => handleAyahTafsir(ayah.numberInSurah)}
-                              className="rounded-lg p-1.5 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
+                              className="rounded-xl p-2 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
                               title="تفسير"
                             >
                               <BookOpen className="h-4 w-4" />
-                            </button>
+                            </motion.button>
                           </div>
-                          <span className="flex h-7 w-7 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                            <span className="-rotate-45 text-xs font-bold text-primary">
-                              {toArabicNumerals(ayah.numberInSurah)}
-                            </span>
-                          </span>
+                          <div className="number-badge h-8 w-8 text-xs">
+                            {toArabicNumerals(ayah.numberInSurah)}
+                          </div>
                         </div>
                         <p
                           className={cn(
