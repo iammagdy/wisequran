@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import BottomNav from "./BottomNav";
 import GlobalAudioBar from "@/components/quran/GlobalAudioBar";
+import { AchievementUnlockNotification } from "@/components/AchievementsSheet";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -16,7 +17,6 @@ export default function AppShell({ children }: Props) {
   const onSurahPage = location.pathname.startsWith("/surah/");
   const showGlobalBar = surahNumber !== null && !onSurahPage;
 
-  // Persist dark mode across all pages
   useTheme();
 
   return (
@@ -26,6 +26,7 @@ export default function AppShell({ children }: Props) {
         {showGlobalBar && <GlobalAudioBar />}
       </AnimatePresence>
       <BottomNav />
+      <AchievementUnlockNotification />
     </div>
   );
 }
