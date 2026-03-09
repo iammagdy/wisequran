@@ -597,6 +597,20 @@ export default function SurahReaderPage() {
         surahName={surahInfo?.name || `سورة ${surahNumber}`}
         ayahs={ayahs}
       />
+      {/* Focus Mode Overlay */}
+      <AnimatePresence>
+        {focusModeActive && ayahs.length > 0 && (
+          <FocusMode
+            ayahs={ayahs}
+            fontSize={fontSize}
+            surahNumber={surahNumber}
+            surahName={surahInfo?.name || `سورة ${surahNumber}`}
+            playingAyah={playingAyahInSurah}
+            onSeekToAyah={audioPlayer.seekToAyah}
+            onClose={() => setFocusModeActive(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
