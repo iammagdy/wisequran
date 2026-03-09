@@ -51,6 +51,69 @@ export default function SettingsPage() {
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
 
+  // Preview reciter audio
+  const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopPreview = useCallback(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = "";
+      previewAudioRef.current = null;
+    }
+    setPreviewingReciter(null);
+    setPreviewLoading(null);
+  }, []);
+
+  const togglePreview = useCallback((r: typeof RECITERS[0]) => {
+    // If already previewing this reciter, stop
+    if (previewingReciter === r.id) {
+      stopPreview();
+      return;
+    }
+    // Stop any current preview
+    stopPreview();
+
+    setPreviewLoading(r.id);
+    const url = r.hasAyahAudio
+      ? getReciterAyahAudioUrl(r.id, 1)
+      : getReciterAudioUrl(r.id, 1);
+
+    const audio = new Audio(url);
+    previewAudioRef.current = audio;
+
+    audio.addEventListener("canplay", () => {
+      setPreviewLoading(null);
+      setPreviewingReciter(r.id);
+      audio.play().catch(() => {
+        setPreviewingReciter(null);
+      });
+    }, { once: true });
+
+    audio.addEventListener("ended", () => {
+      setPreviewingReciter(null);
+    }, { once: true });
+
+    audio.addEventListener("error", () => {
+      setPreviewLoading(null);
+      setPreviewingReciter(null);
+      toast.error("تعذر تشغيل المعاينة");
+    }, { once: true });
+
+    audio.load();
+  }, [previewingReciter, stopPreview]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+        previewAudioRef.current = null;
+      }
+    };
+  }, []);
+
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
