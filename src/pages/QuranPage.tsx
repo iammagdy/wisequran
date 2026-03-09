@@ -13,6 +13,7 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
 import { juzData } from "@/data/juz-hizb-data";
+import { DailyAyah } from "@/components/quran/DailyAyah";
 
 type ViewMode = "surahs" | "juz";
 
