@@ -96,58 +96,76 @@ export default function PrayerPage() {
   const heroPrayer = nextPrayer ? PRAYERS.find(p => p.id === nextPrayer.id) : null;
 
   return (
-    <div className="px-4 pt-6">
+    <div className="px-4 pt-6 pb-24">
       {/* Header */}
-      <h1 className="mb-3 text-center text-2xl font-bold">صلواتي اليوم</h1>
+      <h1 className="mb-4 text-center text-2xl font-bold heading-decorated mx-auto w-fit">صلواتي اليوم</h1>
 
-      <div className="mb-4 rounded-xl bg-card p-4 shadow-sm text-center space-y-1">
+      {/* Date Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-5 rounded-2xl bg-card p-5 shadow-elevated text-center space-y-1 border border-border/50"
+      >
         <p className="text-lg font-bold">{getArabicDayName(new Date().getDay())}</p>
-        <p className="text-base font-medium">{getHijriDate(new Date())}</p>
+        <p className="text-base font-semibold text-primary">{getHijriDate(new Date())}</p>
         <p className="text-sm text-muted-foreground">{getGregorianDateArabic(new Date())}</p>
-      </div>
+      </motion.div>
 
       {/* Hero Countdown Widget */}
       {nextPrayer && heroPrayer && heroTime && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mb-6 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/5 to-transparent p-5 shadow-md border border-primary/10"
+          className="mb-6 rounded-2xl gradient-hero p-6 shadow-elevated border border-primary/10 relative overflow-hidden"
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-muted-foreground">الصلاة القادمة</span>
-            {streak > 0 && (
-              <span className="rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
-                🔥 {toArabicNumerals(String(streak))} أيام
-              </span>
-            )}
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-accent blur-2xl" />
           </div>
 
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-3xl">{heroPrayer.icon}</span>
-            <span className="text-2xl font-bold text-foreground">{heroPrayer.name}</span>
-          </div>
+          <div className="relative z-10">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm font-semibold text-muted-foreground">الصلاة القادمة</span>
+              {streak > 0 && (
+                <span className="rounded-full badge-gradient px-3 py-1 text-xs font-bold">
+                  🔥 {toArabicNumerals(String(streak))} أيام
+                </span>
+              )}
+            </div>
 
-          {/* Big countdown */}
-          <div className="flex items-center justify-center gap-1 font-mono">
-            <CountdownUnit value={heroTime.h} label="ساعة" />
-            <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
-            <CountdownUnit value={heroTime.m} label="دقيقة" />
-            <span className="text-3xl font-bold text-primary/60 -mt-4">:</span>
-            <CountdownUnit value={heroTime.s} label="ثانية" />
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <span className="text-4xl">{heroPrayer.icon}</span>
+              <span className="text-2xl font-bold text-foreground">{heroPrayer.name}</span>
+            </div>
+
+            {/* Big countdown */}
+            <div className="flex items-center justify-center gap-2">
+              <CountdownUnit value={heroTime.h} label="ساعة" />
+              <span className="text-3xl font-bold text-primary/40 -mt-5">:</span>
+              <CountdownUnit value={heroTime.m} label="دقيقة" />
+              <span className="text-3xl font-bold text-primary/40 -mt-5">:</span>
+              <CountdownUnit value={heroTime.s} label="ثانية" />
+            </div>
           </div>
         </motion.div>
       )}
 
-      {/* Progress */}
-      <div className="mb-6 rounded-xl bg-card p-4 shadow-sm">
-        <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
-          <span className="font-semibold">
+      {/* Progress Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="mb-6 rounded-2xl bg-card p-5 shadow-elevated border border-border/50"
+      >
+        <div className="mb-3 flex items-center justify-between text-sm">
+          <span className="text-muted-foreground font-medium">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
+          <span className="font-bold">
             {progress === 100 ? "ما شاء الله! 🎉" : "أكمل صلواتك"}
           </span>
         </div>
-        <Progress value={progress} className="h-2.5" />
-      </div>
+        <Progress value={progress} variant="gradient" size="default" />
+      </motion.div>
 
       {/* Prayer List */}
       <div className="space-y-3 mb-8">
@@ -163,19 +181,20 @@ export default function PrayerPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => togglePrayer(prayer.id)}
               className={cn(
-                "flex w-full items-center gap-4 rounded-xl p-4 shadow-sm transition-all",
+                "flex w-full items-center gap-4 rounded-2xl p-4 shadow-soft transition-all",
                 done
-                  ? "bg-primary/10"
+                  ? "bg-primary/10 border border-primary/20"
                   : isNext
-                    ? "bg-card ring-2 ring-primary/30"
-                    : "bg-card"
+                    ? "bg-card ring-2 ring-primary/30 shadow-elevated"
+                    : "bg-card border border-border/50"
               )}
             >
               <span className="text-2xl">{prayer.icon}</span>
               <div className="flex-1 text-right">
-                <p className={cn("font-semibold", done && "line-through text-muted-foreground")}>
+                <p className={cn("font-bold", done && "line-through text-muted-foreground")}>
                   {prayer.name}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -185,16 +204,16 @@ export default function PrayerPage() {
               {/* Countdown badge for upcoming prayers */}
               {!done && !isPassed && (
                 <span className={cn(
-                  "rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums",
+                  "rounded-full px-3 py-1.5 text-xs font-bold tabular-nums",
                   isNext
-                    ? "bg-primary text-primary-foreground"
+                    ? "badge-gradient"
                     : "bg-muted text-muted-foreground"
                 )}>
                   {formatCompactCountdown(secsLeft)}
                 </span>
               )}
               {done && (
-                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                <span className="rounded-full bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary">
                   ✓
                 </span>
               )}
@@ -217,11 +236,11 @@ function CountdownUnit({ value, label }: { value: string; label: string }) {
         initial={{ y: -8, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="rounded-xl bg-primary/10 px-3 py-2 min-w-[52px]"
+        className="rounded-xl bg-card shadow-elevated px-4 py-3 min-w-[56px] border border-border/50"
       >
         <span className="text-3xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
       </motion.div>
-      <span className="text-[10px] text-muted-foreground mt-1">{label}</span>
+      <span className="text-[10px] text-muted-foreground mt-1.5 font-medium">{label}</span>
     </div>
   );
 }
