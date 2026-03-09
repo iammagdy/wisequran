@@ -82,9 +82,9 @@ export function useAchievements() {
 
   const checkAndUnlock = useCallback(() => {
     const totalAyahs = getTotalAyahs();
-    const memorizedCount = getSurahsByStatus("memorized").length;
+    const memorizedCount = hifzStats.memorized;
     const goalCompletions = getGoalCompletions();
-    const currentStreak = Math.max(streak, maxStreak);
+    const currentStreak = streak;
     
     const newUnlocks: string[] = [];
     
@@ -122,13 +122,12 @@ export function useAchievements() {
       
       setState({ unlocked: updatedUnlocked, lastChecked: now });
       
-      // Show notification for first new unlock
       const firstNew = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === newUnlocks[0]);
       if (firstNew) {
         setNewUnlock({ ...firstNew, unlocked: true, unlockedAt: now });
       }
     }
-  }, [state, setState, streak, maxStreak, getTotalAyahs, getSurahsByStatus, getGoalCompletions]);
+  }, [state, setState, streak, hifzStats.memorized, getTotalAyahs, getGoalCompletions]);
 
   // Check for new achievements periodically
   useEffect(() => {
