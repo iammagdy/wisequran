@@ -10,6 +10,8 @@ import { juzData } from "@/data/juz-hizb-data";
 import { toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import DailyDuaCard from "@/components/ramadan/DailyDuaCard";
+import IftarCountdown from "@/components/ramadan/IftarCountdown";
 
 export default function RamadanPage() {
   const {
@@ -47,6 +49,12 @@ export default function RamadanPage() {
       </div>
 
       <div className="px-4 pb-24 space-y-6 -mt-2">
+        {/* Iftar Countdown */}
+        <IftarCountdown />
+
+        {/* Daily Dua */}
+        <DailyDuaCard ramadanDay={ramadanDay} />
+
         {/* Daily Checklist */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">

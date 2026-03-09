@@ -17,7 +17,7 @@ const baseTabs = [
 
 export default function BottomNav() {
   const location = useLocation();
-  const showRamadan = useMemo(() => isRamadanNow(), []);
+  const showRamadan = useMemo(() => isRamadanTabVisible(), []);
   const tabs = useMemo(() => {
     if (!showRamadan) return baseTabs;
     // Insert Ramadan tab before settings

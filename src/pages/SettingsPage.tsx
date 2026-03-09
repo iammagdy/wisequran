@@ -15,6 +15,7 @@ import { downloadSurahAudio } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
+import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
 import {
   AlertDialog,
   AlertDialogAction,

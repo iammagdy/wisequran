@@ -21,6 +21,22 @@ export function isRamadanNow(): boolean {
   }
 }
 
+/** Check if Ramadan tab should be visible (Ramadan active + not manually hidden) */
+export function isRamadanTabVisible(): boolean {
+  if (!isRamadanNow()) return false;
+  return localStorage.getItem("wise-ramadan-hidden") !== "true";
+}
+
+/** Hide the Ramadan tab manually */
+export function hideRamadanTab() {
+  localStorage.setItem("wise-ramadan-hidden", "true");
+}
+
+/** Show the Ramadan tab again */
+export function showRamadanTab() {
+  localStorage.removeItem("wise-ramadan-hidden");
+}
+
 /** Get current Ramadan day (1-30) */
 export function getRamadanDay(): number {
   try {
