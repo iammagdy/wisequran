@@ -16,10 +16,8 @@ export default function GlobalAudioBar() {
 
   if (!surahNumber) return null;
 
-  // In ayah mode: progress = ayah index / total. Otherwise: time-based.
-  const pct = isAyahMode
-    ? totalAyahs > 0 ? ((currentAyahIndex + (duration > 0 ? currentTime / duration : 0)) / totalAyahs) * 100 : 0
-    : duration > 0 ? (currentTime / duration) * 100 : 0;
+  // Progress based on time
+  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   const handleNavigate = () => {
     navigate(`/surah/${surahNumber}`);
