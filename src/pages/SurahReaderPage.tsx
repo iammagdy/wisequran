@@ -294,6 +294,13 @@ export default function SurahReaderPage() {
           </div>
           <div className="flex items-center gap-0.5">
             <button
+              onClick={() => setFocusModeActive(true)}
+              className="rounded-lg p-2 transition-colors text-muted-foreground hover:bg-muted"
+              title="وضع التركيز"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </button>
+            <button
               onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
               className={cn(
                 "rounded-lg p-2 transition-colors",
