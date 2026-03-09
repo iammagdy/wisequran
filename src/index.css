@@ -108,12 +108,12 @@
   }
 }
 
-/* Dark mode scrollbar */
-.dark ::-webkit-scrollbar { width: 8px; height: 8px; }
-.dark ::-webkit-scrollbar-track { background: hsl(var(--muted)); }
-.dark ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
-.dark ::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
-.dark * { scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
+/* Scrollbar styling (adapts to light/dark via CSS variables) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: hsl(var(--muted)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground)); }
+* { scrollbar-color: hsl(var(--border)) hsl(var(--muted)); }
 
 @layer utilities {
   .safe-bottom {
