@@ -2,11 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
+import { useLocation as useUserLocation } from "@/hooks/useLocation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "lucide-react";
+import { Compass, MapPin } from "lucide-react";
 import {
   calculatePrayerTimes,
   formatArabicTime,
@@ -14,6 +15,7 @@ import {
   getSecondsUntilPrayer,
   type PrayerTimes,
   type NextPrayerInfo,
+  type CalculationMethod,
 } from "@/lib/prayer-times";
 
 const PRAYERS = [
@@ -60,12 +62,17 @@ export default function PrayerPage() {
     date: getTodayKey(),
     completed: [],
   });
+  const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
+  const { location } = useUserLocation();
 
-  
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
-  const prayerTimes = useMemo(() => calculatePrayerTimes(now), [now]);
+  const prayerTimes = useMemo(() => calculatePrayerTimes(now, {
+    latitude: location?.latitude,
+    longitude: location?.longitude,
+    method: calcMethod,
+  }), [now, location?.latitude, location?.longitude, calcMethod]);
   const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
   // Update every second for live countdown
@@ -92,7 +99,13 @@ export default function PrayerPage() {
   };
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
-
+      {/* Location indicator */}
+      {location?.city && (
+        <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          <span>{location.city}</span>
+        </div>
+      )}
 
   // Hero countdown data
   const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;

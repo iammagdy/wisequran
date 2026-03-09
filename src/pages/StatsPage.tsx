@@ -7,6 +7,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { StatCard } from "@/components/stats/StatCard";
 import { WeeklyChart } from "@/components/stats/WeeklyChart";
 import { StreakCalendar } from "@/components/stats/StreakCalendar";
+import { AchievementsSheet } from "@/components/AchievementsSheet";
 import { Progress } from "@/components/ui/progress";
 import { toArabicNumerals } from "@/lib/utils";
 
@@ -28,7 +29,8 @@ export default function StatsPage() {
         >
           <ArrowRight className="h-5 w-5 text-foreground" />
         </motion.button>
-        <h1 className="text-2xl font-bold heading-decorated">الإحصائيات</h1>
+        <h1 className="text-2xl font-bold heading-decorated flex-1">الإحصائيات</h1>
+        <AchievementsSheet />
       </div>
 
       {/* Today's Goal */}
