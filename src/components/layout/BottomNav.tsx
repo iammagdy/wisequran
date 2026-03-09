@@ -14,43 +14,61 @@ const tabs = [
 export default function BottomNav() {
   const location = useLocation();
 
-  // Bottom nav is always visible on all pages
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-md safe-bottom">
-      <div className="mx-auto flex max-w-lg items-center justify-around py-2">
-        {tabs.map(({ path, icon: Icon, label }) => {
-          const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
-          return (
-            <NavLink
-              key={path}
-              to={path}
-              className="relative flex flex-col items-center gap-0.5 px-3 py-1"
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute -top-2 h-0.5 w-8 rounded-full bg-primary"
-                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                />
-              )}
-              <Icon
-                className={cn(
-                  "h-5 w-5 transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              />
-              <span
-                className={cn(
-                  "text-[10px] font-medium transition-colors",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
+    <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
+      {/* Gradient border top */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      
+      {/* Glass background */}
+      <div className="glass-subtle border-t border-border/30">
+        <div className="mx-auto flex max-w-lg items-center justify-around py-2 px-2">
+          {tabs.map(({ path, icon: Icon, label }) => {
+            const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+            return (
+              <NavLink
+                key={path}
+                to={path}
+                className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all duration-200"
               >
-                {label}
-              </span>
-            </NavLink>
-          );
-        })}
+                {/* Active background pill */}
+                {isActive && (
+                  <motion.div
+                    layoutId="nav-pill"
+                    className="absolute inset-0 rounded-2xl bg-primary/10"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
+                )}
+                
+                <motion.div
+                  animate={{ 
+                    scale: isActive ? 1.1 : 1,
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="relative z-10"
+                >
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 transition-all duration-200",
+                      isActive ? "text-primary" : "text-muted-foreground"
+                    )}
+                    style={{
+                      filter: isActive ? "drop-shadow(0 0 8px hsl(var(--primary) / 0.4))" : "none"
+                    }}
+                  />
+                </motion.div>
+                
+                <span
+                  className={cn(
+                    "relative z-10 text-[10px] font-semibold transition-all duration-200",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {label}
+                </span>
+              </NavLink>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

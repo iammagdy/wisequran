@@ -28,23 +28,25 @@ export default function GlobalAudioBar() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      className="fixed bottom-[calc(3.5rem+env(safe-area-inset-bottom))] inset-x-0 z-40 px-3"
+      className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-40 px-3"
     >
-      <div className="rounded-2xl border border-border/50 bg-card/95 backdrop-blur-md shadow-lg overflow-hidden">
+      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden">
         {/* Progress bar — RTL: fills from right */}
-        <div className="h-0.5 w-full bg-muted">
-          <div
-            className="h-full bg-primary transition-[width] duration-300 mr-auto"
+        <div className="h-1 w-full bg-muted/50">
+          <motion.div
+            className="h-full bg-gradient-to-l from-primary to-primary/70 mr-auto"
             style={{ width: `${pct}%` }}
+            transition={{ duration: 0.3 }}
           />
         </div>
 
-        <div className="flex items-center gap-3 px-3 py-2" dir="rtl">
+        <div className="flex items-center gap-3 px-4 py-3" dir="rtl">
           {/* Play/Pause */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={togglePlayPause}
             disabled={loading}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all active:scale-95 disabled:opacity-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -53,11 +55,11 @@ export default function GlobalAudioBar() {
             ) : (
               <Play className="h-4 w-4 translate-x-[-1px]" />
             )}
-          </button>
+          </motion.button>
 
           {/* Info — clickable to navigate to surah */}
           <button onClick={handleNavigate} className="flex-1 min-w-0 text-right">
-            <p className="font-arabic text-sm font-semibold text-foreground truncate">{surahName}</p>
+            <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
             <p className="text-[10px] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
               {currentAyahInSurah !== null && totalAyahs > 0 && (
@@ -67,12 +69,13 @@ export default function GlobalAudioBar() {
           </button>
 
           {/* Close */}
-          <button
+          <motion.button
+            whileTap={{ scale: 0.9 }}
             onClick={stop}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/50"
           >
             <X className="h-4 w-4" />
-          </button>
+          </motion.button>
         </div>
       </div>
     </motion.div>
