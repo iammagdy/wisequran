@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Share2, Volume2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 import { getDailyAyahReference, getDailyAyahCacheKey, type DailyAyahRef } from "@/lib/daily-ayah";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { SURAH_META } from "@/data/surah-meta";
