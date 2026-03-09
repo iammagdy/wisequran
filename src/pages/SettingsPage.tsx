@@ -78,7 +78,7 @@ export default function SettingsPage() {
     setPreviewLoading(r.id);
     const url = r.hasAyahAudio
       ? getReciterAyahAudioUrl(r.id, 1)
-      : getReciterAudioUrl(r.id, 1);
+      : await getReciterAudioUrl(r.id, 1);
 
     const audio = new Audio(url);
     previewAudioRef.current = audio;
