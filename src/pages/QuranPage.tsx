@@ -13,6 +13,7 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import { searchAyahs, type SearchResult } from "@/lib/quran-search";
 import { HighlightText } from "@/components/HighlightText";
 import { juzData } from "@/data/juz-hizb-data";
+import { DailyAyah } from "@/components/quran/DailyAyah";
 
 type ViewMode = "surahs" | "juz";
 
@@ -137,6 +138,11 @@ export default function QuranPage() {
         </div>
         <Progress value={progress} className="h-1.5" />
       </div>
+
+      {/* Daily Ayah */}
+      {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
+        <DailyAyah />
+      )}
 
       {/* Last Read */}
       {lastRead && !showBookmarks && !showFavorites && !showHistory && isSurahMode && (
