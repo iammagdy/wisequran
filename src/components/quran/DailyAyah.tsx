@@ -112,9 +112,39 @@ export function DailyAyah() {
           <p className="text-xs text-muted-foreground font-medium">
             {data.surahName} · آية {toArabicNumerals(data.ayah)}
           </p>
-          <span className="text-[10px] text-primary/70 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-            اضغط للقراءة ←
-          </span>
+          <div className="flex items-center gap-1">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                const shareText = `${data.text}\n\n— ${data.surahName}، آية ${data.ayah}`;
+                if (navigator.share) {
+                  navigator.share({ text: shareText }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(shareText);
+                  toast({ title: "تم النسخ" });
+                }
+              }}
+              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors"
+            >
+              <Share2 className="h-3.5 w-3.5 text-primary/60" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                const audio = new Audio(
+                  `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${getGlobalAyahNumber(data.surah, data.ayah)}.mp3`
+                );
+                audio.play().catch(() => {
+                  toast({ title: "تعذر تشغيل الصوت" });
+                });
+              }}
+              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors"
+            >
+              <Volume2 className="h-3.5 w-3.5 text-primary/60" />
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.button>
