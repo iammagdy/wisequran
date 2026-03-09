@@ -62,12 +62,17 @@ export default function PrayerPage() {
     date: getTodayKey(),
     completed: [],
   });
+  const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
+  const { location } = useUserLocation();
 
-  
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
-  const prayerTimes = useMemo(() => calculatePrayerTimes(now), [now]);
+  const prayerTimes = useMemo(() => calculatePrayerTimes(now, {
+    latitude: location?.latitude,
+    longitude: location?.longitude,
+    method: calcMethod,
+  }), [now, location?.latitude, location?.longitude, calcMethod]);
   const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
   // Update every second for live countdown
