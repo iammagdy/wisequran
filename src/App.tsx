@@ -32,6 +32,7 @@ const AppContent = () => {
           <Route path="/azkar" element={<AzkarPage />} />
           <Route path="/prayer" element={<PrayerPage />} />
           <Route path="/tasbeeh" element={<TasbeehPage />} />
+          <Route path="/stats" element={<StatsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
