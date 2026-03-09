@@ -101,7 +101,17 @@ export default function PrayerPage() {
   return (
     <div className="px-4 pt-6 pb-24">
       {/* Header */}
-      <h1 className="mb-4 text-center text-2xl font-bold heading-decorated mx-auto w-fit">صلواتي اليوم</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <div />
+        <h1 className="text-2xl font-bold heading-decorated">صلواتي اليوم</h1>
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate("/qibla")}
+          className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
+        >
+          <Compass className="h-5 w-5" />
+        </motion.button>
+      </div>
 
       {/* Date Card */}
       <motion.div 

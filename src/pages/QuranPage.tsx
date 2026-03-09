@@ -171,6 +171,11 @@ export default function QuranPage() {
         )}
       </motion.div>
 
+      {/* Daily Wird */}
+      {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
+        <DailyWird />
+      )}
+
       {/* Daily Ayah */}
       {!showBookmarks && !showFavorites && !showHistory && isSurahMode && (
         <DailyAyah />

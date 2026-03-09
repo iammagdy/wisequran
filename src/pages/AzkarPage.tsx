@@ -180,11 +180,18 @@ export default function AzkarPage() {
                     onClick={() => setSelectedCategory(cat)}
                     className="flex flex-col items-center gap-3 rounded-2xl bg-card p-6 shadow-elevated border border-border/50 transition-all hover:shadow-elevated-lg group"
                   >
-                    <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                    <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                       <span className="text-3xl">{cat.icon}</span>
+                      {isCategoryDone(cat.id) && (
+                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
                     <span className="font-bold text-sm">{cat.nameAr}</span>
-                    <span className="text-xs text-muted-foreground rounded-full bg-muted px-2.5 py-0.5">{toArabicNumerals(cat.items.length)} أذكار</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-muted-foreground rounded-full bg-muted px-2.5 py-0.5">{toArabicNumerals(cat.items.length)} أذكار</span>
+                    </div>
                   </motion.button>
                 ))}
               </div>

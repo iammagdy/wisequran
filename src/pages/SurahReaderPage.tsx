@@ -433,6 +433,12 @@ export default function SurahReaderPage() {
                             >
                               <BookOpen className="h-4 w-4" />
                             </motion.button>
+                            <ShareAyahCard
+                              ayahText={ayah.text}
+                              surahName={surahInfo?.name || ""}
+                              ayahNumber={ayah.numberInSurah}
+                              surahNumber={surahNumber}
+                            />
                           </div>
                           <div className="number-badge h-8 w-8 text-xs">
                             {toArabicNumerals(ayah.numberInSurah)}
