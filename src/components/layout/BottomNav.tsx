@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Settings } from "lucide-react";
+import { Book, Moon, CheckSquare, Circle, Settings } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
