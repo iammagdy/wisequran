@@ -16,6 +16,7 @@ interface MushafPageViewProps {
   setAyahRef: (el: HTMLDivElement | null, num: number) => void;
   targetPage?: number | null;
   onPageChange?: (pageNum: number) => void;
+  onSeekToAyah?: (ayahNum: number) => void;
 }
 
 export default function MushafPageView({
