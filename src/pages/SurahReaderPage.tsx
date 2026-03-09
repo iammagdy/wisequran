@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers, Share2, Maximize2 } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
