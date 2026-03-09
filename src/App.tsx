@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import InstallBanner from "@/components/InstallBanner";
+import SplashScreen from "@/components/SplashScreen";
 import QuranPage from "@/pages/QuranPage";
 import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
@@ -38,17 +40,30 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <BrowserRouter>
-        <AudioPlayerProvider>
-          <AppContent />
-        </AudioPlayerProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [showSplash, setShowSplash] = useState(() => {
+    // Only show splash once per session
+    return !sessionStorage.getItem("splashShown");
+  });
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem("splashShown", "true");
+    setShowSplash(false);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Sonner />
+        {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+        <BrowserRouter>
+          <AudioPlayerProvider>
+            <AppContent />
+          </AudioPlayerProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
