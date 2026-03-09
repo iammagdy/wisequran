@@ -62,8 +62,8 @@ export default function GlobalAudioBar() {
             <p className="font-arabic text-sm font-semibold text-foreground truncate">{surahName}</p>
             <p className="text-[10px] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
-              {isAyahMode && totalAyahs > 0 && (
-                <span className="mr-2">آية {toArabicNumerals(currentAyahIndex + 1)} من {toArabicNumerals(totalAyahs)}</span>
+              {currentAyahInSurah !== null && totalAyahs > 0 && (
+                <span className="mr-2"> · آية {toArabicNumerals(currentAyahInSurah)} من {toArabicNumerals(totalAyahs)}</span>
               )}
             </p>
           </button>

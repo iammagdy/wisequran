@@ -170,6 +170,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       if (qfData) {
         timestampsRef.current = qfData.timestamps;
         audioUrl = qfData.audioUrl;
+        setState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
       }
     } catch {
       // QF API failed, fall back to normal source
