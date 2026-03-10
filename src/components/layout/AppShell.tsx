@@ -27,6 +27,7 @@ export default function AppShell({ children }: Props) {
         {showGlobalBar && <GlobalAudioBar />}
       </AnimatePresence>
       <BottomNav />
+      <UpdateNotification />
       <AchievementUnlockNotification />
     </div>
   );
