@@ -199,7 +199,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
               {playing && (
-                <span className="text-[10px] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
+                <span className="text-[0.625rem] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
                   تلاوة جارية
                 </span>
