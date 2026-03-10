@@ -62,16 +62,24 @@ export default function PrayerPage() {
     completed: [],
   });
   const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
-  const { location } = useUserLocation();
+
+  // Read cached location (no GPS prompt) for prayer times & city display
+  const cachedLocation = useMemo(() => {
+    try {
+      const cached = localStorage.getItem("wise-user-location");
+      if (cached) return JSON.parse(cached) as { latitude: number; longitude: number; city?: string };
+    } catch {}
+    return null;
+  }, []);
 
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
   const prayerTimes = useMemo(() => calculatePrayerTimes(now, {
-    latitude: location?.latitude,
-    longitude: location?.longitude,
+    latitude: cachedLocation?.latitude,
+    longitude: cachedLocation?.longitude,
     method: calcMethod,
-  }), [now, location?.latitude, location?.longitude, calcMethod]);
+  }), [now, cachedLocation?.latitude, cachedLocation?.longitude, calcMethod]);
   const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
   useEffect(() => {
