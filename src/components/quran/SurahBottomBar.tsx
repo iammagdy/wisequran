@@ -126,7 +126,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[10px] text-muted-foreground"
+                className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
                 dir="rtl"
               >
                 <WifiOff className="h-3 w-3" />
