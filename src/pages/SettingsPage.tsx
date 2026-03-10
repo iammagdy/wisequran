@@ -703,7 +703,7 @@ export default function SettingsPage() {
                   <Volume2 className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">التلاوات الصوتية</span>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
