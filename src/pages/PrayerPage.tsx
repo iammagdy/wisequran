@@ -36,7 +36,6 @@ interface DayData {
   completed: string[];
 }
 
-
 function formatHMS(totalSeconds: number): { h: string; m: string; s: string } {
   const abs = Math.max(0, totalSeconds);
   const h = Math.floor(abs / 3600);
@@ -76,7 +75,6 @@ export default function PrayerPage() {
   }), [now, location?.latitude, location?.longitude, calcMethod]);
   const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
-  // Update every second for live countdown
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
@@ -100,15 +98,7 @@ export default function PrayerPage() {
   };
 
   const progress = (todayData.completed.length / PRAYERS.length) * 100;
-      {/* Location indicator */}
-      {location?.city && (
-        <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span>{location.city}</span>
-        </div>
-      )}
 
-  // Hero countdown data
   const heroTime = nextPrayer ? formatHMS(nextPrayer.secondsLeft) : null;
   const heroPrayer = nextPrayer ? PRAYERS.find(p => p.id === nextPrayer.id) : null;
 
@@ -126,6 +116,14 @@ export default function PrayerPage() {
           <Compass className="h-5 w-5" />
         </motion.button>
       </div>
+
+      {/* Location indicator */}
+      {location?.city && (
+        <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3" />
+          <span>{location.city}</span>
+        </div>
+      )}
 
       {/* Date Card */}
       <motion.div 
@@ -145,7 +143,6 @@ export default function PrayerPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="mb-6 rounded-2xl gradient-hero p-6 shadow-elevated border border-primary/10 relative overflow-hidden"
         >
-          {/* Background decoration */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />
             <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-accent blur-2xl" />
@@ -166,7 +163,6 @@ export default function PrayerPage() {
               <span className="text-2xl font-bold text-foreground">{heroPrayer.name}</span>
             </div>
 
-            {/* Big countdown */}
             <div className="flex items-center justify-center gap-2">
               <CountdownUnit value={heroTime.h} label="ساعة" />
               <span className="text-3xl font-bold text-primary/40 -mt-5">:</span>
@@ -228,7 +224,6 @@ export default function PrayerPage() {
                   {formatArabicTime(time)}
                 </p>
               </div>
-              {/* Countdown badge for upcoming prayers */}
               {!done && !isPassed && (
                 <span className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-bold tabular-nums",

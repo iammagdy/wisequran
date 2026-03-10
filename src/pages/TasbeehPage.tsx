@@ -35,8 +35,6 @@ export default function TasbeehPage() {
     if (navigator.vibrate) navigator.vibrate(10);
     setCount((c) => c + 1);
     setTodayTotal((t) => t + 1);
-    
-    // Show sparkle on milestones
     if ((count + 1) % 33 === 0) {
       setShowSparkle(true);
       setTimeout(() => setShowSparkle(false), 1000);
@@ -47,32 +45,41 @@ export default function TasbeehPage() {
     setCount(0);
   }, [setCount]);
 
-  // SVG progress ring
-  const radius = 120;
+  const radius = 110;
   const stroke = 8;
   const circumference = 2 * Math.PI * radius;
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="flex flex-col items-center px-4 pt-6 pb-24 min-h-[calc(100dvh-4rem)]" dir="rtl">
+    <div className="flex flex-col px-4 pt-6 pb-24 min-h-[calc(100dvh-4rem)]" dir="rtl">
       {/* Header */}
-      <h1 className="text-2xl font-bold text-foreground mb-5 heading-decorated">التسبيح</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">التسبيح</h1>
 
       {/* Dhikr selector */}
-      <Select value={dhikr} onValueChange={(v) => { setDhikr(v); setCount(0); }}>
-        <SelectTrigger className="w-60 text-center justify-center text-base font-bold rounded-xl h-12 shadow-soft border-border/50">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {DHIKR_OPTIONS.map((d) => (
-            <SelectItem key={d} value={d} className="text-right text-base font-medium">{d}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex justify-center mb-3">
+        <Select value={dhikr} onValueChange={(v) => { setDhikr(v); setCount(0); }}>
+          <SelectTrigger className="w-56 text-center justify-center text-base font-bold rounded-xl h-11 shadow-soft border-border/50">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {DHIKR_OPTIONS.map((d) => (
+              <SelectItem key={d} value={d} className="text-right text-base font-medium">{d}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Counter circle */}
-      <div className="flex-1 flex items-center justify-center my-8 relative">
-        {/* Sparkle effect on milestones */}
+      {/* Today total - compact at top */}
+      <div className="text-center mb-2">
+        <span className="text-sm text-muted-foreground">إجمالي اليوم: </span>
+        <span className="text-sm font-bold text-primary">{toArabicNumerals(todayTotal)}</span>
+      </div>
+
+      {/* Spacer to push counter down */}
+      <div className="flex-1" />
+
+      {/* Counter circle - positioned at bottom for thumb reach */}
+      <div className="flex items-center justify-center relative mb-4">
         {showSparkle && (
           <motion.div
             initial={{ scale: 0, opacity: 1 }}
@@ -89,11 +96,9 @@ export default function TasbeehPage() {
           onTap={handleTap}
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          {/* Background glow */}
           <div className={`absolute inset-4 rounded-full transition-all duration-500 ${isComplete ? 'bg-primary/20 animate-glow-pulse' : ''}`} />
           
           <svg width={2 * (radius + stroke + 8)} height={2 * (radius + stroke + 8)} className="block">
-            {/* Outer decorative ring */}
             <circle
               cx={radius + stroke + 8}
               cy={radius + stroke + 8}
@@ -103,7 +108,6 @@ export default function TasbeehPage() {
               strokeWidth={1}
               strokeDasharray="4 8"
             />
-            {/* Background ring */}
             <circle
               cx={radius + stroke + 8}
               cy={radius + stroke + 8}
@@ -112,7 +116,6 @@ export default function TasbeehPage() {
               stroke="hsl(var(--muted))"
               strokeWidth={stroke}
             />
-            {/* Progress ring */}
             <circle
               cx={radius + stroke + 8}
               cy={radius + stroke + 8}
@@ -130,7 +133,6 @@ export default function TasbeehPage() {
               }}
             />
           </svg>
-          {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <motion.span 
               key={count}
@@ -156,8 +158,8 @@ export default function TasbeehPage() {
         </motion.button>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-3 mb-6">
+      {/* Actions - right above bottom nav */}
+      <div className="flex gap-3 justify-center mb-2">
         <Button variant="outline" size="default" onClick={handleReset} className="gap-2 rounded-xl shadow-soft">
           <RotateCcw className="h-4 w-4" />
           إعادة
@@ -178,7 +180,7 @@ export default function TasbeehPage() {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap gap-2 justify-center mb-6"
+          className="flex flex-wrap gap-2 justify-center mb-2"
         >
           {TARGET_OPTIONS.map((t) => (
             <Button
@@ -193,16 +195,6 @@ export default function TasbeehPage() {
           ))}
         </motion.div>
       )}
-
-      {/* Today total card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 text-center"
-      >
-        <p className="text-sm text-muted-foreground mb-1">إجمالي اليوم</p>
-        <p className="text-2xl font-bold text-primary">{toArabicNumerals(todayTotal)}</p>
-      </motion.div>
     </div>
   );
 }

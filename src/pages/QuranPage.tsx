@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star, Loader2, History, Flame, BarChart3, GraduationCap } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader2, History, Flame, MoreHorizontal, BarChart3, GraduationCap } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -99,30 +100,6 @@ export default function QuranPage() {
         <div className="flex items-center gap-1.5">
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => navigate("/hifz")}
-            className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
-          >
-            <GraduationCap className="h-5 w-5" />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => navigate("/stats")}
-            className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
-          >
-            <BarChart3 className="h-5 w-5" />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => { setShowHistory(!showHistory); setShowFavorites(false); setShowBookmarks(false); setViewMode("surahs"); }}
-            className={cn(
-              "rounded-xl p-2.5 transition-all shadow-soft",
-              showHistory ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
-            )}
-          >
-            <History className="h-5 w-5" />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
             onClick={() => { setShowFavorites(!showFavorites); setShowBookmarks(false); setShowHistory(false); setViewMode("surahs"); }}
             className={cn(
               "rounded-xl p-2.5 transition-all shadow-soft",
@@ -141,6 +118,33 @@ export default function QuranPage() {
           >
             <Bookmark className="h-5 w-5" />
           </motion.button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                className={cn(
+                  "rounded-xl p-2.5 transition-all shadow-soft",
+                  showHistory ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
+                )}
+              >
+                <MoreHorizontal className="h-5 w-5" />
+              </motion.button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[160px]">
+              <DropdownMenuItem onClick={() => { setShowHistory(!showHistory); setShowFavorites(false); setShowBookmarks(false); setViewMode("surahs"); }} className="gap-2 text-right flex-row-reverse">
+                <History className="h-4 w-4" />
+                سجل القراءة
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/stats")} className="gap-2 text-right flex-row-reverse">
+                <BarChart3 className="h-4 w-4" />
+                الإحصائيات
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/hifz")} className="gap-2 text-right flex-row-reverse">
+                <GraduationCap className="h-4 w-4" />
+                الحفظ
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

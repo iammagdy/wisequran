@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Circle, Compass, Settings, Star } from "lucide-react";
+import { Book, Moon, CheckSquare, Circle, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { isRamadanTabVisible } from "@/hooks/useRamadan";
@@ -10,7 +10,6 @@ const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
-  { path: "/qibla", icon: Compass, label: "القبلة" },
   { path: "/tasbeeh", icon: Circle, label: "التسبيح" },
   { path: "/settings", icon: Settings, label: "الإعدادات" },
 ];
