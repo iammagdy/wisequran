@@ -967,7 +967,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">التفاسير</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
