@@ -941,7 +941,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">نصوص القرآن</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.quranText)}</span>
