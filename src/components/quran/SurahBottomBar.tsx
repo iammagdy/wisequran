@@ -224,7 +224,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 </span>
               )}
               {cached && !downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[10px] font-semibold text-primary">
+                <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[0.625rem] font-semibold text-primary">
                   <Check className="h-3 w-3" />
                   محمّل
                 </span>
