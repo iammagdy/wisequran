@@ -169,7 +169,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                     dir="rtl"
                   />
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums" dir="rtl">
+              <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
                 <span>{formatTime(currentTime)}</span>
                 <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
               </div>
