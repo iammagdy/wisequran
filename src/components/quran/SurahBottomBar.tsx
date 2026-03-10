@@ -211,7 +211,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                  className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   <Download className="h-3 w-3" />
                   تحميل
