@@ -278,14 +278,14 @@ function CountdownUnit({ value, label }: { value: string; label: string }) {
     <div className="flex flex-col items-center">
       <motion.div
         key={value}
-        initial={{ y: -8, opacity: 0 }}
+        initial={{ y: -6, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.2 }}
-        className="rounded-xl bg-card shadow-elevated px-4 py-3 min-w-[56px] border border-border/50"
+        className="rounded-xl bg-card shadow-elevated px-3 py-2 min-w-[48px] border border-border/50"
       >
-        <span className="text-3xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
+        <span className="text-2xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
       </motion.div>
-      <span className="text-[10px] text-muted-foreground mt-1.5 font-medium">{label}</span>
+      <span className="text-[10px] text-muted-foreground mt-1 font-medium">{label}</span>
     </div>
   );
 }

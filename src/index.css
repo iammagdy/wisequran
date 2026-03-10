@@ -90,6 +90,11 @@
   }
 }
 
+/* Global UI scale for accessibility */
+html.ui-scale-normal { font-size: 16px; }
+html.ui-scale-large { font-size: 18px; }
+html.ui-scale-xlarge { font-size: 20px; }
+
 @layer base {
   * {
     @apply border-border;
