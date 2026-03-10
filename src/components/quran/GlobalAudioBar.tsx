@@ -28,7 +28,7 @@ export default function GlobalAudioBar() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] inset-x-0 z-40 px-3"
+      className="fixed bottom-above-nav inset-x-0 z-40 px-3"
     >
       <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden">
         {/* Progress bar — RTL: fills from right */}

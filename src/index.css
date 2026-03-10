@@ -120,6 +120,23 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* Bottom nav height-aware positioning */
+  .bottom-above-nav {
+    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-nav {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-nav-with-bar {
+    padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pb-surah-reader {
+    padding-bottom: calc(18rem + env(safe-area-inset-bottom, 0px));
+  }
+
   /* Card variants */
   .card-elevated {
     box-shadow: var(--shadow-md);
