@@ -52,6 +52,19 @@ export default function SettingsPage() {
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
 
+  // Storage stats
+  const [storageStats, setStorageStats] = useState<{ quranText: number; audio: number; tafsir: number; total: number; audioCount: number; surahCount: number; tafsirCount: number } | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const refreshStorageStats = useCallback(async () => {
+    setLoadingStats(true);
+    try {
+      const stats = await getStorageStats();
+      setStorageStats(stats);
+    } catch { /* ignore */ }
+    setLoadingStats(false);
+  }, []);
+
   // Preview reciter audio
   const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState<string | null>(null);
