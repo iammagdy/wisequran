@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
-import { useLocation as useUserLocation } from "@/hooks/useLocation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass, MapPin } from "lucide-react";
+import { Compass, MapPin, ChevronLeft } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import {
   calculatePrayerTimes,
