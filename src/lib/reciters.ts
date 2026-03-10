@@ -120,25 +120,48 @@ const CORS_PROXIES = [
   "https://api.allorigins.win/raw?url=",
 ];
 
+// Map reciter folders to quranicaudio.com paths
+const QURANIC_AUDIO_MAP: Record<string, string> = {
+  "ar.alafasy": "mishaari_raashid_al_3afaasee",
+  "ar.husary": "mahmood_khaleel_al-husaree",
+  "ar.minshawi": "muhammad_siddeeq_al-minshaawee",
+  "ar.abdulbasitmurattal": "abdulbasit_abdulsamad_192kbps",
+  "ar.abdurrahmaansudais": "abdurrahmaan_as-sudais",
+  "ar.saoodshuraym": "sa3ood_ash-shuraym",
+  "ar.hanirifai": "hani_ar-rifai",
+  "ar.ahmedajamy": "ahmed_al-ajamy",
+};
+
 /**
  * Get an ordered list of audio URLs to try for downloading.
- * Primary URL first, then cdn.islamic.network fallback, then CORS-proxied versions.
+ * Ensures 3+ sources for every reciter: primary, alternative mirrors, then CORS-proxied.
  */
 export async function getReciterAudioUrls(reciterId: string, surahNumber: number): Promise<string[]> {
   const primaryUrl = await getReciterAudioUrl(reciterId, surahNumber);
   const reciter = getReciterById(reciterId);
+  const padded = surahNumber.toString().padStart(3, "0");
   const urls: string[] = [primaryUrl];
 
-  // Add cdn.islamic.network as fallback if the primary isn't already from there
+  // Add cdn.islamic.network surah audio as fallback
   const cdnFallback = `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
   if (primaryUrl !== cdnFallback) {
     urls.push(cdnFallback);
   }
 
-  // Add CORS-proxied versions of the primary URL (for mp3quran.net servers)
-  if (primaryUrl.includes("mp3quran.net") || primaryUrl.includes("quranicaudio.com")) {
-    for (const proxy of CORS_PROXIES) {
-      urls.push(`${proxy}${encodeURIComponent(primaryUrl)}`);
+  // Add download.quranicaudio.com as alternative mirror
+  const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
+  if (qaPath) {
+    const qaUrl = `https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`;
+    if (!urls.includes(qaUrl)) {
+      urls.push(qaUrl);
+    }
+  }
+
+  // Add CORS-proxied versions of ALL unique direct URLs as last resort
+  const directUrls = [...urls];
+  for (const proxy of CORS_PROXIES) {
+    for (const directUrl of directUrls) {
+      urls.push(`${proxy}${encodeURIComponent(directUrl)}`);
     }
   }
 
