@@ -224,12 +224,14 @@ export default function SettingsPage() {
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
     setAudioDownloading(false);
+    refreshStorageStats();
     toast.success("تم تحميل جميع التلاوات");
   };
 
   const handleClearAllAudio = async () => {
     await clearAllAudio();
     setDownloadedAudio([]);
+    refreshStorageStats();
     toast.success("تم مسح جميع التلاوات");
   };
 
