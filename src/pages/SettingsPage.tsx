@@ -1072,6 +1072,59 @@ export default function SettingsPage() {
             <p className="text-sm text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
           </motion.div>
         </section>
+
+        {/* Developer Card */}
+        <section>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="relative p-[2px] rounded-2xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(var(--primary)), hsl(var(--gold)), hsl(var(--primary)))',
+              backgroundSize: '300% 300%',
+              animation: 'gradient-border 4s ease infinite',
+            }}
+          >
+            <div className="bg-card rounded-[14px] p-6 text-center relative overflow-hidden">
+              {/* Ramadan ornaments */}
+              <span className="absolute top-2 right-3 text-lg opacity-20">🌙</span>
+              <span className="absolute top-3 left-4 text-xs opacity-15">✦</span>
+              <span className="absolute bottom-3 right-5 text-xs opacity-15">✦</span>
+              <span className="absolute bottom-2 left-3 text-lg opacity-20">🌙</span>
+
+              <p className="text-xl font-bold text-foreground mb-0.5">Magdy Saber</p>
+              <p className="text-sm text-muted-foreground mb-4">المطوّر</p>
+
+              <div className="flex items-center justify-center gap-3">
+                <a
+                  href="mailto:contact@magdysaber.com"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Email"
+                >
+                  <Mail size={18} />
+                </a>
+                <a
+                  href="https://github.com/iammagdy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="GitHub"
+                >
+                  <Github size={18} />
+                </a>
+                <a
+                  href="https://magdysaber.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  title="Website"
+                >
+                  <Globe size={18} />
+                </a>
+              </div>
+            </div>
+          </motion.div>
       </div>
     </div>
   );
