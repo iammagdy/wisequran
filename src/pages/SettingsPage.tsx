@@ -1069,7 +1069,27 @@ export default function SettingsPage() {
             <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
             <p className="text-xs text-muted-foreground mb-3">v1.0.0</p>
             <Separator className="my-3" />
-            <p className="text-sm text-muted-foreground">تطبيق للقراءة والأذكار والصلاة</p>
+            <p className="text-sm text-muted-foreground mb-4">تطبيق للقراءة والأذكار والصلاة</p>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={async () => {
+                const shareData = {
+                  title: 'Wise QURAN',
+                  text: 'تطبيق القرآن الكريم والأذكار — حمّله الآن!',
+                  url: 'https://wisequran.lovable.app',
+                };
+                if (navigator.share) {
+                  try { await navigator.share(shareData); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(shareData.url);
+                  toast.success("تم نسخ الرابط");
+                }
+              }}
+            >
+              <Share className="h-4 w-4" />
+              شارك التطبيق مع أصدقائك
+            </Button>
           </motion.div>
         </section>
 
