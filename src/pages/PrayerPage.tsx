@@ -112,7 +112,7 @@ export default function PrayerPage() {
   return (
     <div className="px-4 pt-6 pb-24">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <div />
         <h1 className="text-2xl font-bold heading-decorated">صلواتي اليوم</h1>
         <div />
@@ -120,7 +120,7 @@ export default function PrayerPage() {
 
       {/* Location indicator */}
       {cachedLocation?.city && (
-        <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
+        <div className="flex items-center justify-center gap-1.5 mb-3 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />
           <span>{cachedLocation.city}</span>
         </div>
@@ -130,19 +130,38 @@ export default function PrayerPage() {
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-5 rounded-2xl bg-card p-5 shadow-elevated text-center space-y-1 border border-border/50"
+        className="mb-3 rounded-2xl bg-card p-3.5 shadow-elevated text-center space-y-0.5 border border-border/50"
       >
-        <p className="text-lg font-bold">{getArabicDayName(new Date().getDay())}</p>
-        <p className="text-base font-semibold text-primary">{getHijriDate(new Date())}</p>
-        <p className="text-sm text-muted-foreground">{getGregorianDateArabic(new Date())}</p>
+        <p className="text-base font-bold">{getArabicDayName(new Date().getDay())}</p>
+        <p className="text-sm font-semibold text-primary">{getHijriDate(new Date())}</p>
+        <p className="text-xs text-muted-foreground">{getGregorianDateArabic(new Date())}</p>
       </motion.div>
+
+      {/* Qibla Banner — compact, prominent */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => navigate("/qibla")}
+        className="w-full mb-4 rounded-2xl gradient-hero p-3 shadow-elevated border border-primary/10 flex items-center gap-3 text-right"
+      >
+        <div className="rounded-xl bg-primary/15 p-2.5">
+          <Compass className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-bold">اتجاه القبلة 🕋</p>
+          <p className="text-xs text-muted-foreground">حدد اتجاه الكعبة المشرفة</p>
+        </div>
+        <ChevronLeft className="h-4 w-4 text-muted-foreground" />
+      </motion.button>
 
       {/* Hero Countdown Widget */}
       {nextPrayer && heroPrayer && heroTime && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="mb-6 rounded-2xl gradient-hero p-6 shadow-elevated border border-primary/10 relative overflow-hidden"
+          className="mb-4 rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden"
         >
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />
@@ -150,25 +169,25 @@ export default function PrayerPage() {
           </div>
 
           <div className="relative z-10">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-muted-foreground">الصلاة القادمة</span>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-muted-foreground">الصلاة القادمة</span>
               {streak > 0 && (
-                <span className="rounded-full badge-gradient px-3 py-1 text-xs font-bold">
+                <span className="rounded-full badge-gradient px-2.5 py-0.5 text-xs font-bold">
                   🔥 {toArabicNumerals(String(streak))} أيام
                 </span>
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <span className="text-4xl">{heroPrayer.icon}</span>
-              <span className="text-2xl font-bold text-foreground">{heroPrayer.name}</span>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-3xl">{heroPrayer.icon}</span>
+              <span className="text-xl font-bold text-foreground">{heroPrayer.name}</span>
             </div>
 
             <div className="flex items-center justify-center gap-2">
               <CountdownUnit value={heroTime.h} label="ساعة" />
-              <span className="text-3xl font-bold text-primary/40 -mt-5">:</span>
+              <span className="text-2xl font-bold text-primary/40 -mt-4">:</span>
               <CountdownUnit value={heroTime.m} label="دقيقة" />
-              <span className="text-3xl font-bold text-primary/40 -mt-5">:</span>
+              <span className="text-2xl font-bold text-primary/40 -mt-4">:</span>
               <CountdownUnit value={heroTime.s} label="ثانية" />
             </div>
           </div>
@@ -180,9 +199,9 @@ export default function PrayerPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-6 rounded-2xl bg-card p-5 shadow-elevated border border-border/50"
+        className="mb-4 rounded-2xl bg-card p-3.5 shadow-elevated border border-border/50"
       >
-        <div className="mb-3 flex items-center justify-between text-sm">
+        <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground font-medium">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
           <span className="font-bold">
             {progress === 100 ? "ما شاء الله! 🎉" : "أكمل صلواتك"}
@@ -192,7 +211,7 @@ export default function PrayerPage() {
       </motion.div>
 
       {/* Prayer List */}
-      <div className="space-y-3 mb-8">
+      <div className="space-y-2.5 mb-6">
         {PRAYERS.map((prayer, i) => {
           const done = todayData.completed.includes(prayer.id);
           const isNext = nextPrayer?.id === prayer.id && !done;
@@ -208,7 +227,7 @@ export default function PrayerPage() {
               whileTap={{ scale: 0.98 }}
               onClick={() => togglePrayer(prayer.id)}
               className={cn(
-                "flex w-full items-center gap-4 rounded-2xl p-4 shadow-soft transition-all",
+                "flex w-full items-center gap-3 rounded-2xl p-3 shadow-soft transition-all",
                 done
                   ? "bg-primary/10 border border-primary/20"
                   : isNext
@@ -216,9 +235,9 @@ export default function PrayerPage() {
                     : "bg-card border border-border/50"
               )}
             >
-              <span className="text-2xl">{prayer.icon}</span>
+              <span className="text-xl">{prayer.icon}</span>
               <div className="flex-1 text-right">
-                <p className={cn("font-bold", done && "line-through text-muted-foreground")}>
+                <p className={cn("font-bold text-sm", done && "line-through text-muted-foreground")}>
                   {prayer.name}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -227,7 +246,7 @@ export default function PrayerPage() {
               </div>
               {!done && !isPassed && (
                 <span className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-bold tabular-nums",
+                  "rounded-full px-2.5 py-1 text-xs font-bold tabular-nums",
                   isNext
                     ? "badge-gradient"
                     : "bg-muted text-muted-foreground"
@@ -236,34 +255,15 @@ export default function PrayerPage() {
                 </span>
               )}
               {done && (
-                <span className="rounded-full bg-primary/15 px-3 py-1.5 text-xs font-bold text-primary">
+                <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
                   ✓
                 </span>
               )}
-              <Checkbox checked={done} className="h-6 w-6" />
+              <Checkbox checked={done} className="h-5 w-5" />
             </motion.button>
           );
         })}
       </div>
-
-      {/* Qibla Banner */}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => navigate("/qibla")}
-        className="w-full mb-6 rounded-2xl gradient-hero p-5 shadow-elevated border border-primary/10 flex items-center gap-4 text-right"
-      >
-        <div className="rounded-xl bg-primary/15 p-3">
-          <Compass className="h-7 w-7 text-primary" />
-        </div>
-        <div className="flex-1">
-          <p className="text-lg font-bold">اتجاه القبلة 🕋</p>
-          <p className="text-sm text-muted-foreground">حدد اتجاه الكعبة المشرفة</p>
-        </div>
-        <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-      </motion.button>
 
       {/* Prayer Guide */}
       <PrayerGuideCard />
