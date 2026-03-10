@@ -263,7 +263,7 @@ export default function HifzPage() {
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
               <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
-              <span className="text-[10px] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
+              <span className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
               {/* Review strength indicator for memorized surahs */}
               {reviewItem && (
                 <div className="flex gap-0.5 mt-0.5">

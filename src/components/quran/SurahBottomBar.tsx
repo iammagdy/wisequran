@@ -279,7 +279,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         </div>
 
         <div className="px-4 pb-2">
-          <p className="text-center text-[9px] text-muted-foreground/50" dir="rtl">
+          <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir="rtl">
             قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح
           </p>
         </div>

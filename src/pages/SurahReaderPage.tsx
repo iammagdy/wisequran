@@ -570,7 +570,7 @@ export default function SurahReaderPage() {
                     <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
                       <div className="mb-2 flex items-center gap-2">
                         <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                          <span className="-rotate-45 text-[10px] font-bold text-primary">
+                          <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
                             {toArabicNumerals(t.numberInSurah)}
                           </span>
                         </span>
