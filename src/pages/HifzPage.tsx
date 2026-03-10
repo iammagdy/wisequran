@@ -148,7 +148,7 @@ export default function HifzPage() {
                     <div className="flex items-center gap-3">
                       <span className="font-arabic text-base font-bold">{item.surahName}</span>
                       {item.overdueDays > 0 && (
-                        <span className="text-[10px] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
+                        <span className="text-[0.625rem] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
                           متأخرة {toArabicNumerals(item.overdueDays)} يوم
                         </span>
                       )}
