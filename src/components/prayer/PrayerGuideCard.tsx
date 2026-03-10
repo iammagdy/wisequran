@@ -122,7 +122,7 @@ export default function PrayerGuideCard() {
               {RAKAT_INFO.map((r) => (
                 <div key={r.name} className="text-center">
                   <p className="text-lg font-bold text-primary">{r.count}</p>
-                  <p className="text-[10px] text-muted-foreground">{r.name}</p>
+                  <p className="text-[0.625rem] text-muted-foreground">{r.name}</p>
                 </div>
               ))}
             </div>
