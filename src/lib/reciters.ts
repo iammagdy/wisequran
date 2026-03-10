@@ -114,3 +114,33 @@ export async function getReciterAudioUrl(reciterId: string, surahNumber: number)
   // 3. Fallback to cdn.islamic.network surah audio
   return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
 }
+
+const CORS_PROXIES = [
+  "https://corsproxy.io/?",
+  "https://api.allorigins.win/raw?url=",
+];
+
+/**
+ * Get an ordered list of audio URLs to try for downloading.
+ * Primary URL first, then cdn.islamic.network fallback, then CORS-proxied versions.
+ */
+export async function getReciterAudioUrls(reciterId: string, surahNumber: number): Promise<string[]> {
+  const primaryUrl = await getReciterAudioUrl(reciterId, surahNumber);
+  const reciter = getReciterById(reciterId);
+  const urls: string[] = [primaryUrl];
+
+  // Add cdn.islamic.network as fallback if the primary isn't already from there
+  const cdnFallback = `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
+  if (primaryUrl !== cdnFallback) {
+    urls.push(cdnFallback);
+  }
+
+  // Add CORS-proxied versions of the primary URL (for mp3quran.net servers)
+  if (primaryUrl.includes("mp3quran.net") || primaryUrl.includes("quranicaudio.com")) {
+    for (const proxy of CORS_PROXIES) {
+      urls.push(`${proxy}${encodeURIComponent(primaryUrl)}`);
+    }
+  }
+
+  return urls;
+}
