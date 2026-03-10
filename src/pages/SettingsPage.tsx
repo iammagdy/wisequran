@@ -220,12 +220,17 @@ export default function SettingsPage() {
   const handleDownloadSingleAudio = async (num: number) => {
     setSingleAudioDownloading(num);
     try {
-      await downloadSurahAudio(reciterId, num);
-      const updated = await getAllDownloadedAudio(reciterId);
-      setDownloadedAudio(updated);
-      toast.success("تم تحميل التلاوة");
-    } catch {
-      toast.error("فشل تحميل التلاوة");
+      const size = await downloadSurahAudio(reciterId, num);
+      const check = await getAudio(reciterId, num);
+      if (check && check.data.byteLength > 1024) {
+        const updated = await getAllDownloadedAudio(reciterId);
+        setDownloadedAudio(updated);
+        toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
+      } else {
+        toast.error("فشل حفظ التلاوة — حاول مرة أخرى");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل تحميل التلاوة");
     }
     setSingleAudioDownloading(null);
   };

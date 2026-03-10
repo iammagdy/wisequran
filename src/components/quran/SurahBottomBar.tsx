@@ -80,11 +80,17 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     setDownloading(true);
     setDlProgress(0);
     try {
-      await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress);
-      setCached(true);
-      toast.success("تم تحميل الصوت للاستخدام بدون إنترنت");
-    } catch {
-      toast.error("فشل تحميل الصوت");
+      const size = await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress);
+      // Verify actually saved
+      const check = await getAudio(player.reciterId, surahNumber);
+      if (check && check.data.byteLength > 1024) {
+        setCached(true);
+        toast.success(`تم تحميل الصوت (${formatBytes(size)})`);
+      } else {
+        toast.error("فشل حفظ الصوت — حاول مرة أخرى");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل تحميل الصوت");
     }
     setDownloading(false);
   };
