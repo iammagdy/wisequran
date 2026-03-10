@@ -239,14 +239,10 @@ export default function SettingsPage() {
     setSingleAudioDownloading(num);
     try {
       const size = await downloadSurahAudio(reciterId, num);
-      const check = await getAudio(reciterId, num);
-      if (check && check.data.byteLength > 1024) {
-        const updated = await getAllDownloadedAudio(reciterId);
-        setDownloadedAudio(updated);
-        toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
-      } else {
-        toast.error("فشل حفظ التلاوة — حاول مرة أخرى");
-      }
+      const updated = await getAllDownloadedAudio(reciterId);
+      setDownloadedAudio(updated);
+      refreshStorageStats();
+      toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "فشل تحميل التلاوة");
     }
@@ -257,6 +253,13 @@ export default function SettingsPage() {
     await deleteAudio(reciterId, num);
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
+    refreshStorageStats();
+  };
+
+  const handleClearTafsir = async () => {
+    await clearAllTafsir();
+    refreshStorageStats();
+    toast.success("تم مسح جميع التفاسير المحملة");
   };
 
   return (
