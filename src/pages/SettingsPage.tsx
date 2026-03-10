@@ -19,6 +19,11 @@ import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl }
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
+import { APP_VERSION, changelog } from "@/data/changelog";
+import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
