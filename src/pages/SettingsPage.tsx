@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const { checkForUpdate } = useServiceWorkerUpdate();
@@ -299,12 +299,41 @@ export default function SettingsPage() {
 
             <Separator className="my-4" />
 
+            {/* UI Scale */}
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <Smartphone className="h-4.5 w-4.5 text-primary" />
+                <span className="text-sm font-medium">حجم الواجهة</span>
+              </div>
+              <div className="flex gap-2">
+                {([
+                  { value: "normal" as const, label: "عادي" },
+                  { value: "large" as const, label: "كبير" },
+                  { value: "xlarge" as const, label: "كبير جداً" },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setUIScale(opt.value)}
+                    className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
+                      uiScale === opt.value
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
             {/* Font size */}
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Type className="h-4.5 w-4.5 text-primary" />
-                  <span className="text-sm font-medium">حجم الخط</span>
+                  <span className="text-sm font-medium">حجم خط القرآن</span>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{toArabicNumerals(fontSize)}px</span>
               </div>
