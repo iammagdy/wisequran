@@ -34,45 +34,54 @@ async function fetchAudioFromUrl(
   url: string,
   onProgress?: (pct: number) => void
 ): Promise<ArrayBuffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000); // 30s timeout
 
-  const contentLength = Number(res.headers.get("Content-Length") || 0);
-  const reader = res.body?.getReader();
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  if (reader && contentLength > 0) {
-    const chunks: Uint8Array[] = [];
-    let received = 0;
+    const contentLength = Number(res.headers.get("Content-Length") || 0);
+    const reader = res.body?.getReader();
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      chunks.push(value);
-      received += value.length;
-      onProgress?.(Math.round((received / contentLength) * 100));
-    }
+    if (reader && contentLength > 0) {
+      try {
+        const chunks: Uint8Array[] = [];
+        let received = 0;
 
-    const merged = new Uint8Array(received);
-    let offset = 0;
-    for (const chunk of chunks) {
-      merged.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return merged.buffer;
-  } else {
-    // Fallback: no streaming or unknown length
-    if (reader) {
-      reader.cancel();
-      const res2 = await fetch(url);
-      if (!res2.ok) throw new Error(`HTTP ${res2.status} on retry`);
-      const buf = await res2.arrayBuffer();
-      onProgress?.(100);
-      return buf;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          onProgress?.(Math.round((received / contentLength) * 100));
+        }
+
+        const merged = new Uint8Array(received);
+        let offset = 0;
+        for (const chunk of chunks) {
+          merged.set(chunk, offset);
+          offset += chunk.length;
+        }
+        return merged.buffer;
+      } catch {
+        // Streaming failed — retry without streaming
+        reader.cancel().catch(() => {});
+        const res2 = await fetch(url);
+        if (!res2.ok) throw new Error(`HTTP ${res2.status} on retry`);
+        const buf = await res2.arrayBuffer();
+        onProgress?.(100);
+        return buf;
+      }
     } else {
       const buf = await res.arrayBuffer();
       onProgress?.(100);
       return buf;
     }
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
   }
 }
 
