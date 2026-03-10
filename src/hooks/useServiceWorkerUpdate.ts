@@ -66,13 +66,28 @@ export function useServiceWorkerUpdate() {
       setRegistration(reg);
       await reg.update();
 
-      // Check if a waiting worker appeared after update
       if (reg.waiting) {
         setUpdateAvailable(true);
         return true;
       }
 
-      return false;
+      // Wait for the new SW to install (or timeout)
+      return new Promise<boolean>((resolve) => {
+        const timeout = setTimeout(() => resolve(false), 10000);
+
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          if (!newWorker) { clearTimeout(timeout); resolve(false); return; }
+
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed") {
+              clearTimeout(timeout);
+              setUpdateAvailable(true);
+              resolve(true);
+            }
+          });
+        }, { once: true });
+      });
     } catch {
       return false;
     }
