@@ -38,6 +38,9 @@ import {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const { checkForUpdate } = useServiceWorkerUpdate();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
