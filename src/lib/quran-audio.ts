@@ -1,22 +1,17 @@
 import { saveAudio, getAudio } from "./db";
 import { getReciterAudioUrls } from "./reciters";
 
-const MIN_AUDIO_SIZE = 10_240; // 10KB minimum — no valid surah audio is smaller
+const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
 
 /**
  * Validate that a buffer contains actual MP3/audio data by checking magic bytes.
- * Checks for: ID3 tag (ID3v2), MPEG sync word (0xFF 0xE0+), or fLaC header.
  */
 function isValidAudioFile(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 4) return false;
   const bytes = new Uint8Array(buffer);
-  // ID3v2 tag: starts with "ID3"
   if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) return true;
-  // MPEG audio frame sync: 0xFF followed by 0xE0+ (11 sync bits)
   if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) return true;
-  // OGG container: "OggS"
   if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return true;
-  // Check if it looks like HTML (common proxy error response)
   const textStart = new TextDecoder().decode(bytes.slice(0, 50)).trim().toLowerCase();
   if (textStart.startsWith("<!doctype") || textStart.startsWith("<html") || textStart.startsWith("<head")) return false;
   return false;
@@ -24,7 +19,6 @@ function isValidAudioFile(buffer: ArrayBuffer): boolean {
 
 /**
  * Try to get a playable audio source for a surah.
- * Returns a blob URL (from cache) or the CDN URL, or null if offline & not cached.
  */
 export async function resolveAudioSource(
   reciterId: string,
@@ -37,7 +31,6 @@ export async function resolveAudioSource(
   }
 
   if (navigator.onLine) {
-    // Return first URL from the list (primary)
     const urls = await getReciterAudioUrls(reciterId, surahNumber);
     return { url: urls[0], cached: false };
   }
@@ -46,23 +39,22 @@ export async function resolveAudioSource(
 }
 
 /**
- * Attempt to fetch audio from a single URL, with streaming progress if possible.
- * Returns ArrayBuffer on success, throws on failure.
+ * Fetch audio from a URL. Simple approach: plain fetch + arrayBuffer.
+ * Reports progress only if Content-Length is available.
  */
 async function fetchAudioFromUrl(
   url: string,
   onProgress?: (pct: number) => void
 ): Promise<ArrayBuffer> {
   const controller = new AbortController();
-  // 60s for initial connection
-  let timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => controller.abort(), 60_000);
+  const timeoutId = setTimeout(() => controller.abort(), 90_000);
 
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { signal: controller.signal, mode: "cors" });
     clearTimeout(timeoutId);
+
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    // Reject HTML responses (CORS proxy error pages)
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("text/html")) {
       throw new Error("Server returned HTML instead of audio");
@@ -71,56 +63,32 @@ async function fetchAudioFromUrl(
     const contentLength = Number(res.headers.get("Content-Length") || 0);
     const reader = res.body?.getReader();
 
-    if (reader) {
-      try {
-        const chunks: Uint8Array[] = [];
-        let received = 0;
+    // Try streaming for progress reporting
+    if (reader && contentLength > 0) {
+      const chunks: Uint8Array[] = [];
+      let received = 0;
 
-        // 30s activity timeout — resets with every chunk
-        timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            clearTimeout(timeoutId);
-            break;
-          }
-          clearTimeout(timeoutId);
-          timeoutId = setTimeout(() => controller.abort(), 30_000);
-
-          chunks.push(value);
-          received += value.length;
-
-          if (contentLength > 0) {
-            onProgress?.(Math.round((received / contentLength) * 100));
-          } else {
-            // No Content-Length: report negative received bytes (MB) as signal
-            onProgress?.(-(received));
-          }
-        }
-
-        const merged = new Uint8Array(received);
-        let offset = 0;
-        for (const chunk of chunks) {
-          merged.set(chunk, offset);
-          offset += chunk.length;
-        }
-        return merged.buffer;
-      } catch {
-        clearTimeout(timeoutId);
-        reader.cancel().catch(() => {});
-        // Retry without streaming
-        const res2 = await fetch(url);
-        if (!res2.ok) throw new Error(`HTTP ${res2.status} on retry`);
-        const buf = await res2.arrayBuffer();
-        onProgress?.(100);
-        return buf;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        onProgress?.(Math.round((received / contentLength) * 100));
       }
-    } else {
-      const buf = await res.arrayBuffer();
-      onProgress?.(100);
-      return buf;
+
+      const merged = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return merged.buffer;
     }
+
+    // Fallback: no streaming, just get the whole buffer
+    const buf = await res.arrayBuffer();
+    onProgress?.(100);
+    return buf;
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
@@ -128,8 +96,7 @@ async function fetchAudioFromUrl(
 }
 
 /**
- * Download surah audio trying multiple URLs (primary, fallback, CORS proxy).
- * Throws on failure — callers should catch and show error.
+ * Download surah audio trying multiple URLs.
  * Returns the size in bytes of the downloaded audio.
  */
 export async function downloadSurahAudio(
@@ -138,7 +105,6 @@ export async function downloadSurahAudio(
   onProgress?: (pct: number) => void
 ): Promise<number> {
   const urls = await getReciterAudioUrls(reciterId, surahNumber);
-
   let lastError: Error | null = null;
 
   for (let i = 0; i < urls.length; i++) {
@@ -146,22 +112,18 @@ export async function downloadSurahAudio(
       console.log(`[audio-dl] trying source ${i + 1}/${urls.length}: ${urls[i].substring(0, 80)}...`);
       const buf = await fetchAudioFromUrl(urls[i], onProgress);
 
-      // Validate minimum size
       if (buf.byteLength < MIN_AUDIO_SIZE) {
-        console.warn(`[audio-dl] source ${i + 1} returned too-small file (${buf.byteLength} bytes), skipping`);
+        console.warn(`[audio-dl] source ${i + 1} too small (${buf.byteLength}B), skipping`);
         continue;
       }
 
-      // Validate it's actually audio, not an HTML error page
       if (!isValidAudioFile(buf)) {
-        console.warn(`[audio-dl] source ${i + 1} returned non-audio data (${buf.byteLength} bytes), skipping`);
+        console.warn(`[audio-dl] source ${i + 1} not valid audio (${buf.byteLength}B), skipping`);
         continue;
       }
 
-      // Save to IndexedDB
       await saveAudio(reciterId, surahNumber, buf);
 
-      // Verify the save
       const verified = await getAudio(reciterId, surahNumber);
       if (!verified || verified.data.byteLength < MIN_AUDIO_SIZE) {
         throw new Error("فشل التحقق من حفظ الصوت في التخزين المحلي");
@@ -172,7 +134,6 @@ export async function downloadSurahAudio(
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       console.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
-      // Reset progress for next attempt
       onProgress?.(0);
     }
   }
@@ -181,20 +142,18 @@ export async function downloadSurahAudio(
 }
 
 /**
- * Auto-cache audio after successful playback (Spotify-like behavior).
- * Fetches the URL in the background and saves to IndexedDB if valid.
+ * Auto-cache audio after successful playback.
  */
 export async function cachePlayingAudio(
   reciterId: string,
   surahNumber: number,
   audioUrl: string
 ): Promise<void> {
-  // Skip if already cached
   const existing = await getAudio(reciterId, surahNumber);
   if (existing) return;
 
   try {
-    const res = await fetch(audioUrl);
+    const res = await fetch(audioUrl, { mode: "cors" });
     if (!res.ok) return;
 
     const contentType = res.headers.get("Content-Type") || "";
