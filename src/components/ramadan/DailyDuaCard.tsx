@@ -45,7 +45,7 @@ export default function DailyDuaCard({ ramadanDay }: DailyDuaCardProps) {
           </Button>
         </div>
         <p className="text-sm leading-relaxed font-arabic text-foreground">{dua.text}</p>
-        <p className="text-[10px] text-muted-foreground">{dua.source}</p>
+        <p className="text-[0.625rem] text-muted-foreground">{dua.source}</p>
       </CardContent>
     </Card>
   );

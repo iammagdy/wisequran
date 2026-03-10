@@ -125,7 +125,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
           
           {!achievement.unlocked && achievement.target && (
             <div className="mt-2">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+              <div className="flex items-center justify-between text-[0.625rem] text-muted-foreground mb-1">
                 <span>{toArabicNumerals(achievement.progress || 0)}</span>
                 <span>{toArabicNumerals(achievement.target)}</span>
               </div>

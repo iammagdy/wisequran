@@ -285,7 +285,7 @@ function CountdownUnit({ value, label }: { value: string; label: string }) {
       >
         <span className="text-2xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
       </motion.div>
-      <span className="text-[10px] text-muted-foreground mt-1 font-medium">{label}</span>
+      <span className="text-[0.625rem] text-muted-foreground mt-1 font-medium">{label}</span>
     </div>
   );
 }
