@@ -210,7 +210,7 @@ export default function HifzPage() {
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.dueToday)}</p>
-              <p className="text-[10px] text-muted-foreground">مستحقة اليوم</p>
+              <p className="text-[0.625rem] text-muted-foreground">مستحقة اليوم</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalReviewsDone)}</p>
