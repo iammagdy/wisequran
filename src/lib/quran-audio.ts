@@ -152,6 +152,12 @@ export async function downloadSurahAudio(
         continue;
       }
 
+      // Validate it's actually audio, not an HTML error page
+      if (!isValidAudioFile(buf)) {
+        console.warn(`[audio-dl] source ${i + 1} returned non-audio data (${buf.byteLength} bytes), skipping`);
+        continue;
+      }
+
       // Save to IndexedDB
       await saveAudio(reciterId, surahNumber, buf);
 
