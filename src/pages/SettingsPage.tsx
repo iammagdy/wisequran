@@ -1125,6 +1125,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </motion.div>
+        </section>
       </div>
     </div>
   );
