@@ -32,7 +32,7 @@ export function StreakCalendar({ data }: StreakCalendarProps) {
                 <div
                   key={di}
                   title={`${label}: ${toArabicNumerals(day.ayahCount)} آية`}
-                  className="h-9 w-9 rounded-lg flex items-center justify-center text-[10px] font-medium transition-colors"
+                  className="h-9 w-9 rounded-lg flex items-center justify-center text-[0.625rem] font-medium transition-colors"
                   style={{
                     backgroundColor:
                       intensity > 0
