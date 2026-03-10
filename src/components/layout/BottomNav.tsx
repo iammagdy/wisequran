@@ -10,7 +10,6 @@ const baseTabs = [
   { path: "/", icon: Book, label: "القرآن" },
   { path: "/azkar", icon: Moon, label: "الأذكار" },
   { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
-  { path: "/qibla", icon: Compass, label: "القبلة" },
   { path: "/tasbeeh", icon: Circle, label: "التسبيح" },
   { path: "/settings", icon: Settings, label: "الإعدادات" },
 ];
