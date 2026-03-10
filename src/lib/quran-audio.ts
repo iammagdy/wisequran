@@ -62,6 +62,12 @@ async function fetchAudioFromUrl(
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+    // Reject HTML responses (CORS proxy error pages)
+    const contentType = res.headers.get("Content-Type") || "";
+    if (contentType.includes("text/html")) {
+      throw new Error("Server returned HTML instead of audio");
+    }
+
     const contentLength = Number(res.headers.get("Content-Length") || 0);
     const reader = res.body?.getReader();
 
