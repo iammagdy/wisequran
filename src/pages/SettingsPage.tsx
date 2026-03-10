@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw } from "lucide-react";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,11 @@ import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl }
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
+import { APP_VERSION, changelog } from "@/data/changelog";
+import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +38,9 @@ import {
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const { checkForUpdate } = useServiceWorkerUpdate();
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
@@ -1068,9 +1076,40 @@ export default function SettingsPage() {
             className="rounded-2xl gradient-hero p-6 text-center shadow-elevated border border-primary/10"
           >
             <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
-            <p className="text-xs text-muted-foreground mb-3">v1.0.0</p>
+            <button
+              onClick={() => setShowChangelog(true)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer mb-3"
+            >
+              <Sparkles className="h-3 w-3" />
+              v{APP_VERSION}
+            </button>
+
             <Separator className="my-3" />
             <p className="text-sm text-muted-foreground mb-4">تطبيق للقراءة والأذكار والصلاة</p>
+
+            {/* Check for Updates */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 mb-3"
+              disabled={checkingUpdate}
+              onClick={async () => {
+                setCheckingUpdate(true);
+                const hasUpdate = await checkForUpdate();
+                setCheckingUpdate(false);
+                if (!hasUpdate) {
+                  toast.success("التطبيق محدّث بالفعل ✓");
+                }
+              }}
+            >
+              {checkingUpdate ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              التحقق من التحديثات
+            </Button>
+
             <Button
               variant="outline"
               className="w-full gap-2"
@@ -1093,6 +1132,35 @@ export default function SettingsPage() {
             </Button>
           </motion.div>
         </section>
+
+        {/* Changelog Sheet */}
+        <Sheet open={showChangelog} onOpenChange={setShowChangelog}>
+          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-0">
+            <SheetHeader className="px-6 pb-4">
+              <SheetTitle className="text-center font-arabic text-lg">سجل التحديثات</SheetTitle>
+            </SheetHeader>
+            <ScrollArea className="h-full px-6 pb-8">
+              <div className="space-y-6">
+                {changelog.map((entry) => (
+                  <div key={entry.version} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
+                      <span className="text-xs text-muted-foreground">{entry.date}</span>
+                    </div>
+                    <ul className="space-y-1.5 pr-4">
+                      {entry.changes.map((change, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                          {change}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
 
         {/* Developer Card */}
         <section>

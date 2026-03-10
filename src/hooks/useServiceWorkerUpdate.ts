@@ -56,5 +56,27 @@ export function useServiceWorkerUpdate() {
     registration.waiting.postMessage({ type: "SKIP_WAITING" });
   }, [registration]);
 
-  return { updateAvailable, isUpdating, applyUpdate };
+  const checkForUpdate = useCallback(async (): Promise<boolean> => {
+    if (!("serviceWorker" in navigator) || !navigator.onLine) return false;
+
+    try {
+      const reg = registration || (await navigator.serviceWorker.getRegistration());
+      if (!reg) return false;
+
+      setRegistration(reg);
+      await reg.update();
+
+      // Check if a waiting worker appeared after update
+      if (reg.waiting) {
+        setUpdateAvailable(true);
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }, [registration]);
+
+  return { updateAvailable, isUpdating, applyUpdate, checkForUpdate };
 }
