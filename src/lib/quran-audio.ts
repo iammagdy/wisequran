@@ -180,6 +180,37 @@ export async function downloadSurahAudio(
   throw new Error(`فشل تحميل الصوت من جميع المصادر: ${lastError?.message ?? "خطأ غير معروف"}`);
 }
 
+/**
+ * Auto-cache audio after successful playback (Spotify-like behavior).
+ * Fetches the URL in the background and saves to IndexedDB if valid.
+ */
+export async function cachePlayingAudio(
+  reciterId: string,
+  surahNumber: number,
+  audioUrl: string
+): Promise<void> {
+  // Skip if already cached
+  const existing = await getAudio(reciterId, surahNumber);
+  if (existing) return;
+
+  try {
+    const res = await fetch(audioUrl);
+    if (!res.ok) return;
+
+    const contentType = res.headers.get("Content-Type") || "";
+    if (contentType.includes("text/html")) return;
+
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength < MIN_AUDIO_SIZE) return;
+    if (!isValidAudioFile(buf)) return;
+
+    await saveAudio(reciterId, surahNumber, buf);
+    console.log(`[auto-cache] cached surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
+  } catch {
+    // Silent fail — caching is best-effort
+  }
+}
+
 /** Format bytes to a human-readable Arabic string */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
