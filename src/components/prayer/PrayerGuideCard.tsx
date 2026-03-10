@@ -108,7 +108,7 @@ export default function PrayerGuideCard() {
           <ol className="space-y-2 pr-1 mb-4">
             {PRAYER_STEPS.map((step, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[0.625rem] font-bold text-primary">
                   {(i + 1).toLocaleString("ar-EG")}
                 </span>
                 <span className="text-muted-foreground leading-relaxed">{step}</span>
