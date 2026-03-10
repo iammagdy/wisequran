@@ -198,6 +198,7 @@ export default function SettingsPage() {
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
+    refreshStorageStats();
     if (updated.length === 114) {
       toast.success("تم تحميل القرآن الكريم بالكامل");
     }
@@ -207,6 +208,7 @@ export default function SettingsPage() {
     await clearAllData();
     setDownloadedSurahs([]);
     setDownloadedAudio([]);
+    refreshStorageStats();
     toast.success("تم مسح البيانات المحملة");
   };
 
