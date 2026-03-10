@@ -185,7 +185,8 @@ export default function SettingsPage() {
     getAllDownloadedSurahs().then(setDownloadedSurahs);
     getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
     fetchSurahList().then(setSurahs);
-  }, [reciterId]);
+    refreshStorageStats();
+  }, [reciterId, refreshStorageStats]);
 
   const handleDownloadAll = async () => {
     setDownloading(true);
