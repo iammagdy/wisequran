@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
-import { useLocation as useUserLocation } from "@/hooks/useLocation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass, MapPin } from "lucide-react";
+import { Compass, MapPin, ChevronLeft } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import {
   calculatePrayerTimes,
@@ -63,16 +62,24 @@ export default function PrayerPage() {
     completed: [],
   });
   const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
-  const { location } = useUserLocation();
+
+  // Read cached location (no GPS prompt) for prayer times & city display
+  const cachedLocation = useMemo(() => {
+    try {
+      const cached = localStorage.getItem("wise-user-location");
+      if (cached) return JSON.parse(cached) as { latitude: number; longitude: number; city?: string };
+    } catch {}
+    return null;
+  }, []);
 
   const { streak } = useStreak();
 
   const [now, setNow] = useState(() => new Date());
   const prayerTimes = useMemo(() => calculatePrayerTimes(now, {
-    latitude: location?.latitude,
-    longitude: location?.longitude,
+    latitude: cachedLocation?.latitude,
+    longitude: cachedLocation?.longitude,
     method: calcMethod,
-  }), [now, location?.latitude, location?.longitude, calcMethod]);
+  }), [now, cachedLocation?.latitude, cachedLocation?.longitude, calcMethod]);
   const nextPrayer = useMemo(() => getNextPrayer(prayerTimes, now), [prayerTimes, now]);
 
   useEffect(() => {
@@ -108,20 +115,14 @@ export default function PrayerPage() {
       <div className="mb-4 flex items-center justify-between">
         <div />
         <h1 className="text-2xl font-bold heading-decorated">صلواتي اليوم</h1>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate("/qibla")}
-          className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
-        >
-          <Compass className="h-5 w-5" />
-        </motion.button>
+        <div />
       </div>
 
       {/* Location indicator */}
-      {location?.city && (
+      {cachedLocation?.city && (
         <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />
-          <span>{location.city}</span>
+          <span>{cachedLocation.city}</span>
         </div>
       )}
 
@@ -244,6 +245,25 @@ export default function PrayerPage() {
           );
         })}
       </div>
+
+      {/* Qibla Banner */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => navigate("/qibla")}
+        className="w-full mb-6 rounded-2xl gradient-hero p-5 shadow-elevated border border-primary/10 flex items-center gap-4 text-right"
+      >
+        <div className="rounded-xl bg-primary/15 p-3">
+          <Compass className="h-7 w-7 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-lg font-bold">اتجاه القبلة 🕋</p>
+          <p className="text-sm text-muted-foreground">حدد اتجاه الكعبة المشرفة</p>
+        </div>
+        <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+      </motion.button>
 
       {/* Prayer Guide */}
       <PrayerGuideCard />
