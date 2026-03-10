@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
-import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio } from "@/lib/db";
+import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio, getStorageStats, clearAllTafsir } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
