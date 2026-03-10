@@ -195,7 +195,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               <span className="font-arabic text-sm font-bold text-foreground truncate">
                 {surahName}
               </span>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              <span className="text-[0.625rem] text-muted-foreground whitespace-nowrap">
                 {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
               {playing && (
