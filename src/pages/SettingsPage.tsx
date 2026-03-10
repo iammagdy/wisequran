@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu, HardDrive, FileText, Music, BookMarked } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe } from "lucide-react";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Switch } from "@/components/ui/switch";
