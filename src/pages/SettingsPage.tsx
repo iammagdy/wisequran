@@ -1165,52 +1165,109 @@ export default function SettingsPage() {
         {/* Developer Card */}
         <section>
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
+            initial={{ opacity: 0, y: 16, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.2 }}
             className="relative p-[2px] rounded-2xl overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(var(--primary)), hsl(var(--gold)), hsl(var(--primary)))',
-              backgroundSize: '300% 300%',
-              animation: 'gradient-border 4s ease infinite',
+              background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--gold)), hsl(var(--primary)))',
+              backgroundSize: '400% 400%',
+              animation: 'gradient-border 3s ease infinite',
             }}
           >
             <div className="bg-card rounded-[14px] p-6 text-center relative overflow-hidden">
-              {/* Ramadan ornaments */}
-              <span className="absolute top-2 right-3 text-lg opacity-20">🌙</span>
-              <span className="absolute top-3 left-4 text-xs opacity-15">✦</span>
-              <span className="absolute bottom-3 right-5 text-xs opacity-15">✦</span>
-              <span className="absolute bottom-2 left-3 text-lg opacity-20">🌙</span>
+              {/* Shimmer overlay */}
+              <div
+                className="absolute inset-0 opacity-[0.07] pointer-events-none"
+                style={{
+                  background: 'linear-gradient(110deg, transparent 30%, hsl(var(--gold) / 0.6) 50%, transparent 70%)',
+                  backgroundSize: '200% 100%',
+                  animation: 'shimmer 3s linear infinite',
+                }}
+              />
 
-              <p className="text-xl font-bold text-foreground mb-0.5">Magdy Saber</p>
-              <p className="text-sm text-muted-foreground mb-4">المطوّر</p>
+              {/* Floating Ramadan emojis */}
+              {[
+                { emoji: '🏮', top: '6px', right: '12px', size: 'text-xl', delay: 0 },
+                { emoji: '🌙', top: '8px', left: '14px', size: 'text-2xl', delay: 0.5 },
+                { emoji: '⭐', bottom: '8px', right: '16px', size: 'text-sm', delay: 1.2 },
+                { emoji: '✨', bottom: '12px', left: '18px', size: 'text-base', delay: 0.8 },
+                { emoji: '🕌', top: '50%', right: '8px', size: 'text-sm', delay: 1.5 },
+                { emoji: '🏮', bottom: '6px', left: '50%', size: 'text-lg', delay: 0.3 },
+              ].map((item, i) => (
+                <motion.span
+                  key={i}
+                  className={`absolute ${item.size} pointer-events-none select-none`}
+                  style={{
+                    top: item.top,
+                    bottom: item.bottom,
+                    left: item.left,
+                    right: item.right,
+                    opacity: 0.35,
+                  }}
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    delay: item.delay,
+                  }}
+                >
+                  {item.emoji}
+                </motion.span>
+              ))}
+
+              {/* Developer badge */}
+              <motion.span
+                className="inline-block mb-2 px-3 py-0.5 text-[10px] font-bold rounded-full"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
+                  color: 'hsl(var(--gold-foreground))',
+                }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', delay: 0.4 }}
+              >
+                المطوّر ✦
+              </motion.span>
+
+              <p
+                className="text-xl font-bold text-foreground mb-1"
+                style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}
+              >
+                Magdy Saber
+              </p>
+
+              <p className="text-xs text-muted-foreground mb-4">
+                صنع بـ ❤️ في رمضان 🌙
+              </p>
 
               <div className="flex items-center justify-center gap-3">
-                <a
-                  href="mailto:contact@magdysaber.com"
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  title="Email"
-                >
-                  <Mail size={18} />
-                </a>
-                <a
-                  href="https://github.com/iammagdy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  title="GitHub"
-                >
-                  <Github size={18} />
-                </a>
-                <a
-                  href="https://magdysaber.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                  title="Website"
-                >
-                  <Globe size={18} />
-                </a>
+                {[
+                  { href: 'mailto:contact@magdysaber.com', icon: <Mail size={18} />, title: 'Email' },
+                  { href: 'https://github.com/iammagdy', icon: <Github size={18} />, title: 'GitHub' },
+                  { href: 'https://magdysaber.com', icon: <Globe size={18} />, title: 'Website' },
+                ].map((link, i) => (
+                  <motion.a
+                    key={i}
+                    href={link.href}
+                    target={link.href.startsWith('mailto') ? undefined : '_blank'}
+                    rel={link.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
+                    title={link.title}
+                    className="flex items-center justify-center w-10 h-10 rounded-full text-gold-foreground transition-colors"
+                    style={{
+                      background: 'linear-gradient(135deg, hsl(var(--gold) / 0.2), hsl(var(--primary) / 0.15))',
+                      color: 'hsl(var(--primary))',
+                    }}
+                    whileHover={{ scale: 1.15, rotate: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + i * 0.1 }}
+                  >
+                    {link.icon}
+                  </motion.a>
+                ))}
               </div>
             </div>
           </motion.div>
