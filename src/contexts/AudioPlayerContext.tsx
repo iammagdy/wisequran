@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect, type ReactNode } from "react";
-import { resolveAudioSource } from "@/lib/quran-audio";
+import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl } from "@/lib/reciters";
 import { fetchChapterRecitation, findCurrentAyahByTime, type AyahTimestamp } from "@/lib/ayah-timestamps";
@@ -206,6 +206,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     try {
       await audio.play();
       setState((s) => ({ ...s, playing: true }));
+      // Auto-cache in background (Spotify-like)
+      if (!blobUrlRef.current && audioUrl) {
+        cachePlayingAudio(reciterId, surahNumber, audioUrl).catch(() => {});
+      }
       return;
     } catch {
       // Primary source failed, try fallback
@@ -219,6 +223,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       try {
         await audio.play();
         setState((s) => ({ ...s, playing: true }));
+        if (!fallback.cached) {
+          cachePlayingAudio(reciterId, surahNumber, fallback.url).catch(() => {});
+        }
         return;
       } catch {
         // Fallback also failed

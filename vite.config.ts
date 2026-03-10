@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        navigateFallbackDenylist: [/^\/~oauth/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
@@ -26,6 +27,32 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "quran-api-cache",
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/api\.quran\.com\/api\/v4\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "quran-foundation-api-cache",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/download\.quranicaudio\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "quranic-audio-cache",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/.*\.mp3quran\.net\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "mp3quran-audio-cache",
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
