@@ -35,27 +35,43 @@ async function fetchAudioFromUrl(
   onProgress?: (pct: number) => void
 ): Promise<ArrayBuffer> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000); // 30s timeout
+  // 60s for initial connection
+  let timeoutId: ReturnType<typeof setTimeout> = setTimeout(() => controller.abort(), 60_000);
 
   try {
     const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const contentLength = Number(res.headers.get("Content-Length") || 0);
     const reader = res.body?.getReader();
 
-    if (reader && contentLength > 0) {
+    if (reader) {
       try {
         const chunks: Uint8Array[] = [];
         let received = 0;
 
+        // 30s activity timeout — resets with every chunk
+        timeoutId = setTimeout(() => controller.abort(), 30_000);
+
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            clearTimeout(timeoutId);
+            break;
+          }
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => controller.abort(), 30_000);
+
           chunks.push(value);
           received += value.length;
-          onProgress?.(Math.round((received / contentLength) * 100));
+
+          if (contentLength > 0) {
+            onProgress?.(Math.round((received / contentLength) * 100));
+          } else {
+            // No Content-Length: report negative received bytes (MB) as signal
+            onProgress?.(-(received));
+          }
         }
 
         const merged = new Uint8Array(received);
@@ -66,8 +82,9 @@ async function fetchAudioFromUrl(
         }
         return merged.buffer;
       } catch {
-        // Streaming failed — retry without streaming
+        clearTimeout(timeoutId);
         reader.cancel().catch(() => {});
+        // Retry without streaming
         const res2 = await fetch(url);
         if (!res2.ok) throw new Error(`HTTP ${res2.status} on retry`);
         const buf = await res2.arrayBuffer();
@@ -80,7 +97,7 @@ async function fetchAudioFromUrl(
       return buf;
     }
   } catch (e) {
-    clearTimeout(timeout);
+    clearTimeout(timeoutId);
     throw e;
   }
 }
