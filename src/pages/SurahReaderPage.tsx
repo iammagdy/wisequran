@@ -218,7 +218,7 @@ export default function SurahReaderPage() {
               return (
               <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
-                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-bold text-primary hover:bg-primary/20 transition-colors">
+                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors">
                     صفحة {toArabicNumerals(currentPage)}
                     {minPage && maxPage && minPage !== maxPage && (
                       <span className="text-primary/60 mr-1">
