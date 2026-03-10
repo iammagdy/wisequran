@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Download, Loader2, WifiOff, Check, X, Timer } from "lucide-react";
-import { downloadSurahAudio } from "@/lib/quran-audio";
+import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
