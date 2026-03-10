@@ -206,6 +206,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     try {
       await audio.play();
       setState((s) => ({ ...s, playing: true }));
+      // Auto-cache in background (Spotify-like)
+      if (!blobUrlRef.current && audioUrl) {
+        cachePlayingAudio(reciterId, surahNumber, audioUrl).catch(() => {});
+      }
       return;
     } catch {
       // Primary source failed, try fallback

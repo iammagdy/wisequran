@@ -115,11 +115,6 @@ export async function getReciterAudioUrl(reciterId: string, surahNumber: number)
   return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
 }
 
-const CORS_PROXIES = [
-  "https://corsproxy.io/?",
-  "https://api.allorigins.win/raw?url=",
-];
-
 // Map reciter folders to quranicaudio.com paths
 const QURANIC_AUDIO_MAP: Record<string, string> = {
   "ar.alafasy": "mishaari_raashid_al_3afaasee",
@@ -134,36 +129,36 @@ const QURANIC_AUDIO_MAP: Record<string, string> = {
 
 /**
  * Get an ordered list of audio URLs to try for downloading.
- * Ensures 3+ sources for every reciter: primary, alternative mirrors, then CORS-proxied.
+ * No CORS proxies — only direct URLs from servers that support CORS.
  */
 export async function getReciterAudioUrls(reciterId: string, surahNumber: number): Promise<string[]> {
-  const primaryUrl = await getReciterAudioUrl(reciterId, surahNumber);
   const reciter = getReciterById(reciterId);
   const padded = surahNumber.toString().padStart(3, "0");
-  const urls: string[] = [primaryUrl];
+  const urls: string[] = [];
 
-  // Add cdn.islamic.network surah audio as fallback
-  const cdnFallback = `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
-  if (primaryUrl !== cdnFallback) {
-    urls.push(cdnFallback);
-  }
-
-  // Add download.quranicaudio.com as alternative mirror
+  // 1. download.quranicaudio.com — most reliable with proper CORS headers
   const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
   if (qaPath) {
-    const qaUrl = `https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`;
-    if (!urls.includes(qaUrl)) {
-      urls.push(qaUrl);
+    urls.push(`https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`);
+  }
+
+  // 2. Custom CDN (mp3quran.net etc.) for reciters that have it
+  const customBase = CUSTOM_CDN_RECITERS[reciterId];
+  if (customBase) {
+    urls.push(`${customBase}/${padded}.mp3`);
+  }
+
+  // 3. Dynamic mp3quran.net resolution
+  if (reciter.mp3quranId) {
+    const server = await resolveMp3QuranServer(reciter.mp3quranId);
+    if (server) {
+      const mp3Url = `${server}/${padded}.mp3`;
+      if (!urls.includes(mp3Url)) urls.push(mp3Url);
     }
   }
 
-  // Add CORS-proxied versions of ALL unique direct URLs as last resort
-  const directUrls = [...urls];
-  for (const proxy of CORS_PROXIES) {
-    for (const directUrl of directUrls) {
-      urls.push(`${proxy}${encodeURIComponent(directUrl)}`);
-    }
-  }
+  // 4. cdn.islamic.network as last resort
+  urls.push(`https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`);
 
   return urls;
 }
