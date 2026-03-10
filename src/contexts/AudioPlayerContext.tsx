@@ -223,6 +223,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       try {
         await audio.play();
         setState((s) => ({ ...s, playing: true }));
+        if (!fallback.cached) {
+          cachePlayingAudio(reciterId, surahNumber, fallback.url).catch(() => {});
+        }
         return;
       } catch {
         // Fallback also failed
