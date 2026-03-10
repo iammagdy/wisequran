@@ -1,7 +1,26 @@
 import { saveAudio, getAudio } from "./db";
 import { getReciterAudioUrls } from "./reciters";
 
-const MIN_AUDIO_SIZE = 1024; // 1KB minimum — anything smaller is invalid
+const MIN_AUDIO_SIZE = 10_240; // 10KB minimum — no valid surah audio is smaller
+
+/**
+ * Validate that a buffer contains actual MP3/audio data by checking magic bytes.
+ * Checks for: ID3 tag (ID3v2), MPEG sync word (0xFF 0xE0+), or fLaC header.
+ */
+function isValidAudioFile(buffer: ArrayBuffer): boolean {
+  if (buffer.byteLength < 4) return false;
+  const bytes = new Uint8Array(buffer);
+  // ID3v2 tag: starts with "ID3"
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) return true;
+  // MPEG audio frame sync: 0xFF followed by 0xE0+ (11 sync bits)
+  if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) return true;
+  // OGG container: "OggS"
+  if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return true;
+  // Check if it looks like HTML (common proxy error response)
+  const textStart = new TextDecoder().decode(bytes.slice(0, 50)).trim().toLowerCase();
+  if (textStart.startsWith("<!doctype") || textStart.startsWith("<html") || textStart.startsWith("<head")) return false;
+  return false;
+}
 
 /**
  * Try to get a playable audio source for a surah.
