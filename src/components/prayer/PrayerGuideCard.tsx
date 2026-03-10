@@ -94,7 +94,7 @@ export default function PrayerGuideCard() {
           <ol className="space-y-2 pr-1">
             {WUDU_STEPS.map((step, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[0.625rem] font-bold text-primary">
                   {(i + 1).toLocaleString("ar-EG")}
                 </span>
                 <span className="text-muted-foreground leading-relaxed">{step}</span>
@@ -108,7 +108,7 @@ export default function PrayerGuideCard() {
           <ol className="space-y-2 pr-1 mb-4">
             {PRAYER_STEPS.map((step, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[0.625rem] font-bold text-primary">
                   {(i + 1).toLocaleString("ar-EG")}
                 </span>
                 <span className="text-muted-foreground leading-relaxed">{step}</span>
@@ -122,7 +122,7 @@ export default function PrayerGuideCard() {
               {RAKAT_INFO.map((r) => (
                 <div key={r.name} className="text-center">
                   <p className="text-lg font-bold text-primary">{r.count}</p>
-                  <p className="text-[10px] text-muted-foreground">{r.name}</p>
+                  <p className="text-[0.625rem] text-muted-foreground">{r.name}</p>
                 </div>
               ))}
             </div>
@@ -159,7 +159,7 @@ export default function PrayerGuideCard() {
         </GuideSection>
       </div>
 
-      <p className="mt-3 text-center text-[10px] text-muted-foreground">
+      <p className="mt-3 text-center text-[0.625rem] text-muted-foreground">
         المصدر: صفة صلاة النبي ﷺ — الشيخ الألباني | islamqa.info
       </p>
     </motion.div>

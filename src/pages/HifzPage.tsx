@@ -148,13 +148,13 @@ export default function HifzPage() {
                     <div className="flex items-center gap-3">
                       <span className="font-arabic text-base font-bold">{item.surahName}</span>
                       {item.overdueDays > 0 && (
-                        <span className="text-[10px] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
+                        <span className="text-[0.625rem] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
                           متأخرة {toArabicNumerals(item.overdueDays)} يوم
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-muted-foreground">{getStrengthLabel(item.level)}</span>
+                      <span className="text-[0.625rem] text-muted-foreground">{getStrengthLabel(item.level)}</span>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 7 }).map((_, i) => (
                           <div
@@ -206,15 +206,15 @@ export default function HifzPage() {
           <div className="mt-3 flex gap-3 text-center">
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalInReview)}</p>
-              <p className="text-[10px] text-muted-foreground">في المراجعة</p>
+              <p className="text-[0.625rem] text-muted-foreground">في المراجعة</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.dueToday)}</p>
-              <p className="text-[10px] text-muted-foreground">مستحقة اليوم</p>
+              <p className="text-[0.625rem] text-muted-foreground">مستحقة اليوم</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalReviewsDone)}</p>
-              <p className="text-[10px] text-muted-foreground">إجمالي المراجعات</p>
+              <p className="text-[0.625rem] text-muted-foreground">إجمالي المراجعات</p>
             </div>
           </div>
         )}
@@ -263,7 +263,7 @@ export default function HifzPage() {
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
               <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
-              <span className="text-[10px] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
+              <span className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
               {/* Review strength indicator for memorized surahs */}
               {reviewItem && (
                 <div className="flex gap-0.5 mt-0.5">

@@ -60,7 +60,7 @@ export default function GlobalAudioBar() {
           {/* Info — clickable to navigate to surah */}
           <button onClick={handleNavigate} className="flex-1 min-w-0 text-right">
             <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
-            <p className="text-[10px] text-muted-foreground truncate">
+            <p className="text-[0.625rem] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
               {currentAyahInSurah !== null && totalAyahs > 0 && (
                 <span className="mr-2"> · آية {toArabicNumerals(currentAyahInSurah)} من {toArabicNumerals(totalAyahs)}</span>

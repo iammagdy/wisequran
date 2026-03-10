@@ -32,7 +32,7 @@ export function StreakCalendar({ data }: StreakCalendarProps) {
                 <div
                   key={di}
                   title={`${label}: ${toArabicNumerals(day.ayahCount)} آية`}
-                  className="h-9 w-9 rounded-lg flex items-center justify-center text-[10px] font-medium transition-colors"
+                  className="h-9 w-9 rounded-lg flex items-center justify-center text-[0.625rem] font-medium transition-colors"
                   style={{
                     backgroundColor:
                       intensity > 0
@@ -51,7 +51,7 @@ export function StreakCalendar({ data }: StreakCalendarProps) {
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-center gap-2 mt-3 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 mt-3 text-[0.625rem] text-muted-foreground">
         <span>أقل</span>
         {[0, 0.25, 0.5, 0.75, 1].map((v, i) => (
           <div

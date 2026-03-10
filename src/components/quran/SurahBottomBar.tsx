@@ -126,7 +126,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[10px] text-muted-foreground"
+                className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
                 dir="rtl"
               >
                 <WifiOff className="h-3 w-3" />
@@ -169,7 +169,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                     dir="rtl"
                   />
               </div>
-              <div className="flex justify-between text-[10px] text-muted-foreground tabular-nums" dir="rtl">
+              <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
                 <span>{formatTime(currentTime)}</span>
                 <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
               </div>
@@ -195,11 +195,11 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               <span className="font-arabic text-sm font-bold text-foreground truncate">
                 {surahName}
               </span>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              <span className="text-[0.625rem] text-muted-foreground whitespace-nowrap">
                 {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
               {playing && (
-                <span className="text-[10px] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
+                <span className="text-[0.625rem] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
                   تلاوة جارية
                 </span>
@@ -211,20 +211,20 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                  className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   <Download className="h-3 w-3" />
                   تحميل
                 </motion.button>
               )}
               {downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   {toArabicNumerals(`${dlProgress}%`)}
                 </span>
               )}
               {cached && !downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[10px] font-semibold text-primary">
+                <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[0.625rem] font-semibold text-primary">
                   <Check className="h-3 w-3" />
                   محمّل
                 </span>
@@ -279,7 +279,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         </div>
 
         <div className="px-4 pb-2">
-          <p className="text-center text-[9px] text-muted-foreground/50" dir="rtl">
+          <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir="rtl">
             قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح
           </p>
         </div>

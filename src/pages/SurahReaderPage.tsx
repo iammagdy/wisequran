@@ -218,7 +218,7 @@ export default function SurahReaderPage() {
               return (
               <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
-                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[11px] font-bold text-primary hover:bg-primary/20 transition-colors">
+                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors">
                     صفحة {toArabicNumerals(currentPage)}
                     {minPage && maxPage && minPage !== maxPage && (
                       <span className="text-primary/60 mr-1">
@@ -286,7 +286,7 @@ export default function SurahReaderPage() {
           </div>
           <div className="text-center flex-1">
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[0.6875rem] text-muted-foreground">
               {surahInfo && (
                 <span>{toArabicNumerals(surahInfo.numberOfAyahs)} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
               )}
@@ -570,7 +570,7 @@ export default function SurahReaderPage() {
                     <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
                       <div className="mb-2 flex items-center gap-2">
                         <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                          <span className="-rotate-45 text-[10px] font-bold text-primary">
+                          <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
                             {toArabicNumerals(t.numberInSurah)}
                           </span>
                         </span>

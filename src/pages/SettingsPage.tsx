@@ -644,7 +644,7 @@ export default function SettingsPage() {
             >
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium">نصوص القرآن</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedSurahs.length}/114`)}
                 </span>
               </div>
@@ -703,7 +703,7 @@ export default function SettingsPage() {
                   <Volume2 className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">التلاوات الصوتية</span>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
@@ -941,7 +941,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">نصوص القرآن</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.quranText)}</span>
@@ -954,7 +954,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">التلاوات الصوتية</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.audio)}</span>
@@ -967,7 +967,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">التفاسير</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1248,7 +1248,7 @@ export default function SettingsPage() {
 
               {/* Developer badge */}
               <motion.span
-                className="inline-block mb-2 px-3 py-0.5 text-[10px] font-bold rounded-full"
+                className="inline-block mb-2 px-3 py-0.5 text-[0.625rem] font-bold rounded-full"
                 style={{
                   background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
                   color: 'hsl(var(--gold-foreground))',

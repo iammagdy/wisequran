@@ -72,7 +72,7 @@ export default function BottomNav() {
                 
                 <span
                   className={cn(
-                    "relative z-10 text-[10px] font-semibold transition-all duration-200",
+                    "relative z-10 text-[0.625rem] font-semibold transition-all duration-200",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
