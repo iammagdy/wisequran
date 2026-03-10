@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CheckCircle, RotateCcw, Star, Clock, Pause, MoreVertical, Menu, HardDrive, FileText, Music, BookMarked } from "lucide-react";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
-import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio } from "@/lib/db";
+import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio, getStorageStats, clearAllTafsir } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
@@ -51,6 +51,19 @@ export default function SettingsPage() {
   const [audioDownloadProgress, setAudioDownloadProgress] = useState(0);
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
+
+  // Storage stats
+  const [storageStats, setStorageStats] = useState<{ quranText: number; audio: number; tafsir: number; total: number; audioCount: number; surahCount: number; tafsirCount: number } | null>(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const refreshStorageStats = useCallback(async () => {
+    setLoadingStats(true);
+    try {
+      const stats = await getStorageStats();
+      setStorageStats(stats);
+    } catch { /* ignore */ }
+    setLoadingStats(false);
+  }, []);
 
   // Preview reciter audio
   const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
@@ -172,7 +185,8 @@ export default function SettingsPage() {
     getAllDownloadedSurahs().then(setDownloadedSurahs);
     getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
     fetchSurahList().then(setSurahs);
-  }, [reciterId]);
+    refreshStorageStats();
+  }, [reciterId, refreshStorageStats]);
 
   const handleDownloadAll = async () => {
     setDownloading(true);
@@ -184,6 +198,7 @@ export default function SettingsPage() {
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
+    refreshStorageStats();
     if (updated.length === 114) {
       toast.success("تم تحميل القرآن الكريم بالكامل");
     }
@@ -193,6 +208,7 @@ export default function SettingsPage() {
     await clearAllData();
     setDownloadedSurahs([]);
     setDownloadedAudio([]);
+    refreshStorageStats();
     toast.success("تم مسح البيانات المحملة");
   };
 
@@ -208,12 +224,14 @@ export default function SettingsPage() {
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
     setAudioDownloading(false);
+    refreshStorageStats();
     toast.success("تم تحميل جميع التلاوات");
   };
 
   const handleClearAllAudio = async () => {
     await clearAllAudio();
     setDownloadedAudio([]);
+    refreshStorageStats();
     toast.success("تم مسح جميع التلاوات");
   };
 
@@ -221,14 +239,10 @@ export default function SettingsPage() {
     setSingleAudioDownloading(num);
     try {
       const size = await downloadSurahAudio(reciterId, num);
-      const check = await getAudio(reciterId, num);
-      if (check && check.data.byteLength > 1024) {
-        const updated = await getAllDownloadedAudio(reciterId);
-        setDownloadedAudio(updated);
-        toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
-      } else {
-        toast.error("فشل حفظ التلاوة — حاول مرة أخرى");
-      }
+      const updated = await getAllDownloadedAudio(reciterId);
+      setDownloadedAudio(updated);
+      refreshStorageStats();
+      toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "فشل تحميل التلاوة");
     }
@@ -239,6 +253,13 @@ export default function SettingsPage() {
     await deleteAudio(reciterId, num);
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
+    refreshStorageStats();
+  };
+
+  const handleClearTafsir = async () => {
+    await clearAllTafsir();
+    refreshStorageStats();
+    toast.success("تم مسح جميع التفاسير المحملة");
   };
 
   return (
@@ -841,6 +862,108 @@ export default function SettingsPage() {
             </motion.div>
           </section>
         )}
+
+        {/* ─── Storage Management ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <HardDrive className="h-3.5 w-3.5" />
+            إدارة التخزين
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.16 }}
+            className="rounded-xl bg-card p-4 shadow-sm space-y-4"
+          >
+            {loadingStats ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : storageStats ? (
+              <>
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">إجمالي التخزين</span>
+                    <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                      {formatBytes(storageStats.total)}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-gradient-to-l from-primary to-primary/70 transition-all" style={{ width: `${Math.min((storageStats.total / (500 * 1024 * 1024)) * 100, 100)}%` }} />
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                        <FileText className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">نصوص القرآن</p>
+                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatBytes(storageStats.quranText)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/20">
+                        <Music className="h-4 w-4 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">التلاوات الصوتية</p>
+                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground">{formatBytes(storageStats.audio)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                        <BookMarked className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">التفاسير</p>
+                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{formatBytes(storageStats.tafsir)}</span>
+                      {storageStats.tafsirCount > 0 && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button className="text-destructive/50 hover:text-destructive transition-colors">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent dir="rtl">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>مسح جميع التفاسير؟</AlertDialogTitle>
+                              <AlertDialogDescription>سيتم حذف جميع التفاسير المحملة. يمكنك إعادة تحميلها لاحقاً.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter className="flex-row-reverse gap-2">
+                              <AlertDialogAction onClick={handleClearTafsir} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">نعم، مسح الكل</AlertDialogAction>
+                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {storageStats.total === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-2">لا توجد بيانات محملة حالياً</p>
+                )}
+              </>
+            ) : null}
+          </motion.div>
+        </section>
 
         {/* ─── Reset Progress ─── */}
         <section>

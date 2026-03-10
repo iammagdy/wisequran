@@ -123,6 +123,11 @@ export async function clearAllData() {
   await db.clear("audio");
 }
 
+export async function clearAllTafsir() {
+  const db = await getDB();
+  await db.clear("tafsir");
+}
+
 export async function saveTafsir(editionId: string, surahNumber: number, ayahs: { numberInSurah: number; text: string }[]) {
   const db = await getDB();
   await db.put("tafsir", { id: tafsirKey(editionId, surahNumber), editionId, surahNumber, ayahs });
@@ -131,4 +136,48 @@ export async function saveTafsir(editionId: string, surahNumber: number, ayahs: 
 export async function getTafsir(editionId: string, surahNumber: number) {
   const db = await getDB();
   return db.get("tafsir", tafsirKey(editionId, surahNumber));
+}
+
+/** Calculate storage usage breakdown in bytes */
+export async function getStorageStats(): Promise<{
+  quranText: number;
+  audio: number;
+  tafsir: number;
+  total: number;
+  audioCount: number;
+  surahCount: number;
+  tafsirCount: number;
+}> {
+  const db = await getDB();
+
+  // Quran text
+  const allSurahs = await db.getAll("surahs");
+  let quranText = 0;
+  for (const s of allSurahs) {
+    quranText += new Blob([JSON.stringify(s)]).size;
+  }
+
+  // Audio
+  const allAudio = await db.getAll("audio");
+  let audio = 0;
+  for (const a of allAudio) {
+    audio += a.data.byteLength;
+  }
+
+  // Tafsir
+  const allTafsir = await db.getAll("tafsir");
+  let tafsir = 0;
+  for (const t of allTafsir) {
+    tafsir += new Blob([JSON.stringify(t)]).size;
+  }
+
+  return {
+    quranText,
+    audio,
+    tafsir,
+    total: quranText + audio + tafsir,
+    audioCount: allAudio.length,
+    surahCount: allSurahs.length,
+    tafsirCount: allTafsir.length,
+  };
 }
