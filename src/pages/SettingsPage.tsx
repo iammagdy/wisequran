@@ -954,7 +954,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">التلاوات الصوتية</p>
-                        <p className="text-[10px] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.audio)}</span>
