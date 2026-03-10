@@ -116,7 +116,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="fixed bottom-14 inset-x-0 z-50 px-3">
+    <div className="fixed bottom-above-nav inset-x-0 z-50 px-3">
       <div className="rounded-t-2xl glass-card shadow-elevated-lg overflow-hidden">
         <div className="px-4 pt-4 pb-2 space-y-3">
           {/* Offline warning */}
