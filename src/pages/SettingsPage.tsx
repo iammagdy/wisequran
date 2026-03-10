@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const { checkForUpdate } = useServiceWorkerUpdate();
