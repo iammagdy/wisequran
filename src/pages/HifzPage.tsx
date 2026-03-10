@@ -154,7 +154,7 @@ export default function HifzPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-muted-foreground">{getStrengthLabel(item.level)}</span>
+                      <span className="text-[0.625rem] text-muted-foreground">{getStrengthLabel(item.level)}</span>
                       <div className="flex gap-0.5">
                         {Array.from({ length: 7 }).map((_, i) => (
                           <div
