@@ -11,9 +11,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
-import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio } from "@/lib/db";
+import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
-import { downloadSurahAudio } from "@/lib/quran-audio";
+import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
@@ -220,12 +220,17 @@ export default function SettingsPage() {
   const handleDownloadSingleAudio = async (num: number) => {
     setSingleAudioDownloading(num);
     try {
-      await downloadSurahAudio(reciterId, num);
-      const updated = await getAllDownloadedAudio(reciterId);
-      setDownloadedAudio(updated);
-      toast.success("تم تحميل التلاوة");
-    } catch {
-      toast.error("فشل تحميل التلاوة");
+      const size = await downloadSurahAudio(reciterId, num);
+      const check = await getAudio(reciterId, num);
+      if (check && check.data.byteLength > 1024) {
+        const updated = await getAllDownloadedAudio(reciterId);
+        setDownloadedAudio(updated);
+        toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
+      } else {
+        toast.error("فشل حفظ التلاوة — حاول مرة أخرى");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "فشل تحميل التلاوة");
     }
     setSingleAudioDownloading(null);
   };
