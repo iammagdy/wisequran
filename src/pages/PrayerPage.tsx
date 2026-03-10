@@ -246,6 +246,25 @@ export default function PrayerPage() {
         })}
       </div>
 
+      {/* Qibla Banner */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => navigate("/qibla")}
+        className="w-full mb-6 rounded-2xl gradient-hero p-5 shadow-elevated border border-primary/10 flex items-center gap-4 text-right"
+      >
+        <div className="rounded-xl bg-primary/15 p-3">
+          <Compass className="h-7 w-7 text-primary" />
+        </div>
+        <div className="flex-1">
+          <p className="text-lg font-bold">اتجاه القبلة 🕋</p>
+          <p className="text-sm text-muted-foreground">حدد اتجاه الكعبة المشرفة</p>
+        </div>
+        <ChevronLeft className="h-5 w-5 text-muted-foreground" />
+      </motion.button>
+
       {/* Prayer Guide */}
       <PrayerGuideCard />
 
