@@ -644,7 +644,7 @@ export default function SettingsPage() {
             >
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium">نصوص القرآن</span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedSurahs.length}/114`)}
                 </span>
               </div>
