@@ -115,20 +115,14 @@ export default function PrayerPage() {
       <div className="mb-4 flex items-center justify-between">
         <div />
         <h1 className="text-2xl font-bold heading-decorated">صلواتي اليوم</h1>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => navigate("/qibla")}
-          className="rounded-xl p-2.5 transition-all shadow-soft bg-card text-muted-foreground hover:bg-muted"
-        >
-          <Compass className="h-5 w-5" />
-        </motion.button>
+        <div />
       </div>
 
       {/* Location indicator */}
-      {location?.city && (
+      {cachedLocation?.city && (
         <div className="flex items-center justify-center gap-1.5 mb-4 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />
-          <span>{location.city}</span>
+          <span>{cachedLocation.city}</span>
         </div>
       )}
 
