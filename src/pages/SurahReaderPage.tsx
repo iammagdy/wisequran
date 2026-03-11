@@ -201,7 +201,7 @@ export default function SurahReaderPage() {
     <div className="min-h-screen pb-surah-reader">
       {/* Header */}
       <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-4 py-3 pb-[5px] pt-[12px]">
           <div className="flex items-center gap-1.5">
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -349,7 +349,7 @@ export default function SurahReaderPage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6">
+      <div className="px-4 py-6 pt-[10px]">
         {loading ?
         <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) =>

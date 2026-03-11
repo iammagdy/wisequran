@@ -31,7 +31,7 @@ export default function MushafPageView({
   setAyahRef,
   targetPage,
   onPageChange,
-  onSeekToAyah,
+  onSeekToAyah
 }: MushafPageViewProps) {
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
 
@@ -47,7 +47,7 @@ export default function MushafPageView({
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     direction: "rtl",
-    startIndex: 0,
+    startIndex: 0
   });
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -88,7 +88,7 @@ export default function MushafPageView({
   useEffect(() => {
     if (!emblaApi || !highlightedAyah || pages.length === 0) return;
     const idx = pages.findIndex(([, pageAyahs]) =>
-      pageAyahs.some((a) => a.numberInSurah === highlightedAyah)
+    pageAyahs.some((a) => a.numberInSurah === highlightedAyah)
     );
     if (idx >= 0) {
       emblaApi.scrollTo(idx);
@@ -99,7 +99,7 @@ export default function MushafPageView({
   useEffect(() => {
     if (!emblaApi || !playingAyah || pages.length === 0) return;
     const idx = pages.findIndex(([, pageAyahs]) =>
-      pageAyahs.some((a) => a.numberInSurah === playingAyah)
+    pageAyahs.some((a) => a.numberInSurah === playingAyah)
     );
     if (idx >= 0) {
       emblaApi.scrollTo(idx);
@@ -110,121 +110,121 @@ export default function MushafPageView({
     <div className="relative" dir="rtl">
       {/* Page counter */}
       <div className="mb-3 text-center text-xs text-muted-foreground">
-        {pages.length > 0 && (
-          <span>
+        {pages.length > 0 &&
+        <span>
             {toArabicNumerals(currentSlide + 1)} / {toArabicNumerals(pages.length)}
           </span>
-        )}
+        }
       </div>
 
       {/* Carousel */}
       <div ref={emblaRef} className="overflow-hidden rounded-2xl">
         <div className="flex">
-          {pages.map(([pageNum, pageAyahs]) => (
-            <div
-              key={pageNum}
-              className="min-w-0 shrink-0 grow-0 basis-full"
-            >
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm mx-1 min-h-[60vh] flex flex-col">
-                {pageNum > 0 && (
-                  <div className="mb-4 flex items-center justify-center gap-3">
+          {pages.map(([pageNum, pageAyahs]) =>
+          <div
+            key={pageNum}
+            className="min-w-0 shrink-0 grow-0 basis-full">
+            
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm mx-1 min-h-[60vh] flex flex-col pt-[10px] pb-[10px]">
+                {pageNum > 0 &&
+              <div className="mb-4 flex items-center justify-center gap-3">
                     <div className="h-px flex-1 bg-border" />
                     <span className="text-xs font-bold text-primary">
                       صفحة {toArabicNumerals(pageNum)}
                     </span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
-                )}
+              }
 
                 <p
-                  className="font-arabic text-foreground text-justify flex-1"
-                  style={{ fontSize, lineHeight: 2.4 }}
-                >
-                  {pageAyahs.map((ayah) => (
-                    <span
-                      key={ayah.numberInSurah}
-                      id={`ayah-${ayah.numberInSurah}`}
-                      data-ayah={ayah.numberInSurah}
-                      ref={(el) => setAyahRef(el as HTMLDivElement | null, ayah.numberInSurah)}
-                      className={cn(
-                        "transition-colors",
-                        highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm",
-                        playingAyah === ayah.numberInSurah && "bg-primary/15 rounded-sm"
-                      )}
-                    >
+                className="font-arabic text-foreground text-justify flex-1"
+                style={{ fontSize, lineHeight: 2.4 }}>
+                
+                  {pageAyahs.map((ayah) =>
+                <span
+                  key={ayah.numberInSurah}
+                  id={`ayah-${ayah.numberInSurah}`}
+                  data-ayah={ayah.numberInSurah}
+                  ref={(el) => setAyahRef(el as HTMLDivElement | null, ayah.numberInSurah)}
+                  className={cn(
+                    "transition-colors",
+                    highlightedAyah === ayah.numberInSurah && "bg-primary/10 rounded-sm",
+                    playingAyah === ayah.numberInSurah && "bg-primary/15 rounded-sm"
+                  )}>
+                  
                       {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                       <button
-                        onClick={() => {
-                          if (playingAyah !== null && onSeekToAyah) {
-                            onSeekToAyah(ayah.numberInSurah);
-                          } else {
-                            setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah);
-                          }
-                        }}
-                        className={cn(
-                          "inline-flex items-baseline transition-colors",
-                          playingAyah !== null
-                            ? "text-primary hover:text-primary/80 cursor-pointer"
-                            : "text-primary/70 hover:text-primary"
-                        )}
-                        style={{ fontSize: fontSize * 0.65 }}
-                      >
+                    onClick={() => {
+                      if (playingAyah !== null && onSeekToAyah) {
+                        onSeekToAyah(ayah.numberInSurah);
+                      } else {
+                        setSelectedAyah(selectedAyah === ayah.numberInSurah ? null : ayah.numberInSurah);
+                      }
+                    }}
+                    className={cn(
+                      "inline-flex items-baseline transition-colors",
+                      playingAyah !== null ?
+                      "text-primary hover:text-primary/80 cursor-pointer" :
+                      "text-primary/70 hover:text-primary"
+                    )}
+                    style={{ fontSize: fontSize * 0.65 }}>
+                    
                         ﴿{toArabicNumerals(ayah.numberInSurah)}﴾
                       </button>{" "}
                     </span>
-                  ))}
+                )}
                 </p>
 
                 {selectedAyah !== null &&
-                  pageAyahs.some((a) => a.numberInSurah === selectedAyah) && (
-                    <div className="mt-3 flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-2">
+              pageAyahs.some((a) => a.numberInSurah === selectedAyah) &&
+              <div className="mt-3 flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-2">
                       <span className="text-xs text-muted-foreground">
                         الآية {toArabicNumerals(selectedAyah)}
                       </span>
                       <button
-                        onClick={() => toggleBookmark(selectedAyah)}
-                        className="rounded-lg p-1.5 transition-colors hover:bg-background"
-                      >
-                        {isBookmarked(selectedAyah) ? (
-                          <BookmarkCheck className="h-4 w-4 text-accent" />
-                        ) : (
-                          <Bookmark className="h-4 w-4 text-muted-foreground" />
-                        )}
+                  onClick={() => toggleBookmark(selectedAyah)}
+                  className="rounded-lg p-1.5 transition-colors hover:bg-background">
+                  
+                        {isBookmarked(selectedAyah) ?
+                  <BookmarkCheck className="h-4 w-4 text-accent" /> :
+
+                  <Bookmark className="h-4 w-4 text-muted-foreground" />
+                  }
                       </button>
                       <button
-                        onClick={() => {
-                          onAyahTafsir(selectedAyah);
-                          setSelectedAyah(null);
-                        }}
-                        className="rounded-lg p-1.5 transition-colors hover:bg-background text-muted-foreground"
-                      >
+                  onClick={() => {
+                    onAyahTafsir(selectedAyah);
+                    setSelectedAyah(null);
+                  }}
+                  className="rounded-lg p-1.5 transition-colors hover:bg-background text-muted-foreground">
+                  
                         <BookOpen className="h-4 w-4" />
                       </button>
                     </div>
-                  )}
+              }
               </div>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Navigation arrows for desktop */}
-      {canScrollPrev && (
-        <button
-          onClick={() => emblaApi?.scrollPrev()}
-          className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex"
-        >
+      {canScrollPrev &&
+      <button
+        onClick={() => emblaApi?.scrollPrev()}
+        className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
+        
           <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
-      )}
-      {canScrollNext && (
-        <button
-          onClick={() => emblaApi?.scrollNext()}
-          className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex"
-        >
+      }
+      {canScrollNext &&
+      <button
+        onClick={() => emblaApi?.scrollNext()}
+        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
+        
           <ChevronRight className="h-5 w-5 text-foreground" />
         </button>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
