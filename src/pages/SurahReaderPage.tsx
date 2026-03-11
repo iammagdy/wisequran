@@ -415,10 +415,10 @@ export default function SurahReaderPage() {
                     id={`ayah-${ayah.numberInSurah}`}
                     data-ayah={ayah.numberInSurah}
                     ref={(el) => setAyahRef(el, ayah.numberInSurah)}
-                    className={cn(
-                      "group relative rounded-2xl bg-card p-5 shadow-soft border border-border/50 transition-all duration-300",
-                      highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
-                      playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 shadow-glow animate-glow-pulse"
+                    className={cn("group relative rounded-2xl bg-card p-5 shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] pl-[10px] pr-[10px]",
+
+                    highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
+                    playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 shadow-glow animate-glow-pulse"
                     )}>
                     
                         <div className="mb-3 flex items-center justify-between">
