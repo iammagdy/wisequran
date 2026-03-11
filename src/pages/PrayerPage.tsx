@@ -110,7 +110,7 @@ export default function PrayerPage() {
   const heroPrayer = nextPrayer ? PRAYERS.find((p) => p.id === nextPrayer.id) : null;
 
   return (
-    <div className="px-4 pt-6 pb-24">
+    <div className="px-4 pt-6 pl-[5px] pb-[20px]">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div />
