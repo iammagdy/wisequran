@@ -91,7 +91,7 @@ export default function QuranPage() {
   const isSurahMode = viewMode === "surahs";
 
   return (
-    <div className="px-4 pt-6 pb-24">
+    <div className="px-4 pt-[15px] pb-[15px] pl-[10px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-[5px] mt-0">
         <div>
