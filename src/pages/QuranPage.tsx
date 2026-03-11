@@ -224,7 +224,7 @@ export default function QuranPage() {
 
       {/* View Mode Tabs */}
       {!showBookmarks && !showFavorites && !showHistory &&
-      <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 pt-0 pb-0 mb-[5px]" dir="rtl">
+      <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 pt-0 pb-0 mb-[8px]" dir="rtl">
           {[
         { key: "surahs" as ViewMode, label: "السور" },
         { key: "juz" as ViewMode, label: "الأجزاء" }].
