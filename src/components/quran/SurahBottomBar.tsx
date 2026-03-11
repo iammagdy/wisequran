@@ -113,26 +113,26 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   const currentTime = isThisSurah ? player.currentTime : 0;
   const duration = isThisSurah ? player.duration : 0;
   const offline = isThisSurah && player.offline;
-  const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const pct = duration > 0 ? currentTime / duration * 100 : 0;
 
   return (
     <div className="fixed bottom-above-nav inset-x-0 z-50 px-3">
       <div className="rounded-t-2xl glass-card shadow-elevated-lg overflow-hidden">
-        <div className="px-4 pt-4 pb-2 space-y-3">
+        <div className="px-4 pb-2 space-y-3 pt-[5px] border-2 border-primary">
           {/* Offline warning */}
           <AnimatePresence>
-            {offline && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
-                dir="rtl"
-              >
+            {offline &&
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
+              dir="rtl">
+              
                 <WifiOff className="h-3 w-3" />
                 صوت غير متاح بدون إنترنت — حمّل الصوت أولاً
               </motion.div>
-            )}
+            }
           </AnimatePresence>
 
           {/* Row 1: Play + Progress + Time + Timer toggle */}
@@ -141,15 +141,15 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               whileTap={{ scale: 0.9 }}
               onClick={handlePlayPause}
               disabled={loading}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : playing ? (
-                <Pause className="h-4 w-4" />
-              ) : (
-                <Play className="h-4 w-4 translate-x-[1px]" />
-              )}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50">
+              
+              {loading ?
+              <Loader2 className="h-4 w-4 animate-spin" /> :
+              playing ?
+              <Pause className="h-4 w-4" /> :
+
+              <Play className="h-4 w-4 translate-x-[1px]" />
+              }
             </motion.button>
 
             <div className="flex flex-1 flex-col gap-1 min-w-0">
@@ -157,17 +157,17 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 <motion.div
                   className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-primary to-primary/70"
                   style={{ width: `${pct}%` }}
-                  transition={{ duration: 0.3 }}
-                />
+                  transition={{ duration: 0.3 }} />
+                
                 <input
-                    type="range"
-                    min={0}
-                    max={duration || 1}
-                    value={currentTime}
-                    onChange={handleSeek}
-                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                    dir="rtl"
-                  />
+                  type="range"
+                  min={0}
+                  max={duration || 1}
+                  value={currentTime}
+                  onChange={handleSeek}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  dir="rtl" />
+                
               </div>
               <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
                 <span>{formatTime(currentTime)}</span>
@@ -180,11 +180,11 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               onClick={() => setShowTimer(!showTimer)}
               className={cn(
                 "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
-                showTimer || timerActive
-                  ? "bg-primary/15 text-primary"
-                  : "text-muted-foreground hover:bg-muted"
-              )}
-            >
+                showTimer || timerActive ?
+                "bg-primary/15 text-primary" :
+                "text-muted-foreground hover:bg-muted"
+              )}>
+              
               <Timer className="h-4 w-4" />
             </motion.button>
           </div>
@@ -198,65 +198,65 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               <span className="text-[0.625rem] text-muted-foreground whitespace-nowrap">
                 {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
-              {playing && (
-                <span className="text-[0.625rem] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
+              {playing &&
+              <span className="text-[0.625rem] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
                   تلاوة جارية
                 </span>
-              )}
+              }
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {!cached && !downloading && (
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleDownload}
-                  className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                >
+              {!cached && !downloading &&
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleDownload}
+                className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary">
+                
                   <Download className="h-3 w-3" />
                   تحميل
                 </motion.button>
-              )}
-              {downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] text-muted-foreground">
+              }
+              {downloading &&
+              <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   {toArabicNumerals(`${dlProgress}%`)}
                 </span>
-              )}
-              {cached && !downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[0.625rem] font-semibold text-primary">
+              }
+              {cached && !downloading &&
+              <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[0.625rem] font-semibold text-primary">
                   <Check className="h-3 w-3" />
                   محمّل
                 </span>
-              )}
+              }
             </div>
           </div>
 
           {/* Timer section */}
           <AnimatePresence>
-            {showTimer && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
+            {showTimer &&
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden">
+              
                 <div className="border-t border-border/30 pt-3">
-                  {!timerActive ? (
-                    <div className="flex gap-2" dir="rtl">
-                      {TIMER_PRESETS.map((m) => (
-                        <motion.button
-                          key={m}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => startTimer(m)}
-                          className="flex-1 rounded-xl bg-muted px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                        >
+                  {!timerActive ?
+                <div className="flex gap-2" dir="rtl">
+                      {TIMER_PRESETS.map((m) =>
+                  <motion.button
+                    key={m}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => startTimer(m)}
+                    className="flex-1 rounded-xl bg-muted px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary/10 hover:text-primary">
+                    
                           {toArabicNumerals(m)} د
                         </motion.button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between" dir="rtl">
+                  )}
+                    </div> :
+
+                <div className="flex items-center justify-between" dir="rtl">
                       <div className="flex items-center gap-2">
                         <Timer className="h-4 w-4 text-primary" />
                         <span className="font-arabic text-base font-bold tabular-nums text-foreground">
@@ -264,17 +264,17 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                         </span>
                       </div>
                       <motion.button
-                        whileTap={{ scale: 0.9 }}
-                        onClick={stopTimer}
-                        className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted"
-                      >
+                    whileTap={{ scale: 0.9 }}
+                    onClick={stopTimer}
+                    className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted">
+                    
                         <X className="h-4 w-4" />
                       </motion.button>
                     </div>
-                  )}
+                }
                 </div>
               </motion.div>
-            )}
+            }
           </AnimatePresence>
         </div>
 
@@ -284,6 +284,6 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
