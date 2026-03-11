@@ -193,7 +193,7 @@ export default function QuranPage() {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         onClick={() => navigate(`/surah/${lastRead.surah}`)}
-        className="flex w-full items-center rounded-2xl bg-card p-4 text-right shadow-elevated border border-primary/10 hover-lift mb-[5px] pb-[5px] pt-[5px] gap-[20px]">
+        className="flex w-full items-center rounded-2xl bg-card p-4 text-right shadow-elevated border border-primary/10 hover-lift gap-[20px] pb-0 pt-0 mb-[3px]">
         
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
             <BookOpen className="h-5 w-5 text-primary" />
