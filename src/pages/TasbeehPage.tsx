@@ -71,8 +71,8 @@ export default function TasbeehPage() {
 
       {/* Today total - compact at top */}
       <div className="text-center mb-2">
-        <span className="text-sm text-muted-foreground">إجمالي اليوم: </span>
-        <span className="text-sm font-bold text-primary">{toArabicNumerals(todayTotal)}</span>
+        <span className="text-secondary-foreground text-base">إجمالي اليوم: </span>
+        <span className="font-bold text-primary text-base">{toArabicNumerals(todayTotal)}</span>
       </div>
 
       {/* Spacer to push counter down */}
