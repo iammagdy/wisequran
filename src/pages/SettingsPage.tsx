@@ -1248,7 +1248,7 @@ export default function SettingsPage() {
 
               {/* Developer badge */}
               <motion.span
-                className="inline-block mb-2 px-3 py-0.5 text-[0.625rem] font-bold rounded-full"
+                className="inline-block mb-2 px-3 py-0.5 font-bold rounded-full text-sm bg-accent"
                 style={{
                   background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
                   color: 'hsl(var(--gold-foreground))'
