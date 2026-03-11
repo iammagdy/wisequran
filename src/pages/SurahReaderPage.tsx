@@ -321,25 +321,25 @@ export default function SurahReaderPage() {
 
         {/* Tab switcher */}
         <div className="flex justify-center gap-2 px-4 pt-1 pb-[4px]" dir="rtl">
-          <div className="flex gap-1.5 p-1 rounded-2xl bg-muted/50">
+          <div className="flex gap-1.5 p-1 rounded-2xl bg-muted/50 border-2">
             <button
               onClick={() => {setActiveTab("text");setFocusedAyah(null);}}
-              className={cn(
-                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
-                activeTab === "text" ?
-                "bg-card text-foreground shadow-soft" :
-                "text-muted-foreground hover:text-foreground"
+              className={cn("rounded-xl px-5 py-2 text-sm font-semibold transition-all border",
+
+              activeTab === "text" ?
+              "bg-card text-foreground shadow-soft" :
+              "text-muted-foreground hover:text-foreground"
               )}>
               
               النص
             </button>
             <button
               onClick={() => setActiveTab("tafsir")}
-              className={cn(
-                "rounded-xl px-5 py-2 text-sm font-semibold transition-all",
-                activeTab === "tafsir" ?
-                "bg-card text-foreground shadow-soft" :
-                "text-muted-foreground hover:text-foreground"
+              className={cn("rounded-xl px-5 py-2 text-sm font-semibold transition-all border",
+
+              activeTab === "tafsir" ?
+              "bg-card text-foreground shadow-soft" :
+              "text-muted-foreground hover:text-foreground"
               )}>
               
               التفسير
