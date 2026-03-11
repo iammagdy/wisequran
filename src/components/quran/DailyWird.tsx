@@ -24,7 +24,7 @@ export function DailyWird() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 mb-[10px] pt-[5px] pb-px"
+        className="rounded-2xl bg-card p-4 shadow-elevated border-border/50 mb-[10px] pt-[5px] pb-px border-2"
         dir="rtl">
         
         <div className="items-center justify-between flex flex-row mb-[5px]">
