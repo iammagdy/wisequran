@@ -170,19 +170,19 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 
               </div>
               <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
-                <span>{formatTime(currentTime)}</span>
-                <span>{duration > 0 ? formatTime(duration) : "--:--"}</span>
+                <span className="text-base text-[#4b9b73]">{formatTime(currentTime)}</span>
+                <span className="text-base text-[#4b9b73]">{duration > 0 ? formatTime(duration) : "--:--"}</span>
               </div>
             </div>
 
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowTimer(!showTimer)}
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
-                showTimer || timerActive ?
-                "bg-primary/15 text-primary" :
-                "text-muted-foreground hover:bg-muted"
+              className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all bg-input",
+
+              showTimer || timerActive ?
+              "bg-primary/15 text-primary" :
+              "text-muted-foreground hover:bg-muted"
               )}>
               
               <Timer className="h-4 w-4" />
