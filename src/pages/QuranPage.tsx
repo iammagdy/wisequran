@@ -152,7 +152,7 @@ export default function QuranPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-[16px] pb-[5px] pt-[5px] mb-[5px]"
+        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-[16px] mb-[5px] pt-[2px] pb-[2px]"
         dir="rtl">
         
         <div className="flex items-center justify-between mb-3">
@@ -232,7 +232,7 @@ export default function QuranPage() {
         <button
           key={tab.key}
           onClick={() => setViewMode(tab.key)}
-          className={cn("flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all pb-[5px] pt-[5px]",
+          className={cn("flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all pb-[5px] pt-[5px] border",
 
           viewMode === tab.key ?
           "bg-card text-foreground shadow-soft" :
@@ -377,7 +377,7 @@ export default function QuranPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: Math.min(i * 0.02, 0.5) }}
           onClick={() => navigate(`/surah/${surah.number}`)}
-          className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group">
+          className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group pt-[2px] pb-[2px]">
           
                   <div className="number-badge h-11 w-11 text-sm">
                     {toArabicNumerals(surah.number)}
