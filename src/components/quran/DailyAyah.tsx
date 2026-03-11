@@ -17,7 +17,7 @@ interface CachedAyah {
 }
 
 function getGlobalAyahNumber(surah: number, ayah: number): number {
-  const ayahCounts = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+  const ayahCounts = [7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6];
   let total = 0;
   for (let i = 0; i < surah - 1; i++) total += ayahCounts[i];
   return total + ayah;
@@ -32,7 +32,7 @@ export function DailyAyah() {
     const load = async () => {
       const cacheKey = getDailyAyahCacheKey();
       const cached = localStorage.getItem(cacheKey);
-      
+
       if (cached) {
         setData(JSON.parse(cached));
         setLoading(false);
@@ -44,13 +44,13 @@ export function DailyAyah() {
         const ayahs: Ayah[] = await fetchSurahAyahs(ref.surah);
         const ayah = ayahs.find((a) => a.numberInSurah === ref.ayah);
         const surahMeta = SURAH_META.find((s) => s.number === ref.surah);
-        
+
         if (ayah && surahMeta) {
           const entry: CachedAyah = {
             surah: ref.surah,
             ayah: ref.ayah,
             text: ayah.text,
-            surahName: surahMeta.name,
+            surahName: surahMeta.name
           };
           localStorage.setItem(cacheKey, JSON.stringify(entry));
           setData(entry);
@@ -73,8 +73,8 @@ export function DailyAyah() {
         </div>
         <Skeleton className="h-20 w-full mb-3 rounded-xl" />
         <Skeleton className="h-3 w-28 mr-auto" />
-      </div>
-    );
+      </div>);
+
   }
 
   if (!data) return null;
@@ -85,9 +85,9 @@ export function DailyAyah() {
       animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.99 }}
       onClick={() => navigate(`/surah/${data.surah}?ayah=${data.ayah}`)}
-      className="mb-5 w-full rounded-2xl gradient-hero p-5 text-right shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group cursor-pointer"
-      dir="rtl"
-    >
+      className="w-full rounded-2xl gradient-hero p-5 text-right shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group cursor-pointer mb-[5px] pr-[20px] pt-[5px] pb-[2px]"
+      dir="rtl">
+      
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -110,7 +110,7 @@ export function DailyAyah() {
           <span className="text-xs font-semibold text-primary">آية اليوم</span>
         </div>
         
-        <p className="font-arabic text-lg leading-loose mb-4 text-foreground/90 line-clamp-3">
+        <p className="font-arabic text-lg leading-loose text-foreground/90 line-clamp-3 mb-[5px] mt-0">
           {data.text}
         </p>
         
@@ -130,8 +130,8 @@ export function DailyAyah() {
                   toast({ title: "تم النسخ" });
                 }
               }}
-              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors"
-            >
+              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+              
               <Share2 className="h-3.5 w-3.5 text-primary/60" />
             </button>
             <button
@@ -144,13 +144,13 @@ export function DailyAyah() {
                   toast({ title: "تعذر تشغيل الصوت" });
                 });
               }}
-              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors"
-            >
+              className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
+              
               <Volume2 className="h-3.5 w-3.5 text-primary/60" />
             </button>
           </div>
         </div>
       </div>
-    </motion.div>
-  );
+    </motion.div>);
+
 }

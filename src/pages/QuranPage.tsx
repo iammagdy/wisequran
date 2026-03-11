@@ -93,7 +93,7 @@ export default function QuranPage() {
   return (
     <div className="px-4 pt-6 pb-24">
       {/* Header */}
-      <div className="mb-5 flex items-center justify-between">
+      <div className="flex items-center justify-between mb-[5px] mt-0">
         <div>
           <h1 className="text-2xl font-bold heading-decorated">القرآن الكريم</h1>
         </div>
@@ -193,7 +193,7 @@ export default function QuranPage() {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         onClick={() => navigate(`/surah/${lastRead.surah}`)}
-        className="mb-5 flex w-full items-center gap-4 rounded-2xl bg-card p-4 text-right shadow-elevated border border-primary/10 hover-lift">
+        className="flex w-full items-center rounded-2xl bg-card p-4 text-right shadow-elevated border border-primary/10 hover-lift mb-[5px] pb-[5px] pt-[5px] gap-[20px]">
         
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
             <BookOpen className="h-5 w-5 text-primary" />
