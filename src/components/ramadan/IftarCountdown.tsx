@@ -13,9 +13,9 @@ export default function IftarCountdown() {
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      const options = location
-        ? { latitude: location.latitude, longitude: location.longitude }
-        : {};
+      const options = location ?
+      { latitude: location.latitude, longitude: location.longitude } :
+      {};
       const times = calculatePrayerTimes(now, options);
       const [h, m] = times.maghrib.split(":").map(Number);
 
@@ -35,7 +35,7 @@ export default function IftarCountdown() {
               body: "اللهم لك صمت وعلى رزقك أفطرت",
               icon: "/icons/icon-192.png",
               dir: "rtl",
-              lang: "ar",
+              lang: "ar"
             });
           }
         }
@@ -64,7 +64,7 @@ export default function IftarCountdown() {
 
   const formatTime = (totalSeconds: number) => {
     const hrs = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const mins = Math.floor(totalSeconds % 3600 / 60);
     const secs = totalSeconds % 60;
     return `${toArabicNumerals(hrs.toString().padStart(2, "0"))} : ${toArabicNumerals(mins.toString().padStart(2, "0"))} : ${toArabicNumerals(secs.toString().padStart(2, "0"))}`;
   };
@@ -72,23 +72,23 @@ export default function IftarCountdown() {
   return (
     <Card className="border-amber-300/40 dark:border-amber-600/30 overflow-hidden">
       <CardContent className="p-4 text-center space-y-2">
-        {passed ? (
-          <>
+        {passed ?
+        <>
             <p className="text-2xl">🎉</p>
             <p className="text-lg font-bold text-foreground">حان وقت الإفطار!</p>
             <p className="text-xs text-muted-foreground">ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله</p>
-          </>
-        ) : remaining !== null ? (
-          <>
+          </> :
+        remaining !== null ?
+        <>
             <p className="text-xs text-muted-foreground">⏱️ باقي على الإفطار</p>
-            <p className="text-2xl font-bold tracking-wider text-foreground font-mono" dir="ltr">
+            <p className="text-2xl font-bold tracking-wider text-foreground font-sans" dir="ltr">
               {formatTime(remaining)}
             </p>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">جارٍ حساب الوقت...</p>
-        )}
+          </> :
+
+        <p className="text-sm text-muted-foreground">جارٍ حساب الوقت...</p>
+        }
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
