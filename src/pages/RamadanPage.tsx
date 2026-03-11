@@ -31,7 +31,7 @@ export default function RamadanPage() {
   return (
     <div className="min-h-screen" dir="rtl">
       {/* Ramadan Vibes Header */}
-      <div className="relative overflow-hidden bg-gradient-to-b from-amber-600/20 via-amber-500/10 to-transparent px-4 pt-12 pb-8">
+      <div className="relative overflow-hidden bg-gradient-to-b from-amber-600/20 via-amber-500/10 to-transparent px-4 pb-[10px] pt-[25px]">
         {/* Decorative elements */}
         <div className="absolute inset-0 pointer-events-none select-none">
           <span className="absolute top-4 right-6 text-3xl animate-float opacity-60">🏮</span>
@@ -82,11 +82,11 @@ export default function RamadanPage() {
                     
                     <button
                       onClick={() => toggleChecklistItem(item.id)}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-right",
-                        done ?
-                        "bg-primary/10 border-primary/30" :
-                        "bg-card border-border hover:border-amber-300/50"
+                      className={cn("w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-right pb-[5px] pt-[5px]",
+
+                      done ?
+                      "bg-primary/10 border-primary/30" :
+                      "bg-card border-border hover:border-amber-300/50"
                       )}>
                       
                       <div
