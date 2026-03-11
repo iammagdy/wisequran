@@ -33,8 +33,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  AlertDialogTrigger } from
+"@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
@@ -62,7 +62,7 @@ export default function SettingsPage() {
   const [showAudioList, setShowAudioList] = useState(false);
 
   // Storage stats
-  const [storageStats, setStorageStats] = useState<{ quranText: number; audio: number; tafsir: number; total: number; audioCount: number; surahCount: number; tafsirCount: number } | null>(null);
+  const [storageStats, setStorageStats] = useState<{quranText: number;audio: number;tafsir: number;total: number;audioCount: number;surahCount: number;tafsirCount: number;} | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
   const refreshStorageStats = useCallback(async () => {
@@ -70,7 +70,7 @@ export default function SettingsPage() {
     try {
       const stats = await getStorageStats();
       setStorageStats(stats);
-    } catch { /* ignore */ }
+    } catch {/* ignore */}
     setLoadingStats(false);
   }, []);
 
@@ -226,9 +226,9 @@ export default function SettingsPage() {
     const total = 114;
     for (let i = 1; i <= total; i++) {
       if (!downloadedAudio.includes(i)) {
-        try { await downloadSurahAudio(reciterId, i); } catch { /* continue */ }
+        try {await downloadSurahAudio(reciterId, i);} catch {/* continue */}
       }
-      setAudioDownloadProgress(Math.round((i / total) * 100));
+      setAudioDownloadProgress(Math.round(i / total * 100));
     }
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
@@ -272,7 +272,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6 pb-24" dir="rtl">
+    <div className="px-4 pt-6 pl-[5px] pb-[20px]" dir="rtl">
       <h1 className="mb-1 text-2xl font-bold heading-decorated">الإعدادات</h1>
       <p className="mb-6 text-sm text-muted-foreground">إعدادات التطبيق</p>
 
@@ -286,8 +286,8 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4"
-          >
+            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4">
+            
             {/* Theme toggle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -306,23 +306,23 @@ export default function SettingsPage() {
                 <span className="text-sm font-medium">حجم الواجهة</span>
               </div>
               <div className="flex gap-2">
-                {([
-                  { value: "normal" as const, label: "عادي" },
-                  { value: "large" as const, label: "كبير" },
-                  { value: "xlarge" as const, label: "كبير جداً" },
-                ]).map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setUIScale(opt.value)}
-                    className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
-                      uiScale === opt.value
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    }`}
-                  >
+                {[
+                { value: "normal" as const, label: "عادي" },
+                { value: "large" as const, label: "كبير" },
+                { value: "xlarge" as const, label: "كبير جداً" }].
+                map((opt) =>
+                <button
+                  key={opt.value}
+                  onClick={() => setUIScale(opt.value)}
+                  className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
+                  uiScale === opt.value ?
+                  "bg-primary text-primary-foreground" :
+                  "bg-muted text-muted-foreground hover:bg-muted/80"}`
+                  }>
+                  
                     {opt.label}
                   </button>
-                ))}
+                )}
               </div>
             </div>
 
@@ -342,12 +342,12 @@ export default function SettingsPage() {
                 onValueChange={([v]) => setFontSize(v)}
                 min={16}
                 max={40}
-                step={2}
-              />
+                step={2} />
+              
               <p
                 className="mt-3 text-center font-arabic text-muted-foreground"
-                style={{ fontSize }}
-              >
+                style={{ fontSize }}>
+                
                 بِسْمِ اللَّهِ
               </p>
             </div>
@@ -364,50 +364,50 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.02 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden"
-          >
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+            
             <Collapsible>
               <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{RECITERS.find(r => r.id === reciterId)?.name ?? "مشاري العفاسي"}</span>
+                <span className="font-arabic">{RECITERS.find((r) => r.id === reciterId)?.name ?? "مشاري العفاسي"}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="border-t border-border/50 px-2 py-2 max-h-64 overflow-y-auto space-y-0.5">
-                  {RECITERS.map((r) => (
-                    <div
-                      key={r.id}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        reciterId === r.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
-                      }`}
-                    >
+                  {RECITERS.map((r) =>
+                  <div
+                    key={r.id}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    reciterId === r.id ?
+                    "bg-primary/10 text-primary" :
+                    "text-foreground hover:bg-muted"}`
+                    }>
+                    
                       <button
-                        onClick={() => setReciterId(r.id)}
-                        className="flex flex-1 items-center gap-3 min-w-0"
-                      >
+                      onClick={() => setReciterId(r.id)}
+                      className="flex flex-1 items-center gap-3 min-w-0">
+                      
                         <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                          reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"
-                        }`}>
+                      reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                      }>
                           {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                         </div>
                         <span className="font-arabic truncate">{r.name}</span>
                       </button>
                       <button
-                        onClick={(e) => { e.stopPropagation(); togglePreview(r); }}
-                        className="shrink-0 p-1.5 rounded-full hover:bg-muted-foreground/10 transition-colors"
-                        title="معاينة الصوت"
-                      >
-                        {previewLoading === r.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        ) : previewingReciter === r.id ? (
-                          <Pause className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Volume2 className="h-4 w-4 text-muted-foreground" />
-                        )}
+                      onClick={(e) => {e.stopPropagation();togglePreview(r);}}
+                      className="shrink-0 p-1.5 rounded-full hover:bg-muted-foreground/10 transition-colors"
+                      title="معاينة الصوت">
+                      
+                        {previewLoading === r.id ?
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> :
+                      previewingReciter === r.id ?
+                      <Pause className="h-4 w-4 text-primary" /> :
+
+                      <Volume2 className="h-4 w-4 text-muted-foreground" />
+                      }
                       </button>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -424,33 +424,33 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.025 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden"
-          >
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+            
             <Collapsible>
               <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{TAFSIR_EDITIONS.find(t => t.id === tafsirId)?.name ?? "تفسير الميسر"}</span>
+                <span className="font-arabic">{TAFSIR_EDITIONS.find((t) => t.id === tafsirId)?.name ?? "تفسير الميسر"}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="border-t border-border/50 px-2 py-2 space-y-0.5">
-                  {TAFSIR_EDITIONS.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => setTafsirId(t.id)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        tafsirId === t.id
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
-                      }`}
-                    >
+                  {TAFSIR_EDITIONS.map((t) =>
+                  <button
+                    key={t.id}
+                    onClick={() => setTafsirId(t.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    tafsirId === t.id ?
+                    "bg-primary/10 text-primary" :
+                    "text-foreground hover:bg-muted"}`
+                    }>
+                    
                       <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"
-                      }`}>
+                    tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                    }>
                         {tafsirId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                       </div>
                       <span className="font-arabic">{t.name}</span>
                     </button>
-                  ))}
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -467,15 +467,15 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.03 }}
-            className="rounded-xl bg-card p-4 shadow-sm space-y-3"
-          >
+            className="rounded-xl bg-card p-4 shadow-sm space-y-3">
+            
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {notificationsEnabled ? (
-                  <Bell className="h-4.5 w-4.5 text-primary" />
-                ) : (
-                  <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
-                )}
+                {notificationsEnabled ?
+                <Bell className="h-4.5 w-4.5 text-primary" /> :
+
+                <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
+                }
                 <span className="text-sm font-medium">تذكير بأوقات الصلاة</span>
               </div>
               <Switch
@@ -498,13 +498,13 @@ export default function SettingsPage() {
                     setNotificationsEnabled(false);
                     toast.success("تم إيقاف إشعارات الصلاة");
                   }
-                }}
-              />
+                }} />
+              
             </div>
             <p className="text-xs text-muted-foreground">
-              {notificationPermission === "denied"
-                ? "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح"
-                : "ستصلك إشعارات عند دخول وقت كل صلاة"}
+              {notificationPermission === "denied" ?
+              "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح" :
+              "ستصلك إشعارات عند دخول وقت كل صلاة"}
             </p>
 
             <Separator className="my-4" />
@@ -512,11 +512,11 @@ export default function SettingsPage() {
             {/* Azkar Notifications */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                {azkarNotificationsEnabled ? (
-                  <Bell className="h-4.5 w-4.5 text-primary" />
-                ) : (
-                  <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
-                )}
+                {azkarNotificationsEnabled ?
+                <Bell className="h-4.5 w-4.5 text-primary" /> :
+
+                <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
+                }
                 <span className="text-sm font-medium">تذكير بأذكار الصباح والمساء</span>
               </div>
               <Switch
@@ -539,8 +539,8 @@ export default function SettingsPage() {
                     setAzkarNotificationsEnabled(false);
                     toast.success("تم إيقاف تذكير الأذكار");
                   }
-                }}
-              />
+                }} />
+              
             </div>
             <p className="text-xs text-muted-foreground">
               تذكير عند الفجر والمغرب لقراءة الأذكار
@@ -558,8 +558,8 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.035 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden"
-          >
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+            
             <Collapsible>
               <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
                 <span className="font-arabic">{CALCULATION_METHODS[calcMethod]?.name ?? "الهيئة المصرية"}</span>
@@ -567,24 +567,24 @@ export default function SettingsPage() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="border-t border-border/50 px-2 py-2 space-y-0.5">
-                  {(Object.entries(CALCULATION_METHODS) as [CalculationMethod, typeof CALCULATION_METHODS[CalculationMethod]][]).map(([key, method]) => (
-                    <button
-                      key={key}
-                      onClick={() => setCalcMethod(key)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                        calcMethod === key
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-muted"
-                      }`}
-                    >
+                  {(Object.entries(CALCULATION_METHODS) as [CalculationMethod, typeof CALCULATION_METHODS[CalculationMethod]][]).map(([key, method]) =>
+                  <button
+                    key={key}
+                    onClick={() => setCalcMethod(key)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    calcMethod === key ?
+                    "bg-primary/10 text-primary" :
+                    "text-foreground hover:bg-muted"}`
+                    }>
+                    
                       <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                        calcMethod === key ? "border-primary bg-primary" : "border-muted-foreground/30"
-                      }`}>
+                    calcMethod === key ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                    }>
                         {calcMethod === key && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                       </div>
                       <span className="font-arabic">{method.name}</span>
                     </button>
-                  ))}
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -597,34 +597,34 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05 }}
-            className="rounded-xl bg-card p-4 shadow-sm"
-          >
+            className="rounded-xl bg-card p-4 shadow-sm">
+            
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium">عدد الآيات يومياً</span>
               <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{toArabicNumerals(goal)} آية</span>
             </div>
             <div className="flex gap-2 mb-3">
-              {[10, 20, 50].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setGoal(v)}
-                  className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
-                    goal === v
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  }`}
-                >
+              {[10, 20, 50].map((v) =>
+              <button
+                key={v}
+                onClick={() => setGoal(v)}
+                className={`flex-1 rounded-lg py-2 text-sm font-medium transition-colors ${
+                goal === v ?
+                "bg-primary text-primary-foreground" :
+                "bg-muted text-muted-foreground hover:bg-muted/80"}`
+                }>
+                
                   {toArabicNumerals(v)}
                 </button>
-              ))}
+              )}
             </div>
             <Slider
               value={[goal]}
               onValueChange={([v]) => setGoal(v)}
               min={5}
               max={100}
-              step={5}
-            />
+              step={5} />
+            
           </motion.div>
         </section>
 
@@ -640,8 +640,8 @@ export default function SettingsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="rounded-xl bg-card p-4 shadow-sm"
-            >
+              className="rounded-xl bg-card p-4 shadow-sm">
+              
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium">نصوص القرآن</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
@@ -650,45 +650,45 @@ export default function SettingsPage() {
               </div>
               <p className="mb-3 text-xs text-muted-foreground">تحميل نصوص السور للقراءة بدون إنترنت</p>
 
-              {downloading ? (
-                <div className="space-y-2">
+              {downloading ?
+              <div className="space-y-2">
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${downloadProgress}%` }}
-                    />
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${downloadProgress}%` }} />
+                  
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
                     جارٍ التحميل... {toArabicNumerals(`${downloadProgress}%`)}
                   </p>
-                </div>
-              ) : (
-                <div className="flex gap-2">
+                </div> :
+
+              <div className="flex gap-2">
                   <button
-                    onClick={handleClear}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
-                  >
+                  onClick={handleClear}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20">
+                  
                     <Trash2 className="h-3.5 w-3.5" />
                     مسح الكل
                   </button>
                   <button
-                    onClick={handleDownloadAll}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    {downloadedSurahs.length === 114 ? (
-                      <>
+                  onClick={handleDownloadAll}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                  
+                    {downloadedSurahs.length === 114 ?
+                  <>
                         <Check className="h-3.5 w-3.5" />
                         مكتمل
-                      </>
-                    ) : (
-                      <>
+                      </> :
+
+                  <>
                         <Download className="h-3.5 w-3.5" />
                         تحميل الكل
                       </>
-                    )}
+                  }
                   </button>
                 </div>
-              )}
+              }
             </motion.div>
 
             {/* Audio Download */}
@@ -696,8 +696,8 @@ export default function SettingsPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="rounded-xl bg-card p-4 shadow-sm"
-            >
+              className="rounded-xl bg-card p-4 shadow-sm">
+              
               <div className="mb-1 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-4 w-4 text-primary" />
@@ -709,26 +709,26 @@ export default function SettingsPage() {
               </div>
               <p className="mb-3 text-xs text-muted-foreground">تحميل التلاوات للاستماع بدون إنترنت</p>
 
-              {audioDownloading ? (
-                <div className="space-y-2">
+              {audioDownloading ?
+              <div className="space-y-2">
                   <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{ width: `${audioDownloadProgress}%` }}
-                    />
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${audioDownloadProgress}%` }} />
+                  
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
                     جارٍ تحميل التلاوات... {toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
-                </div>
-              ) : (
-                <div className="flex gap-2">
+                </div> :
+
+              <div className="flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button
-                        className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
-                        disabled={downloadedAudio.length === 0}
-                      >
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
+                      disabled={downloadedAudio.length === 0}>
+                      
                         <Trash2 className="h-3.5 w-3.5" />
                         مسح الصوت
                       </button>
@@ -749,23 +749,23 @@ export default function SettingsPage() {
                     </AlertDialogContent>
                   </AlertDialog>
                   <button
-                    onClick={handleDownloadAllAudio}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    {downloadedAudio.length === 114 ? (
-                      <>
+                  onClick={handleDownloadAllAudio}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                  
+                    {downloadedAudio.length === 114 ?
+                  <>
                         <Check className="h-3.5 w-3.5" />
                         مكتمل
-                      </>
-                    ) : (
-                      <>
+                      </> :
+
+                  <>
                         <Download className="h-3.5 w-3.5" />
                         تحميل الكل
                       </>
-                    )}
+                  }
                   </button>
                 </div>
-              )}
+              }
 
               {/* Collapsible surah list */}
               <Collapsible open={showAudioList} onOpenChange={setShowAudioList}>
@@ -776,45 +776,45 @@ export default function SettingsPage() {
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  {surahs.length > 0 && (
-                    <div className="mt-3 max-h-64 space-y-0.5 overflow-y-auto rounded-lg bg-muted/30 p-1.5">
+                  {surahs.length > 0 &&
+                  <div className="mt-3 max-h-64 space-y-0.5 overflow-y-auto rounded-lg bg-muted/30 p-1.5">
                       {surahs.map((s, idx) => {
-                        const isDownloaded = downloadedAudio.includes(s.number);
-                        const isLoading = singleAudioDownloading === s.number;
-                        return (
-                          <div
-                            key={s.number}
-                            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}
-                          >
+                      const isDownloaded = downloadedAudio.includes(s.number);
+                      const isLoading = singleAudioDownloading === s.number;
+                      return (
+                        <div
+                          key={s.number}
+                          className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}>
+                          
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-muted-foreground w-6 text-center">{toArabicNumerals(s.number)}</span>
                               <span className="font-arabic text-sm">{s.name}</span>
                               {isDownloaded && <Check className="h-3 w-3 text-primary" />}
                             </div>
                             <div>
-                              {isLoading ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                              ) : isDownloaded ? (
-                                <button
-                                  onClick={() => handleDeleteSingleAudio(s.number)}
-                                  className="text-destructive/50 transition-colors hover:text-destructive"
-                                >
+                              {isLoading ?
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" /> :
+                            isDownloaded ?
+                            <button
+                              onClick={() => handleDeleteSingleAudio(s.number)}
+                              className="text-destructive/50 transition-colors hover:text-destructive">
+                              
                                   <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleDownloadSingleAudio(s.number)}
-                                  className="text-primary/50 transition-colors hover:text-primary"
-                                >
+                                </button> :
+
+                            <button
+                              onClick={() => handleDownloadSingleAudio(s.number)}
+                              className="text-primary/50 transition-colors hover:text-primary">
+                              
                                   <Download className="h-3.5 w-3.5" />
                                 </button>
-                              )}
+                            }
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>);
+
+                    })}
                     </div>
-                  )}
+                  }
                 </CollapsibleContent>
               </Collapsible>
             </motion.div>
@@ -822,20 +822,20 @@ export default function SettingsPage() {
         </section>
 
         {/* ─── Install PWA ─── */}
-        {!isInstalled && (
-          <section>
+        {!isInstalled &&
+        <section>
             <div className="section-title flex items-center gap-1.5">
               <Smartphone className="h-3.5 w-3.5" />
               تثبيت التطبيق
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-xl bg-card p-5 shadow-sm"
-            >
-              {isIOS ? (
-                <div className="space-y-3 text-center">
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-xl bg-card p-5 shadow-sm">
+            
+              {isIOS ?
+            <div className="space-y-3 text-center">
                   <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
                   <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -848,20 +848,20 @@ export default function SettingsPage() {
                       <span>اختر "إضافة إلى الشاشة الرئيسية"</span>
                     </div>
                   </div>
-                </div>
-              ) : deferredPrompt ? (
-                <div className="text-center space-y-3">
+                </div> :
+            deferredPrompt ?
+            <div className="text-center space-y-3">
                   <p className="text-sm text-muted-foreground">ثبّت التطبيق على جهازك للوصول السريع والعمل بدون إنترنت</p>
                   <button
-                    onClick={handleInstall}
-                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
+                onClick={handleInstall}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                
                     <Download className="h-4 w-4" />
                     تثبيت التطبيق
                   </button>
-                </div>
-              ) : (
-                <div className="space-y-3 text-center">
+                </div> :
+
+            <div className="space-y-3 text-center">
                   <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
                   <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -876,30 +876,30 @@ export default function SettingsPage() {
                     </div>
                   </div>
                 </div>
-              )}
+            }
             </motion.div>
           </section>
-        )}
+        }
 
-        {isInstalled && (
-          <section>
+        {isInstalled &&
+        <section>
             <div className="section-title flex items-center gap-1.5">
               <Smartphone className="h-3.5 w-3.5" />
               تثبيت التطبيق
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-xl bg-card p-5 shadow-sm"
-            >
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-xl bg-card p-5 shadow-sm">
+            
               <div className="flex items-center justify-center gap-2 text-sm text-primary">
                 <CheckCircle className="h-4 w-4" />
                 <span>التطبيق مثبّت بالفعل</span>
               </div>
             </motion.div>
           </section>
-        )}
+        }
 
         {/* ─── Storage Management ─── */}
         <section>
@@ -911,14 +911,14 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16 }}
-            className="rounded-xl bg-card p-4 shadow-sm space-y-4"
-          >
-            {loadingStats ? (
-              <div className="flex items-center justify-center py-4">
+            className="rounded-xl bg-card p-4 shadow-sm space-y-4">
+            
+            {loadingStats ?
+            <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : storageStats ? (
-              <>
+              </div> :
+            storageStats ?
+            <>
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">إجمالي التخزين</span>
@@ -927,7 +927,7 @@ export default function SettingsPage() {
                     </span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-gradient-to-l from-primary to-primary/70 transition-all" style={{ width: `${Math.min((storageStats.total / (500 * 1024 * 1024)) * 100, 100)}%` }} />
+                    <div className="h-full rounded-full bg-gradient-to-l from-primary to-primary/70 transition-all" style={{ width: `${Math.min(storageStats.total / (500 * 1024 * 1024) * 100, 100)}%` }} />
                   </div>
                 </div>
 
@@ -972,8 +972,8 @@ export default function SettingsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{formatBytes(storageStats.tafsir)}</span>
-                      {storageStats.tafsirCount > 0 && (
-                        <AlertDialog>
+                      {storageStats.tafsirCount > 0 &&
+                    <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <button className="text-destructive/50 hover:text-destructive transition-colors">
                               <Trash2 className="h-3.5 w-3.5" />
@@ -990,16 +990,16 @@ export default function SettingsPage() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                      )}
+                    }
                     </div>
                   </div>
                 </div>
 
-                {storageStats.total === 0 && (
-                  <p className="text-center text-xs text-muted-foreground py-2">لا توجد بيانات محملة حالياً</p>
-                )}
-              </>
-            ) : null}
+                {storageStats.total === 0 &&
+              <p className="text-center text-xs text-muted-foreground py-2">لا توجد بيانات محملة حالياً</p>
+              }
+              </> :
+            null}
           </motion.div>
         </section>
 
@@ -1013,8 +1013,8 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
-            className="rounded-xl bg-card p-4 shadow-sm"
-          >
+            className="rounded-xl bg-card p-4 shadow-sm">
+            
             <p className="mb-3 text-xs text-muted-foreground">
               سيتم مسح سجل القراءة والعلامات المرجعية والمفضلة والأهداف اليومية. لن يتم حذف البيانات المحملة.
             </p>
@@ -1044,8 +1044,8 @@ export default function SettingsPage() {
                       toast.success("تم إعادة تعيين التقدم بنجاح");
                       setTimeout(() => window.location.reload(), 500);
                     }}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    
                     نعم، إعادة تعيين
                   </AlertDialogAction>
                   <AlertDialogCancel>إلغاء</AlertDialogCancel>
@@ -1056,42 +1056,42 @@ export default function SettingsPage() {
         </section>
 
         {/* ─── Ramadan Tab Visibility ─── */}
-        {isRamadanNow() && (
-          <section>
+        {isRamadanNow() &&
+        <section>
             <div className="section-title flex items-center gap-1.5">
               <Star className="h-3.5 w-3.5" />
               رمضان
             </div>
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.17 }}
-              className="rounded-xl bg-card p-4 shadow-sm"
-            >
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.17 }}
+            className="rounded-xl bg-card p-4 shadow-sm">
+            
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-lg">🌙</span>
                   <span className="text-sm font-medium">إظهار تبويب رمضان</span>
                 </div>
                 <Switch
-                  checked={isRamadanTabVisible()}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      showRamadanTab();
-                    } else {
-                      hideRamadanTab();
-                    }
-                    toast.success(checked ? "تم إظهار تبويب رمضان" : "تم إخفاء تبويب رمضان");
-                    setTimeout(() => window.location.reload(), 500);
-                  }}
-                />
+                checked={isRamadanTabVisible()}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    showRamadanTab();
+                  } else {
+                    hideRamadanTab();
+                  }
+                  toast.success(checked ? "تم إظهار تبويب رمضان" : "تم إخفاء تبويب رمضان");
+                  setTimeout(() => window.location.reload(), 500);
+                }} />
+              
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 يظهر التبويب تلقائياً خلال شهر رمضان فقط
               </p>
             </motion.div>
           </section>
-        )}
+        }
 
         <section>
           <div className="section-title flex items-center gap-1.5">
@@ -1102,13 +1102,13 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="rounded-2xl gradient-hero p-6 text-center shadow-elevated border border-primary/10"
-          >
+            className="rounded-2xl gradient-hero p-6 text-center shadow-elevated border border-primary/10">
+            
             <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
             <button
               onClick={() => setShowChangelog(true)}
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer mb-3"
-            >
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer mb-3">
+              
               <Sparkles className="h-3 w-3" />
               v{APP_VERSION}
             </button>
@@ -1129,13 +1129,13 @@ export default function SettingsPage() {
                 if (!hasUpdate) {
                   toast.success("التطبيق محدّث بالفعل ✓");
                 }
-              }}
-            >
-              {checkingUpdate ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
-              )}
+              }}>
+              
+              {checkingUpdate ?
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> :
+
+              <RefreshCw className="h-3.5 w-3.5" />
+              }
               التحقق من التحديثات
             </Button>
 
@@ -1146,16 +1146,16 @@ export default function SettingsPage() {
                 const shareData = {
                   title: 'Wise QURAN',
                   text: 'تطبيق القرآن الكريم والأذكار — حمّله الآن!',
-                  url: 'https://wisequran.lovable.app',
+                  url: 'https://wisequran.lovable.app'
                 };
                 if (navigator.share) {
-                  try { await navigator.share(shareData); } catch {}
+                  try {await navigator.share(shareData);} catch {}
                 } else {
                   await navigator.clipboard.writeText(shareData.url);
                   toast.success("تم نسخ الرابط");
                 }
-              }}
-            >
+              }}>
+              
               <Share className="h-4 w-4" />
               شارك التطبيق مع أصدقائك
             </Button>
@@ -1170,22 +1170,22 @@ export default function SettingsPage() {
             </SheetHeader>
             <ScrollArea className="h-full px-6 pb-8">
               <div className="space-y-6">
-                {changelog.map((entry) => (
-                  <div key={entry.version} className="space-y-2">
+                {changelog.map((entry) =>
+                <div key={entry.version} className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
                       <span className="text-xs text-muted-foreground">{entry.date}</span>
                     </div>
                     <ul className="space-y-1.5 pr-4">
-                      {entry.changes.map((change, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                      {entry.changes.map((change, i) =>
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                           {change}
                         </li>
-                      ))}
+                    )}
                     </ul>
                   </div>
-                ))}
+                )}
               </div>
             </ScrollArea>
           </SheetContent>
@@ -1201,9 +1201,9 @@ export default function SettingsPage() {
             style={{
               background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--gold)), hsl(var(--primary)))',
               backgroundSize: '400% 400%',
-              animation: 'gradient-border 3s ease infinite',
-            }}
-          >
+              animation: 'gradient-border 3s ease infinite'
+            }}>
+            
             <div className="bg-card rounded-[14px] p-6 text-center relative overflow-hidden">
               {/* Shimmer overlay */}
               <div
@@ -1211,59 +1211,59 @@ export default function SettingsPage() {
                 style={{
                   background: 'linear-gradient(110deg, transparent 30%, hsl(var(--gold) / 0.6) 50%, transparent 70%)',
                   backgroundSize: '200% 100%',
-                  animation: 'shimmer 3s linear infinite',
-                }}
-              />
+                  animation: 'shimmer 3s linear infinite'
+                }} />
+              
 
               {/* Floating Ramadan emojis */}
               {[
-                { emoji: '🏮', top: '6px', right: '12px', size: 'text-xl', delay: 0 },
-                { emoji: '🌙', top: '8px', left: '14px', size: 'text-2xl', delay: 0.5 },
-                { emoji: '⭐', bottom: '8px', right: '16px', size: 'text-sm', delay: 1.2 },
-                { emoji: '✨', bottom: '12px', left: '18px', size: 'text-base', delay: 0.8 },
-                { emoji: '🕌', top: '50%', right: '8px', size: 'text-sm', delay: 1.5 },
-                { emoji: '🏮', bottom: '6px', left: '50%', size: 'text-lg', delay: 0.3 },
-              ].map((item, i) => (
-                <motion.span
-                  key={i}
-                  className={`absolute ${item.size} pointer-events-none select-none`}
-                  style={{
-                    top: item.top,
-                    bottom: item.bottom,
-                    left: item.left,
-                    right: item.right,
-                    opacity: 0.35,
-                  }}
-                  animate={{ y: [0, -8, 0] }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    delay: item.delay,
-                  }}
-                >
+              { emoji: '🏮', top: '6px', right: '12px', size: 'text-xl', delay: 0 },
+              { emoji: '🌙', top: '8px', left: '14px', size: 'text-2xl', delay: 0.5 },
+              { emoji: '⭐', bottom: '8px', right: '16px', size: 'text-sm', delay: 1.2 },
+              { emoji: '✨', bottom: '12px', left: '18px', size: 'text-base', delay: 0.8 },
+              { emoji: '🕌', top: '50%', right: '8px', size: 'text-sm', delay: 1.5 },
+              { emoji: '🏮', bottom: '6px', left: '50%', size: 'text-lg', delay: 0.3 }].
+              map((item, i) =>
+              <motion.span
+                key={i}
+                className={`absolute ${item.size} pointer-events-none select-none`}
+                style={{
+                  top: item.top,
+                  bottom: item.bottom,
+                  left: item.left,
+                  right: item.right,
+                  opacity: 0.35
+                }}
+                animate={{ y: [0, -8, 0] }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                  delay: item.delay
+                }}>
+                
                   {item.emoji}
                 </motion.span>
-              ))}
+              )}
 
               {/* Developer badge */}
               <motion.span
                 className="inline-block mb-2 px-3 py-0.5 text-[0.625rem] font-bold rounded-full"
                 style={{
                   background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
-                  color: 'hsl(var(--gold-foreground))',
+                  color: 'hsl(var(--gold-foreground))'
                 }}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                transition={{ type: 'spring', delay: 0.4 }}
-              >
+                transition={{ type: 'spring', delay: 0.4 }}>
+                
                 المطوّر ✦
               </motion.span>
 
               <p
                 className="text-xl font-bold text-foreground mb-1"
-                style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}
-              >
+                style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}>
+                
                 Magdy Saber
               </p>
 
@@ -1273,35 +1273,35 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-center gap-3">
                 {[
-                  { href: 'mailto:contact@magdysaber.com', icon: <Mail size={18} />, title: 'Email' },
-                  { href: 'https://github.com/iammagdy', icon: <Github size={18} />, title: 'GitHub' },
-                  { href: 'https://magdysaber.com', icon: <Globe size={18} />, title: 'Website' },
-                ].map((link, i) => (
-                  <motion.a
-                    key={i}
-                    href={link.href}
-                    target={link.href.startsWith('mailto') ? undefined : '_blank'}
-                    rel={link.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
-                    title={link.title}
-                    className="flex items-center justify-center w-10 h-10 rounded-full text-gold-foreground transition-colors"
-                    style={{
-                      background: 'linear-gradient(135deg, hsl(var(--gold) / 0.2), hsl(var(--primary) / 0.15))',
-                      color: 'hsl(var(--primary))',
-                    }}
-                    whileHover={{ scale: 1.15, rotate: 5 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + i * 0.1 }}
-                  >
+                { href: 'mailto:contact@magdysaber.com', icon: <Mail size={18} />, title: 'Email' },
+                { href: 'https://github.com/iammagdy', icon: <Github size={18} />, title: 'GitHub' },
+                { href: 'https://magdysaber.com', icon: <Globe size={18} />, title: 'Website' }].
+                map((link, i) =>
+                <motion.a
+                  key={i}
+                  href={link.href}
+                  target={link.href.startsWith('mailto') ? undefined : '_blank'}
+                  rel={link.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
+                  title={link.title}
+                  className="flex items-center justify-center w-10 h-10 rounded-full text-gold-foreground transition-colors"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--gold) / 0.2), hsl(var(--primary) / 0.15))',
+                    color: 'hsl(var(--primary))'
+                  }}
+                  whileHover={{ scale: 1.15, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.1 }}>
+                  
                     {link.icon}
                   </motion.a>
-                ))}
+                )}
               </div>
             </div>
           </motion.div>
         </section>
       </div>
-    </div>
-  );
+    </div>);
+
 }
