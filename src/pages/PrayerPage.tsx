@@ -161,7 +161,7 @@ export default function PrayerPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mb-4 rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden">
+        className="mb-4 rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden pb-[5px] pt-[5px]">
         
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />
