@@ -224,7 +224,7 @@ export default function QuranPage() {
 
       {/* View Mode Tabs */}
       {!showBookmarks && !showFavorites && !showHistory &&
-      <div className="mb-5 flex gap-2 p-1 rounded-2xl bg-muted/50" dir="rtl">
+      <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 pt-0 pb-0 mb-[5px]" dir="rtl">
           {[
         { key: "surahs" as ViewMode, label: "السور" },
         { key: "juz" as ViewMode, label: "الأجزاء" }].
@@ -232,11 +232,11 @@ export default function QuranPage() {
         <button
           key={tab.key}
           onClick={() => setViewMode(tab.key)}
-          className={cn(
-            "flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all",
-            viewMode === tab.key ?
-            "bg-card text-foreground shadow-soft" :
-            "text-muted-foreground hover:text-foreground"
+          className={cn("flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all pb-[5px] pt-[5px]",
+
+          viewMode === tab.key ?
+          "bg-card text-foreground shadow-soft" :
+          "text-muted-foreground hover:text-foreground"
           )}>
           
               {tab.label}
