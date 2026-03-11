@@ -6,12 +6,12 @@ import { useDailyWird, type WirdPlan } from "@/hooks/useDailyWird";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 
-const PLAN_OPTIONS: { plan: WirdPlan; label: string }[] = [
-  { plan: 30, label: "٣٠ يوم (جزء/يوم)" },
-  { plan: 60, label: "٦٠ يوم" },
-  { plan: 90, label: "٩٠ يوم" },
-  { plan: 180, label: "١٨٠ يوم" },
-];
+const PLAN_OPTIONS: {plan: WirdPlan;label: string;}[] = [
+{ plan: 30, label: "٣٠ يوم (جزء/يوم)" },
+{ plan: 60, label: "٦٠ يوم" },
+{ plan: 90, label: "٩٠ يوم" },
+{ plan: 180, label: "١٨٠ يوم" }];
+
 
 export function DailyWird() {
   const navigate = useNavigate();
@@ -24,10 +24,10 @@ export function DailyWird() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-5 rounded-2xl bg-card p-4 shadow-elevated border border-border/50"
-        dir="rtl"
-      >
-        <div className="flex items-center justify-between mb-3">
+        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 mb-[10px] pt-[5px] pb-px"
+        dir="rtl">
+        
+        <div className="items-center justify-between flex flex-row mb-[5px]">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" />
             <span className="text-sm font-bold">الورد اليومي</span>
@@ -37,24 +37,24 @@ export function DailyWird() {
           </button>
         </div>
         <AnimatePresence>
-          {showSetup && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+          {showSetup &&
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
               <div className="grid grid-cols-2 gap-2 pt-2">
-                {PLAN_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.plan}
-                    onClick={() => startPlan(opt.plan)}
-                    className="rounded-xl bg-primary/10 p-3 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors"
-                  >
+                {PLAN_OPTIONS.map((opt) =>
+              <button
+                key={opt.plan}
+                onClick={() => startPlan(opt.plan)}
+                className="rounded-xl bg-primary/10 p-3 text-sm font-semibold text-primary hover:bg-primary/20 transition-colors">
+                
                     {opt.label}
                   </button>
-                ))}
+              )}
               </div>
             </motion.div>
-          )}
+          }
         </AnimatePresence>
-      </motion.div>
-    );
+      </motion.div>);
+
   }
 
   return (
@@ -62,8 +62,8 @@ export function DailyWird() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="mb-5 rounded-2xl bg-card p-4 shadow-elevated border border-primary/10"
-      dir="rtl"
-    >
+      dir="rtl">
+      
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <BookOpen className="h-4 w-4 text-primary" />
@@ -81,20 +81,20 @@ export function DailyWird() {
 
       <Progress value={progress} variant="gradient" size="sm" className="mb-3" />
 
-      {portion && (
-        <div className="flex items-center justify-between">
+      {portion &&
+      <div className="flex items-center justify-between">
           <button
-            onClick={() => {
-              if (!portion.isDone) markTodayDone();
-              navigate(`/surah/${portion.startSurah}?ayah=${portion.startAyah}`);
-            }}
-            className={cn(
-              "flex-1 rounded-xl p-3 text-right transition-all",
-              portion.isDone
-                ? "bg-primary/10 border border-primary/20"
-                : "bg-muted/50 hover:bg-muted"
-            )}
-          >
+          onClick={() => {
+            if (!portion.isDone) markTodayDone();
+            navigate(`/surah/${portion.startSurah}?ayah=${portion.startAyah}`);
+          }}
+          className={cn(
+            "flex-1 rounded-xl p-3 text-right transition-all",
+            portion.isDone ?
+            "bg-primary/10 border border-primary/20" :
+            "bg-muted/50 hover:bg-muted"
+          )}>
+          
             <div className="flex items-center gap-2 mb-1">
               {portion.isDone && <Check className="h-4 w-4 text-primary" />}
               <span className="text-xs text-muted-foreground">
@@ -106,7 +106,7 @@ export function DailyWird() {
             </p>
           </button>
         </div>
-      )}
-    </motion.div>
-  );
+      }
+    </motion.div>);
+
 }
