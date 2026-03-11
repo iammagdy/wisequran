@@ -125,10 +125,10 @@ export default function AzkarPage() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}>
           
-            <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center justify-between mb-[5px]">
               <div>
                 <h1 className="mb-1 text-2xl font-bold heading-decorated">الأذكار</h1>
-                <p className="text-sm text-muted-foreground">أذكار يومية</p>
+                <p className="text-sm text-muted-foreground pt-[5px]">أذكار يومية</p>
               </div>
               <motion.button
               whileTap={{ scale: 0.9 }}
