@@ -161,7 +161,7 @@ export default function PrayerPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mb-4 rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden pb-[5px] pt-[5px]">
+        className="rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden pb-[5px] pt-[5px] mb-[10px]">
         
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />
@@ -199,7 +199,7 @@ export default function PrayerPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="mb-4 rounded-2xl bg-card p-3.5 shadow-elevated border border-border/50">
+        className="rounded-2xl bg-card p-3.5 shadow-elevated border border-border/50 pt-[5px] pb-[5px] mb-[10px]">
         
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="text-muted-foreground font-medium">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
