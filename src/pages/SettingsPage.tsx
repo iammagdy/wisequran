@@ -1261,10 +1261,10 @@ export default function SettingsPage() {
               </motion.span>
 
               <p
-                className="text-xl font-bold text-foreground mb-1"
+                className="font-bold text-foreground mb-1 text-2xl"
                 style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}>
                 
-                Magdy Saber
+                ​مجدي صابر
               </p>
 
               <p className="text-xs text-muted-foreground mb-4">
