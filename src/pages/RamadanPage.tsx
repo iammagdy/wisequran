@@ -22,7 +22,7 @@ export default function RamadanPage() {
     khatmahProgress,
     todayJuz,
     ramadanDay,
-    checklistProgress,
+    checklistProgress
   } = useRamadan();
   const navigate = useNavigate();
 
@@ -48,7 +48,7 @@ export default function RamadanPage() {
         </div>
       </div>
 
-      <div className="px-4 pb-24 space-y-6 -mt-2">
+      <div className="px-4 space-y-6 -mt-2 pb-[20px]">
         {/* Iftar Countdown */}
         <IftarCountdown />
 
@@ -64,11 +64,11 @@ export default function RamadanPage() {
             </span>
           </div>
           <Progress
-            value={(checklistProgress / checklistTotal) * 100}
+            value={checklistProgress / checklistTotal * 100}
             variant="gradient"
             size="sm"
-            className="bg-amber-100 dark:bg-amber-900/30"
-          />
+            className="bg-amber-100 dark:bg-amber-900/30" />
+          
           <div className="grid gap-2">
             <AnimatePresence>
               {DAILY_CHECKLIST.map((item) => {
@@ -78,25 +78,25 @@ export default function RamadanPage() {
                     key={item.id}
                     layout
                     initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
+                    animate={{ opacity: 1, y: 0 }}>
+                    
                     <button
                       onClick={() => toggleChecklistItem(item.id)}
                       className={cn(
                         "w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 text-right",
-                        done
-                          ? "bg-primary/10 border-primary/30"
-                          : "bg-card border-border hover:border-amber-300/50"
-                      )}
-                    >
+                        done ?
+                        "bg-primary/10 border-primary/30" :
+                        "bg-card border-border hover:border-amber-300/50"
+                      )}>
+                      
                       <div
                         className={cn(
                           "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all",
-                          done
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        )}
-                      >
+                          done ?
+                          "bg-primary text-primary-foreground" :
+                          "bg-muted"
+                        )}>
+                        
                         {done && <Check className="h-4 w-4" />}
                       </div>
                       <span className="text-lg">{item.emoji}</span>
@@ -104,13 +104,13 @@ export default function RamadanPage() {
                         className={cn(
                           "text-sm font-medium flex-1",
                           done ? "line-through text-muted-foreground" : "text-foreground"
-                        )}
-                      >
+                        )}>
+                        
                         {item.label}
                       </span>
                     </button>
-                  </motion.div>
-                );
+                  </motion.div>);
+
               })}
             </AnimatePresence>
           </div>
@@ -125,11 +125,11 @@ export default function RamadanPage() {
             </span>
           </div>
           <Progress
-            value={(khatmahProgress / 30) * 100}
+            value={khatmahProgress / 30 * 100}
             variant="gradient"
             size="sm"
-            className="bg-amber-100 dark:bg-amber-900/30"
-          />
+            className="bg-amber-100 dark:bg-amber-900/30" />
+          
 
           {/* Today's Juz highlight */}
           <Card variant="gradient" className="border-amber-300/40 dark:border-amber-600/30">
@@ -145,21 +145,21 @@ export default function RamadanPage() {
                   size="sm"
                   variant={isJuzCompleted(todayJuz) ? "secondary" : "default"}
                   onClick={() => toggleJuz(todayJuz)}
-                  className="gap-1"
-                >
-                  {isJuzCompleted(todayJuz) ? (
-                    <>
+                  className="gap-1">
+                  
+                  {isJuzCompleted(todayJuz) ?
+                  <>
                       <Check className="h-4 w-4" /> تم
-                    </>
-                  ) : (
-                    "إتمام ✓"
-                  )}
+                    </> :
+
+                  "إتمام ✓"
+                  }
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => navigate(`/surah/${juzData[todayJuz - 1]?.startSurah || 1}`)}
-                >
+                  onClick={() => navigate(`/surah/${juzData[todayJuz - 1]?.startSurah || 1}`)}>
+                  
                   <BookOpen className="h-4 w-4" />
                 </Button>
               </div>
@@ -177,16 +177,16 @@ export default function RamadanPage() {
                   onClick={() => toggleJuz(juz)}
                   className={cn(
                     "aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-200 border",
-                    done
-                      ? "bg-primary text-primary-foreground border-primary/50"
-                      : isCurrent
-                      ? "bg-amber-100 dark:bg-amber-900/40 border-amber-400/50 text-amber-700 dark:text-amber-300"
-                      : "bg-card border-border text-muted-foreground hover:border-amber-300/50"
-                  )}
-                >
+                    done ?
+                    "bg-primary text-primary-foreground border-primary/50" :
+                    isCurrent ?
+                    "bg-amber-100 dark:bg-amber-900/40 border-amber-400/50 text-amber-700 dark:text-amber-300" :
+                    "bg-card border-border text-muted-foreground hover:border-amber-300/50"
+                  )}>
+                  
                   {done ? <Check className="h-4 w-4" /> : toArabicNumerals(juz)}
-                </button>
-              );
+                </button>);
+
             })}
           </div>
         </section>
@@ -196,11 +196,11 @@ export default function RamadanPage() {
           <h2 className="text-lg font-bold text-foreground">فضائل وأدعية 🤲</h2>
           <ScrollArea className="w-full" dir="rtl">
             <div className="flex gap-3 pb-3">
-              {RAMADAN_ACTIVITIES.map((activity, i) => (
-                <Card
-                  key={i}
-                  className="min-w-[220px] max-w-[260px] shrink-0 border-amber-200/50 dark:border-amber-700/30"
-                >
+              {RAMADAN_ACTIVITIES.map((activity, i) =>
+              <Card
+                key={i}
+                className="min-w-[220px] max-w-[260px] shrink-0 border-amber-200/50 dark:border-amber-700/30">
+                
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{activity.emoji}</span>
@@ -211,12 +211,12 @@ export default function RamadanPage() {
                     </p>
                   </CardContent>
                 </Card>
-              ))}
+              )}
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
         </section>
       </div>
-    </div>
-  );
+    </div>);
+
 }
