@@ -116,7 +116,7 @@ export default function AzkarPage() {
   filter((d) => favoriteAzkar.includes(d.id));
 
   return (
-    <div className="px-4 pt-6 pb-24">
+    <div className="px-4 pb-[20px] pt-[20px] pl-[10px]">
       <AnimatePresence mode="wait">
         {!selectedCategory ?
         <motion.div
