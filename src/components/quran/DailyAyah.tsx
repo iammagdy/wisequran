@@ -103,7 +103,7 @@ export function DailyAyah() {
       </div>
 
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mr-[15px] mb-[5px] pb-[5px] pt-[5px]">
           <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10">
             <Sparkles className="h-4 w-4 text-primary icon-glow" />
           </div>
@@ -114,7 +114,7 @@ export function DailyAyah() {
           {data.text}
         </p>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
             {data.surahName} · آية {toArabicNumerals(data.ayah)}
           </p>
