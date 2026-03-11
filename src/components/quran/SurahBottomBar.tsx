@@ -118,7 +118,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   return (
     <div className="fixed bottom-above-nav inset-x-0 z-50 px-3">
       <div className="rounded-t-2xl glass-card shadow-elevated-lg overflow-hidden">
-        <div className="px-4 pb-2 space-y-3 pt-[5px] border-2 border-primary">
+        <div className="px-4 pb-2 space-y-3 pt-[5px] border-2 border-primary rounded-3xl">
           {/* Offline warning */}
           <AnimatePresence>
             {offline &&
