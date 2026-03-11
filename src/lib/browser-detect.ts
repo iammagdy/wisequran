@@ -30,7 +30,7 @@ export function getInstallInstructions(browser: BrowserType): { step1: string; s
     case "ios-safari":
       return { step1: "اضغط على زر المشاركة", step2: "اختر \"إضافة إلى الشاشة الرئيسية\"", icon: "share" };
     case "chromium":
-      return { step1: "اضغط على قائمة المتصفح (⋮)", step2: "اختر \"إضافة إلى الشاشة الرئيسية\"", icon: "dots-v" };
+      return { step1: "اضغط على قائمة المتصفح", step2: "اختر \"إضافة إلى الشاشة الرئيسية\"", icon: "dots-v" };
     case "firefox":
       return { step1: "اضغط على قائمة المتصفح (⋯)", step2: "اختر \"تثبيت\"", icon: "dots-h" };
     default:
