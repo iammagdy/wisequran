@@ -30,9 +30,14 @@ export default function GlobalAudioBar() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      className="fixed bottom-above-nav inset-x-0 z-[51] px-3 pointer-events-none"
+      className="fixed inset-x-0 z-[51] px-3 pb-3 pointer-events-none"
+      style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden pointer-events-auto" style={{ boxShadow: '0 -4px 20px -4px hsl(var(--foreground) / 0.1)' }}>
+      <div
+        onClick={handleOpenNowPlaying}
+        className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden pointer-events-auto cursor-pointer active:scale-[0.98] transition-transform"
+        style={{ boxShadow: '0 -4px 20px -4px hsl(var(--foreground) / 0.1)' }}
+      >
         <div className="h-1 w-full bg-muted/50">
           <motion.div
             className="h-full bg-gradient-to-l from-primary to-primary/70 mr-auto"
@@ -45,9 +50,12 @@ export default function GlobalAudioBar() {
           {/* Play/Pause */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={togglePlayPause}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlayPause();
+            }}
             disabled={loading}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50 z-10"
           >
             {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -58,8 +66,8 @@ export default function GlobalAudioBar() {
             )}
           </motion.button>
 
-          {/* Info — clickable to open now playing screen */}
-          <button onClick={handleOpenNowPlaying} className="flex-1 min-w-0 text-right">
+          {/* Info — entire bar is clickable */}
+          <div className="flex-1 min-w-0 text-right pointer-events-none">
             <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
             <p className="text-[0.625rem] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
@@ -67,13 +75,16 @@ export default function GlobalAudioBar() {
                 <span className="mr-2"> · آية {toArabicNumerals(currentAyahInSurah)} من {toArabicNumerals(totalAyahs)}</span>
               )}
             </p>
-          </button>
+          </div>
 
           {/* Close */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={stop}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/50"
+            onClick={(e) => {
+              e.stopPropagation();
+              stop();
+            }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/50 z-10"
           >
             <X className="h-4 w-4" />
           </motion.button>
