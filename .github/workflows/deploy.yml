@@ -31,12 +31,13 @@ jobs:
           echo "Listing contents of dist directory:"
           ls -la ./dist/
 
-      - name: Sync files via FTP to Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Sync files via SFTP to Hostinger
+        uses: appleboy/scp-action@master
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          host: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: quran/
-          dangerous-clean-slate: true
+          port: ${{ secrets.FTP_PORT }}
+          source: "./dist/*"
+          target: "domains/thewise.cloud/public_html/quran"
+          strip_components: 1
