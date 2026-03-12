@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.1.0";
+export const APP_VERSION = "2.2.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,14 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.2.0",
+    date: "2026-03-12",
+    changes: [
+      "تحديث تجريبي لاختبار نظام النشر التلقائي (SFTP Tunnel)",
+      "تأكيد عمل زر 'التحقق من وجود تحديثات'",
+    ],
+  },
   {
     version: "2.1.0",
     date: "2026-03-12",
