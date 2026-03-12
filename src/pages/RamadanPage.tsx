@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Check, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
+import { Check, BookOpen, CircleAlert as AlertCircle, RefreshCw } from "lucide-react";
 import { useRamadan, getRamadanDay } from "@/hooks/useRamadan";
 import { DAILY_CHECKLIST, RAMADAN_ACTIVITIES } from "@/lib/ramadan-data";
 import { juzData } from "@/data/juz-hizb-data";
