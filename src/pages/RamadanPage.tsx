@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Check, BookOpen } from "lucide-react";
+import { Check, BookOpen, AlertCircle, RefreshCw } from "lucide-react";
 import { useRamadan, getRamadanDay } from "@/hooks/useRamadan";
 import { DAILY_CHECKLIST, RAMADAN_ACTIVITIES } from "@/lib/ramadan-data";
 import { juzData } from "@/data/juz-hizb-data";
@@ -12,21 +12,80 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import DailyDuaCard from "@/components/ramadan/DailyDuaCard";
 import IftarCountdown from "@/components/ramadan/IftarCountdown";
+import { useState, useEffect } from "react";
 
 export default function RamadanPage() {
-  const {
-    toggleJuz,
-    toggleChecklistItem,
-    isJuzCompleted,
-    isChecklistDone,
-    khatmahProgress,
-    todayJuz,
-    ramadanDay,
-    checklistProgress
-  } = useRamadan();
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  const checklistTotal = DAILY_CHECKLIST.length;
+  let ramadanData;
+  try {
+    ramadanData = useRamadan();
+  } catch (error) {
+    console.error("Error in useRamadan hook:", error);
+    if (!hasError) setHasError(true);
+  }
+
+  const {
+    toggleJuz = () => {},
+    toggleChecklistItem = () => {},
+    isJuzCompleted = () => false,
+    isChecklistDone = () => false,
+    khatmahProgress = 0,
+    todayJuz = 1,
+    ramadanDay = 1,
+    checklistProgress = 0
+  } = ramadanData || {};
+
+  useEffect(() => {
+    try {
+      if (!DAILY_CHECKLIST || DAILY_CHECKLIST.length === 0) {
+        throw new Error("DAILY_CHECKLIST is empty");
+      }
+      if (!juzData || juzData.length === 0) {
+        throw new Error("juzData is empty");
+      }
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error loading Ramadan data:", error);
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, []);
+
+  const checklistTotal = DAILY_CHECKLIST?.length || 8;
+
+  if (hasError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" dir="rtl">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-6 text-center space-y-4">
+            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto" />
+            <h2 className="text-xl font-bold text-foreground">عذراً، حدث خطأ</h2>
+            <p className="text-muted-foreground">
+              لم نتمكن من تحميل بيانات رمضان. يرجى المحاولة مرة أخرى.
+            </p>
+            <Button onClick={() => window.location.reload()} variant="default" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              إعادة المحاولة
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" dir="rtl">
+        <div className="text-center space-y-3">
+          <div className="text-4xl animate-pulse">🌙</div>
+          <p className="text-muted-foreground">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" dir="rtl">

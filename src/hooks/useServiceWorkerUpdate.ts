@@ -64,16 +64,26 @@ export function useServiceWorkerUpdate() {
       if (!reg) return false;
 
       setRegistration(reg);
-      await reg.update();
+
+      const cacheBuster = `?v=${Date.now()}`;
+      const response = await fetch(`/manifest.json${cacheBuster}`, {
+        cache: 'no-cache',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+
+      if (!response.ok) {
+        await reg.update();
+      } else {
+        await reg.update();
+      }
 
       if (reg.waiting) {
         setUpdateAvailable(true);
         return true;
       }
 
-      // Wait for the new SW to install (or timeout)
       return new Promise<boolean>((resolve) => {
-        const timeout = setTimeout(() => resolve(false), 10000);
+        const timeout = setTimeout(() => resolve(false), 15000);
 
         reg.addEventListener("updatefound", () => {
           const newWorker = reg.installing;

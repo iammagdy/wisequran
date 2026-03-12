@@ -30,10 +30,9 @@ export default function GlobalAudioBar() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      className="fixed bottom-above-nav inset-x-0 z-45 px-3"
+      className="fixed bottom-above-nav inset-x-0 z-[48] px-3 pointer-events-none"
     >
-      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden" style={{ boxShadow: '0 -4px 20px -4px hsl(var(--foreground) / 0.1)' }}>
-        {/* Progress bar — RTL: fills from right */}
+      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden pointer-events-auto" style={{ boxShadow: '0 -4px 20px -4px hsl(var(--foreground) / 0.1)' }}>
         <div className="h-1 w-full bg-muted/50">
           <motion.div
             className="h-full bg-gradient-to-l from-primary to-primary/70 mr-auto"

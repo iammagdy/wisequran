@@ -17,9 +17,13 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "prompt",
+      includeAssets: ["favicon.ico", "icons/*.png", "placeholder.svg"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
+        cleanupOutdatedCaches: true,
+        skipWaiting: false,
+        clientsClaim: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
@@ -27,6 +31,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "quran-api-cache",
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
@@ -35,6 +40,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "quran-foundation-api-cache",
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
@@ -61,6 +67,7 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "google-fonts-cache",
               expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
           {
@@ -69,11 +76,15 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: "google-fonts-webfonts",
               expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
       },
-      manifest: false, // Using public/manifest.json
+      manifest: false,
+      devOptions: {
+        enabled: false,
+      },
     }),
   ].filter(Boolean),
   resolve: {
