@@ -1203,7 +1203,7 @@ export default function SettingsPage() {
                 const shareData = {
                   title: 'Wise QURAN',
                   text: 'تطبيق القرآن الكريم والأذكار — حمّله الآن!',
-                  url: 'https://wisequran.lovable.app'
+                  url: 'https://wisequran.com'
                 };
                 if (navigator.share) {
                   try {await navigator.share(shareData);} catch {}
