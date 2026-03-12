@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "prompt",
-      includeAssets: ["favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
+      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         navigateFallbackDenylist: [/^\/~oauth/],
