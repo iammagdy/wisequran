@@ -14,7 +14,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio, getStorageStats, clearAllTafsir } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
-import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
+import { downloadSurahAudio, formatBytes, verifyAndRepairDownloads } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
@@ -60,6 +60,8 @@ export default function SettingsPage() {
   const [audioDownloadProgress, setAudioDownloadProgress] = useState(0);
   const [singleAudioDownloading, setSingleAudioDownloading] = useState<number | null>(null);
   const [showAudioList, setShowAudioList] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyProgress, setVerifyProgress] = useState({ current: 0, total: 0 });
 
   // Storage stats
   const [storageStats, setStorageStats] = useState<{quranText: number;audio: number;tafsir: number;total: number;audioCount: number;surahCount: number;tafsirCount: number;} | null>(null);
@@ -269,6 +271,38 @@ export default function SettingsPage() {
     await clearAllTafsir();
     refreshStorageStats();
     toast.success("تم مسح جميع التفاسير المحملة");
+  };
+
+  const handleVerifyDownloads = async () => {
+    setVerifying(true);
+    setVerifyProgress({ current: 0, total: 0 });
+
+    try {
+      const result = await verifyAndRepairDownloads(
+        reciterId,
+        (current, total) => {
+          setVerifyProgress({ current, total });
+        }
+      );
+
+      const updated = await getAllDownloadedAudio(reciterId);
+      setDownloadedAudio(updated);
+      refreshStorageStats();
+
+      if (result.corrupted.length === 0) {
+        toast.success(`تم التحقق من جميع الملفات ✓ (${toArabicNumerals(result.valid.length)} ملف سليم)`);
+      } else {
+        toast.success(
+          `تم إصلاح التحميلات\nملفات سليمة: ${toArabicNumerals(result.valid.length)}\nملفات تالفة تم حذفها: ${toArabicNumerals(result.corrupted.length)}`,
+          { duration: 5000 }
+        );
+      }
+    } catch (e) {
+      toast.error("فشل التحقق من التحميلات");
+    } finally {
+      setVerifying(false);
+      setVerifyProgress({ current: 0, total: 0 });
+    }
   };
 
   return (
@@ -715,20 +749,33 @@ export default function SettingsPage() {
                     <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${audioDownloadProgress}%` }} />
-                  
+
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
                     جارٍ تحميل التلاوات... {toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
                 </div> :
+              verifying ?
+              <div className="space-y-2">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: verifyProgress.total > 0 ? `${(verifyProgress.current / verifyProgress.total) * 100}%` : '0%' }} />
 
-              <div className="flex gap-2">
+                  </div>
+                  <p className="text-center text-xs text-muted-foreground">
+                    جارٍ التحقق... {toArabicNumerals(`${verifyProgress.current}/${verifyProgress.total}`)}
+                  </p>
+                </div> :
+
+              <div className="space-y-2">
+                <div className="flex gap-2">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <button
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20"
                       disabled={downloadedAudio.length === 0}>
-                      
+
                         <Trash2 className="h-3.5 w-3.5" />
                         مسح الصوت
                       </button>
@@ -765,6 +812,16 @@ export default function SettingsPage() {
                   }
                   </button>
                 </div>
+
+                {downloadedAudio.length > 0 && (
+                  <button
+                    onClick={handleVerifyDownloads}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-muted py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/80">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    التحقق من التحميلات
+                  </button>
+                )}
+              </div>
               }
 
               {/* Collapsible surah list */}

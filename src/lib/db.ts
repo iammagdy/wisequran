@@ -138,6 +138,51 @@ export async function getTafsir(editionId: string, surahNumber: number) {
   return db.get("tafsir", tafsirKey(editionId, surahNumber));
 }
 
+/**
+ * Check available storage quota and return usage information
+ */
+export async function checkStorageQuota(): Promise<{
+  usage: number;
+  quota: number;
+  available: number;
+  percentUsed: number;
+  hasEnoughSpace: (requiredBytes: number) => boolean;
+}> {
+  if (!navigator.storage || !navigator.storage.estimate) {
+    return {
+      usage: 0,
+      quota: 0,
+      available: 0,
+      percentUsed: 0,
+      hasEnoughSpace: () => true,
+    };
+  }
+
+  try {
+    const estimate = await navigator.storage.estimate();
+    const usage = estimate.usage || 0;
+    const quota = estimate.quota || 0;
+    const available = quota - usage;
+    const percentUsed = quota > 0 ? (usage / quota) * 100 : 0;
+
+    return {
+      usage,
+      quota,
+      available,
+      percentUsed,
+      hasEnoughSpace: (requiredBytes: number) => available > requiredBytes * 1.1,
+    };
+  } catch {
+    return {
+      usage: 0,
+      quota: 0,
+      available: 0,
+      percentUsed: 0,
+      hasEnoughSpace: () => true,
+    };
+  }
+}
+
 /** Calculate storage usage breakdown in bytes */
 export async function getStorageStats(): Promise<{
   quranText: number;

@@ -1,4 +1,4 @@
-import { saveAudio, getAudio } from "./db";
+import { saveAudio, getAudio, deleteAudio, checkStorageQuota } from "./db";
 import { getReciterAudioUrls } from "./reciters";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
@@ -96,7 +96,7 @@ async function fetchAudioFromUrl(
 }
 
 /**
- * Download surah audio trying multiple URLs.
+ * Download surah audio trying multiple URLs with comprehensive verification.
  * Returns the size in bytes of the downloaded audio.
  */
 export async function downloadSurahAudio(
@@ -104,6 +104,12 @@ export async function downloadSurahAudio(
   surahNumber: number,
   onProgress?: (pct: number) => void
 ): Promise<number> {
+  const storageCheck = await checkStorageQuota();
+
+  if (storageCheck.percentUsed > 95) {
+    throw new Error("مساحة التخزين ممتلئة تقريباً. يرجى حذف بعض البيانات أولاً");
+  }
+
   const urls = await getReciterAudioUrls(reciterId, surahNumber);
   let lastError: Error | null = null;
 
@@ -122,19 +128,45 @@ export async function downloadSurahAudio(
         continue;
       }
 
-      await saveAudio(reciterId, surahNumber, buf);
+      if (!storageCheck.hasEnoughSpace(buf.byteLength)) {
+        throw new Error("مساحة التخزين غير كافية لحفظ هذا الملف");
+      }
+
+      try {
+        await saveAudio(reciterId, surahNumber, buf);
+      } catch (e: any) {
+        if (e.name === 'QuotaExceededError') {
+          throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
+        }
+        throw e;
+      }
 
       const verified = await getAudio(reciterId, surahNumber);
       if (!verified || verified.data.byteLength < MIN_AUDIO_SIZE) {
+        await deleteAudio(reciterId, surahNumber);
         throw new Error("فشل التحقق من حفظ الصوت في التخزين المحلي");
       }
 
+      if (!isValidAudioFile(verified.data)) {
+        await deleteAudio(reciterId, surahNumber);
+        throw new Error("الملف المحفوظ تالف أو غير صالح");
+      }
+
+      const blobTest = new Blob([verified.data], { type: "audio/mpeg" });
+      if (blobTest.size < MIN_AUDIO_SIZE) {
+        await deleteAudio(reciterId, surahNumber);
+        throw new Error("فشل إنشاء ملف صوتي قابل للتشغيل");
+      }
+
       onProgress?.(100);
+      console.log(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
       return buf.byteLength;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       console.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
       onProgress?.(0);
+
+      await deleteAudio(reciterId, surahNumber).catch(() => {});
     }
   }
 
@@ -168,6 +200,71 @@ export async function cachePlayingAudio(
   } catch {
     // Silent fail — caching is best-effort
   }
+}
+
+/**
+ * Verify all downloaded audio files and repair/remove corrupted ones.
+ * Returns a report of the verification process.
+ */
+export async function verifyAndRepairDownloads(
+  reciterId: string,
+  onProgress?: (current: number, total: number, surahNumber: number) => void
+): Promise<{
+  valid: number[];
+  corrupted: number[];
+  repaired: number[];
+}> {
+  const db = await (await import("./db")).getDB();
+  const allAudio = await db.getAll("audio");
+  const reciterAudio = allAudio.filter((a) => a.reciterId === reciterId);
+
+  const valid: number[] = [];
+  const corrupted: number[] = [];
+
+  for (let i = 0; i < reciterAudio.length; i++) {
+    const audio = reciterAudio[i];
+    onProgress?.(i + 1, reciterAudio.length, audio.surahNumber);
+
+    try {
+      if (audio.data.byteLength < MIN_AUDIO_SIZE) {
+        console.warn(`[verify] surah ${audio.surahNumber}: too small (${audio.data.byteLength}B)`);
+        corrupted.push(audio.surahNumber);
+        await deleteAudio(reciterId, audio.surahNumber);
+        continue;
+      }
+
+      if (!isValidAudioFile(audio.data)) {
+        console.warn(`[verify] surah ${audio.surahNumber}: invalid audio format`);
+        corrupted.push(audio.surahNumber);
+        await deleteAudio(reciterId, audio.surahNumber);
+        continue;
+      }
+
+      const blobTest = new Blob([audio.data], { type: "audio/mpeg" });
+      if (blobTest.size < MIN_AUDIO_SIZE) {
+        console.warn(`[verify] surah ${audio.surahNumber}: blob creation failed`);
+        corrupted.push(audio.surahNumber);
+        await deleteAudio(reciterId, audio.surahNumber);
+        continue;
+      }
+
+      const url = URL.createObjectURL(blobTest);
+      URL.revokeObjectURL(url);
+
+      valid.push(audio.surahNumber);
+      console.log(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(audio.data.byteLength)})`);
+    } catch (e) {
+      console.error(`[verify] surah ${audio.surahNumber}: error during verification`, e);
+      corrupted.push(audio.surahNumber);
+      await deleteAudio(reciterId, audio.surahNumber).catch(() => {});
+    }
+  }
+
+  return {
+    valid,
+    corrupted,
+    repaired: [],
+  };
 }
 
 /** Format bytes to a human-readable Arabic string */

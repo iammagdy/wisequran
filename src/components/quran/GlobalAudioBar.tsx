@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Pause, Loader2, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
+import NowPlayingScreen from "./NowPlayingScreen";
 
 
 export default function GlobalAudioBar() {
@@ -12,15 +13,16 @@ export default function GlobalAudioBar() {
     togglePlayPause, stop, totalAyahs, currentAyahInSurah,
     currentTime, duration,
   } = useAudioPlayer();
-  const navigate = useNavigate();
+
+  const [showNowPlaying, setShowNowPlaying] = useState(false);
 
   if (!surahNumber) return null;
 
   // Progress based on time
   const pct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const handleNavigate = () => {
-    navigate(`/surah/${surahNumber}`);
+  const handleOpenNowPlaying = () => {
+    setShowNowPlaying(true);
   };
 
   return (
@@ -28,9 +30,9 @@ export default function GlobalAudioBar() {
       initial={{ y: 80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
-      className="fixed bottom-above-nav inset-x-0 z-40 px-3"
+      className="fixed bottom-above-nav inset-x-0 z-45 px-3"
     >
-      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden">
+      <div className="rounded-2xl glass-card shadow-elevated-lg overflow-hidden" style={{ boxShadow: '0 -4px 20px -4px hsl(var(--foreground) / 0.1)' }}>
         {/* Progress bar — RTL: fills from right */}
         <div className="h-1 w-full bg-muted/50">
           <motion.div
@@ -57,8 +59,8 @@ export default function GlobalAudioBar() {
             )}
           </motion.button>
 
-          {/* Info — clickable to navigate to surah */}
-          <button onClick={handleNavigate} className="flex-1 min-w-0 text-right">
+          {/* Info — clickable to open now playing screen */}
+          <button onClick={handleOpenNowPlaying} className="flex-1 min-w-0 text-right">
             <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
             <p className="text-[0.625rem] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
@@ -78,6 +80,8 @@ export default function GlobalAudioBar() {
           </motion.button>
         </div>
       </div>
+
+      <NowPlayingScreen open={showNowPlaying} onOpenChange={setShowNowPlaying} />
     </motion.div>
   );
 }
