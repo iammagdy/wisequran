@@ -8,6 +8,8 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
@@ -24,6 +26,11 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Verify build directory exists
+        run: |
+          echo "Listing contents of dist directory:"
+          ls -la ./dist/
+
       - name: Sync files via FTP to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -31,5 +38,5 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/ # Vite outputs the compiled app to the dist folder
-          server-dir: ./ # Where to upload on the server (the root of the subdomain folder)
+          server-dir: ./ # Where to upload on the server (locked to the user's /quran folder)
           dangerous-clean-slate: true # Deletes old files on the server to ensure a clean deployment
