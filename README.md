@@ -64,6 +64,10 @@ npm run build
 
 The app runs at `http://localhost:8080` by default.
 
+## Acknowledgments
+
+This project was developed and extensively overhauled with the assistance of **[Claude]** (by Anthropic) and **[Gemini]** (by Google), acting as AI pair programmers for major architecture, UI/UX, and PWA offline capabilities.
+
 ## License
 
 MIT
