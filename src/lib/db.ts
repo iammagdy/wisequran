@@ -226,3 +226,81 @@ export async function getStorageStats(): Promise<{
     tafsirCount: allTafsir.length,
   };
 }
+
+/**
+ * Verify that a specific audio file exists and has valid data in IndexedDB
+ */
+export async function verifyAudioExists(reciterId: string, surahNumber: number): Promise<boolean> {
+  try {
+    const db = await getDB();
+    const entry = await db.get("audio", audioKey(reciterId, surahNumber));
+    return !!(entry && entry.data && entry.data.byteLength > 0);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Verify that a specific surah text exists and has ayahs in IndexedDB
+ */
+export async function verifySurahExists(surahNumber: number): Promise<boolean> {
+  try {
+    const db = await getDB();
+    const entry = await db.get("surahs", surahNumber);
+    return !!(entry && entry.ayahs && entry.ayahs.length > 0);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Bulk verify all downloaded audio files and return list of broken surah numbers
+ */
+export async function verifyAllAudio(reciterId: string): Promise<{
+  valid: number[];
+  broken: number[];
+}> {
+  const db = await getDB();
+  const all = await db.getAll("audio");
+  const reciterAudio = all.filter((a) => a.reciterId === reciterId);
+  
+  const valid: number[] = [];
+  const broken: number[] = [];
+  
+  for (const entry of reciterAudio) {
+    if (entry.data && entry.data.byteLength > 0) {
+      valid.push(entry.surahNumber);
+    } else {
+      broken.push(entry.surahNumber);
+      // Clean up broken entry
+      await db.delete("audio", entry.id);
+    }
+  }
+  
+  return { valid, broken };
+}
+
+/**
+ * Bulk verify all downloaded surah texts and return list of broken surah numbers
+ */
+export async function verifyAllSurahs(): Promise<{
+  valid: number[];
+  broken: number[];
+}> {
+  const db = await getDB();
+  const all = await db.getAll("surahs");
+  
+  const valid: number[] = [];
+  const broken: number[] = [];
+  
+  for (const entry of all) {
+    if (entry.ayahs && entry.ayahs.length > 0) {
+      valid.push(entry.number);
+    } else {
+      broken.push(entry.number);
+      await db.delete("surahs", entry.number);
+    }
+  }
+  
+  return { valid, broken };
+}

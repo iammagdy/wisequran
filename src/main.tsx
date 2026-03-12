@@ -3,18 +3,6 @@ import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import "./index.css";
 
-let deferredPrompt: any = null;
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  console.log("PWA install prompt ready");
-});
-
-window.addEventListener("appinstalled", () => {
-  console.log("PWA installed successfully");
-  deferredPrompt = null;
-});
 
 registerSW({
   immediate: true,

@@ -84,7 +84,7 @@ export function ShareAyahCard({ ayahText, surahName, ayahNumber, surahNumber }: 
     // App branding
     ctx.font = "18px sans-serif";
     ctx.fillStyle = "rgba(200, 170, 100, 0.4)";
-    ctx.fillText("Wise Quran", width / 2, height - 60);
+    ctx.fillText("Wise Quran — quran.thewise.cloud", width / 2, height - 60);
 
     return new Promise((resolve) => {
       canvas.toBlob((blob) => resolve(blob), "image/png");

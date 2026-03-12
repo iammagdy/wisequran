@@ -1203,7 +1203,7 @@ export default function SettingsPage() {
                 const shareData = {
                   title: 'Wise QURAN',
                   text: 'تطبيق القرآن الكريم والأذكار — حمّله الآن!',
-                  url: 'https://wisequran.com'
+                  url: 'https://quran.thewise.cloud'
                 };
                 if (navigator.share) {
                   try {await navigator.share(shareData);} catch {}
