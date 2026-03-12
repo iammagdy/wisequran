@@ -32,11 +32,11 @@ jobs:
           ls -la ./dist/
 
       - name: Sync files via FTP to Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/ # Vite outputs the compiled app to the dist folder
-          server-dir: ./ # Where to upload on the server (locked to the user's /quran folder)
-          dangerous-clean-slate: true # Deletes old files on the server to ensure a clean deployment
+          local-dir: ./dist/
+          server-dir: ./
+          dangerous-clean-slate: true
