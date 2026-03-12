@@ -1,18 +1,35 @@
 <p align="center">
-  <img src="public/icons/icon-192.png" alt="Wise Quran" width="80" height="80">
+  <img src="public/icons/icon-192.png" alt="Wise Quran" width="120" height="120">
 </p>
 
-<h1 align="center">Wise Quran</h1>
+<h1 align="center">Wise Quran — القرآن الكريم</h1>
 
 <p align="center">
-  القرآن الكريم — A modern, offline-first Quran app built as a Progressive Web App.
+  <strong>A modern, offline-first Quran application built as a Progressive Web App.</strong>
 </p>
 
 <p align="center">
-  <a href="https://quran.thewise.cloud">Live Demo</a> · <a href="#features">Features</a> · <a href="#screenshots">Screenshots</a> · <a href="#getting-started">Getting Started</a>
+  <a href="https://quran.thewise.cloud">quran.thewise.cloud</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/license/iammagdy/wisequran?style=flat-square&color=3d7a5a" alt="License">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square&color=3d7a5a" alt="PRs Welcome">
+  <img src="https://img.shields.io/badge/PWA-Ready-brightgreen?style=flat-square&color=3d7a5a" alt="PWA Ready">
+  <img src="https://img.shields.io/badge/React-18-informational?style=flat-square&color=3d7a5a" alt="React">
+</p>
+
+<p align="center">
+  <a href="#about-the-project">About</a> · <a href="#features">Features</a> · <a href="#screenshots">Screenshots</a> · <a href="#architecture--data">Architecture</a> · <a href="#getting-started">Getting Started</a> · <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
+
+## About The Project
+
+Wise Quran is designed to provide a fast, beautiful, and distraction-free experience for reading the Quran, listening to recitations, and tracking daily prayers and Azkar. 
+
+It is built specifically with offline capabilities in mind — meaning once you download a Surah or audio file, it is permanently stored on your device and can be accessed without an internet connection, making it perfect for travel or areas with low connectivity.
 
 ## Features
 
@@ -44,6 +61,13 @@
 - **IndexedDB** — Local storage for surahs, audio, and tafsir
 - **Framer Motion** — Animations
 - **shadcn/ui** — Component library
+
+## Architecture & Data
+
+Wise Quran relies on highly optimized modern web APIs to deliver a native-like experience:
+- **Service Workers & Workbox:** Caches the application shell, fonts, and assets for instant loading.
+- **IndexedDB:** All Quranic text, translations, Tafsir, and downloaded audio files are stored locally in the browser's IndexedDB. This bypasses the typical 50MB browser storage limits, allowing for gigabytes of offline audio storage.
+- **React + Tailwind + shadcn/ui:** Ensures a highly responsive layout across desktop, tablet, and mobile devices.
 
 ## Getting Started
 
