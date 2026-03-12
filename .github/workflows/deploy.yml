@@ -32,7 +32,7 @@ jobs:
           ls -la ./dist/
 
       - name: Sync files via FTP to Hostinger
-        uses: SamKirkland/FTP-Deploy-Action@v4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
