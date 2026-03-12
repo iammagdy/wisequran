@@ -35,7 +35,7 @@ type AccuracyLevel = "low" | "medium" | "high";
 
 export default function QiblaPage() {
   const navigate = useNavigate();
-  const { location, loading: locationLoading, error: locationError, refresh: refreshLocation } = useLocation();
+  const { location, loading: locationLoading, error: locationError, refresh: refreshLocation } = useLocation(true);
   
   const [heading, setHeading] = useState<number | null>(null);
   const [compassAccuracy, setCompassAccuracy] = useState<AccuracyLevel>("medium");

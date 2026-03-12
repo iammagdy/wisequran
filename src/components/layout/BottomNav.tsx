@@ -41,7 +41,7 @@ export default function BottomNav() {
               <NavLink
                 key={path}
                 to={path}
-                className="relative flex flex-col items-center gap-1 px-2 py-2 rounded-2xl transition-all duration-200"
+                className="relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl transition-all duration-200"
               >
                 {/* Active background pill */}
                 {isActive && (
@@ -61,7 +61,7 @@ export default function BottomNav() {
                 >
                   <Icon
                     className={cn(
-                      "h-5 w-5 transition-all duration-200",
+                      "h-6 w-6 transition-all duration-200",
                       isActive ? "text-primary" : "text-muted-foreground"
                     )}
                     style={{
@@ -72,7 +72,7 @@ export default function BottomNav() {
                 
                 <span
                   className={cn(
-                    "relative z-10 text-[0.625rem] font-semibold transition-all duration-200",
+                    "relative z-10 text-xs font-semibold transition-all duration-200",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >

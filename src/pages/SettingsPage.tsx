@@ -1184,7 +1184,10 @@ export default function SettingsPage() {
                 const hasUpdate = await checkForUpdate();
                 setCheckingUpdate(false);
                 if (!hasUpdate) {
-                  toast.success("التطبيق محدّث بالفعل ✓");
+                  toast.success("أنت تستخدم أحدث نسخة", {
+                    description: "التطبيق محدث بالكامل",
+                    position: "bottom-center"
+                  });
                 }
               }}>
               

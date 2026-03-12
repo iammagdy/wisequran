@@ -18,7 +18,7 @@ interface UseLocationResult {
 const CACHE_KEY = "wise-user-location";
 const CACHE_DURATION = 1000 * 60 * 30; // 30 minutes
 
-export function useLocation(): UseLocationResult {
+export function useLocation(autoFetch: boolean = false): UseLocationResult {
   const [location, setLocation] = useState<LocationData | null>(() => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -90,9 +90,29 @@ export function useLocation(): UseLocationResult {
 
   useEffect(() => {
     if (!location) {
-      fetchLocation();
+      if (autoFetch) {
+        fetchLocation();
+        return;
+      }
+
+      // Check if permission was already granted previously
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({ name: 'geolocation' })
+          .then((result) => {
+            if (result.state === 'granted') {
+              fetchLocation();
+            } else {
+              setLoading(false); // Done checking, don't spin indefinitely
+            }
+          })
+          .catch(() => {
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
     }
-  }, []);
+  }, [autoFetch, location, fetchLocation]);
 
   return { location, loading, error, refresh: fetchLocation };
 }

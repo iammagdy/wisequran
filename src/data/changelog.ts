@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.0.0";
+export const APP_VERSION = "2.1.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -7,6 +7,17 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.1.0",
+    date: "2026-03-12",
+    changes: [
+      "تأجيل طلب صلاحية الموقع حتى استخدام أداة القبلة فقط",
+      "إضافة تنبيهات مرئية عند التحقق من وجود تحديثات جديدة",
+      "تكبير حجم الأيقونات والخطوط في شريط التنقل السفلي لتناسب كبار السن",
+      "تحسينات عامة على تجربة المستخدم لضمان سهولة الاستخدام",
+      "رابط التطبيق الرسمي: quran.thewise.cloud"
+    ],
+  },
   {
     version: "2.0.0",
     date: "2026-03-12",
