@@ -3,7 +3,8 @@ name: Deploy to Hostinger
 on:
   push:
     branches:
-      - main # Runs this script every time code is pushed to the main branch
+      - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
