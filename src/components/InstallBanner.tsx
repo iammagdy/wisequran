@@ -64,10 +64,10 @@ export default function InstallBanner() {
         >
           <button
             onClick={dismiss}
-            className="absolute top-2 left-2 rounded-full p-1 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute top-3 left-3 rounded-full p-2 bg-muted/80 hover:bg-muted text-foreground transition-colors shadow-sm border border-border/50"
             aria-label="إغلاق"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
 
           <div className="flex items-center gap-3" dir="rtl">

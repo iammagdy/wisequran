@@ -77,7 +77,16 @@ export default function FocusMode({
       }}
       onClick={resetControlsTimeout}
     >
-      {/* Minimal header */}
+      {/* Always-visible close hint — stays visible even when controls auto-hide */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 left-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity"
+        aria-label="إغلاق وضع التركيز"
+      >
+        <X className="h-4 w-4 text-foreground" />
+      </button>
+
+      {/* Minimal header — auto-hides */}
       <AnimatePresence>
         {controlsVisible && (
           <motion.div

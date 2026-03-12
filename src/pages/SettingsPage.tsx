@@ -1224,7 +1224,7 @@ export default function SettingsPage() {
 
         {/* Changelog Sheet */}
         <Sheet open={showChangelog} onOpenChange={setShowChangelog}>
-          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-0">
+          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-0 [&>button:last-child]:hidden">
             <SheetHeader className="px-6 pb-4">
               <SheetTitle className="text-center font-arabic text-lg">سجل التحديثات</SheetTitle>
             </SheetHeader>

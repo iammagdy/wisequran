@@ -31,7 +31,7 @@ export function AchievementsSheet({ trigger }: Props) {
           </button>
         )}
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 [&>button:last-child]:hidden">
         <SheetHeader className="px-6 pb-4 border-b border-border">
           <SheetTitle className="text-center font-bold text-lg">الإنجازات</SheetTitle>
         </SheetHeader>

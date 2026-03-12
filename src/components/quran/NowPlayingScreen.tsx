@@ -68,7 +68,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full h-full w-full p-0 border-0 bg-background" dir="rtl">
+      <DialogContent className="max-w-full h-full w-full p-0 border-0 bg-background rounded-none data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 [&>button:last-child]:hidden" dir="rtl">
         <div className="flex flex-col h-full safe-area-bottom">
           <div className="flex items-center justify-between px-4 py-5 border-b border-border bg-card/50 backdrop-blur-sm">
             <button
