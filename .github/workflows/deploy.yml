@@ -3,27 +3,33 @@ name: Deploy to Hostinger
 on:
   push:
     branches:
-      - main
+      - main # Runs this script every time code is pushed to the main branch
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Vite requires a reasonably modern version of Node
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build project
         run: npm run build
 
-      - name: Deploy to Hostinger
+      - name: Sync files via FTP to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: dist/
-          server-dir: public_html/Wise_Quran/
+          local-dir: ./dist/ # Vite outputs the compiled app to the dist folder
+          server-dir: ./ # Where to upload on the server (the root of the subdomain folder)
+          dangerous-clean-slate: true # Deletes old files on the server to ensure a clean deployment
