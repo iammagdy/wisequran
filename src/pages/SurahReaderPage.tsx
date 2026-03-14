@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Layers, Share2, Maximize2 } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Layers, Share2, Maximize2, Globe } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,7 @@ export default function SurahReaderPage() {
   const [focusModeActive, setFocusModeActive] = useState(false);
 
   // Tab & tafsir state
-  const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
+  const [activeTab, setActiveTab] = useState<"text" | "tafsir" | "translation">("text");
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
   const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
   const [tafsirLoading, setTafsirLoading] = useState(false);
@@ -84,7 +84,7 @@ export default function SurahReaderPage() {
     hasTracked.current = false;
     setLoading(true);
     setError("");
-    setActiveTab("text");
+    setActiveTab(translationEnabled ? "translation" : "text");
     setFocusedAyah(null);
     setTafsirAyahs([]);
     setTafsirSearch("");
@@ -189,9 +189,9 @@ export default function SurahReaderPage() {
     });
   }, [activeTab, surahNumber, tafsirEdition, tafsirAyahs.length]);
 
-  // Fetch translation whenever enabled/edition/surah changes
+  // Fetch translation whenever the translation tab is active, or translation is enabled
   useEffect(() => {
-    if (!translationEnabled) {
+    if (!translationEnabled && activeTab !== "translation") {
       setTranslationAyahs([]);
       return;
     }
@@ -202,7 +202,7 @@ export default function SurahReaderPage() {
     if (!editionChanged && !enabledChanged && translationAyahs.length > 0) return;
 
     fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
-  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
+  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length, activeTab]);
 
   const isBookmarked = (ayahNum: number) =>
   bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
@@ -318,53 +318,58 @@ export default function SurahReaderPage() {
           <div className="flex items-center gap-0.5">
             <button
               onClick={() => setFocusModeActive(true)}
-              className="rounded-lg p-2 transition-colors text-muted-foreground hover:bg-muted"
+              className="rounded-lg p-2.5 transition-colors text-muted-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="وضع التركيز">
-              
               <Maximize2 className="h-4 w-4" />
             </button>
             <button
               onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
               className={cn(
-                "rounded-lg p-2 transition-colors",
+                "rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
                 readerMode === "mushaf" ? "text-primary" : "text-muted-foreground hover:bg-muted"
               )}
               title={readerMode === "ayah" ? "عرض المصحف" : "عرض الآيات"}>
-              
               <Layers className="h-4 w-4" />
             </button>
             <button
               onClick={toggleFavorite}
-              className={cn("rounded-lg p-2 transition-colors", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}>
-              
+              className={cn("rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}>
               <Star className={cn("h-4 w-4", isFavorite && "fill-primary")} />
             </button>
           </div>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex justify-center gap-2 px-4 pt-1 pb-[4px]" dir="rtl">
-          <div className="flex gap-1.5 p-1 rounded-2xl bg-muted/50 border-2">
+        <div className="flex justify-center px-3 pt-1 pb-[4px]" dir="rtl">
+          <div className="flex gap-1 p-1 rounded-2xl bg-muted/50 border-2 w-full max-w-sm">
             <button
               onClick={() => {setActiveTab("text");setFocusedAyah(null);}}
-              className={cn("rounded-xl px-5 py-2 text-sm font-semibold transition-all border",
-
+              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px]",
               activeTab === "text" ?
               "bg-card text-foreground shadow-soft" :
-              "text-muted-foreground hover:text-foreground"
+              "text-muted-foreground hover:text-foreground border-transparent"
               )}>
-              
               النص
             </button>
             <button
+              onClick={() => setActiveTab("translation")}
+              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px] relative",
+              activeTab === "translation" ?
+              "bg-card text-foreground shadow-soft" :
+              "text-muted-foreground hover:text-foreground border-transparent"
+              )}>
+              ترجمة
+              {!translationEnabled && activeTab !== "translation" && (
+                <span className="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-primary/60" />
+              )}
+            </button>
+            <button
               onClick={() => setActiveTab("tafsir")}
-              className={cn("rounded-xl px-5 py-2 text-sm font-semibold transition-all border",
-
+              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px]",
               activeTab === "tafsir" ?
               "bg-card text-foreground shadow-soft" :
-              "text-muted-foreground hover:text-foreground"
+              "text-muted-foreground hover:text-foreground border-transparent"
               )}>
-              
               التفسير
             </button>
           </div>
@@ -389,7 +394,52 @@ export default function SurahReaderPage() {
               إعادة المحاولة
             </button>
           </div> :
-        activeTab === "text" ? (
+        activeTab === "translation" ? (
+        /* ===== ترجمة Tab ===== */
+        <div dir="ltr" className="space-y-3">
+          {/* Translation header */}
+          <div className="flex items-center justify-between mb-2" dir="rtl">
+            <div className="flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">
+                {TRANSLATION_EDITIONS.find((e) => e.id === translationEdition)?.name ?? "Sahih International"}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {TRANSLATION_EDITIONS.find((e) => e.id === translationEdition)?.language}
+            </span>
+          </div>
+
+          {translationAyahs.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : (
+            translationAyahs.map((t) => {
+              const edition = TRANSLATION_EDITIONS.find((e) => e.id === translationEdition);
+              return (
+                <div
+                  key={t.numberInSurah}
+                  className="rounded-2xl bg-card p-4 shadow-soft border border-border/50"
+                  dir={edition?.dir ?? "ltr"}
+                >
+                  <div className="flex items-center gap-2 mb-2" dir="rtl">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[0.625rem] font-bold text-primary">
+                      {toArabicNumerals(t.numberInSurah)}
+                    </span>
+                  </div>
+                  <p
+                    className="text-sm text-foreground leading-relaxed"
+                    style={{ textAlign: edition?.dir === "rtl" ? "right" : "left" }}
+                  >
+                    {t.text}
+                  </p>
+                </div>
+              );
+            })
+          )}
+        </div>
+      ) : activeTab === "text" ? (
         /* ===== النص Tab ===== */
         <>
             {surahNumber !== 1 && surahNumber !== 9 &&

@@ -413,7 +413,7 @@ export default function SettingsPage() {
                   {RECITERS.map((r) =>
                   <div
                     key={r.id}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
                     reciterId === r.id ?
                     "bg-primary/10 text-primary" :
                     "text-foreground hover:bg-muted"}`
@@ -432,7 +432,7 @@ export default function SettingsPage() {
                       </button>
                       <button
                       onClick={(e) => {e.stopPropagation();togglePreview(r);}}
-                      className="shrink-0 p-1.5 rounded-full hover:bg-muted-foreground/10 transition-colors"
+                      className="shrink-0 p-2.5 rounded-full hover:bg-muted-foreground/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                       title="معاينة الصوت">
                       
                         {previewLoading === r.id ?
@@ -474,7 +474,7 @@ export default function SettingsPage() {
                   <button
                     key={t.id}
                     onClick={() => setTafsirId(t.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
                     tafsirId === t.id ?
                     "bg-primary/10 text-primary" :
                     "text-foreground hover:bg-muted"}`
@@ -498,7 +498,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5" />
-            الترجمة
+            الترجمة · Translation
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -507,7 +507,10 @@ export default function SettingsPage() {
             className="rounded-xl bg-card shadow-sm overflow-hidden">
 
             <div className="flex items-center justify-between px-4 py-3.5">
-              <span className="text-sm font-medium">إظهار الترجمة</span>
+              <div>
+                <span className="text-sm font-medium block">إظهار الترجمة</span>
+                <span className="text-xs text-muted-foreground">Show Quran translation</span>
+              </div>
               <Switch
                 checked={translationEnabled}
                 onCheckedChange={setTranslationEnabled} />
@@ -525,7 +528,7 @@ export default function SettingsPage() {
                     <button
                       key={t.id}
                       onClick={() => setTranslationId(t.id)}
-                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
                       translationId === t.id ?
                       "bg-primary/10 text-primary" :
                       "text-foreground hover:bg-muted"}`

@@ -51,14 +51,14 @@ export default function TasbeehPage() {
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="flex flex-col px-4 pt-6 min-h-[calc(100dvh-4rem)] pb-[20px] pl-[5px]" dir="rtl">
+    <div className="flex flex-col px-4 pt-6 min-h-[calc(100dvh-4rem)] pb-[20px]" dir="rtl">
       {/* Header */}
       <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">التسبيح</h1>
 
       {/* Dhikr selector */}
       <div className="flex justify-center mb-3">
         <Select value={dhikr} onValueChange={(v) => {setDhikr(v);setCount(0);}}>
-          <SelectTrigger className="w-56 text-center justify-center text-base font-bold rounded-xl h-11 shadow-soft border-border/50">
+          <SelectTrigger className="w-full max-w-[224px] text-center justify-center text-base font-bold rounded-xl h-11 shadow-soft border-border/50">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

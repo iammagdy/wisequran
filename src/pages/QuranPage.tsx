@@ -105,7 +105,7 @@ export default function QuranPage() {
             whileTap={{ scale: 0.9 }}
             onClick={() => {setShowFavorites(!showFavorites);setShowBookmarks(false);setShowHistory(false);setViewMode("surahs");}}
             className={cn(
-              "rounded-xl p-2.5 transition-all shadow-soft",
+              "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
               showFavorites ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
             )}>
             
@@ -115,7 +115,7 @@ export default function QuranPage() {
             whileTap={{ scale: 0.9 }}
             onClick={() => {setShowBookmarks(!showBookmarks);setShowFavorites(false);setShowHistory(false);setViewMode("surahs");}}
             className={cn(
-              "rounded-xl p-2.5 transition-all shadow-soft",
+              "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
               showBookmarks ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
             )}>
             
@@ -126,7 +126,7 @@ export default function QuranPage() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 className={cn(
-                  "rounded-xl p-2.5 transition-all shadow-soft",
+                  "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
                   showHistory ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
                 )}>
                 
@@ -196,18 +196,18 @@ export default function QuranPage() {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.99 }}
         onClick={() => navigate(`/surah/${lastRead.surah}`)}
-        className="flex w-full items-center rounded-2xl bg-card p-4 text-right shadow-elevated border border-primary/10 hover-lift gap-[20px] pb-0 pt-0 mb-[3px]">
-        
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+        className="flex w-full items-center rounded-2xl bg-card py-3 px-4 text-right shadow-elevated border border-primary/10 hover-lift gap-3 mb-[3px]">
+
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground font-medium">متابعة القراءة</p>
-            <p className="text-sm font-bold">
+            <p className="text-sm font-bold truncate">
               سورة {getSurahName(lastRead.surah)} — آية {toArabicNumerals(lastRead.ayah)}
             </p>
           </div>
-          <span className="text-xs text-primary/60">←</span>
+          <span className="text-xs text-primary/60 shrink-0">←</span>
         </motion.button>
       }
 

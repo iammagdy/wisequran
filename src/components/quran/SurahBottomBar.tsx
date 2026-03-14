@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Download, Loader2, WifiOff, Check, X, Timer } from "lucide-react";
+import { Play, Pause, Download, Loader as Loader2, WifiOff, Check, X, Timer } from "lucide-react";
 import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
@@ -178,32 +178,34 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowTimer(!showTimer)}
-              className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all bg-input",
+              className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all bg-input",
 
               showTimer || timerActive ?
               "bg-primary/15 text-primary" :
               "text-muted-foreground hover:bg-muted"
               )}>
-              
+
               <Timer className="h-4 w-4" />
             </motion.button>
           </div>
 
           {/* Row 2: Surah name + reciter + status + download */}
           <div className="flex items-center justify-between" dir="rtl">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="font-arabic text-sm font-bold text-foreground truncate">
-                {surahName}
-              </span>
-              <span className="text-[0.625rem] text-muted-foreground whitespace-nowrap">
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-arabic text-sm font-bold text-foreground truncate">
+                  {surahName}
+                </span>
+                {playing &&
+                <span className="text-[0.625rem] text-primary font-semibold shrink-0 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
+                    تلاوة جارية
+                  </span>
+                }
+              </div>
+              <span className="text-[0.625rem] text-muted-foreground truncate">
                 {getReciterById(player.surahNumber === surahNumber ? player.playingReciterId : player.reciterId).name}
               </span>
-              {playing &&
-              <span className="text-[0.625rem] text-primary font-semibold whitespace-nowrap flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
-                  تلاوة جارية
-                </span>
-              }
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

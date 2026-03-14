@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, BookOpen, CheckCircle2, Circle, Loader2, RotateCcw, Check, Clock, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
@@ -83,17 +83,17 @@ export default function HifzPage() {
 
       {/* Progress Summary */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl bg-card p-5 shadow-elevated border border-border/50">
-        <div className="grid grid-cols-3 gap-3 mb-4 text-center" dir="rtl">
+        <div className="grid grid-cols-3 gap-2 mb-4 text-center" dir="rtl">
           <div>
-            <p className="text-2xl font-bold text-primary">{toArabicNumerals(stats.memorized)}</p>
+            <p className="text-xl font-bold text-primary">{toArabicNumerals(stats.memorized)}</p>
             <p className="text-xs text-muted-foreground">محفوظة</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-accent">{toArabicNumerals(stats.inProgress)}</p>
+            <p className="text-xl font-bold text-accent">{toArabicNumerals(stats.inProgress)}</p>
             <p className="text-xs text-muted-foreground">قيد الحفظ</p>
           </div>
           <div>
-            <p className="text-2xl font-bold text-muted-foreground">{toArabicNumerals(stats.notStarted)}</p>
+            <p className="text-xl font-bold text-muted-foreground">{toArabicNumerals(stats.notStarted)}</p>
             <p className="text-xs text-muted-foreground">لم تبدأ</p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function HifzPage() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleMarkReviewed(item.surahNumber, "good")}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-2.5 text-sm font-semibold hover:bg-primary/20 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-3 text-sm font-semibold hover:bg-primary/20 transition-colors min-h-[44px]"
                     >
                       <Check className="h-4 w-4" />
                       أتقنتها
@@ -189,7 +189,7 @@ export default function HifzPage() {
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleMarkReviewed(item.surahNumber, "hard")}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-2.5 text-sm font-semibold hover:bg-muted/80 transition-colors"
+                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-3 text-sm font-semibold hover:bg-muted/80 transition-colors min-h-[44px]"
                     >
                       <RotateCcw className="h-4 w-4" />
                       تحتاج مراجعة
