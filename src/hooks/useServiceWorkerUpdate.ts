@@ -45,15 +45,35 @@ export function useServiceWorkerUpdate() {
   }, []);
 
   const applyUpdate = useCallback(() => {
-    if (!registration?.waiting) return;
-
     setIsUpdating(true);
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      window.location.reload();
-    });
+    const doReload = () => window.location.reload();
 
-    registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    if (registration?.waiting) {
+      let reloaded = false;
+      const onControllerChange = () => {
+        if (reloaded) return;
+        reloaded = true;
+        navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+        doReload();
+      };
+
+      navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
+      // Fallback: if controllerchange never fires within 4s, force reload anyway
+      setTimeout(() => {
+        if (!reloaded) {
+          reloaded = true;
+          navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+          doReload();
+        }
+      }, 4000);
+
+      registration.waiting.postMessage({ type: "SKIP_WAITING" });
+    } else {
+      // No waiting SW — just reload to pick up any cached updates
+      setTimeout(doReload, 300);
+    }
   }, [registration]);
 
   const checkForUpdate = useCallback(async (): Promise<boolean> => {
