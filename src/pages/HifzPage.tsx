@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
@@ -111,6 +111,30 @@ export default function HifzPage() {
           <Progress value={stats.percentage} variant="gradient" size="sm" />
         </div>
       </motion.div>
+
+      {/* Recitation Test Banner */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => navigate("/hifz/test")}
+        className="w-full mb-5 rounded-2xl bg-primary text-primary-foreground p-4 flex items-center gap-3 shadow-elevated hover:bg-primary/90 transition-colors"
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+          <Mic className="h-5 w-5" />
+        </div>
+        <div className="text-start flex-1">
+          <p className="text-sm font-bold">
+            {language === "en" ? "Recitation Test" : "اختبار التلاوة"}
+          </p>
+          <p className="text-xs opacity-80">
+            {language === "en" ? "Test your memory with voice recitation" : "اختبر حفظك بالتلاوة الصوتية"}
+          </p>
+        </div>
+        <ArrowRight className={cn("h-4 w-4 opacity-70", isRTL && "rotate-180")} />
+      </motion.button>
 
       {/* Today's Review Section */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir={isRTL ? "rtl" : "ltr"}>

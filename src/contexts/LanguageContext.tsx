@@ -324,6 +324,36 @@ interface Translations {
   // Not found
   not_found: string;
   go_home: string;
+
+  // Recitation Test
+  recitation_test: string;
+  recitation_subtitle: string;
+  select_surah: string;
+  select_range: string;
+  verse_from: string;
+  verse_to: string;
+  start_test: string;
+  tap_to_speak: string;
+  listening: string;
+  stop_listening: string;
+  processing: string;
+  test_result: string;
+  your_score: string;
+  correct_ayahs: string;
+  out_of: string;
+  try_again: string;
+  excellent: string;
+  good_job: string;
+  keep_practicing: string;
+  speech_not_supported: string;
+  speech_not_supported_desc: string;
+  no_speech_detected: string;
+  recitation_history: string;
+  best_score: string;
+  per_ayah_breakdown: string;
+  correct: string;
+  incorrect: string;
+  verses: string;
 }
 
 const ar: Translations = {
@@ -625,6 +655,35 @@ const ar: Translations = {
 
   not_found: "الصفحة غير موجودة",
   go_home: "العودة للرئيسية",
+
+  recitation_test: "اختبار التلاوة",
+  recitation_subtitle: "اختبر حفظك بالتلاوة الصوتية",
+  select_surah: "اختر السورة",
+  select_range: "نطاق الآيات",
+  verse_from: "من آية",
+  verse_to: "إلى آية",
+  start_test: "ابدأ الاختبار",
+  tap_to_speak: "اضغط للتلاوة",
+  listening: "جارٍ الاستماع...",
+  stop_listening: "إيقاف",
+  processing: "جارٍ التقييم...",
+  test_result: "نتيجة الاختبار",
+  your_score: "نتيجتك",
+  correct_ayahs: "آيات صحيحة",
+  out_of: "من",
+  try_again: "حاول مجدداً",
+  excellent: "ممتاز! أحسنت",
+  good_job: "جيد! استمر في التدريب",
+  keep_practicing: "تحتاج إلى مزيد من المراجعة",
+  speech_not_supported: "الميزة غير مدعومة",
+  speech_not_supported_desc: "اختبار التلاوة الصوتية يتطلب Chrome أو متصفح Android. هذه الميزة غير متاحة على Safari/iOS حالياً.",
+  no_speech_detected: "لم يُكتشف كلام. حاول مجدداً.",
+  recitation_history: "سجل الاختبارات",
+  best_score: "أفضل نتيجة",
+  per_ayah_breakdown: "تفصيل الآيات",
+  correct: "صحيح",
+  incorrect: "خطأ",
+  verses: "آيات",
 };
 
 const en: Translations = {
@@ -926,6 +985,35 @@ const en: Translations = {
 
   not_found: "Page Not Found",
   go_home: "Go to Home",
+
+  recitation_test: "Recitation Test",
+  recitation_subtitle: "Test your memorization by reciting aloud",
+  select_surah: "Select Surah",
+  select_range: "Verse Range",
+  verse_from: "From verse",
+  verse_to: "To verse",
+  start_test: "Start Test",
+  tap_to_speak: "Tap to Recite",
+  listening: "Listening...",
+  stop_listening: "Stop",
+  processing: "Evaluating...",
+  test_result: "Test Result",
+  your_score: "Your Score",
+  correct_ayahs: "Correct Verses",
+  out_of: "out of",
+  try_again: "Try Again",
+  excellent: "Excellent! Well done",
+  good_job: "Good job! Keep practicing",
+  keep_practicing: "Needs more review",
+  speech_not_supported: "Not Supported on This Browser",
+  speech_not_supported_desc: "Voice recitation testing requires Chrome or Android browser. This feature is not available on Safari/iOS at this time.",
+  no_speech_detected: "No speech detected. Please try again.",
+  recitation_history: "Test History",
+  best_score: "Best Score",
+  per_ayah_breakdown: "Per-Verse Breakdown",
+  correct: "Correct",
+  incorrect: "Incorrect",
+  verses: "verses",
 };
 
 interface LanguageContextValue {

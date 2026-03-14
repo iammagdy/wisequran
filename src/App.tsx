@@ -16,6 +16,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import TasbeehPage from "@/pages/TasbeehPage";
 import StatsPage from "@/pages/StatsPage";
 import HifzPage from "@/pages/HifzPage";
+import RecitationTestPage from "@/pages/RecitationTestPage";
 import QiblaPage from "@/pages/QiblaPage";
 import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
@@ -38,6 +39,7 @@ const AppContent = () => {
           <Route path="/tasbeeh" element={<TasbeehPage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/hifz" element={<HifzPage />} />
+          <Route path="/hifz/test" element={<RecitationTestPage />} />
           <Route path="/qibla" element={<QiblaPage />} />
           <Route path="/ramadan" element={<RamadanPage />} />
           <Route path="/settings" element={<SettingsPage />} />
