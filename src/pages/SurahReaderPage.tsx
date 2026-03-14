@@ -21,6 +21,7 @@ import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
 import FocusMode from "@/components/quran/FocusMode";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{id: string;}>();
@@ -36,6 +37,8 @@ export default function SurahReaderPage() {
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const audioPlayer = useAudioPlayer();
   const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioPlayer.currentAyahInSurah : null;
+
+  const { t, language, isRTL } = useLanguage();
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [surahInfo, setSurahInfo] = useState<SurahMeta | null>(null);
@@ -99,7 +102,7 @@ export default function SurahReaderPage() {
       setLoading(false);
     }).
     catch(() => {
-      setError("تعذر تحميل السورة. تحقق من الاتصال بالإنترنت.");
+      setError(t("error_loading"));
       setLoading(false);
     });
   }, [surahNumber, addToHistory, setLastRead]);
@@ -184,7 +187,7 @@ export default function SurahReaderPage() {
       setTafsirLoading(false);
     }).
     catch(() => {
-      setTafsirError("تعذر تحميل التفسير. تحقق من الاتصال بالإنترنت.");
+      setTafsirError(t("error_loading"));
       setTafsirLoading(false);
     });
   }, [activeTab, surahNumber, tafsirEdition, tafsirAyahs.length]);
@@ -230,7 +233,7 @@ export default function SurahReaderPage() {
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/")}
               className="rounded-xl p-2.5 hover:bg-muted transition-colors">
-              
+
               <ArrowRight className="h-5 w-5" />
             </motion.button>
             {/* Page indicator in header */}
@@ -250,7 +253,7 @@ export default function SurahReaderPage() {
                       }
                   </button>
                 </PopoverTrigger>
-                <PopoverContent side="bottom" align="start" className="w-56 p-3" dir="rtl">
+                <PopoverContent side="bottom" align="start" className="w-56 p-3" dir={isRTL ? "rtl" : "ltr"}>
                   <p className="text-xs font-medium text-foreground mb-2">انتقل إلى صفحة</p>
                   <form
                       onSubmit={(e) => {
@@ -284,7 +287,7 @@ export default function SurahReaderPage() {
                         setGoToPageOpen(false);
                       }}
                       className="flex gap-2">
-                      
+
                     <Input
                         type="number"
                         min={1}
@@ -294,11 +297,11 @@ export default function SurahReaderPage() {
                         placeholder="رقم الصفحة"
                         className="text-center text-sm h-8"
                         autoFocus />
-                      
+
                     <button
                         type="submit"
                         className="shrink-0 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                        
+
                       انتقل
                     </button>
                   </form>
@@ -308,10 +311,10 @@ export default function SurahReaderPage() {
             })()}
           </div>
           <div className="text-center flex-1">
-            <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `سورة ${surahNumber}`}</h1>
+            <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `${t("surah")} ${surahNumber}`}</h1>
             <p className="text-[0.6875rem] text-muted-foreground">
               {surahInfo &&
-              <span>{toArabicNumerals(surahInfo.numberOfAyahs)} آية · {surahInfo.revelationType === "Meccan" ? "مكية" : "مدنية"}</span>
+              <span>{toArabicNumerals(surahInfo.numberOfAyahs)} {t("ayah")} · {surahInfo.revelationType === "Meccan" ? t("revelation_meccan") : t("revelation_medinan")}</span>
               }
             </p>
           </div>
@@ -340,7 +343,7 @@ export default function SurahReaderPage() {
         </div>
 
         {/* Tab switcher */}
-        <div className="flex justify-center px-3 pt-1 pb-[4px]" dir="rtl">
+        <div className="flex justify-center px-3 pt-1 pb-[4px]" dir={isRTL ? "rtl" : "ltr"}>
           <div className="flex gap-1 p-1 rounded-2xl bg-muted/50 border-2 w-full max-w-sm">
             <button
               onClick={() => {setActiveTab("text");setFocusedAyah(null);}}
@@ -349,7 +352,7 @@ export default function SurahReaderPage() {
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
               )}>
-              النص
+              {t("text_tab")}
             </button>
             <button
               onClick={() => setActiveTab("translation")}
@@ -358,7 +361,7 @@ export default function SurahReaderPage() {
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
               )}>
-              ترجمة
+              {t("translation_tab")}
               {!translationEnabled && activeTab !== "translation" && (
                 <span className="absolute -top-1 -left-1 h-2 w-2 rounded-full bg-primary/60" />
               )}
@@ -370,7 +373,7 @@ export default function SurahReaderPage() {
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
               )}>
-              التفسير
+              {t("tafsir_tab")}
             </button>
           </div>
         </div>
@@ -390,15 +393,15 @@ export default function SurahReaderPage() {
             <button
             onClick={() => window.location.reload()}
             className="mt-3 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground">
-            
+
               إعادة المحاولة
             </button>
           </div> :
         activeTab === "translation" ? (
-        /* ===== ترجمة Tab ===== */
+        /* ===== Translation Tab ===== */
         <div dir="ltr" className="space-y-3">
           {/* Translation header */}
-          <div className="flex items-center justify-between mb-2" dir="rtl">
+          <div className="flex items-center justify-between mb-2" dir={isRTL ? "rtl" : "ltr"}>
             <div className="flex items-center gap-2">
               <Globe className="h-4 w-4 text-primary" />
               <span className="text-sm font-semibold text-foreground">
@@ -415,24 +418,24 @@ export default function SurahReaderPage() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            translationAyahs.map((t) => {
+            translationAyahs.map((tAyah) => {
               const edition = TRANSLATION_EDITIONS.find((e) => e.id === translationEdition);
               return (
                 <div
-                  key={t.numberInSurah}
+                  key={tAyah.numberInSurah}
                   className="rounded-2xl bg-card p-4 shadow-soft border border-border/50"
                   dir={edition?.dir ?? "ltr"}
                 >
-                  <div className="flex items-center gap-2 mb-2" dir="rtl">
+                  <div className="flex items-center gap-2 mb-2" dir={isRTL ? "rtl" : "ltr"}>
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[0.625rem] font-bold text-primary">
-                      {toArabicNumerals(t.numberInSurah)}
+                      {toArabicNumerals(tAyah.numberInSurah)}
                     </span>
                   </div>
                   <p
                     className="text-sm text-foreground leading-relaxed"
                     style={{ textAlign: edition?.dir === "rtl" ? "right" : "left" }}
                   >
-                    {t.text}
+                    {tAyah.text}
                   </p>
                 </div>
               );
@@ -440,14 +443,14 @@ export default function SurahReaderPage() {
           )}
         </div>
       ) : activeTab === "text" ? (
-        /* ===== النص Tab ===== */
+        /* ===== Text Tab ===== */
         <>
             {surahNumber !== 1 && surahNumber !== 9 &&
           <div className="ornamental-divider mb-8 px-4">
                 <p
               className="shrink-0 font-arabic text-muted-foreground"
               style={{ fontSize: fontSize * 0.85 }}>
-              
+
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </p>
               </div>
@@ -469,7 +472,7 @@ export default function SurahReaderPage() {
             onSeekToAyah={audioPlayer.seekToAyah} /> :
 
 
-          <div className="space-y-3" dir="rtl">
+          <div className="space-y-3" dir={isRTL ? "rtl" : "ltr"}>
                 {ayahs.map((ayah, i) => {
               const showPageSep = i > 0 && ayah.page && ayahs[i - 1]?.page && ayah.page !== ayahs[i - 1].page;
               return (
@@ -493,14 +496,14 @@ export default function SurahReaderPage() {
                     highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
                     playingAyahInSurah === ayah.numberInSurah && "ring-2 ring-primary bg-primary/10 shadow-glow animate-glow-pulse"
                     )}>
-                    
+
                         <div className="mb-3 flex items-center justify-between">
                           <div className="flex items-center gap-1">
                             <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => toggleBookmark(ayah.numberInSurah)}
                           className="rounded-xl p-2 transition-colors hover:bg-muted">
-                          
+
                               {isBookmarked(ayah.numberInSurah) ?
                           <BookmarkCheck className="h-4 w-4 text-gold" /> :
 
@@ -511,8 +514,8 @@ export default function SurahReaderPage() {
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleAyahTafsir(ayah.numberInSurah)}
                           className="rounded-xl p-2 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
-                          title="تفسير">
-                          
+                          title={t("tafsir_tab")}>
+
                               <BookOpen className="h-4 w-4" />
                             </motion.button>
                             <ShareAyahCard
@@ -520,7 +523,7 @@ export default function SurahReaderPage() {
                           surahName={surahInfo?.name || ""}
                           ayahNumber={ayah.numberInSurah}
                           surahNumber={surahNumber} />
-                        
+
                           </div>
                           <div className="number-badge h-8 w-8 text-xs">
                             {toArabicNumerals(ayah.numberInSurah)}
@@ -537,19 +540,19 @@ export default function SurahReaderPage() {
                           audioPlayer.seekToAyah(ayah.numberInSurah);
                         }
                       }}>
-                      
+
                           {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
                         {translationEnabled && translationAyahs.length > 0 && (() => {
-                          const t = translationAyahs.find((t) => t.numberInSurah === ayah.numberInSurah);
-                          if (!t) return null;
+                          const tAyah = translationAyahs.find((tAyah) => tAyah.numberInSurah === ayah.numberInSurah);
+                          if (!tAyah) return null;
                           const edition = TRANSLATION_EDITIONS.find((e) => e.id === translationEdition);
                           return (
                             <p
                               className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed"
                               dir={edition?.dir ?? "ltr"}
                               style={{ textAlign: edition?.dir === "rtl" ? "right" : "left" }}>
-                              {t.text}
+                              {tAyah.text}
                             </p>
                           );
                         })()}
@@ -561,8 +564,8 @@ export default function SurahReaderPage() {
           }
           </>) : (
 
-        /* ===== التفسير Tab ===== */
-        <div dir="rtl">
+        /* ===== Tafsir Tab ===== */
+        <div dir={isRTL ? "rtl" : "ltr"}>
             {tafsirLoading ?
           <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -578,7 +581,7 @@ export default function SurahReaderPage() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
                     <h2 className="font-arabic text-base font-bold text-foreground">
-                      تفسير الآية {toArabicNumerals(focusedAyah)}
+                      {t("tafsir_tab")} {t("ayah")} {toArabicNumerals(focusedAyah)}
                     </h2>
                   </div>
                   <span className="text-xs text-muted-foreground">{editionName}</span>
@@ -588,16 +591,16 @@ export default function SurahReaderPage() {
                   <p
                 className="font-arabic text-foreground/90 leading-[2.2]"
                 style={{ fontSize: 18 }}>
-                
+
                     {tafsirAyahs.find((a) => a.numberInSurah === focusedAyah)?.text ||
-                "لم يتم العثور على التفسير"}
+                t("no_tafsir")}
                   </p>
                 </div>
 
                 <button
               onClick={() => setFocusedAyah(null)}
               className="text-sm text-primary hover:underline">
-              
+
                   ← عرض تفسير السورة بالكامل
                 </button>
               </div>) : (
@@ -606,7 +609,7 @@ export default function SurahReaderPage() {
           <div className="space-y-5">
                 <div className="flex items-center gap-2 mb-4">
                   <BookOpen className="h-4 w-4 text-primary" />
-                  <h2 className="font-arabic text-base font-bold text-foreground">تفسير السورة</h2>
+                  <h2 className="font-arabic text-base font-bold text-foreground">{t("tafsir_tab")} {t("surah")}</h2>
                   <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
                 </div>
 
@@ -615,14 +618,14 @@ export default function SurahReaderPage() {
                   <Select
                 value=""
                 onValueChange={(val) => setFocusedAyah(Number(val))}>
-                
+
                     <SelectTrigger className="w-40 shrink-0 text-right">
                       <SelectValue placeholder="انتقل إلى آية..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {tafsirAyahs.map((t) =>
-                  <SelectItem key={t.numberInSurah} value={String(t.numberInSurah)}>
-                          الآية {toArabicNumerals(t.numberInSurah)}
+                      {tafsirAyahs.map((tafsirItem) =>
+                  <SelectItem key={tafsirItem.numberInSurah} value={String(tafsirItem.numberInSurah)}>
+                          {t("ayah")} {toArabicNumerals(tafsirItem.numberInSurah)}
                         </SelectItem>
                   )}
                     </SelectContent>
@@ -630,18 +633,18 @@ export default function SurahReaderPage() {
                   <div className="relative flex-1">
                     <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                  placeholder="ابحث في التفسير..."
+                  placeholder={t("search")}
                   value={tafsirSearch}
                   onChange={(e) => setTafsirSearch(e.target.value)}
                   className="pr-10 text-right"
-                  dir="rtl" />
-                
+                  dir={isRTL ? "rtl" : "ltr"} />
+
                   </div>
                 </div>
 
                 {(() => {
               const filteredTafsir = tafsirSearch.trim() ?
-              tafsirAyahs.filter((t) => t.text.includes(tafsirSearch.trim())) :
+              tafsirAyahs.filter((tafsirItem) => tafsirItem.text.includes(tafsirSearch.trim())) :
               tafsirAyahs;
 
               if (filteredTafsir.length === 0) {
@@ -652,21 +655,21 @@ export default function SurahReaderPage() {
 
               }
 
-              return filteredTafsir.map((t) =>
-              <div key={t.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
+              return filteredTafsir.map((tafsirItem) =>
+              <div key={tafsirItem.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
                       <div className="mb-2 flex items-center gap-2">
                         <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                           <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
-                            {toArabicNumerals(t.numberInSurah)}
+                            {toArabicNumerals(tafsirItem.numberInSurah)}
                           </span>
                         </span>
-                        <span className="text-xs text-muted-foreground">الآية {toArabicNumerals(t.numberInSurah)}</span>
+                        <span className="text-xs text-muted-foreground">{t("ayah")} {toArabicNumerals(tafsirItem.numberInSurah)}</span>
                       </div>
                       <p
                   className="font-arabic text-foreground/90 leading-[2.2]"
                   style={{ fontSize: 17 }}>
-                  
-                        <HighlightText text={t.text} highlight={tafsirSearch.trim()} />
+
+                        <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
                       </p>
                     </div>
               );
@@ -680,9 +683,9 @@ export default function SurahReaderPage() {
       {/* Bottom player bar */}
       <SurahBottomBar
         surahNumber={surahNumber}
-        surahName={surahInfo?.name || `سورة ${surahNumber}`}
+        surahName={surahInfo?.name || `${t("surah")} ${surahNumber}`}
         ayahs={ayahs} />
-      
+
       {/* Focus Mode Overlay */}
       <AnimatePresence>
         {focusModeActive && ayahs.length > 0 &&
@@ -690,7 +693,7 @@ export default function SurahReaderPage() {
           ayahs={ayahs}
           fontSize={fontSize}
           surahNumber={surahNumber}
-          surahName={surahInfo?.name || `سورة ${surahNumber}`}
+          surahName={surahInfo?.name || `${t("surah")} ${surahNumber}`}
           playingAyah={playingAyahInSurah}
           onSeekToAyah={audioPlayer.seekToAyah}
           onClose={() => setFocusModeActive(false)} />

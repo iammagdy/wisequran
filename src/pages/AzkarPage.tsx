@@ -6,6 +6,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { useAzkarCompletion } from "@/hooks/useAzkarCompletion";
 import { ArrowRight, RotateCcw, Heart, Star, CircleCheck as CheckCircle2 } from "lucide-react";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 function DhikrCounter({
   dhikr,
@@ -13,8 +14,6 @@ function DhikrCounter({
   onComplete,
   isFavorite,
   onToggleFavorite
-
-
 
 
 
@@ -41,13 +40,13 @@ function DhikrCounter({
         "rounded-2xl p-5 shadow-elevated transition-all border",
         done ? "bg-primary/10 border-primary/20" : "bg-card border-border/50"
       )}>
-      
+
       <div className="flex items-center justify-between mb-3">
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={onToggleFavorite}
           className="rounded-xl p-2 transition-colors hover:bg-muted">
-          
+
           <Heart className={cn("h-5 w-5 transition-all", isFavorite ? "fill-primary text-primary" : "text-muted-foreground")} />
         </motion.button>
         {!done &&
@@ -57,7 +56,7 @@ function DhikrCounter({
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.3 }} />
-          
+
           </div>
         }
       </div>
@@ -65,7 +64,7 @@ function DhikrCounter({
         className="font-arabic leading-loose text-right text-foreground mb-3"
         style={{ fontSize: fontSize * 0.85 }}
         dir="rtl">
-        
+
         {dhikr.text}
       </p>
       <p className="text-xs text-muted-foreground mb-4">{dhikr.translation}</p>
@@ -74,7 +73,7 @@ function DhikrCounter({
           whileTap={{ scale: 0.9 }}
           onClick={() => setRemaining(dhikr.count)}
           className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-colors">
-          
+
           <RotateCcw className="h-5 w-5" />
         </motion.button>
         <motion.button
@@ -86,7 +85,7 @@ function DhikrCounter({
             "counter-button text-primary-foreground" :
             "bg-accent/90 text-accent-foreground shadow-elevated hover:shadow-elevated-lg"
           )}>
-          
+
           {done ? "✓" : toArabicNumerals(remaining)}
         </motion.button>
       </div>
@@ -95,6 +94,7 @@ function DhikrCounter({
 }
 
 export default function AzkarPage() {
+  const { t, language, isRTL } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<AzkarCategory | null>(null);
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [favoriteAzkar, setFavoriteAzkar] = useLocalStorage<string[]>("wise-favorite-azkar", []);
@@ -116,7 +116,7 @@ export default function AzkarPage() {
   filter((d) => favoriteAzkar.includes(d.id));
 
   return (
-    <div className="px-4 pb-5 pt-5 pl-2.5">
+    <div className="px-4 pb-5 pt-5 pl-2.5" dir={isRTL ? "rtl" : "ltr"}>
       <AnimatePresence mode="wait">
         {!selectedCategory ?
         <motion.div
@@ -124,11 +124,11 @@ export default function AzkarPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}>
-          
+
             <div className="flex items-center justify-between mb-[5px]">
               <div>
-                <h1 className="mb-1 text-2xl font-bold heading-decorated">الأذكار</h1>
-                <p className="text-sm text-muted-foreground pt-1.5 pb-1.5">أذكار يومية</p>
+                <h1 className="mb-1 text-2xl font-bold heading-decorated">{t("azkar_title")}</h1>
+                <p className="text-sm text-muted-foreground pt-1.5 pb-1.5">{t("azkar_subtitle")}</p>
               </div>
               <motion.button
               whileTap={{ scale: 0.9 }}
@@ -137,19 +137,19 @@ export default function AzkarPage() {
                 "rounded-xl p-2.5 transition-all shadow-soft",
                 showFavorites ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
               )}>
-              
+
                 <Star className="h-5 w-5" />
               </motion.button>
             </div>
 
             {showFavorites ?
           <div>
-                <h2 className="mb-4 text-lg font-bold">المفضلة</h2>
+                <h2 className="mb-4 text-lg font-bold">{t("favorites")}</h2>
                 {favoriteDhikrItems.length === 0 ?
             <div className="rounded-2xl bg-muted/30 p-8 text-center">
                     <Heart className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">
-                      لا توجد أذكار مفضلة بعد
+                      {t("no_favorites_azkar")}
                     </p>
                   </div> :
 
@@ -179,7 +179,7 @@ export default function AzkarPage() {
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedCategory(cat)}
               className="flex flex-col items-center rounded-2xl bg-card p-6 shadow-elevated border-border/50 transition-all hover:shadow-elevated-lg group pt-2.5 pb-2.5 pl-1.5 pr-1.5 gap-px border-2">
-              
+
                     <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 group-hover:bg-primary/15 transition-colors">
                       <span className="text-3xl">{cat.icon}</span>
                       {isCategoryDone(cat.id) &&
@@ -190,7 +190,11 @@ export default function AzkarPage() {
                     </div>
                     <span className="font-bold text-sm">{cat.nameAr}</span>
                     <div className="flex items-center gap-1">
-                      <span className="text-xs text-muted-foreground rounded-full bg-muted px-2.5 py-0.5">{toArabicNumerals(cat.items.length)} أذكار</span>
+                      <span className="text-xs text-muted-foreground rounded-full bg-muted px-2.5 py-0.5">
+                        {language === "en"
+                          ? `${cat.items.length} adhkar`
+                          : `${toArabicNumerals(cat.items.length)} أذكار`}
+                      </span>
                     </div>
                   </motion.button>
             )}
@@ -203,18 +207,22 @@ export default function AzkarPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}>
-          
+
             <div className="mb-5 flex items-center gap-3">
               <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setSelectedCategory(null)}
               className="rounded-xl p-2.5 hover:bg-muted transition-colors">
-              
+
                 <ArrowRight className="h-5 w-5" />
               </motion.button>
               <div>
                 <h1 className="text-xl font-bold">{selectedCategory.nameAr}</h1>
-                <p className="text-xs text-muted-foreground">{toArabicNumerals(selectedCategory.items.length)} أذكار</p>
+                <p className="text-xs text-muted-foreground">
+                  {language === "en"
+                    ? `${selectedCategory.items.length} adhkar`
+                    : `${toArabicNumerals(selectedCategory.items.length)} أذكار`}
+                </p>
               </div>
             </div>
 
@@ -225,14 +233,14 @@ export default function AzkarPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}>
-              
+
                   <DhikrCounter
                 dhikr={dhikr}
                 fontSize={fontSize}
                 onComplete={() => markActive()}
                 isFavorite={favoriteAzkar.includes(dhikr.id)}
                 onToggleFavorite={() => toggleFavorite(dhikr.id)} />
-              
+
                 </motion.div>
             )}
             </div>

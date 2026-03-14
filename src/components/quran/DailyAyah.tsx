@@ -8,6 +8,7 @@ import { getDailyAyahReference, getDailyAyahCacheKey, type DailyAyahRef } from "
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { SURAH_META } from "@/data/surah-meta";
 import { toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CachedAyah {
   surah: number;
@@ -27,6 +28,7 @@ export function DailyAyah() {
   const [data, setData] = useState<CachedAyah | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     const load = async () => {
@@ -107,7 +109,7 @@ export function DailyAyah() {
           <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10">
             <Sparkles className="h-4 w-4 text-primary icon-glow" />
           </div>
-          <span className="text-xs font-semibold text-primary">آية اليوم</span>
+          <span className="text-xs font-semibold text-primary">{t("daily_ayah")}</span>
         </div>
         
         <p className="font-arabic text-lg leading-loose text-foreground/90 line-clamp-3 mb-[5px] mt-0">
@@ -116,7 +118,7 @@ export function DailyAyah() {
         
         <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
-            {data.surahName} · آية {toArabicNumerals(data.ayah)}
+            {data.surahName} · {t("ayah")} {toArabicNumerals(data.ayah)}
           </p>
           <div className="flex items-center gap-1">
             <button
@@ -127,7 +129,7 @@ export function DailyAyah() {
                   navigator.share({ text: shareText }).catch(() => {});
                 } else {
                   navigator.clipboard.writeText(shareText);
-                  toast({ title: "تم النسخ" });
+                  toast({ title: t("copied") });
                 }
               }}
               className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">
@@ -141,7 +143,7 @@ export function DailyAyah() {
                   `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${getGlobalAyahNumber(data.surah, data.ayah)}.mp3`
                 );
                 audio.play().catch(() => {
-                  toast({ title: "تعذر تشغيل الصوت" });
+                  toast({ title: language === "en" ? "Could not play audio" : "تعذر تشغيل الصوت" });
                 });
               }}
               className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">

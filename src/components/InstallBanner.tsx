@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Share, MoreVertical, Menu } from "lucide-react";
+import { X, Download, Share, MoveVertical as MoreVertical, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,6 +15,7 @@ export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const browserType = detectBrowser();
   const instructions = getInstallInstructions(browserType);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Already installed or dismissed
@@ -65,7 +67,7 @@ export default function InstallBanner() {
           <button
             onClick={dismiss}
             className="absolute top-3 left-3 rounded-full p-2 bg-muted/80 hover:bg-muted text-foreground transition-colors shadow-sm border border-border/50"
-            aria-label="إغلاق"
+            aria-label={t("close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -75,12 +77,12 @@ export default function InstallBanner() {
               <Download className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-foreground">ثبّت التطبيق</p>
-              <p className="text-xs text-muted-foreground">للوصول السريع بدون متصفح</p>
+              <p className="text-sm font-semibold text-foreground">{t("install_app")}</p>
+              <p className="text-xs text-muted-foreground">{t("install_subtitle")}</p>
             </div>
             {deferredPrompt ? (
               <Button size="sm" onClick={handleInstall} className="shrink-0">
-                تثبيت
+                {t("install")}
               </Button>
             ) : (
               <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">

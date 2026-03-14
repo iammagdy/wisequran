@@ -10,16 +10,18 @@ import { StreakCalendar } from "@/components/stats/StreakCalendar";
 import { AchievementsSheet } from "@/components/AchievementsSheet";
 import { Progress } from "@/components/ui/progress";
 import { toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StatsPage() {
   const navigate = useNavigate();
   const { weeklyData, monthlyData, totals, weeklyTotal, monthlyTotal } = useReadingStats();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
+  const { t, language, isRTL } = useLanguage();
   const progress = Math.min((todayCount / goal) * 100, 100);
 
   return (
-    <div className="px-4 pt-6 pb-24" dir="rtl">
+    <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <motion.button
@@ -29,7 +31,7 @@ export default function StatsPage() {
         >
           <ArrowRight className="h-5 w-5 text-foreground" />
         </motion.button>
-        <h1 className="text-2xl font-bold heading-decorated flex-1">الإحصائيات</h1>
+        <h1 className="text-2xl font-bold heading-decorated flex-1">{t("statistics")}</h1>
         <AchievementsSheet />
       </div>
 
@@ -40,23 +42,23 @@ export default function StatsPage() {
         className="rounded-2xl bg-card p-5 shadow-soft border border-border/50 mb-5"
       >
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-muted-foreground">هدف اليوم</span>
+          <span className="text-sm font-medium text-muted-foreground">{t("today_goal")}</span>
           <span className="text-sm font-bold text-foreground">
-            {toArabicNumerals(todayCount)} / {toArabicNumerals(goal)} آية
+            {language === "en" ? todayCount : toArabicNumerals(todayCount)} / {language === "en" ? goal : toArabicNumerals(goal)} {t("ayah")}
           </span>
         </div>
         <Progress value={progress} variant="gradient" size="sm" />
         {progress >= 100 && (
-          <p className="text-xs text-primary font-medium mt-2 text-center">🎉 ما شاء الله! أكملت هدفك اليوم</p>
+          <p className="text-xs text-primary font-medium mt-2 text-center">🎉 {t("goal_complete")}</p>
         )}
       </motion.div>
 
       {/* Hero Stats */}
       <div className="grid grid-cols-2 gap-3 mb-5">
-        <StatCard icon={BookOpen} value={totals.totalAyahs} label="إجمالي الآيات" delay={0.05} accent />
-        <StatCard icon={Clock} value={totals.totalMinutes} label="دقائق القراءة" delay={0.1} />
-        <StatCard icon={Flame} value={streak} label="أيام متواصلة" delay={0.15} accent />
-        <StatCard icon={Trophy} value={totals.maxStreak} label="أطول سلسلة" delay={0.2} />
+        <StatCard icon={BookOpen} value={totals.totalAyahs} label={t("total_ayahs")} delay={0.05} accent />
+        <StatCard icon={Clock} value={totals.totalMinutes} label={t("reading_minutes")} delay={0.1} />
+        <StatCard icon={Flame} value={streak} label={t("streak_days")} delay={0.15} accent />
+        <StatCard icon={Trophy} value={totals.maxStreak} label={t("longest_streak")} delay={0.2} />
       </div>
 
       {/* Summary Row */}
@@ -67,8 +69,8 @@ export default function StatsPage() {
           transition={{ delay: 0.25 }}
           className="flex-1 rounded-2xl bg-primary/10 p-4 text-center"
         >
-          <p className="text-xl font-bold text-primary">{toArabicNumerals(weeklyTotal)}</p>
-          <p className="text-xs text-muted-foreground">هذا الأسبوع</p>
+          <p className="text-xl font-bold text-primary">{language === "en" ? weeklyTotal : toArabicNumerals(weeklyTotal)}</p>
+          <p className="text-xs text-muted-foreground">{t("this_week")}</p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -76,8 +78,8 @@ export default function StatsPage() {
           transition={{ delay: 0.3 }}
           className="flex-1 rounded-2xl bg-accent/10 p-4 text-center"
         >
-          <p className="text-xl font-bold text-accent">{toArabicNumerals(monthlyTotal)}</p>
-          <p className="text-xs text-muted-foreground">هذا الشهر</p>
+          <p className="text-xl font-bold text-accent">{language === "en" ? monthlyTotal : toArabicNumerals(monthlyTotal)}</p>
+          <p className="text-xs text-muted-foreground">{t("this_month")}</p>
         </motion.div>
       </div>
 

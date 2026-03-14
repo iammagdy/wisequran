@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Navigation, MapPin, AlertCircle, RefreshCw, Lock, Unlock, Info, Smartphone } from "lucide-react";
+import { ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLocation, calculateDistance, getMagneticDeclination } from "@/hooks/useLocation";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Kaaba coordinates
 const KAABA_LAT = 21.4225;
@@ -36,10 +37,11 @@ type AccuracyLevel = "low" | "medium" | "high";
 export default function QiblaPage() {
   const navigate = useNavigate();
   const { location, loading: locationLoading, error: locationError, refresh: refreshLocation } = useLocation(true);
-  
+  const { t, language, isRTL } = useLanguage();
+
   const [heading, setHeading] = useState<number | null>(null);
   const [compassAccuracy, setCompassAccuracy] = useState<AccuracyLevel>("medium");
-  const [compassError, setCompassError] = useState<string | null>(null);
+  const [compassErrorKey, setCompassErrorKey] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [showCalibration, setShowCalibration] = useState(false);
@@ -61,13 +63,13 @@ export default function QiblaPage() {
     const handleOrientation = (e: DeviceOrientationEvent) => {
       // @ts-ignore – webkitCompassHeading is Safari-specific
       const compassHeading = e.webkitCompassHeading ?? (e.alpha !== null ? (360 - e.alpha) % 360 : null);
-      
+
       // @ts-ignore – webkitCompassAccuracy is Safari-specific
       const accuracy = e.webkitCompassAccuracy;
-      
+
       if (compassHeading !== null) {
         setHeading(compassHeading);
-        
+
         // Set accuracy level
         if (accuracy !== undefined) {
           if (accuracy < 15) setCompassAccuracy("high");
@@ -85,10 +87,10 @@ export default function QiblaPage() {
           if (response === "granted") {
             window.addEventListener("deviceorientation", handleOrientation, true);
           } else {
-            setCompassError("يرجى السماح بالوصول إلى البوصلة");
+            setCompassErrorKey("allow_compass");
           }
         })
-        .catch(() => setCompassError("تعذر الوصول إلى مستشعر الاتجاه"));
+        .catch(() => setCompassErrorKey("sensor_error"));
     } else {
       window.addEventListener("deviceorientation", handleOrientation, true);
     }
@@ -103,7 +105,7 @@ export default function QiblaPage() {
     const needleRotation = qiblaBearing - activeHeading;
     const normalizedRotation = ((needleRotation % 360) + 360) % 360;
     const aligned = normalizedRotation < 5 || normalizedRotation > 355;
-    
+
     setIsAligned(aligned);
 
     // Haptic feedback when aligned
@@ -129,22 +131,23 @@ export default function QiblaPage() {
     ? qiblaBearing - activeHeading
     : 0;
 
+  const compassError = compassErrorKey ? t(compassErrorKey) : null;
   const error = locationError || compassError;
 
   return (
-    <div className="px-4 pt-6 pb-24 flex flex-col items-center min-h-screen">
+    <div className="px-4 pt-6 pb-24 flex flex-col items-center min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-6 flex items-center gap-3 self-start w-full">
-        <motion.button 
-          whileTap={{ scale: 0.9 }} 
-          onClick={() => navigate(-1)} 
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate(-1)}
           className="rounded-xl p-2.5 hover:bg-muted transition-colors"
         >
           <ArrowRight className="h-5 w-5" />
         </motion.button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold heading-decorated">اتجاه القبلة</h1>
-          <p className="text-sm text-muted-foreground">البوصلة نحو الكعبة المشرفة</p>
+          <h1 className="text-2xl font-bold heading-decorated">{t("qibla_title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("qibla_description")}</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -157,9 +160,9 @@ export default function QiblaPage() {
       </div>
 
       {error ? (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           className="rounded-2xl bg-destructive/10 p-8 text-center w-full"
         >
           <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
@@ -168,7 +171,7 @@ export default function QiblaPage() {
             onClick={refreshLocation}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
           >
-            إعادة المحاولة
+            {t("retry")}
           </button>
         </motion.div>
       ) : (
@@ -176,7 +179,7 @@ export default function QiblaPage() {
           {/* Accuracy Indicator */}
           <div className="flex items-center justify-center gap-4 mb-4 w-full">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">دقة البوصلة:</span>
+              <span className="text-xs text-muted-foreground">{t("compass_accuracy")}</span>
               <div className="flex gap-1">
                 {["low", "medium", "high"].map((level, i) => (
                   <div
@@ -191,13 +194,13 @@ export default function QiblaPage() {
                 ))}
               </div>
             </div>
-            
+
             {compassAccuracy === "low" && (
               <button
                 onClick={() => setShowCalibration(true)}
                 className="text-xs text-primary font-medium hover:underline"
               >
-                معايرة
+                {t("calibrate")}
               </button>
             )}
           </div>
@@ -224,7 +227,7 @@ export default function QiblaPage() {
               "absolute inset-0 rounded-full border-2 shadow-elevated transition-colors duration-300",
               isAligned ? "border-primary/50" : "border-border/50"
             )} />
-            
+
             {/* Cardinal directions */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
@@ -237,7 +240,7 @@ export default function QiblaPage() {
                 <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-sm font-bold text-muted-foreground">S</span>
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">E</span>
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">W</span>
-                
+
                 {/* Tick marks */}
                 {Array.from({ length: 36 }).map((_, i) => (
                   <div
@@ -272,7 +275,7 @@ export default function QiblaPage() {
                 </div>
                 {/* Kaaba icon at top */}
                 <div className="absolute left-1/2 top-3 -translate-x-1/2">
-                  <motion.div 
+                  <motion.div
                     animate={isAligned ? { scale: [1, 1.1, 1] } : {}}
                     transition={{ repeat: isAligned ? Infinity : 0, duration: 1 }}
                     className={cn(
@@ -301,22 +304,22 @@ export default function QiblaPage() {
             onClick={toggleLock}
             className={cn(
               "flex items-center gap-2 rounded-xl px-4 py-2.5 mb-6 transition-all",
-              isLocked 
-                ? "bg-primary text-primary-foreground" 
+              isLocked
+                ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             )}
           >
             {isLocked ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-            <span className="text-sm font-medium">{isLocked ? "البوصلة مثبتة" : "تثبيت البوصلة"}</span>
+            <span className="text-sm font-medium">{isLocked ? t("compass_locked") : t("lock_compass")}</span>
           </motion.button>
 
           {/* Info Cards */}
           <div className="w-full space-y-3">
             {/* Qibla bearing */}
             {qiblaBearing !== null && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
-                animate={{ opacity: 1, y: 0 }} 
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 className={cn(
                   "rounded-2xl bg-card p-5 shadow-elevated border transition-all duration-300",
                   isAligned ? "border-primary/30 bg-primary/5" : "border-border/50"
@@ -325,13 +328,13 @@ export default function QiblaPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-muted-foreground">اتجاه القبلة</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t("qibla_direction")}</span>
                   </div>
-                  <p className="text-2xl font-bold text-primary">{toArabicNumerals(Math.round(qiblaBearing))}°</p>
+                  <p className="text-2xl font-bold text-primary">{language === "en" ? Math.round(qiblaBearing) : toArabicNumerals(Math.round(qiblaBearing))}°</p>
                 </div>
                 {isAligned && (
                   <p className="text-xs text-primary font-medium mt-2 text-center">
-                    ✓ أنت تواجه القبلة الآن
+                    {t("facing_qibla")}
                   </p>
                 )}
               </motion.div>
@@ -339,8 +342,8 @@ export default function QiblaPage() {
 
             {/* Distance to Kaaba */}
             {distanceToKaaba !== null && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50"
@@ -348,10 +351,10 @@ export default function QiblaPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Navigation className="h-4 w-4 text-accent" />
-                    <span className="text-sm font-medium text-muted-foreground">المسافة إلى الكعبة</span>
+                    <span className="text-sm font-medium text-muted-foreground">{t("distance_to_kaaba")}</span>
                   </div>
                   <p className="text-xl font-bold text-accent">
-                    {toArabicNumerals(Math.round(distanceToKaaba).toLocaleString())} كم
+                    {language === "en" ? Math.round(distanceToKaaba).toLocaleString() : toArabicNumerals(Math.round(distanceToKaaba).toLocaleString())} {t("km")}
                   </p>
                 </div>
               </motion.div>
@@ -359,26 +362,26 @@ export default function QiblaPage() {
 
             {/* Location info */}
             {location && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} 
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50"
               >
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">موقعك</span>
+                  <span className="text-sm font-medium text-foreground">{t("your_location")}</span>
                 </div>
                 <div className="space-y-1.5 text-xs text-muted-foreground">
                   {location.city && (
                     <p className="text-sm font-medium text-foreground">{location.city}</p>
                   )}
                   <p>
-                    {toArabicNumerals(location.latitude.toFixed(4))}°, {toArabicNumerals(location.longitude.toFixed(4))}°
+                    {language === "en" ? location.latitude.toFixed(4) : toArabicNumerals(location.latitude.toFixed(4))}°, {language === "en" ? location.longitude.toFixed(4) : toArabicNumerals(location.longitude.toFixed(4))}°
                   </p>
                   <p className="flex items-center gap-1">
-                    <span>دقة الموقع:</span>
-                    <span className="font-medium">±{toArabicNumerals(Math.round(location.accuracy))} متر</span>
+                    <span>{t("location_accuracy")}</span>
+                    <span className="font-medium">±{language === "en" ? Math.round(location.accuracy) : toArabicNumerals(Math.round(location.accuracy))} {t("meters")}</span>
                   </p>
                 </div>
               </motion.div>
@@ -386,10 +389,10 @@ export default function QiblaPage() {
           </div>
 
           {/* No compass hint */}
-          {heading === null && !compassError && (
+          {heading === null && !compassErrorKey && (
             <div className="flex items-center gap-2 mt-4 text-muted-foreground">
               <Smartphone className="h-4 w-4 animate-pulse" />
-              <span className="text-sm">حرّك جهازك لتفعيل البوصلة</span>
+              <span className="text-sm">{t("move_device")}</span>
             </div>
           )}
         </>
@@ -413,16 +416,16 @@ export default function QiblaPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <Info className="h-10 w-10 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-bold mb-2">معايرة البوصلة</h3>
+              <h3 className="text-lg font-bold mb-2">{t("calibration_title")}</h3>
               <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                لتحسين دقة البوصلة، حرّك جهازك على شكل رقم ٨ عدة مرات حتى تتحسن الدقة.
+                {t("calibration_desc")}
               </p>
               <div className="text-6xl mb-4">∞</div>
               <button
                 onClick={() => setShowCalibration(false)}
                 className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground"
               >
-                حسناً
+                {t("ok")}
               </button>
             </motion.div>
           </motion.div>

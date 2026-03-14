@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Timer } from "lucide-react";
 import { type Ayah } from "@/lib/quran-api";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FocusModeProps {
   ayahs: Ayah[];
@@ -33,6 +34,7 @@ export default function FocusMode({
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   // Timer
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function FocusMode({
       <button
         onClick={onClose}
         className="absolute top-4 left-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity"
-        aria-label="إغلاق وضع التركيز"
+        aria-label={t("close_focus")}
       >
         <X className="h-4 w-4 text-foreground" />
       </button>

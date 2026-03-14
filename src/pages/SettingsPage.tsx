@@ -21,6 +21,7 @@ import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-ed
 import { toast } from "sonner";
 import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
 import { APP_VERSION, changelog } from "@/data/changelog";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -39,6 +40,7 @@ import {
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
+  const { t, language, setLanguage, isRTL } = useLanguage();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const { checkForUpdate } = useServiceWorkerUpdate();
@@ -309,27 +311,58 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6 pl-[5px] pb-[20px]" dir="rtl">
-      <h1 className="mb-1 text-2xl font-bold heading-decorated">الإعدادات</h1>
-      <p className="mb-6 text-sm text-muted-foreground">إعدادات التطبيق</p>
+    <div className="px-4 pt-6 pl-[5px] pb-[20px]" dir={isRTL ? "rtl" : "ltr"}>
+      <h1 className="mb-1 text-2xl font-bold heading-decorated">{t("settings_title")}</h1>
+      <p className="mb-6 text-sm text-muted-foreground">{language === "ar" ? "إعدادات التطبيق" : "App settings"}</p>
 
       <div className="space-y-6">
+        {/* ─── Language ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5" />
+            {t("language")}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+            <div className="flex gap-2 p-3">
+              <button
+                onClick={() => setLanguage("ar")}
+                className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors min-h-[44px] ${
+                  language === "ar" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {t("language_arabic")}
+              </button>
+              <button
+                onClick={() => setLanguage("en")}
+                className={`flex-1 rounded-xl py-3 text-sm font-semibold transition-colors min-h-[44px] ${
+                  language === "en" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {t("language_english")}
+              </button>
+            </div>
+          </motion.div>
+        </section>
+
         {/* ─── Appearance & Reading ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" />
-            المظهر والقراءة
+            {t("appearance")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4">
-            
+
             {/* Theme toggle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {theme === "dark" ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
-                <span className="text-sm font-medium">الوضع الليلي</span>
+                <span className="text-sm font-medium">{language === "ar" ? "الوضع الليلي" : "Dark Mode"}</span>
               </div>
               <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
             </div>
@@ -340,13 +373,13 @@ export default function SettingsPage() {
             <div>
               <div className="mb-3 flex items-center gap-3">
                 <Smartphone className="h-4.5 w-4.5 text-primary" />
-                <span className="text-sm font-medium">حجم الواجهة</span>
+                <span className="text-sm font-medium">{t("ui_scale")}</span>
               </div>
               <div className="flex gap-2">
                 {[
-                { value: "normal" as const, label: "عادي" },
-                { value: "large" as const, label: "كبير" },
-                { value: "xlarge" as const, label: "كبير جداً" }].
+                { value: "normal" as const, labelKey: "scale_normal" as const },
+                { value: "large" as const, labelKey: "scale_large" as const },
+                { value: "xlarge" as const, labelKey: "scale_xlarge" as const }].
                 map((opt) =>
                 <button
                   key={opt.value}
@@ -356,8 +389,7 @@ export default function SettingsPage() {
                   "bg-primary text-primary-foreground" :
                   "bg-muted text-muted-foreground hover:bg-muted/80"}`
                   }>
-                  
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 )}
               </div>
@@ -370,9 +402,9 @@ export default function SettingsPage() {
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Type className="h-4.5 w-4.5 text-primary" />
-                  <span className="text-sm font-medium">حجم خط القرآن</span>
+                  <span className="text-sm font-medium">{language === "ar" ? "حجم خط القرآن" : "Quran Font Size"}</span>
                 </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{toArabicNumerals(fontSize)}px</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
               </div>
               <Slider
                 value={[fontSize]}
@@ -380,11 +412,10 @@ export default function SettingsPage() {
                 min={16}
                 max={40}
                 step={2} />
-              
+
               <p
                 className="mt-3 text-center font-arabic text-muted-foreground"
                 style={{ fontSize }}>
-                
                 بِسْمِ اللَّهِ
               </p>
             </div>
@@ -395,7 +426,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Mic className="h-3.5 w-3.5" />
-            صوت القارئ
+            {t("reciter_section")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -455,7 +486,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <BookOpen className="h-3.5 w-3.5" />
-            التفسير
+            {t("tafsir_section")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -498,7 +529,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5" />
-            الترجمة · Translation
+            {t("translation_section")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -508,8 +539,8 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between px-4 py-3.5">
               <div>
-                <span className="text-sm font-medium block">إظهار الترجمة</span>
-                <span className="text-xs text-muted-foreground">Show Quran translation</span>
+                <span className="text-sm font-medium block">{t("show_translation")}</span>
+                <span className="text-xs text-muted-foreground">{t("show_translation_subtitle")}</span>
               </div>
               <Switch
                 checked={translationEnabled}
@@ -553,7 +584,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Bell className="h-3.5 w-3.5" />
-            إشعارات الصلاة
+            {t("prayer_notifications")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -568,7 +599,7 @@ export default function SettingsPage() {
 
                 <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
                 }
-                <span className="text-sm font-medium">تذكير بأوقات الصلاة</span>
+                <span className="text-sm font-medium">{language === "ar" ? "تذكير بأوقات الصلاة" : "Prayer Time Reminders"}</span>
               </div>
               <Switch
                 checked={notificationsEnabled}
@@ -609,7 +640,7 @@ export default function SettingsPage() {
 
                 <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
                 }
-                <span className="text-sm font-medium">تذكير بأذكار الصباح والمساء</span>
+                <span className="text-sm font-medium">{language === "ar" ? "تذكير بأذكار الصباح والمساء" : "Morning & Evening Azkar Reminder"}</span>
               </div>
               <Switch
                 checked={azkarNotificationsEnabled}
@@ -644,7 +675,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Clock className="h-3.5 w-3.5" />
-            طريقة حساب المواقيت
+            {t("prayer_method")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -683,7 +714,7 @@ export default function SettingsPage() {
           </motion.div>
           <div className="section-title flex items-center gap-1.5">
             <Target className="h-3.5 w-3.5" />
-            الهدف اليومي
+            {t("daily_reading_goal")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -692,8 +723,8 @@ export default function SettingsPage() {
             className="rounded-xl bg-card p-4 shadow-sm">
             
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium">عدد الآيات يومياً</span>
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{toArabicNumerals(goal)} آية</span>
+              <span className="text-sm font-medium">{language === "ar" ? "عدد الآيات يومياً" : "Daily verse count"}</span>
+              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{goal} {t("ayahs")}</span>
             </div>
             <div className="flex gap-2 mb-3">
               {[10, 20, 50].map((v) =>
@@ -724,7 +755,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Download className="h-3.5 w-3.5" />
-            التحميلات
+            {t("downloads")}
           </div>
           <div className="space-y-3">
             {/* Quran Text Download */}
@@ -1020,7 +1051,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <HardDrive className="h-3.5 w-3.5" />
-            إدارة التخزين
+            {t("storage")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1122,7 +1153,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <RotateCcw className="h-3.5 w-3.5" />
-            إعادة تعيين التقدم
+            {t("reset_progress")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1211,7 +1242,7 @@ export default function SettingsPage() {
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Info className="h-3.5 w-3.5" />
-            حول التطبيق
+            {t("about")}
           </div>
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -1229,7 +1260,7 @@ export default function SettingsPage() {
             </button>
 
             <Separator className="my-3" />
-            <p className="text-sm text-muted-foreground mb-4">تطبيق للقراءة والأذكار والصلاة</p>
+            <p className="text-sm text-muted-foreground mb-4">{language === "ar" ? "تطبيق للقراءة والأذكار والصلاة" : "A Quran, Azkar & Prayer app"}</p>
 
             {/* Check for Updates */}
             <Button
@@ -1254,7 +1285,7 @@ export default function SettingsPage() {
 
               <RefreshCw className="h-3.5 w-3.5" />
               }
-              التحقق من التحديثات
+              {t("check_updates")}
             </Button>
 
             <Button
@@ -1263,7 +1294,7 @@ export default function SettingsPage() {
               onClick={async () => {
                 const shareData = {
                   title: 'Wise QURAN',
-                  text: 'تطبيق القرآن الكريم والأذكار — حمّله الآن!',
+                  text: language === "ar" ? 'تطبيق القرآن الكريم والأذكار — حمّله الآن!' : 'The Noble Quran & Azkar app — Download now!',
                   url: 'https://quran.thewise.cloud'
                 };
                 if (navigator.share) {
@@ -1274,12 +1305,12 @@ export default function SettingsPage() {
                   }
                 } else {
                   await navigator.clipboard.writeText(shareData.url);
-                  toast.success("تم نسخ الرابط");
+                  toast.success(t("copied"));
                 }
               }}>
-              
+
               <Share className="h-4 w-4" />
-              شارك التطبيق مع أصدقائك
+              {t("share_app")}
             </Button>
           </motion.div>
         </section>
@@ -1288,7 +1319,7 @@ export default function SettingsPage() {
         <Sheet open={showChangelog} onOpenChange={setShowChangelog}>
           <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-0 [&>button:last-child]:hidden">
             <SheetHeader className="px-6 pb-4">
-              <SheetTitle className="text-center font-arabic text-lg">سجل التحديثات</SheetTitle>
+              <SheetTitle className="text-center font-arabic text-lg">{t("changelog")}</SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-full px-6 pb-8">
               <div className="space-y-6">

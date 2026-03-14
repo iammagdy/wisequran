@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import InstallBanner from "@/components/InstallBanner";
 import SplashScreen from "@/components/SplashScreen";
 import QuranPage from "@/pages/QuranPage";
@@ -65,9 +66,11 @@ const App = () => {
         <Sonner />
         {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
         <BrowserRouter>
-          <AudioPlayerProvider>
-            <AppContent />
-          </AudioPlayerProvider>
+          <LanguageProvider>
+            <AudioPlayerProvider>
+              <AppContent />
+            </AudioPlayerProvider>
+          </LanguageProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

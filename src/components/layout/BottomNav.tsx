@@ -1,41 +1,39 @@
 import { useMemo } from "react";
-
 import { NavLink, useLocation } from "react-router-dom";
-import { Book, Moon, CheckSquare, Circle, Settings, Star } from "lucide-react";
+import { Book, Moon, SquareCheck as CheckSquare, Circle, Settings, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { isRamadanTabVisible } from "@/hooks/useRamadan";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const baseTabs = [
-  { path: "/", icon: Book, label: "القرآن" },
-  { path: "/azkar", icon: Moon, label: "الأذكار" },
-  { path: "/prayer", icon: CheckSquare, label: "الصلوات" },
-  { path: "/tasbeeh", icon: Circle, label: "التسبيح" },
-  { path: "/settings", icon: Settings, label: "الإعدادات" },
+const basePaths = [
+  { path: "/", icon: Book, key: "nav_quran" as const },
+  { path: "/azkar", icon: Moon, key: "nav_azkar" as const },
+  { path: "/prayer", icon: CheckSquare, key: "nav_prayer" as const },
+  { path: "/tasbeeh", icon: Circle, key: "nav_tasbeeh" as const },
+  { path: "/settings", icon: Settings, key: "nav_settings" as const },
 ];
 
 export default function BottomNav() {
   const location = useLocation();
+  const { t } = useLanguage();
   const showRamadan = useMemo(() => isRamadanTabVisible(), []);
+
   const tabs = useMemo(() => {
-    if (!showRamadan) return baseTabs;
-    // Insert Ramadan tab before settings
+    if (!showRamadan) return basePaths;
     return [
-      ...baseTabs.slice(0, -1),
-      { path: "/ramadan", icon: Star, label: "رمضان" },
-      baseTabs[baseTabs.length - 1],
+      ...basePaths.slice(0, -1),
+      { path: "/ramadan", icon: Star, key: "nav_ramadan" as const },
+      basePaths[basePaths.length - 1],
     ];
   }, [showRamadan]);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-      {/* Gradient border top */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-      
-      {/* Glass background */}
       <div className="glass-subtle border-t border-border/30">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2 px-2">
-          {tabs.map(({ path, icon: Icon, label }) => {
+          {tabs.map(({ path, icon: Icon, key }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             return (
               <NavLink
@@ -43,7 +41,6 @@ export default function BottomNav() {
                 to={path}
                 className="relative flex flex-col items-center gap-1.5 px-3 py-3 rounded-2xl transition-all duration-200"
               >
-                {/* Active background pill */}
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
@@ -51,11 +48,9 @@ export default function BottomNav() {
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
-                
+
                 <motion.div
-                  animate={{ 
-                    scale: isActive ? 1.1 : 1,
-                  }}
+                  animate={{ scale: isActive ? 1.1 : 1 }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                   className="relative z-10"
                 >
@@ -69,14 +64,14 @@ export default function BottomNav() {
                     }}
                   />
                 </motion.div>
-                
+
                 <span
                   className={cn(
                     "relative z-10 text-xs font-semibold transition-all duration-200",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  {label}
+                  {t(key)}
                 </span>
               </NavLink>
             );

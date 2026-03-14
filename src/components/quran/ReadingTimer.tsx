@@ -3,14 +3,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const PRESETS = [5, 10, 15, 20]; // minutes
+const PRESETS = [5, 10, 15, 20];
 
 export default function ReadingTimer() {
   const [active, setActive] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [totalSeconds, setTotalSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { t, language } = useLanguage();
 
   const start = useCallback((minutes: number) => {
     const secs = minutes * 60;
@@ -35,7 +37,7 @@ export default function ReadingTimer() {
           clearInterval(intervalRef.current!);
           intervalRef.current = null;
           setActive(false);
-          toast("انتهى وقت القراءة 📖", { duration: 5000 });
+          toast(t("reading_time_up"), { duration: 5000 });
           return 0;
         }
         return prev - 1;
@@ -45,7 +47,7 @@ export default function ReadingTimer() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [active]);
+  }, [active, t]);
 
   const pct = totalSeconds > 0 ? ((totalSeconds - remaining) / totalSeconds) * 100 : 0;
 
@@ -63,7 +65,7 @@ export default function ReadingTimer() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="flex gap-2" dir="rtl"
+          className="flex gap-2"
         >
           {PRESETS.map((m) => (
             <button
@@ -71,7 +73,7 @@ export default function ReadingTimer() {
               onClick={() => start(m)}
               className="flex-1 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              {toArabicNumerals(m)} د
+              {language === "en" ? `${m} ${t("minutes_abbr")}` : `${toArabicNumerals(m)} ${t("minutes_abbr")}`}
             </button>
           ))}
         </motion.div>
@@ -83,7 +85,7 @@ export default function ReadingTimer() {
           exit={{ opacity: 0 }}
           className="space-y-1.5"
         >
-          <div className="flex items-center justify-between" dir="rtl">
+          <div className="flex items-center justify-between">
             <span className="font-arabic text-base font-bold tabular-nums text-foreground">
               {formatRemaining()}
             </span>

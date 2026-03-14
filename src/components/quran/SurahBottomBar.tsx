@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { Ayah } from "@/lib/quran-api";
 
 interface Props {
@@ -25,6 +26,7 @@ const TIMER_PRESETS = [5, 10, 15, 20];
 
 export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props) {
   const player = useAudioPlayer();
+  const { t, language } = useLanguage();
   const isThisSurah = player.surahNumber === surahNumber;
 
   // Download state
@@ -52,7 +54,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
           clearInterval(timerRef.current!);
           timerRef.current = null;
           setTimerActive(false);
-          toast("انتهى وقت القراءة 📖", { duration: 5000 });
+          toast(t("reading_time_up"), { duration: 5000 });
           return 0;
         }
         return prev - 1;
@@ -61,7 +63,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [timerActive]);
+  }, [timerActive, t]);
 
   const handlePlayPause = useCallback(async () => {
     if (isThisSurah) {
@@ -85,12 +87,12 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
       const check = await getAudio(player.reciterId, surahNumber);
       if (check && check.data.byteLength > 1024) {
         setCached(true);
-        toast.success(`تم تحميل الصوت (${formatBytes(size)})`);
+        toast.success(language === "en" ? `Audio downloaded (${formatBytes(size)})` : `تم تحميل الصوت (${formatBytes(size)})`);
       } else {
-        toast.error("فشل حفظ الصوت — حاول مرة أخرى");
+        toast.error(language === "en" ? "Failed to save audio — try again" : "فشل حفظ الصوت — حاول مرة أخرى");
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "فشل تحميل الصوت");
+      toast.error(language === "en" ? (e instanceof Error ? e.message : "Failed to download audio") : (e instanceof Error ? e.message : "فشل تحميل الصوت"));
     }
     setDownloading(false);
   };
@@ -128,9 +130,9 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               exit={{ opacity: 0, height: 0 }}
               className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
               dir="rtl">
-              
+
                 <WifiOff className="h-3 w-3" />
-                صوت غير متاح بدون إنترنت — حمّل الصوت أولاً
+                {t("audio_unavailable_offline")}
               </motion.div>
             }
           </AnimatePresence>
@@ -142,7 +144,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               onClick={handlePlayPause}
               disabled={loading}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full counter-button text-primary-foreground disabled:opacity-50">
-              
+
               {loading ?
               <Loader2 className="h-4 w-4 animate-spin" /> :
               playing ?
@@ -158,7 +160,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   className="absolute inset-y-0 right-0 rounded-full bg-gradient-to-l from-primary to-primary/70"
                   style={{ width: `${pct}%` }}
                   transition={{ duration: 0.3 }} />
-                
+
                 <input
                   type="range"
                   min={0}
@@ -167,7 +169,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   onChange={handleSeek}
                   className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   dir="rtl" />
-                
+
               </div>
               <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
                 <span className="text-base text-[#4b9b73]">{formatTime(currentTime)}</span>
@@ -199,7 +201,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 {playing &&
                 <span className="text-[0.625rem] text-primary font-semibold shrink-0 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-glow-pulse" />
-                    تلاوة جارية
+                    {t("now_playing")}
                   </span>
                 }
               </div>
@@ -214,9 +216,9 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 whileTap={{ scale: 0.95 }}
                 onClick={handleDownload}
                 className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] font-semibold text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary">
-                
+
                   <Download className="h-3 w-3" />
-                  تحميل
+                  {t("download")}
                 </motion.button>
               }
               {downloading &&
@@ -228,7 +230,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               {cached && !downloading &&
               <span className="flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1.5 text-[0.625rem] font-semibold text-primary">
                   <Check className="h-3 w-3" />
-                  محمّل
+                  {t("downloaded")}
                 </span>
               }
             </div>
@@ -242,7 +244,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden">
-              
+
                 <div className="border-t border-border/30 pt-3">
                   {!timerActive ?
                 <div className="flex gap-2" dir="rtl">
@@ -252,8 +254,8 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                     whileTap={{ scale: 0.95 }}
                     onClick={() => startTimer(m)}
                     className="flex-1 rounded-xl bg-muted px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary/10 hover:text-primary">
-                    
-                          {toArabicNumerals(m)} د
+
+                          {language === "en" ? `${m}${t("minutes_abbr")}` : `${toArabicNumerals(m)}${t("minutes_abbr")}`}
                         </motion.button>
                   )}
                     </div> :
@@ -269,7 +271,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                     whileTap={{ scale: 0.9 }}
                     onClick={stopTimer}
                     className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted">
-                    
+
                         <X className="h-4 w-4" />
                       </motion.button>
                     </div>
@@ -282,7 +284,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
 
         <div className="px-4 pb-2">
           <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir="rtl">
-            قد يتوقف الصوت تلقائياً حسب إعدادات الجهاز والمتصفح
+            {t("audio_disclaimer")}
           </p>
         </div>
       </div>

@@ -3,9 +3,11 @@ import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function UpdateNotification() {
   const { updateAvailable, isUpdating, applyUpdate } = useServiceWorkerUpdate();
+  const { t } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -19,18 +21,18 @@ export default function UpdateNotification() {
         >
           {isUpdating ? (
             <div className="space-y-3 text-center">
-              <p className="text-sm font-semibold text-foreground">جارٍ التحديث...</p>
+              <p className="text-sm font-semibold text-foreground">{t("updating")}</p>
               <Progress value={90} variant="gradient" size="sm" />
             </div>
           ) : (
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">تحديث جديد متاح</p>
-                <p className="text-xs text-muted-foreground">اضغط للتحديث والحصول على أحدث الميزات</p>
+                <p className="text-sm font-semibold text-foreground">{t("update_available")}</p>
+                <p className="text-xs text-muted-foreground">{t("update_description")}</p>
               </div>
               <Button size="sm" variant="gradient" onClick={applyUpdate} className="shrink-0 gap-1.5">
                 <RefreshCw className="h-3.5 w-3.5" />
-                تحديث
+                {t("update")}
               </Button>
             </div>
           )}

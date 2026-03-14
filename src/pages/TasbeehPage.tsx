@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DHIKR_OPTIONS = [
 "سبحان الله",
@@ -21,6 +22,7 @@ function getTodayKey() {
 }
 
 export default function TasbeehPage() {
+  const { t, language } = useLanguage();
   const [target, setTarget] = useLocalStorage("wise-tasbeeh-target", 33);
   const [count, setCount] = useLocalStorage("wise-tasbeeh-count", 0);
   const [dhikr, setDhikr] = useLocalStorage("wise-tasbeeh-dhikr", DHIKR_OPTIONS[0]);
@@ -51,9 +53,9 @@ export default function TasbeehPage() {
   const dashOffset = circumference * (1 - progress);
 
   return (
-    <div className="flex flex-col px-4 pt-6 min-h-[calc(100dvh-4rem)] pb-[20px]" dir="rtl">
+    <div className="flex flex-col px-4 pt-6 min-h-[calc(100dvh-4rem)] pb-[20px]" dir={language === "en" ? "ltr" : "rtl"}>
       {/* Header */}
-      <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">التسبيح</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">{t("tasbeeh_title")}</h1>
 
       {/* Dhikr selector */}
       <div className="flex justify-center mb-3">
@@ -71,7 +73,7 @@ export default function TasbeehPage() {
 
       {/* Today total - compact at top */}
       <div className="text-center mb-2">
-        <span className="text-secondary-foreground text-base">إجمالي اليوم: </span>
+        <span className="text-secondary-foreground text-base">{t("today_total")}: </span>
         <span className="font-bold text-primary text-base">{toArabicNumerals(todayTotal)}</span>
       </div>
 
@@ -85,7 +87,7 @@ export default function TasbeehPage() {
           initial={{ scale: 0, opacity: 1 }}
           animate={{ scale: 2, opacity: 0 }}
           className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          
+
             <Sparkles className="h-16 w-16 text-gold" />
           </motion.div>
         }
@@ -95,9 +97,9 @@ export default function TasbeehPage() {
           whileTap={{ scale: 0.95 }}
           onTap={handleTap}
           style={{ WebkitTapHighlightColor: "transparent" }}>
-          
+
           <div className={`absolute inset-4 rounded-full transition-all duration-500 ${isComplete ? 'bg-primary/20 animate-glow-pulse' : ''}`} />
-          
+
           <svg width={2 * (radius + stroke + 8)} height={2 * (radius + stroke + 8)} className="block">
             <circle
               cx={radius + stroke + 8}
@@ -107,7 +109,7 @@ export default function TasbeehPage() {
               stroke="hsl(var(--border) / 0.3)"
               strokeWidth={1}
               strokeDasharray="4 8" />
-            
+
             <circle
               cx={radius + stroke + 8}
               cy={radius + stroke + 8}
@@ -115,7 +117,7 @@ export default function TasbeehPage() {
               fill="none"
               stroke="hsl(var(--muted))"
               strokeWidth={stroke} />
-            
+
             <circle
               cx={radius + stroke + 8}
               cy={radius + stroke + 8}
@@ -131,7 +133,7 @@ export default function TasbeehPage() {
               style={{
                 filter: isComplete ? "drop-shadow(0 0 8px hsl(var(--gold) / 0.5))" : "drop-shadow(0 0 6px hsl(var(--primary) / 0.3))"
               }} />
-            
+
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <motion.span
@@ -139,7 +141,7 @@ export default function TasbeehPage() {
               initial={{ scale: 1.2 }}
               animate={{ scale: 1 }}
               className={`text-5xl font-bold leading-none ${isComplete ? 'text-gold' : 'text-foreground'}`}>
-              
+
               {toArabicNumerals(count)}
             </motion.span>
             <span className="text-lg text-muted-foreground mt-2">
@@ -150,8 +152,8 @@ export default function TasbeehPage() {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               className="text-xs text-gold font-semibold mt-2">
-              
-                ما شاء الله! 🎉
+
+                {t("mashaallah")}
               </motion.span>
             }
           </div>
@@ -162,16 +164,16 @@ export default function TasbeehPage() {
       <div className="flex gap-3 justify-center mb-2">
         <Button variant="outline" size="default" onClick={handleReset} className="gap-2 rounded-xl shadow-soft">
           <RotateCcw className="h-4 w-4" />
-          إعادة
+          {t("reset")}
         </Button>
         <Button
           variant="outline"
           size="default"
           className="gap-2 rounded-xl shadow-soft"
           onClick={() => setShowTargetPicker(!showTargetPicker)}>
-          
+
           <Target className="h-4 w-4" />
-          الهدف
+          {t("target")}
         </Button>
       </div>
 
@@ -181,7 +183,7 @@ export default function TasbeehPage() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-wrap gap-2 justify-center mb-2">
-        
+
           {TARGET_OPTIONS.map((t) =>
         <Button
           key={t}
@@ -189,7 +191,7 @@ export default function TasbeehPage() {
           variant={target === t ? "gradient" : "secondary"}
           className="rounded-xl"
           onClick={() => {setTarget(t);setCount(0);setShowTargetPicker(false);}}>
-          
+
               {toArabicNumerals(t)}
             </Button>
         )}

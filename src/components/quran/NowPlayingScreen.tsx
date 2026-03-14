@@ -7,6 +7,7 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NowPlayingScreenProps {
   open: boolean;
@@ -26,6 +27,8 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
     togglePlayPause,
     seekToAyah,
   } = useAudioPlayer();
+
+  const { t } = useLanguage();
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
@@ -74,7 +77,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
             <button
               onClick={() => onOpenChange(false)}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 hover:bg-primary/25 transition-all shadow-lg active:scale-95 border-2 border-primary/30"
-              aria-label="إغلاق"
+              aria-label={t("close")}
             >
               <X className="h-6 w-6 text-foreground" strokeWidth={2.5} />
             </button>

@@ -5,6 +5,7 @@ import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
 import NowPlayingScreen from "./NowPlayingScreen";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 
 export default function GlobalAudioBar() {
@@ -15,6 +16,7 @@ export default function GlobalAudioBar() {
   } = useAudioPlayer();
 
   const [showNowPlaying, setShowNowPlaying] = useState(false);
+  const { t, language } = useLanguage();
 
   if (!surahNumber) return null;
 
@@ -72,7 +74,7 @@ export default function GlobalAudioBar() {
             <p className="text-[0.625rem] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
               {currentAyahInSurah !== null && totalAyahs > 0 && (
-                <span className="mr-2"> · آية {toArabicNumerals(currentAyahInSurah)} من {toArabicNumerals(totalAyahs)}</span>
+                <span className="mr-2"> · {language === "en" ? "v." : "آية"} {toArabicNumerals(currentAyahInSurah)} {t("of")} {toArabicNumerals(totalAyahs)}</span>
               )}
             </p>
           </div>

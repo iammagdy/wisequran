@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { APP_VERSION, changelog, type ChangelogEntry } from "@/data/changelog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChangelogModalProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface ChangelogModalProps {
 
 export default function ChangelogModal({ open, newEntries, onDismiss }: ChangelogModalProps) {
   const [showAll, setShowAll] = useState(false);
+  const { t } = useLanguage();
 
   const displayEntries = showAll ? changelog : newEntries;
 
@@ -32,8 +34,8 @@ export default function ChangelogModal({ open, newEntries, onDismiss }: Changelo
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Sparkles className="h-6 w-6 text-primary" />
             </div>
-            <SheetTitle className="font-arabic text-lg">ما الجديد في الإصدار {APP_VERSION}</SheetTitle>
-            <p className="text-xs text-muted-foreground">تم تحديث التطبيق بنجاح</p>
+            <SheetTitle className="font-arabic text-lg">{t("whats_new")} {APP_VERSION}</SheetTitle>
+            <p className="text-xs text-muted-foreground">{t("app_updated")}</p>
           </motion.div>
         </SheetHeader>
 
@@ -70,7 +72,7 @@ export default function ChangelogModal({ open, newEntries, onDismiss }: Changelo
                 className="flex w-full items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ChevronDown className="h-3.5 w-3.5" />
-                عرض كل سجل التحديثات
+                {t("show_all_changelog")}
               </button>
             )}
           </div>
@@ -78,7 +80,7 @@ export default function ChangelogModal({ open, newEntries, onDismiss }: Changelo
 
         <div className="px-6 pb-4 pt-2">
           <Button variant="gradient" className="w-full" onClick={onDismiss}>
-            حسناً، شكراً!
+            {t("ok_thanks")}
           </Button>
         </div>
       </SheetContent>

@@ -8,13 +8,14 @@ import { useHifzReview } from "@/hooks/useHifzReview";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type FilterMode = "all" | "memorized" | "reading" | "none";
 
-const STATUS_CONFIG: Record<HifzStatus, { label: string; color: string; bg: string; icon: typeof CheckCircle2 }> = {
-  memorized: { label: "محفوظة", color: "text-primary", bg: "bg-primary/15 border-primary/30", icon: CheckCircle2 },
-  reading: { label: "قيد الحفظ", color: "text-accent", bg: "bg-accent/15 border-accent/30", icon: Loader2 },
-  none: { label: "لم تبدأ", color: "text-muted-foreground", bg: "bg-card border-border/50", icon: Circle },
+const STATUS_CONFIG: Record<HifzStatus, { color: string; bg: string; icon: typeof CheckCircle2 }> = {
+  memorized: { color: "text-primary", bg: "bg-primary/15 border-primary/30", icon: CheckCircle2 },
+  reading: { color: "text-accent", bg: "bg-accent/15 border-accent/30", icon: Loader2 },
+  none: { color: "text-muted-foreground", bg: "bg-card border-border/50", icon: Circle },
 };
 
 function getStrengthColor(level: number): string {
@@ -23,13 +24,8 @@ function getStrengthColor(level: number): string {
   return "bg-primary";
 }
 
-function getStrengthLabel(level: number): string {
-  if (level <= 1) return "ضعيف";
-  if (level <= 3) return "متوسط";
-  return "قوي";
-}
-
 export default function HifzPage() {
+  const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { getStatus, cycleStatus, stats } = useHifz();
   const review = useHifzReview();
@@ -37,6 +33,12 @@ export default function HifzPage() {
 
   const filtered = SURAH_META.filter((s) => filter === "all" || getStatus(s.number) === filter);
   const todayQueue = review.getTodayQueue();
+
+  const getStrengthLabel = (level: number): string => {
+    if (level <= 1) return t("weak");
+    if (level <= 3) return t("medium");
+    return t("strong");
+  };
 
   // Sync: when cycling status to memorized, add to review
   const handleCycleStatus = (surahNumber: number) => {
@@ -57,49 +59,53 @@ export default function HifzPage() {
     review.markReviewed(surahNumber, quality);
     if (quality === "good") {
       toast({
-        title: "أحسنت! ✨",
-        description: `تمت مراجعة سورة ${meta?.name || ""}`,
+        title: language === "en" ? "Well done! ✨" : "أحسنت! ✨",
+        description: language === "en"
+          ? `Reviewed Surah ${meta?.name || ""}`
+          : `تمت مراجعة سورة ${meta?.name || ""}`,
       });
     } else {
       toast({
-        title: "ستتحسن إن شاء الله",
-        description: `ستظهر سورة ${meta?.name || ""} في مراجعة الغد`,
+        title: language === "en" ? "Keep going, you'll improve" : "ستتحسن إن شاء الله",
+        description: language === "en"
+          ? `Surah ${meta?.name || ""} will appear in tomorrow's review`
+          : `ستظهر سورة ${meta?.name || ""} في مراجعة الغد`,
       });
     }
   };
 
   return (
-    <div className="px-4 pt-6 pb-24">
+    <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="rounded-xl p-2.5 hover:bg-muted transition-colors">
           <ArrowRight className="h-5 w-5" />
         </motion.button>
         <div>
-          <h1 className="text-2xl font-bold heading-decorated">متابعة الحفظ</h1>
-          <p className="text-sm text-muted-foreground">تتبع حفظك للقرآن الكريم</p>
+          <h1 className="text-2xl font-bold heading-decorated">{t("hifz_title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("hifz_subtitle")}</p>
         </div>
       </div>
 
       {/* Progress Summary */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl bg-card p-5 shadow-elevated border border-border/50">
-        <div className="grid grid-cols-3 gap-2 mb-4 text-center" dir="rtl">
+        <div className="grid grid-cols-3 gap-2 mb-4 text-center" dir={isRTL ? "rtl" : "ltr"}>
           <div>
             <p className="text-xl font-bold text-primary">{toArabicNumerals(stats.memorized)}</p>
-            <p className="text-xs text-muted-foreground">محفوظة</p>
+            <p className="text-xs text-muted-foreground">{t("memorized")}</p>
           </div>
           <div>
             <p className="text-xl font-bold text-accent">{toArabicNumerals(stats.inProgress)}</p>
-            <p className="text-xs text-muted-foreground">قيد الحفظ</p>
+            <p className="text-xs text-muted-foreground">{t("in_progress")}</p>
           </div>
           <div>
             <p className="text-xl font-bold text-muted-foreground">{toArabicNumerals(stats.notStarted)}</p>
-            <p className="text-xs text-muted-foreground">لم تبدأ</p>
+            <p className="text-xs text-muted-foreground">{t("not_started")}</p>
           </div>
         </div>
-        <div dir="rtl">
+        <div dir={isRTL ? "rtl" : "ltr"}>
           <div className="flex items-center justify-between mb-2 text-sm">
-            <span className="text-muted-foreground">{toArabicNumerals(stats.memorizedAyahs)} / {toArabicNumerals(stats.totalAyahs)} آية</span>
+            <span className="text-muted-foreground">{toArabicNumerals(stats.memorizedAyahs)} / {toArabicNumerals(stats.totalAyahs)} {t("ayah")}</span>
             <span className="font-bold text-primary">{toArabicNumerals(stats.percentage)}%</span>
           </div>
           <Progress value={stats.percentage} variant="gradient" size="sm" />
@@ -107,15 +113,17 @@ export default function HifzPage() {
       </motion.div>
 
       {/* Today's Review Section */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir="rtl">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir={isRTL ? "rtl" : "ltr"}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold">المراجعة اليوم</h2>
+            <h2 className="text-lg font-bold">{t("today_review")}</h2>
           </div>
           {review.stats.reviewedToday > 0 && (
             <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1">
-              تمت مراجعة {toArabicNumerals(review.stats.reviewedToday)}
+              {language === "en"
+                ? `Reviewed ${review.stats.reviewedToday}`
+                : `تمت مراجعة ${toArabicNumerals(review.stats.reviewedToday)}`}
             </span>
           )}
         </div>
@@ -123,9 +131,9 @@ export default function HifzPage() {
         {todayQueue.length === 0 ? (
           <div className="rounded-2xl bg-primary/5 border border-primary/20 p-6 text-center">
             <Sparkles className="h-8 w-8 text-primary/50 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-foreground">لا توجد مراجعات اليوم</p>
+            <p className="text-sm font-semibold text-foreground">{t("no_reviews_today")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {review.stats.totalInReview > 0 ? "أحسنت! أكملت جميع المراجعات 🎉" : "ضع سوراً كمحفوظة لبدء المراجعة"}
+              {review.stats.totalInReview > 0 ? t("all_reviews_done") : t("add_memorized_hint")}
             </p>
           </div>
         ) : (
@@ -149,7 +157,9 @@ export default function HifzPage() {
                       <span className="font-arabic text-base font-bold">{item.surahName}</span>
                       {item.overdueDays > 0 && (
                         <span className="text-[0.625rem] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
-                          متأخرة {toArabicNumerals(item.overdueDays)} يوم
+                          {language === "en"
+                            ? `${item.overdueDays} ${t("days")} ${t("overdue")}`
+                            : `${t("overdue")} ${toArabicNumerals(item.overdueDays)} ${t("days")}`}
                         </span>
                       )}
                     </div>
@@ -184,7 +194,7 @@ export default function HifzPage() {
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-3 text-sm font-semibold hover:bg-primary/20 transition-colors min-h-[44px]"
                     >
                       <Check className="h-4 w-4" />
-                      أتقنتها
+                      {t("mastered")}
                     </motion.button>
                     <motion.button
                       whileTap={{ scale: 0.95 }}
@@ -192,7 +202,7 @@ export default function HifzPage() {
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-3 text-sm font-semibold hover:bg-muted/80 transition-colors min-h-[44px]"
                     >
                       <RotateCcw className="h-4 w-4" />
-                      تحتاج مراجعة
+                      {t("needs_review")}
                     </motion.button>
                   </div>
                 </motion.div>
@@ -206,27 +216,27 @@ export default function HifzPage() {
           <div className="mt-3 flex gap-3 text-center">
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalInReview)}</p>
-              <p className="text-[0.625rem] text-muted-foreground">في المراجعة</p>
+              <p className="text-[0.625rem] text-muted-foreground">{t("in_review")}</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.dueToday)}</p>
-              <p className="text-[0.625rem] text-muted-foreground">مستحقة اليوم</p>
+              <p className="text-[0.625rem] text-muted-foreground">{t("due_today")}</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
               <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalReviewsDone)}</p>
-              <p className="text-[0.625rem] text-muted-foreground">إجمالي المراجعات</p>
+              <p className="text-[0.625rem] text-muted-foreground">{t("total_reviews")}</p>
             </div>
           </div>
         )}
       </motion.div>
 
       {/* Filter Tabs */}
-      <div className="mb-5 flex gap-1.5 p-1 rounded-2xl bg-muted/50" dir="rtl">
+      <div className="mb-5 flex gap-1.5 p-1 rounded-2xl bg-muted/50" dir={isRTL ? "rtl" : "ltr"}>
         {([
-          { key: "all" as FilterMode, label: "الكل" },
-          { key: "memorized" as FilterMode, label: "محفوظة" },
-          { key: "reading" as FilterMode, label: "قيد الحفظ" },
-          { key: "none" as FilterMode, label: "لم تبدأ" },
+          { key: "all" as FilterMode, label: t("filter_all") },
+          { key: "memorized" as FilterMode, label: t("memorized") },
+          { key: "reading" as FilterMode, label: t("in_progress") },
+          { key: "none" as FilterMode, label: t("not_started") },
         ]).map((tab) => (
           <button
             key={tab.key}
@@ -248,6 +258,10 @@ export default function HifzPage() {
           const config = STATUS_CONFIG[status];
           const Icon = config.icon;
           const reviewItem = review.getReviewItem(surah.number);
+          const statusLabel =
+            status === "memorized" ? t("memorized") :
+            status === "reading" ? t("in_progress") :
+            t("not_started");
           return (
             <motion.button
               key={surah.number}
@@ -263,7 +277,7 @@ export default function HifzPage() {
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
               <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
-              <span className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} آية</span>
+              <span className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} {t("ayah")}</span>
               {/* Review strength indicator for memorized surahs */}
               {reviewItem && (
                 <div className="flex gap-0.5 mt-0.5">
@@ -286,7 +300,7 @@ export default function HifzPage() {
       {filtered.length === 0 && (
         <div className="rounded-2xl bg-muted/30 p-8 text-center mt-4">
           <BookOpen className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">لا توجد سور في هذا التصنيف</p>
+          <p className="text-sm text-muted-foreground">{t("no_surahs_in_filter")}</p>
         </div>
       )}
 

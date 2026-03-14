@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trophy, Lock, CheckCircle } from "lucide-react";
+import { X, Trophy, Lock, CircleCheck as CheckCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAchievements, type Achievement } from "@/hooks/useAchievements";
 import { Progress } from "@/components/ui/progress";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   trigger?: React.ReactNode;
@@ -11,12 +12,13 @@ interface Props {
 
 export function AchievementsSheet({ trigger }: Props) {
   const { achievements, unlockedCount, totalCount } = useAchievements();
+  const { t } = useLanguage();
 
   const categories = [
-    { id: "streak", name: "المواصلة", icon: "🔥" },
-    { id: "reading", name: "القراءة", icon: "📖" },
-    { id: "hifz", name: "الحفظ", icon: "🎯" },
-    { id: "goals", name: "الأهداف", icon: "🏆" },
+    { id: "streak", name: t("achievement_streak"), icon: "🔥" },
+    { id: "reading", name: t("achievement_reading"), icon: "📖" },
+    { id: "hifz", name: t("achievement_hifz"), icon: "🎯" },
+    { id: "goals", name: t("achievement_goals"), icon: "🏆" },
   ];
 
   return (
@@ -33,14 +35,14 @@ export function AchievementsSheet({ trigger }: Props) {
       </SheetTrigger>
       <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl px-0 [&>button:last-child]:hidden">
         <SheetHeader className="px-6 pb-4 border-b border-border">
-          <SheetTitle className="text-center font-bold text-lg">الإنجازات</SheetTitle>
+          <SheetTitle className="text-center font-bold text-lg">{t("achievements")}</SheetTitle>
         </SheetHeader>
 
         {/* Progress summary */}
         <div className="px-6 py-4">
           <div className="rounded-2xl bg-gradient-to-br from-gold/10 to-primary/10 p-4 border border-gold/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-muted-foreground">التقدم الكلي</span>
+              <span className="text-sm font-medium text-muted-foreground">{t("overall_progress")}</span>
               <span className="text-sm font-bold text-gold">
                 {toArabicNumerals(unlockedCount)} / {toArabicNumerals(totalCount)}
               </span>
@@ -54,7 +56,7 @@ export function AchievementsSheet({ trigger }: Props) {
           {categories.map((category) => {
             const categoryAchievements = achievements.filter((a) => a.category === category.id);
             const unlockedInCategory = categoryAchievements.filter((a) => a.unlocked).length;
-            
+
             return (
               <div key={category.id} className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
@@ -64,7 +66,7 @@ export function AchievementsSheet({ trigger }: Props) {
                     {toArabicNumerals(unlockedInCategory)}/{toArabicNumerals(categoryAchievements.length)}
                   </span>
                 </div>
-                
+
                 <div className="space-y-2">
                   {categoryAchievements.map((achievement) => (
                     <AchievementCard key={achievement.id} achievement={achievement} />
@@ -106,7 +108,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
         >
           {achievement.icon}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h4 className={cn(
@@ -122,7 +124,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{achievement.description}</p>
-          
+
           {!achievement.unlocked && achievement.target && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-[0.625rem] text-muted-foreground mb-1">
@@ -141,6 +143,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
 // New unlock notification overlay
 export function AchievementUnlockNotification() {
   const { newUnlock, dismissNewUnlock } = useAchievements();
+  const { t } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -205,7 +208,7 @@ export function AchievementUnlockNotification() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <p className="text-xs text-gold font-semibold mb-1">🎉 إنجاز جديد!</p>
+              <p className="text-xs text-gold font-semibold mb-1">{t("new_achievement")}</p>
               <h3 className="text-xl font-bold text-foreground mb-2">{newUnlock.title}</h3>
               <p className="text-sm text-muted-foreground">{newUnlock.description}</p>
             </motion.div>

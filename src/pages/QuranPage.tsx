@@ -18,6 +18,7 @@ import { DailyAyah } from "@/components/quran/DailyAyah";
 import { DailyWird } from "@/components/quran/DailyWird";
 import ChangelogModal from "@/components/ChangelogModal";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type ViewMode = "surahs" | "juz";
 
@@ -41,6 +42,7 @@ export default function QuranPage() {
   const { history } = useReadingHistory();
   const [showHistory, setShowHistory] = useState(false);
   const { showChangelog, newEntries, dismissChangelog } = usePostUpdateChangelog();
+  const { t, language, isRTL } = useLanguage();
 
   useEffect(() => {
     fetchSurahList().then((data) => {
@@ -85,11 +87,15 @@ export default function QuranPage() {
   const getSurahName = (num: number) => surahs.find((s) => s.number === num)?.name || String(num);
 
   const formatRange = (startSurah: number, startAyah: number, endSurah: number, endAyah: number) => {
+    const fmtNum = (n: number) => language === "en" ? n : toArabicNumerals(n);
     if (startSurah === endSurah) {
-      return `${getSurahName(startSurah)} ${toArabicNumerals(startAyah)} — ${toArabicNumerals(endAyah)}`;
+      return `${getSurahName(startSurah)} ${fmtNum(startAyah)} — ${fmtNum(endAyah)}`;
     }
-    return `${getSurahName(startSurah)} ${toArabicNumerals(startAyah)} — ${getSurahName(endSurah)} ${toArabicNumerals(endAyah)}`;
+    return `${getSurahName(startSurah)} ${fmtNum(startAyah)} — ${getSurahName(endSurah)} ${fmtNum(endAyah)}`;
   };
+
+  const getRevelationType = (type: string) =>
+    type === "Meccan" ? t("revelation_meccan") : t("revelation_medinan");
 
   const isSurahMode = viewMode === "surahs";
 
@@ -98,7 +104,7 @@ export default function QuranPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-[5px] mt-0">
         <div>
-          <h1 className="text-2xl font-bold heading-decorated">القرآن الكريم</h1>
+          <h1 className="text-2xl font-bold heading-decorated">{t("quran_title")}</h1>
         </div>
         <div className="flex items-center gap-1.5">
           <motion.button
@@ -108,7 +114,7 @@ export default function QuranPage() {
               "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
               showFavorites ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
             )}>
-            
+
             <Star className="h-5 w-5" />
           </motion.button>
           <motion.button
@@ -118,7 +124,7 @@ export default function QuranPage() {
               "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
               showBookmarks ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
             )}>
-            
+
             <Bookmark className="h-5 w-5" />
           </motion.button>
           <DropdownMenu>
@@ -129,22 +135,22 @@ export default function QuranPage() {
                   "rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center",
                   showHistory ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
                 )}>
-                
+
                 <MoreHorizontal className="h-5 w-5" />
               </motion.button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
               <DropdownMenuItem onClick={() => {setShowHistory(!showHistory);setShowFavorites(false);setShowBookmarks(false);setViewMode("surahs");}} className="gap-2 text-right flex-row-reverse">
                 <History className="h-4 w-4" />
-                سجل القراءة
+                {t("reading_history")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/stats")} className="gap-2 text-right flex-row-reverse">
                 <BarChart3 className="h-4 w-4" />
-                الإحصائيات
+                {t("statistics")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/hifz")} className="gap-2 text-right flex-row-reverse">
                 <GraduationCap className="h-4 w-4" />
-                الحفظ
+                {t("memorization")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -156,25 +162,25 @@ export default function QuranPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-4 mb-1.5 pt-0.5 pb-0.5"
-        dir="rtl">
-        
+        dir={isRTL ? "rtl" : "ltr"}>
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground font-medium">
-              اليوم: <span className="text-foreground font-bold">{toArabicNumerals(todayCount)}</span> / {toArabicNumerals(goal)} آية
+              {t("today")}: <span className="text-foreground font-bold">{language === "en" ? todayCount : toArabicNumerals(todayCount)}</span> / {language === "en" ? goal : toArabicNumerals(goal)} {t("ayah")}
             </span>
           </div>
           {streak > 0 &&
           <div className="flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1">
               <Flame className="h-4 w-4 text-accent streak-glow" />
-              <span className="text-sm font-bold text-accent">{toArabicNumerals(streak)}</span>
-              <span className="text-xs text-accent/80">أيام</span>
+              <span className="text-sm font-bold text-accent">{language === "en" ? streak : toArabicNumerals(streak)}</span>
+              <span className="text-xs text-accent/80">{t("days")}</span>
             </div>
           }
         </div>
         <Progress value={progress} variant="gradient" size="sm" />
         {progress >= 100 &&
-        <p className="text-xs text-primary font-medium mt-2 text-center">🎉 ما شاء الله! أكملت هدفك اليوم</p>
+        <p className="text-xs text-primary font-medium mt-2 text-center">🎉 {t("goal_complete")}</p>
         }
       </motion.div>
 
@@ -202,9 +208,9 @@ export default function QuranPage() {
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground font-medium">متابعة القراءة</p>
+            <p className="text-xs text-muted-foreground font-medium">{t("continue_reading")}</p>
             <p className="text-sm font-bold truncate">
-              سورة {getSurahName(lastRead.surah)} — آية {toArabicNumerals(lastRead.ayah)}
+              {t("surah")} {getSurahName(lastRead.surah)} — {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
             </p>
           </div>
           <span className="text-xs text-primary/60 shrink-0">←</span>
@@ -216,21 +222,21 @@ export default function QuranPage() {
       <div className="relative mb-5">
           <Search className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-          placeholder="بحث بالاسم، الرقم، أو نص الآية..."
+          placeholder={t("search_placeholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pr-11 text-right rounded-xl h-12 shadow-soft border-border/50 focus:shadow-elevated transition-shadow"
-          dir="rtl" />
-        
+          dir={isRTL ? "rtl" : "ltr"} />
+
         </div>
       }
 
       {/* View Mode Tabs */}
       {!showBookmarks && !showFavorites && !showHistory &&
-      <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 pt-0 pb-0 mb-[8px]" dir="rtl">
+      <div className="flex gap-2 p-1 rounded-2xl bg-muted/50 pt-0 pb-0 mb-[8px]" dir={isRTL ? "rtl" : "ltr"}>
           {[
-        { key: "surahs" as ViewMode, label: "السور" },
-        { key: "juz" as ViewMode, label: "الأجزاء" }].
+        { key: "surahs" as ViewMode, label: t("surah_list") },
+        { key: "juz" as ViewMode, label: t("juz_list") }].
         map((tab) =>
         <button
           key={tab.key}
@@ -241,7 +247,7 @@ export default function QuranPage() {
           "bg-card text-foreground shadow-soft" :
           "text-muted-foreground hover:text-foreground"
           )}>
-          
+
               {tab.label}
             </button>
         )}
@@ -251,11 +257,11 @@ export default function QuranPage() {
       {/* Bookmarks View */}
       {showBookmarks &&
       <div className="mb-5">
-          <h2 className="mb-3 text-lg font-bold">العلامات المرجعية</h2>
+          <h2 className="mb-3 text-lg font-bold">{t("bookmarks")}</h2>
           {bookmarks.length === 0 ?
         <div className="rounded-2xl bg-muted/30 p-8 text-center">
               <Bookmark className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">لا توجد علامات مرجعية بعد</p>
+              <p className="text-sm text-muted-foreground">{t("no_bookmarks")}</p>
             </div> :
 
         <div className="space-y-2">
@@ -267,10 +273,10 @@ export default function QuranPage() {
             transition={{ delay: i * 0.05 }}
             onClick={() => navigate(`/surah/${b.surah}?ayah=${b.ayah}`)}
             className="flex w-full items-center justify-between rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all">
-            
-                  <span className="text-sm text-muted-foreground">آية {toArabicNumerals(b.ayah)}</span>
+
+                  <span className="text-sm text-muted-foreground">{t("ayah")} {language === "en" ? b.ayah : toArabicNumerals(b.ayah)}</span>
                   <span className="font-bold">
-                    سورة {getSurahName(b.surah)}
+                    {t("surah")} {getSurahName(b.surah)}
                   </span>
                 </motion.button>
           )}
@@ -281,19 +287,20 @@ export default function QuranPage() {
 
       {/* Reading History View */}
       {showHistory &&
-      <div className="mb-5" dir="rtl">
-          <h2 className="mb-3 text-lg font-bold">سجل القراءة</h2>
+      <div className="mb-5" dir={isRTL ? "rtl" : "ltr"}>
+          <h2 className="mb-3 text-lg font-bold">{t("reading_history")}</h2>
           {history.length === 0 ?
         <div className="rounded-2xl bg-muted/30 p-8 text-center">
               <History className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">لا يوجد سجل قراءة بعد</p>
+              <p className="text-sm text-muted-foreground">{t("no_history")}</p>
             </div> :
 
         <div className="space-y-2">
               {history.map((entry, i) => {
             const date = new Date(entry.timestamp);
-            const timeStr = date.toLocaleDateString("ar-EG", { day: "numeric", month: "short" }) +
-            " · " + date.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+            const dateLocale = language === "en" ? "en-US" : "ar-EG";
+            const timeStr = date.toLocaleDateString(dateLocale, { day: "numeric", month: "short" }) +
+            " · " + date.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit" });
             return (
               <motion.button
                 key={`${entry.surah}-${entry.timestamp}`}
@@ -302,12 +309,12 @@ export default function QuranPage() {
                 transition={{ delay: i * 0.03 }}
                 onClick={() => navigate(`/surah/${entry.surah}`)}
                 className="flex w-full items-center justify-between rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99]">
-                
+
                     <span className="text-xs text-muted-foreground">{timeStr}</span>
                     <div className="text-right">
                       <span className="font-bold">{entry.surahName}</span>
                       {entry.ayahReached > 1 &&
-                  <span className="mr-2 text-xs text-muted-foreground">آية {toArabicNumerals(entry.ayahReached)}</span>
+                  <span className="mr-2 text-xs text-muted-foreground">{t("ayah")} {language === "en" ? entry.ayahReached : toArabicNumerals(entry.ayahReached)}</span>
                   }
                     </div>
                   </motion.button>);
@@ -322,14 +329,14 @@ export default function QuranPage() {
       {showFavorites && displayList.length === 0 && !loading &&
       <div className="rounded-2xl bg-muted/30 p-8 text-center">
           <Star className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">لا توجد سور مفضلة بعد</p>
+          <p className="text-sm text-muted-foreground">{t("no_favorites")}</p>
         </div>
       }
 
       {/* Ayah Search Results */}
       {search.trim().length >= 3 && !showBookmarks && !showFavorites && isSurahMode &&
-      <div className="mb-5" dir="rtl">
-          <h2 className="mb-3 text-lg font-bold">نتائج البحث في الآيات</h2>
+      <div className="mb-5" dir={isRTL ? "rtl" : "ltr"}>
+          <h2 className="mb-3 text-lg font-bold">{t("search")}</h2>
           {searchingAyahs ?
         <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -350,9 +357,9 @@ export default function QuranPage() {
             transition={{ delay: i * 0.03 }}
             onClick={() => navigate(`/surah/${r.surahNumber}?ayah=${r.ayahNumber}`)}
             className="flex w-full flex-col gap-2 rounded-xl bg-card p-4 text-right shadow-soft hover:shadow-elevated transition-all active:scale-[0.99]">
-            
+
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground rounded-full bg-muted px-2 py-0.5">آية {toArabicNumerals(r.ayahNumber)}</span>
+                    <span className="text-xs text-muted-foreground rounded-full bg-muted px-2 py-0.5">{t("ayah")} {language === "en" ? r.ayahNumber : toArabicNumerals(r.ayahNumber)}</span>
                     <span className="text-sm font-bold text-primary">{r.surahName}</span>
                   </div>
                   <p className="font-arabic text-sm leading-relaxed line-clamp-2"><HighlightText text={r.text} highlight={search.trim()} /></p>
@@ -381,14 +388,14 @@ export default function QuranPage() {
           transition={{ delay: Math.min(i * 0.02, 0.5) }}
           onClick={() => navigate(`/surah/${surah.number}`)}
           className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group pt-[2px] pb-[2px]">
-          
+
                   <div className="number-badge h-11 w-11 text-sm">
-                    {toArabicNumerals(surah.number)}
+                    {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                   </div>
                   <div className="flex-1 text-right">
                     <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors">{surah.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {toArabicNumerals(surah.numberOfAyahs)} آيات · {surah.revelationType === "Meccan" ? "مكية" : "مدنية"}
+                      {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)} {t("ayahs")} · {getRevelationType(surah.revelationType)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -420,10 +427,10 @@ export default function QuranPage() {
                 transition={{ delay: Math.min(i * 0.02, 0.5) }}
                 onClick={() => setExpandedJuz(isExpanded ? null : juz.juzNumber)}
                 className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99]"
-                dir="rtl">
-                
+                dir={isRTL ? "rtl" : "ltr"}>
+
                   <div className="number-badge h-11 w-11 text-sm">
-                    {toArabicNumerals(juz.juzNumber)}
+                    {language === "en" ? juz.juzNumber : toArabicNumerals(juz.juzNumber)}
                   </div>
                   <div className="flex-1 text-right">
                     <p className="text-base font-bold">{juz.name}</p>
@@ -435,7 +442,7 @@ export default function QuranPage() {
                   animate={{ rotate: isExpanded ? 180 : 0 }}
                   className="h-4 w-4 text-muted-foreground"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  
+
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                   </motion.svg>
                 </motion.button>
@@ -445,20 +452,20 @@ export default function QuranPage() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="mr-6 mt-1 space-y-1 overflow-hidden">
-                
+
                     {juzSurahs.map((surah) =>
                 <button
                   key={surah.number}
                   onClick={() => navigate(`/surah/${surah.number}`)}
                   className="flex w-full items-center gap-3 rounded-lg bg-muted/50 p-3 text-right transition-all hover:bg-muted active:scale-[0.99]"
-                  dir="rtl">
-                  
+                  dir={isRTL ? "rtl" : "ltr"}>
+
                         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
-                          {toArabicNumerals(surah.number)}
+                          {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                         </span>
                         <span className="font-arabic text-sm font-semibold">{surah.name}</span>
                         <span className="mr-auto text-xs text-muted-foreground">
-                          {toArabicNumerals(surah.numberOfAyahs)} آية
+                          {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)} {t("ayah")}
                         </span>
                       </button>
                 )}
