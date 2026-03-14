@@ -16,6 +16,8 @@ import { HighlightText } from "@/components/HighlightText";
 import { juzData } from "@/data/juz-hizb-data";
 import { DailyAyah } from "@/components/quran/DailyAyah";
 import { DailyWird } from "@/components/quran/DailyWird";
+import ChangelogModal from "@/components/ChangelogModal";
+import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 
 type ViewMode = "surahs" | "juz";
 
@@ -38,6 +40,7 @@ export default function QuranPage() {
   const { streak } = useStreak();
   const { history } = useReadingHistory();
   const [showHistory, setShowHistory] = useState(false);
+  const { showChangelog, newEntries, dismissChangelog } = usePostUpdateChangelog();
 
   useEffect(() => {
     fetchSurahList().then((data) => {
@@ -469,6 +472,12 @@ export default function QuranPage() {
 
       {/* Safe area spacer */}
       <div className="h-4" />
+
+      <ChangelogModal
+        open={showChangelog}
+        newEntries={newEntries}
+        onDismiss={dismissChangelog}
+      />
     </div>);
 
 }
