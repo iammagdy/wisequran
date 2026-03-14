@@ -387,6 +387,14 @@ interface Translations {
   todays_goal_progress: string;
   hifz_goal_done: string;
   reading_progress: string;
+
+  // QuranPage mode cards
+  mode_reading: string;
+  mode_reading_subtitle: string;
+  mode_listening: string;
+  mode_listening_subtitle: string;
+  mode_hifz: string;
+  mode_hifz_subtitle: string;
 }
 
 const ar: Translations = {
@@ -746,6 +754,13 @@ const ar: Translations = {
   todays_goal_progress: "تقدم هدف اليوم",
   hifz_goal_done: "ما شاء الله! أكملت هدف اليوم",
   reading_progress: "تقدم القراءة",
+
+  mode_reading: "القراءة",
+  mode_reading_subtitle: "تصفح وقرأ القرآن الكريم",
+  mode_listening: "الاستماع",
+  mode_listening_subtitle: "استمع للقرآن مع كبار القراء",
+  mode_hifz: "الحفظ والتسميع",
+  mode_hifz_subtitle: "راجع حفظك واختبر نفسك",
 };
 
 const en: Translations = {
@@ -1105,6 +1120,13 @@ const en: Translations = {
   todays_goal_progress: "Today's Goal Progress",
   hifz_goal_done: "MashaAllah! Daily goal complete",
   reading_progress: "Reading Progress",
+
+  mode_reading: "Reading",
+  mode_reading_subtitle: "Browse and read the Holy Quran",
+  mode_listening: "Listening",
+  mode_listening_subtitle: "Listen with renowned reciters",
+  mode_hifz: "Memorization",
+  mode_hifz_subtitle: "Review and test your memorization",
 };
 
 interface LanguageContextValue {
