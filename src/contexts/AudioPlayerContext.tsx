@@ -91,8 +91,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       artist: getReciterById(state.playingReciterId).name,
       album: "القرآن الكريم",
     });
-    navigator.mediaSession.setActionHandler("play", () => togglePlayPause());
-    navigator.mediaSession.setActionHandler("pause", () => togglePlayPause());
+
+    const handlePlay = () => {
+      audioRef.current?.play();
+    };
+    const handlePause = () => {
+      audioRef.current?.pause();
+    };
+
+    navigator.mediaSession.setActionHandler("play", handlePlay);
+    navigator.mediaSession.setActionHandler("pause", handlePause);
 
     return () => {
       if ("mediaSession" in navigator) {
@@ -100,7 +108,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         navigator.mediaSession.setActionHandler("pause", null);
       }
     };
-  }, [state.playing, state.surahName, state.playingReciterId, togglePlayPause]);
+  }, [state.playing, state.surahName, state.playingReciterId]);
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
