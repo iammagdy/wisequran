@@ -196,10 +196,13 @@ interface Translations {
 
   // Settings
   settings_title: string;
+  settings_subtitle: string;
   appearance: string;
   theme_light: string;
   theme_dark: string;
+  theme_dark_mode: string;
   font_size: string;
+  quran_font_size: string;
   ui_scale: string;
   scale_normal: string;
   scale_large: string;
@@ -210,18 +213,73 @@ interface Translations {
   show_translation: string;
   show_translation_subtitle: string;
   prayer_notifications: string;
+  prayer_time_reminder: string;
+  prayer_time_reminder_enabled: string;
+  prayer_time_reminder_disabled: string;
+  prayer_time_hint: string;
+  prayer_notifications_denied: string;
+  notifications_not_supported: string;
+  notifications_permission_denied: string;
+  azkar_reminder: string;
+  azkar_reminder_enabled: string;
+  azkar_reminder_disabled: string;
+  azkar_reminder_hint: string;
   prayer_method: string;
   daily_reading_goal: string;
+  daily_verse_count: string;
   downloads: string;
+  downloads_quran_text: string;
+  downloads_quran_desc: string;
+  downloads_audio: string;
+  downloads_audio_desc: string;
+  downloads_clear_all: string;
+  downloads_download_all: string;
+  downloads_complete: string;
+  downloads_downloading: string;
+  downloads_downloading_audio: string;
+  downloads_verifying: string;
+  downloads_clear_audio: string;
+  downloads_verify: string;
+  downloads_show_details: string;
+  downloads_hide_details: string;
+  downloads_confirm_clear_audio_title: string;
+  downloads_confirm_clear_audio_desc: string;
+  downloads_confirm_yes: string;
   install_app: string;
+  install_app_ios_intro: string;
+  install_app_intro: string;
+  install_app_already: string;
   storage: string;
+  storage_total: string;
+  storage_quran_text: string;
+  storage_surahs_count: string;
+  storage_audio: string;
+  storage_audio_count: string;
+  storage_tafsir: string;
+  storage_tafsir_count: string;
+  storage_empty: string;
+  storage_confirm_clear_tafsir_title: string;
+  storage_confirm_clear_tafsir_desc: string;
   reset_progress: string;
+  reset_progress_desc: string;
+  reset_progress_confirm_title: string;
+  reset_progress_confirm_desc: string;
+  reset_progress_confirm_btn: string;
+  reset_progress_success: string;
   ramadan_tab: string;
+  ramadan_show_tab: string;
+  ramadan_show_tab_desc: string;
+  ramadan_tab_shown: string;
+  ramadan_tab_hidden: string;
   about: string;
+  about_description: string;
   version: string;
   changelog: string;
   share_app: string;
+  share_app_text: string;
   check_updates: string;
+  up_to_date: string;
+  up_to_date_desc: string;
   language: string;
   language_arabic: string;
   language_english: string;
@@ -582,10 +640,13 @@ const ar: Translations = {
   today_goal: "هدف اليوم",
 
   settings_title: "الإعدادات",
+  settings_subtitle: "إعدادات التطبيق",
   appearance: "المظهر والقراءة",
   theme_light: "فاتح",
   theme_dark: "داكن",
+  theme_dark_mode: "الوضع الليلي",
   font_size: "حجم الخط",
+  quran_font_size: "حجم خط القرآن",
   ui_scale: "حجم الواجهة",
   scale_normal: "عادي",
   scale_large: "كبير",
@@ -596,18 +657,73 @@ const ar: Translations = {
   show_translation: "إظهار الترجمة",
   show_translation_subtitle: "Show Quran translation",
   prayer_notifications: "إشعارات الصلاة",
+  prayer_time_reminder: "تذكير بأوقات الصلاة",
+  prayer_time_reminder_enabled: "تم تفعيل إشعارات الصلاة",
+  prayer_time_reminder_disabled: "تم إيقاف إشعارات الصلاة",
+  prayer_time_hint: "ستصلك إشعارات عند دخول وقت كل صلاة",
+  prayer_notifications_denied: "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح",
+  notifications_not_supported: "المتصفح لا يدعم الإشعارات",
+  notifications_permission_denied: "تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح",
+  azkar_reminder: "تذكير بأذكار الصباح والمساء",
+  azkar_reminder_enabled: "تم تفعيل تذكير الأذكار",
+  azkar_reminder_disabled: "تم إيقاف تذكير الأذكار",
+  azkar_reminder_hint: "تذكير عند الفجر والمغرب لقراءة الأذكار",
   prayer_method: "طريقة حساب أوقات الصلاة",
   daily_reading_goal: "هدف القراءة اليومي",
+  daily_verse_count: "عدد الآيات يومياً",
   downloads: "التنزيلات",
+  downloads_quran_text: "نصوص القرآن",
+  downloads_quran_desc: "تحميل نصوص السور للقراءة بدون إنترنت",
+  downloads_audio: "التلاوات الصوتية",
+  downloads_audio_desc: "تحميل التلاوات للاستماع بدون إنترنت",
+  downloads_clear_all: "مسح الكل",
+  downloads_download_all: "تحميل الكل",
+  downloads_complete: "مكتمل",
+  downloads_downloading: "جارٍ التحميل...",
+  downloads_downloading_audio: "جارٍ تحميل التلاوات...",
+  downloads_verifying: "جارٍ التحقق...",
+  downloads_clear_audio: "مسح الصوت",
+  downloads_verify: "التحقق من التحميلات",
+  downloads_show_details: "عرض التفاصيل",
+  downloads_hide_details: "إخفاء التفاصيل",
+  downloads_confirm_clear_audio_title: "مسح جميع التلاوات؟",
+  downloads_confirm_clear_audio_desc: "سيتم حذف جميع ملفات الصوت المحملة. يمكنك إعادة تحميلها لاحقاً.",
+  downloads_confirm_yes: "نعم، مسح الكل",
   install_app: "تثبيت التطبيق",
+  install_app_ios_intro: "لتثبيت التطبيق على جهازك:",
+  install_app_intro: "لتثبيت التطبيق على جهازك:",
+  install_app_already: "التطبيق مثبّت بالفعل",
   storage: "مساحة التخزين",
+  storage_total: "إجمالي التخزين",
+  storage_quran_text: "نصوص القرآن",
+  storage_surahs_count: "سورة",
+  storage_audio: "التلاوات الصوتية",
+  storage_audio_count: "ملف صوتي",
+  storage_tafsir: "التفاسير",
+  storage_tafsir_count: "سورة",
+  storage_empty: "لا توجد بيانات محملة حالياً",
+  storage_confirm_clear_tafsir_title: "مسح جميع التفاسير؟",
+  storage_confirm_clear_tafsir_desc: "سيتم حذف جميع التفاسير المحملة. يمكنك إعادة تحميلها لاحقاً.",
   reset_progress: "إعادة تعيين التقدم",
+  reset_progress_desc: "سيتم مسح سجل القراءة والعلامات المرجعية والمفضلة والأهداف اليومية. لن يتم حذف البيانات المحملة.",
+  reset_progress_confirm_title: "إعادة تعيين جميع التقدم؟",
+  reset_progress_confirm_desc: "سيتم مسح: آخر قراءة، العلامات المرجعية، السور المفضلة، الهدف اليومي، سجل القراءة، وسلسلة الأيام. هل أنت متأكد؟",
+  reset_progress_confirm_btn: "نعم، إعادة تعيين",
+  reset_progress_success: "تم إعادة تعيين التقدم بنجاح",
   ramadan_tab: "تبويب رمضان",
+  ramadan_show_tab: "إظهار تبويب رمضان",
+  ramadan_show_tab_desc: "يظهر التبويب تلقائياً خلال شهر رمضان فقط",
+  ramadan_tab_shown: "تم إظهار تبويب رمضان",
+  ramadan_tab_hidden: "تم إخفاء تبويب رمضان",
   about: "عن التطبيق",
+  about_description: "تطبيق للقراءة والأذكار والصلاة",
   version: "الإصدار",
   changelog: "سجل التحديثات",
   share_app: "مشاركة التطبيق",
+  share_app_text: "تطبيق القرآن الكريم والأذكار — حمّله الآن!",
   check_updates: "التحقق من التحديثات",
+  up_to_date: "أنت تستخدم أحدث نسخة",
+  up_to_date_desc: "التطبيق محدث بالكامل",
   language: "اللغة",
   language_arabic: "العربية",
   language_english: "English",
@@ -951,10 +1067,13 @@ const en: Translations = {
   today_goal: "Today's Goal",
 
   settings_title: "Settings",
+  settings_subtitle: "App settings",
   appearance: "Appearance & Reading",
   theme_light: "Light",
   theme_dark: "Dark",
+  theme_dark_mode: "Dark Mode",
   font_size: "Font Size",
+  quran_font_size: "Quran Font Size",
   ui_scale: "UI Scale",
   scale_normal: "Normal",
   scale_large: "Large",
@@ -965,18 +1084,73 @@ const en: Translations = {
   show_translation: "Show Translation",
   show_translation_subtitle: "Show Quran translation",
   prayer_notifications: "Prayer Notifications",
+  prayer_time_reminder: "Prayer Time Reminders",
+  prayer_time_reminder_enabled: "Prayer time notifications enabled",
+  prayer_time_reminder_disabled: "Prayer time notifications disabled",
+  prayer_time_hint: "You will be notified at each prayer time",
+  prayer_notifications_denied: "Notification permission denied — please enable it in browser settings",
+  notifications_not_supported: "This browser does not support notifications",
+  notifications_permission_denied: "Notification permission denied, please enable it in browser settings",
+  azkar_reminder: "Morning & Evening Azkar Reminder",
+  azkar_reminder_enabled: "Azkar reminder enabled",
+  azkar_reminder_disabled: "Azkar reminder disabled",
+  azkar_reminder_hint: "Reminded at Fajr and Maghrib to read your Azkar",
   prayer_method: "Prayer Calculation Method",
   daily_reading_goal: "Daily Reading Goal",
+  daily_verse_count: "Daily verse count",
   downloads: "Downloads",
+  downloads_quran_text: "Quran Texts",
+  downloads_quran_desc: "Download surahs for offline reading",
+  downloads_audio: "Audio Recitations",
+  downloads_audio_desc: "Download recitations for offline listening",
+  downloads_clear_all: "Clear All",
+  downloads_download_all: "Download All",
+  downloads_complete: "Complete",
+  downloads_downloading: "Downloading...",
+  downloads_downloading_audio: "Downloading recitations...",
+  downloads_verifying: "Verifying...",
+  downloads_clear_audio: "Clear Audio",
+  downloads_verify: "Verify Downloads",
+  downloads_show_details: "Show Details",
+  downloads_hide_details: "Hide Details",
+  downloads_confirm_clear_audio_title: "Clear all recitations?",
+  downloads_confirm_clear_audio_desc: "All downloaded audio files will be deleted. You can re-download them later.",
+  downloads_confirm_yes: "Yes, Clear All",
   install_app: "Install App",
+  install_app_ios_intro: "To install the app on your device:",
+  install_app_intro: "To install the app on your device:",
+  install_app_already: "App is already installed",
   storage: "Storage",
+  storage_total: "Total Storage",
+  storage_quran_text: "Quran Texts",
+  storage_surahs_count: "surahs",
+  storage_audio: "Audio Recitations",
+  storage_audio_count: "audio files",
+  storage_tafsir: "Tafsir",
+  storage_tafsir_count: "surahs",
+  storage_empty: "No downloaded data",
+  storage_confirm_clear_tafsir_title: "Clear all tafsir?",
+  storage_confirm_clear_tafsir_desc: "All downloaded tafsir will be deleted. You can re-download them later.",
   reset_progress: "Reset Progress",
+  reset_progress_desc: "This will clear reading history, bookmarks, favorites, and daily goals. Downloaded data will not be deleted.",
+  reset_progress_confirm_title: "Reset all progress?",
+  reset_progress_confirm_desc: "This will clear: last read position, bookmarks, favorite surahs, daily goal, reading history, and streak. Are you sure?",
+  reset_progress_confirm_btn: "Yes, Reset",
+  reset_progress_success: "Progress reset successfully",
   ramadan_tab: "Ramadan Tab",
+  ramadan_show_tab: "Show Ramadan Tab",
+  ramadan_show_tab_desc: "Tab appears automatically during Ramadan only",
+  ramadan_tab_shown: "Ramadan tab is now visible",
+  ramadan_tab_hidden: "Ramadan tab is now hidden",
   about: "About",
+  about_description: "A Quran, Azkar & Prayer app",
   version: "Version",
   changelog: "Changelog",
   share_app: "Share App",
+  share_app_text: "The Noble Quran & Azkar app — Download now!",
   check_updates: "Check for Updates",
+  up_to_date: "You're on the latest version",
+  up_to_date_desc: "App is fully up to date",
   language: "Language",
   language_arabic: "العربية",
   language_english: "English",

@@ -124,7 +124,7 @@ export default function SettingsPage() {
         previewAudioRef.current = null;
         setPreviewLoading(null);
         setPreviewingReciter(null);
-        toast.error("انتهت مهلة تحميل المعاينة");
+        toast.error(language === "ar" ? "انتهت مهلة تحميل المعاينة" : "Preview timed out");
       }
     }, 10000);
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
       clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(null);
-      toast.error("تعذر تشغيل المعاينة");
+      toast.error(language === "ar" ? "تعذر تشغيل المعاينة" : "Could not play preview");
     }, { once: true });
 
     // Set src after listeners are attached
@@ -169,7 +169,7 @@ export default function SettingsPage() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const browserType = detectBrowser();
-  const installInstructions = getInstallInstructions(browserType);
+  const installInstructions = getInstallInstructions(browserType, language);
   const isIOS = browserType === "ios-safari";
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 
@@ -209,14 +209,14 @@ export default function SettingsPage() {
     try {
       await downloadAllSurahs((percent) => setDownloadProgress(percent));
     } catch {
-      toast.error("فشل تحميل القرآن، تحقق من الاتصال بالإنترنت");
+      toast.error(language === "ar" ? "فشل تحميل القرآن، تحقق من الاتصال بالإنترنت" : "Download failed, check your internet connection");
     }
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
     refreshStorageStats();
     if (updated.length === 114) {
-      toast.success("تم تحميل القرآن الكريم بالكامل");
+      toast.success(language === "ar" ? "تم تحميل القرآن الكريم بالكامل" : "The entire Quran has been downloaded");
     }
   };
 
@@ -225,7 +225,7 @@ export default function SettingsPage() {
     setDownloadedSurahs([]);
     setDownloadedAudio([]);
     refreshStorageStats();
-    toast.success("تم مسح البيانات المحملة");
+    toast.success(language === "ar" ? "تم مسح البيانات المحملة" : "Downloaded data cleared");
   };
 
   const handleDownloadAllAudio = async () => {
@@ -241,14 +241,14 @@ export default function SettingsPage() {
     setDownloadedAudio(updated);
     setAudioDownloading(false);
     refreshStorageStats();
-    toast.success("تم تحميل جميع التلاوات");
+    toast.success(language === "ar" ? "تم تحميل جميع التلاوات" : "All recitations downloaded");
   };
 
   const handleClearAllAudio = async () => {
     await clearAllAudio();
     setDownloadedAudio([]);
     refreshStorageStats();
-    toast.success("تم مسح جميع التلاوات");
+    toast.success(language === "ar" ? "تم مسح جميع التلاوات" : "All recitations cleared");
   };
 
   const handleDownloadSingleAudio = async (num: number) => {
@@ -258,9 +258,9 @@ export default function SettingsPage() {
       const updated = await getAllDownloadedAudio(reciterId);
       setDownloadedAudio(updated);
       refreshStorageStats();
-      toast.success(`تم تحميل التلاوة (${formatBytes(size)})`);
+      toast.success(language === "ar" ? `تم تحميل التلاوة (${formatBytes(size)})` : `Recitation downloaded (${formatBytes(size)})`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "فشل تحميل التلاوة");
+      toast.error(e instanceof Error ? e.message : (language === "ar" ? "فشل تحميل التلاوة" : "Failed to download recitation"));
     }
     setSingleAudioDownloading(null);
   };
@@ -275,7 +275,7 @@ export default function SettingsPage() {
   const handleClearTafsir = async () => {
     await clearAllTafsir();
     refreshStorageStats();
-    toast.success("تم مسح جميع التفاسير المحملة");
+    toast.success(language === "ar" ? "تم مسح جميع التفاسير المحملة" : "All downloaded tafsir cleared");
   };
 
   const handleVerifyDownloads = async () => {
@@ -295,15 +295,18 @@ export default function SettingsPage() {
       refreshStorageStats();
 
       if (result.corrupted.length === 0) {
-        toast.success(`تم التحقق من جميع الملفات ✓ (${toArabicNumerals(result.valid.length)} ملف سليم)`);
+        toast.success(language === "ar"
+          ? `تم التحقق من جميع الملفات ✓ (${toArabicNumerals(result.valid.length)} ملف سليم)`
+          : `All files verified ✓ (${result.valid.length} valid)`);
       } else {
-        toast.success(
-          `تم إصلاح التحميلات\nملفات سليمة: ${toArabicNumerals(result.valid.length)}\nملفات تالفة تم حذفها: ${toArabicNumerals(result.corrupted.length)}`,
+        toast.success(language === "ar"
+          ? `تم إصلاح التحميلات\nملفات سليمة: ${toArabicNumerals(result.valid.length)}\nملفات تالفة تم حذفها: ${toArabicNumerals(result.corrupted.length)}`
+          : `Downloads repaired\nValid: ${result.valid.length}\nCorrupted removed: ${result.corrupted.length}`,
           { duration: 5000 }
         );
       }
     } catch (e) {
-      toast.error("فشل التحقق من التحميلات");
+      toast.error(language === "ar" ? "فشل التحقق من التحميلات" : "Failed to verify downloads");
     } finally {
       setVerifying(false);
       setVerifyProgress({ current: 0, total: 0 });
@@ -313,7 +316,7 @@ export default function SettingsPage() {
   return (
     <div className="px-4 pt-6 pl-[5px] pb-[20px]" dir={isRTL ? "rtl" : "ltr"}>
       <h1 className="mb-1 text-2xl font-bold heading-decorated">{t("settings_title")}</h1>
-      <p className="mb-6 text-sm text-muted-foreground">{language === "ar" ? "إعدادات التطبيق" : "App settings"}</p>
+      <p className="mb-6 text-sm text-muted-foreground">{t("settings_subtitle")}</p>
 
       <div className="space-y-6">
         {/* ─── Language ─── */}
@@ -347,184 +350,6 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
-        {/* ─── Appearance & Reading ─── */}
-        <section>
-          <div className="section-title flex items-center gap-1.5">
-            <Palette className="h-3.5 w-3.5" />
-            {t("appearance")}
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4">
-
-            {/* Theme toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {theme === "dark" ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
-                <span className="text-sm font-medium">{language === "ar" ? "الوضع الليلي" : "Dark Mode"}</span>
-              </div>
-              <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
-            </div>
-
-            <Separator className="my-4" />
-
-            {/* UI Scale */}
-            <div>
-              <div className="mb-3 flex items-center gap-3">
-                <Smartphone className="h-4.5 w-4.5 text-primary" />
-                <span className="text-sm font-medium">{t("ui_scale")}</span>
-              </div>
-              <div className="flex gap-2">
-                {[
-                { value: "normal" as const, labelKey: "scale_normal" as const },
-                { value: "large" as const, labelKey: "scale_large" as const },
-                { value: "xlarge" as const, labelKey: "scale_xlarge" as const }].
-                map((opt) =>
-                <button
-                  key={opt.value}
-                  onClick={() => setUIScale(opt.value)}
-                  className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
-                  uiScale === opt.value ?
-                  "bg-primary text-primary-foreground" :
-                  "bg-muted text-muted-foreground hover:bg-muted/80"}`
-                  }>
-                    {t(opt.labelKey)}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <Separator className="my-4" />
-
-            {/* Font size */}
-            <div>
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Type className="h-4.5 w-4.5 text-primary" />
-                  <span className="text-sm font-medium">{language === "ar" ? "حجم خط القرآن" : "Quran Font Size"}</span>
-                </div>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
-              </div>
-              <Slider
-                value={[fontSize]}
-                onValueChange={([v]) => setFontSize(v)}
-                min={16}
-                max={40}
-                step={2} />
-
-              <p
-                className="mt-3 text-center font-arabic text-muted-foreground"
-                style={{ fontSize }}>
-                بِسْمِ اللَّهِ
-              </p>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* ─── Reciter Selection (Collapsible) ─── */}
-        <section>
-          <div className="section-title flex items-center gap-1.5">
-            <Mic className="h-3.5 w-3.5" />
-            {t("reciter_section")}
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.02 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden">
-            
-            <Collapsible>
-              <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{RECITERS.find((r) => r.id === reciterId)?.name ?? "مشاري العفاسي"}</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="border-t border-border/50 px-2 py-2 max-h-64 overflow-y-auto space-y-0.5">
-                  {RECITERS.map((r) =>
-                  <div
-                    key={r.id}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
-                    reciterId === r.id ?
-                    "bg-primary/10 text-primary" :
-                    "text-foreground hover:bg-muted"}`
-                    }>
-                    
-                      <button
-                      onClick={() => setReciterId(r.id)}
-                      className="flex flex-1 items-center gap-3 min-w-0">
-                      
-                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                      reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
-                      }>
-                          {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
-                        </div>
-                        <span className="font-arabic truncate">{r.name}</span>
-                      </button>
-                      <button
-                      onClick={(e) => {e.stopPropagation();togglePreview(r);}}
-                      className="shrink-0 p-2.5 rounded-full hover:bg-muted-foreground/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                      title="معاينة الصوت">
-                      
-                        {previewLoading === r.id ?
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> :
-                      previewingReciter === r.id ?
-                      <Pause className="h-4 w-4 text-primary" /> :
-
-                      <Volume2 className="h-4 w-4 text-muted-foreground" />
-                      }
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </motion.div>
-        </section>
-
-        {/* ─── Tafsir Selection (Collapsible) ─── */}
-        <section>
-          <div className="section-title flex items-center gap-1.5">
-            <BookOpen className="h-3.5 w-3.5" />
-            {t("tafsir_section")}
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.025 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden">
-            
-            <Collapsible>
-              <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{TAFSIR_EDITIONS.find((t) => t.id === tafsirId)?.name ?? "تفسير الميسر"}</span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="border-t border-border/50 px-2 py-2 space-y-0.5">
-                  {TAFSIR_EDITIONS.map((t) =>
-                  <button
-                    key={t.id}
-                    onClick={() => setTafsirId(t.id)}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
-                    tafsirId === t.id ?
-                    "bg-primary/10 text-primary" :
-                    "text-foreground hover:bg-muted"}`
-                    }>
-                    
-                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-                    tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
-                    }>
-                        {tafsirId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
-                      </div>
-                      <span className="font-arabic">{t.name}</span>
-                    </button>
-                  )}
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </motion.div>
-        </section>
-
         {/* ─── Translation ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
@@ -534,7 +359,7 @@ export default function SettingsPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.028 }}
+            transition={{ delay: 0.01 }}
             className="rounded-xl bg-card shadow-sm overflow-hidden">
 
             <div className="flex items-center justify-between px-4 py-3.5">
@@ -580,6 +405,184 @@ export default function SettingsPage() {
           </motion.div>
         </section>
 
+        {/* ─── Appearance & Reading ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Palette className="h-3.5 w-3.5" />
+            {t("appearance")}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl bg-card p-5 shadow-elevated border border-border/50 space-y-4">
+
+            {/* Theme toggle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {theme === "dark" ? <Moon className="h-4.5 w-4.5 text-primary" /> : <Sun className="h-4.5 w-4.5 text-primary" />}
+                <span className="text-sm font-medium">{t("theme_dark_mode")}</span>
+              </div>
+              <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* UI Scale */}
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <Smartphone className="h-4.5 w-4.5 text-primary" />
+                <span className="text-sm font-medium">{t("ui_scale")}</span>
+              </div>
+              <div className="flex gap-2">
+                {[
+                { value: "normal" as const, labelKey: "scale_normal" as const },
+                { value: "large" as const, labelKey: "scale_large" as const },
+                { value: "xlarge" as const, labelKey: "scale_xlarge" as const }].
+                map((opt) =>
+                <button
+                  key={opt.value}
+                  onClick={() => setUIScale(opt.value)}
+                  className={`flex-1 rounded-xl py-2 text-sm font-medium transition-colors ${
+                  uiScale === opt.value ?
+                  "bg-primary text-primary-foreground" :
+                  "bg-muted text-muted-foreground hover:bg-muted/80"}`
+                  }>
+                    {t(opt.labelKey)}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* Font size */}
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Type className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">{t("quran_font_size")}</span>
+                </div>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{fontSize}px</span>
+              </div>
+              <Slider
+                value={[fontSize]}
+                onValueChange={([v]) => setFontSize(v)}
+                min={16}
+                max={40}
+                step={2} />
+
+              <p
+                className="mt-3 text-center font-arabic text-muted-foreground"
+                style={{ fontSize }}>
+                بِسْمِ اللَّهِ
+              </p>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ─── Reciter Selection (Collapsible) ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Mic className="h-3.5 w-3.5" />
+            {t("reciter_section")}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.02 }}
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+
+            <Collapsible>
+              <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
+                <span className="font-arabic">{RECITERS.find((r) => r.id === reciterId)?.name ?? "مشاري العفاسي"}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="border-t border-border/50 px-2 py-2 max-h-64 overflow-y-auto space-y-0.5">
+                  {RECITERS.map((r) =>
+                  <div
+                    key={r.id}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
+                    reciterId === r.id ?
+                    "bg-primary/10 text-primary" :
+                    "text-foreground hover:bg-muted"}`
+                    }>
+
+                      <button
+                      onClick={() => setReciterId(r.id)}
+                      className="flex flex-1 items-center gap-3 min-w-0">
+
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      reciterId === r.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                      }>
+                          {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                        </div>
+                        <span className="font-arabic truncate">{r.name}</span>
+                      </button>
+                      <button
+                      onClick={(e) => {e.stopPropagation();togglePreview(r);}}
+                      className="shrink-0 p-2.5 rounded-full hover:bg-muted-foreground/10 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                      title={t("audio_preview")}>
+
+                        {previewLoading === r.id ?
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> :
+                      previewingReciter === r.id ?
+                      <Pause className="h-4 w-4 text-primary" /> :
+
+                      <Volume2 className="h-4 w-4 text-muted-foreground" />
+                      }
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </motion.div>
+        </section>
+
+        {/* ─── Tafsir Selection (Collapsible) ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <BookOpen className="h-3.5 w-3.5" />
+            {t("tafsir_section")}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.025 }}
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+
+            <Collapsible>
+              <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
+                <span className="font-arabic">{TAFSIR_EDITIONS.find((t) => t.id === tafsirId)?.name ?? "تفسير الميسر"}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="border-t border-border/50 px-2 py-2 space-y-0.5">
+                  {TAFSIR_EDITIONS.map((t) =>
+                  <button
+                    key={t.id}
+                    onClick={() => setTafsirId(t.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors min-h-[44px] ${
+                    tafsirId === t.id ?
+                    "bg-primary/10 text-primary" :
+                    "text-foreground hover:bg-muted"}`
+                    }>
+
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                    tafsirId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                    }>
+                        {tafsirId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                      </div>
+                      <span className="font-arabic">{t.name}</span>
+                    </button>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </motion.div>
+        </section>
+
         {/* ─── Prayer Notifications ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
@@ -599,35 +602,35 @@ export default function SettingsPage() {
 
                 <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
                 }
-                <span className="text-sm font-medium">{language === "ar" ? "تذكير بأوقات الصلاة" : "Prayer Time Reminders"}</span>
+                <span className="text-sm font-medium">{t("prayer_time_reminder")}</span>
               </div>
               <Switch
                 checked={notificationsEnabled}
                 onCheckedChange={async (checked) => {
                   if (checked) {
                     if (!("Notification" in window)) {
-                      toast.error("المتصفح لا يدعم الإشعارات");
+                      toast.error(t("notifications_not_supported"));
                       return;
                     }
                     const perm = await Notification.requestPermission();
                     setNotificationPermission(perm);
                     if (perm === "granted") {
                       setNotificationsEnabled(true);
-                      toast.success("تم تفعيل إشعارات الصلاة");
+                      toast.success(t("prayer_time_reminder_enabled"));
                     } else {
-                      toast.error("تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح");
+                      toast.error(t("notifications_permission_denied"));
                     }
                   } else {
                     setNotificationsEnabled(false);
-                    toast.success("تم إيقاف إشعارات الصلاة");
+                    toast.success(t("prayer_time_reminder_disabled"));
                   }
                 }} />
-              
+
             </div>
             <p className="text-xs text-muted-foreground">
               {notificationPermission === "denied" ?
-              "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح" :
-              "ستصلك إشعارات عند دخول وقت كل صلاة"}
+              t("prayer_notifications_denied") :
+              t("prayer_time_hint")}
             </p>
 
             <Separator className="my-4" />
@@ -640,33 +643,33 @@ export default function SettingsPage() {
 
                 <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
                 }
-                <span className="text-sm font-medium">{language === "ar" ? "تذكير بأذكار الصباح والمساء" : "Morning & Evening Azkar Reminder"}</span>
+                <span className="text-sm font-medium">{t("azkar_reminder")}</span>
               </div>
               <Switch
                 checked={azkarNotificationsEnabled}
                 onCheckedChange={async (checked) => {
                   if (checked) {
                     if (!("Notification" in window)) {
-                      toast.error("المتصفح لا يدعم الإشعارات");
+                      toast.error(t("notifications_not_supported"));
                       return;
                     }
                     const perm = await Notification.requestPermission();
                     setNotificationPermission(perm);
                     if (perm === "granted") {
                       setAzkarNotificationsEnabled(true);
-                      toast.success("تم تفعيل تذكير الأذكار");
+                      toast.success(t("azkar_reminder_enabled"));
                     } else {
-                      toast.error("تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح");
+                      toast.error(t("notifications_permission_denied"));
                     }
                   } else {
                     setAzkarNotificationsEnabled(false);
-                    toast.success("تم إيقاف تذكير الأذكار");
+                    toast.success(t("azkar_reminder_disabled"));
                   }
                 }} />
-              
+
             </div>
             <p className="text-xs text-muted-foreground">
-              تذكير عند الفجر والمغرب لقراءة الأذكار
+              {t("azkar_reminder_hint")}
             </p>
           </motion.div>
         </section>
@@ -723,7 +726,7 @@ export default function SettingsPage() {
             className="rounded-xl bg-card p-4 shadow-sm">
             
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-medium">{language === "ar" ? "عدد الآيات يومياً" : "Daily verse count"}</span>
+              <span className="text-sm font-medium">{t("daily_verse_count")}</span>
               <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{goal} {t("ayahs")}</span>
             </div>
             <div className="flex gap-2 mb-3">
@@ -766,12 +769,12 @@ export default function SettingsPage() {
               className="rounded-xl bg-card p-4 shadow-sm">
               
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-sm font-medium">نصوص القرآن</span>
+                <span className="text-sm font-medium">{t("downloads_quran_text")}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedSurahs.length}/114`)}
                 </span>
               </div>
-              <p className="mb-3 text-xs text-muted-foreground">تحميل نصوص السور للقراءة بدون إنترنت</p>
+              <p className="mb-3 text-xs text-muted-foreground">{t("downloads_quran_desc")}</p>
 
               {downloading ?
               <div className="space-y-2">
@@ -779,10 +782,10 @@ export default function SettingsPage() {
                     <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${downloadProgress}%` }} />
-                  
+
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ التحميل... {toArabicNumerals(`${downloadProgress}%`)}
+                    {t("downloads_downloading")} {toArabicNumerals(`${downloadProgress}%`)}
                   </p>
                 </div> :
 
@@ -790,23 +793,23 @@ export default function SettingsPage() {
                   <button
                   onClick={handleClear}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/20">
-                  
+
                     <Trash2 className="h-3.5 w-3.5" />
-                    مسح الكل
+                    {t("downloads_clear_all")}
                   </button>
                   <button
                   onClick={handleDownloadAll}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                  
+
                     {downloadedSurahs.length === 114 ?
                   <>
                         <Check className="h-3.5 w-3.5" />
-                        مكتمل
+                        {t("downloads_complete")}
                       </> :
 
                   <>
                         <Download className="h-3.5 w-3.5" />
-                        تحميل الكل
+                        {t("downloads_download_all")}
                       </>
                   }
                   </button>
@@ -824,13 +827,13 @@ export default function SettingsPage() {
               <div className="mb-1 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Volume2 className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">التلاوات الصوتية</span>
+                  <span className="text-sm font-medium">{t("downloads_audio")}</span>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
                   {toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
-              <p className="mb-3 text-xs text-muted-foreground">تحميل التلاوات للاستماع بدون إنترنت</p>
+              <p className="mb-3 text-xs text-muted-foreground">{t("downloads_audio_desc")}</p>
 
               {audioDownloading ?
               <div className="space-y-2">
@@ -841,7 +844,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ تحميل التلاوات... {toArabicNumerals(`${audioDownloadProgress}%`)}
+                    {t("downloads_downloading_audio")} {toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
                 </div> :
               verifying ?
@@ -853,7 +856,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    جارٍ التحقق... {toArabicNumerals(`${verifyProgress.current}/${verifyProgress.total}`)}
+                    {t("downloads_verifying")} {toArabicNumerals(`${verifyProgress.current}/${verifyProgress.total}`)}
                   </p>
                 </div> :
 
@@ -866,37 +869,37 @@ export default function SettingsPage() {
                       disabled={downloadedAudio.length === 0}>
 
                         <Trash2 className="h-3.5 w-3.5" />
-                        مسح الصوت
+                        {t("downloads_clear_audio")}
                       </button>
                     </AlertDialogTrigger>
-                    <AlertDialogContent dir="rtl">
+                    <AlertDialogContent dir={isRTL ? "rtl" : "ltr"}>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>مسح جميع التلاوات؟</AlertDialogTitle>
+                        <AlertDialogTitle>{t("downloads_confirm_clear_audio_title")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          سيتم حذف جميع ملفات الصوت المحملة. يمكنك إعادة تحميلها لاحقاً.
+                          {t("downloads_confirm_clear_audio_desc")}
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter className="flex-row-reverse gap-2">
                         <AlertDialogAction onClick={handleClearAllAudio} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                          نعم، مسح الكل
+                          {t("downloads_confirm_yes")}
                         </AlertDialogAction>
-                        <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
                   <button
                   onClick={handleDownloadAllAudio}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                  
+
                     {downloadedAudio.length === 114 ?
                   <>
                         <Check className="h-3.5 w-3.5" />
-                        مكتمل
+                        {t("downloads_complete")}
                       </> :
 
                   <>
                         <Download className="h-3.5 w-3.5" />
-                        تحميل الكل
+                        {t("downloads_download_all")}
                       </>
                   }
                   </button>
@@ -907,7 +910,7 @@ export default function SettingsPage() {
                     onClick={handleVerifyDownloads}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-muted py-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/80">
                     <CheckCircle className="h-3.5 w-3.5" />
-                    التحقق من التحميلات
+                    {t("downloads_verify")}
                   </button>
                 )}
               </div>
@@ -918,7 +921,7 @@ export default function SettingsPage() {
                 <CollapsibleTrigger asChild>
                   <button className="mt-3 flex w-full items-center justify-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground">
                     {showAudioList ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showAudioList ? "إخفاء التفاصيل" : "عرض التفاصيل"}
+                    {showAudioList ? t("downloads_hide_details") : t("downloads_show_details")}
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -972,52 +975,52 @@ export default function SettingsPage() {
         <section>
             <div className="section-title flex items-center gap-1.5">
               <Smartphone className="h-3.5 w-3.5" />
-              تثبيت التطبيق
+              {t("install_app")}
             </div>
             <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="rounded-xl bg-card p-5 shadow-sm">
-            
+
               {isIOS ?
             <div className="space-y-3 text-center">
-                  <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
+                  <p className="text-sm text-foreground">{t("install_app_ios_intro")}</p>
                   <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">١.</span>
-                      <span>اضغط على زر المشاركة</span>
+                      <span className="font-medium">1.</span>
+                      <span>{installInstructions.step1}</span>
                       <Share className="h-4 w-4" />
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">٢.</span>
-                      <span>اختر "إضافة إلى الشاشة الرئيسية"</span>
+                      <span className="font-medium">2.</span>
+                      <span>{installInstructions.step2}</span>
                     </div>
                   </div>
                 </div> :
             deferredPrompt ?
             <div className="text-center space-y-3">
-                  <p className="text-sm text-muted-foreground">ثبّت التطبيق على جهازك للوصول السريع والعمل بدون إنترنت</p>
+                  <p className="text-sm text-muted-foreground">{t("install_subtitle")}</p>
                   <button
                 onClick={handleInstall}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                
+
                     <Download className="h-4 w-4" />
-                    تثبيت التطبيق
+                    {t("install_app")}
                   </button>
                 </div> :
 
             <div className="space-y-3 text-center">
-                  <p className="text-sm text-foreground">لتثبيت التطبيق على جهازك:</p>
+                  <p className="text-sm text-foreground">{t("install_app_intro")}</p>
                   <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">١.</span>
+                      <span className="font-medium">1.</span>
                       <span>{installInstructions.step1}</span>
                       {browserType === "chromium" && <MoreVertical className="h-4 w-4" />}
                       {browserType === "firefox" && <Menu className="h-4 w-4" />}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">٢.</span>
+                      <span className="font-medium">2.</span>
                       <span>{installInstructions.step2}</span>
                     </div>
                   </div>
@@ -1031,17 +1034,17 @@ export default function SettingsPage() {
         <section>
             <div className="section-title flex items-center gap-1.5">
               <Smartphone className="h-3.5 w-3.5" />
-              تثبيت التطبيق
+              {t("install_app")}
             </div>
             <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
             className="rounded-xl bg-card p-5 shadow-sm">
-            
+
               <div className="flex items-center justify-center gap-2 text-sm text-primary">
                 <CheckCircle className="h-4 w-4" />
-                <span>التطبيق مثبّت بالفعل</span>
+                <span>{t("install_app_already")}</span>
               </div>
             </motion.div>
           </section>
@@ -1067,7 +1070,7 @@ export default function SettingsPage() {
             <>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">إجمالي التخزين</span>
+                    <span className="text-sm font-medium">{t("storage_total")}</span>
                     <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                       {formatBytes(storageStats.total)}
                     </span>
@@ -1086,8 +1089,8 @@ export default function SettingsPage() {
                         <FileText className="h-4 w-4 text-primary" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">نصوص القرآن</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} سورة</p>
+                        <p className="text-sm font-medium">{t("storage_quran_text")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} {t("storage_surahs_count")}</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.quranText)}</span>
@@ -1099,8 +1102,8 @@ export default function SettingsPage() {
                         <Music className="h-4 w-4 text-accent-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">التلاوات الصوتية</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} ملف صوتي</p>
+                        <p className="text-sm font-medium">{t("storage_audio")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} {t("storage_audio_count")}</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.audio)}</span>
@@ -1112,8 +1115,8 @@ export default function SettingsPage() {
                         <BookMarked className="h-4 w-4 text-muted-foreground" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">التفاسير</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} سورة</p>
+                        <p className="text-sm font-medium">{t("storage_tafsir")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} {t("storage_tafsir_count")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1125,14 +1128,14 @@ export default function SettingsPage() {
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           </AlertDialogTrigger>
-                          <AlertDialogContent dir="rtl">
+                          <AlertDialogContent dir={isRTL ? "rtl" : "ltr"}>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>مسح جميع التفاسير؟</AlertDialogTitle>
-                              <AlertDialogDescription>سيتم حذف جميع التفاسير المحملة. يمكنك إعادة تحميلها لاحقاً.</AlertDialogDescription>
+                              <AlertDialogTitle>{t("storage_confirm_clear_tafsir_title")}</AlertDialogTitle>
+                              <AlertDialogDescription>{t("storage_confirm_clear_tafsir_desc")}</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter className="flex-row-reverse gap-2">
-                              <AlertDialogAction onClick={handleClearTafsir} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">نعم، مسح الكل</AlertDialogAction>
-                              <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleClearTafsir} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t("downloads_confirm_yes")}</AlertDialogAction>
+                              <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
@@ -1142,7 +1145,7 @@ export default function SettingsPage() {
                 </div>
 
                 {storageStats.total === 0 &&
-              <p className="text-center text-xs text-muted-foreground py-2">لا توجد بيانات محملة حالياً</p>
+              <p className="text-center text-xs text-muted-foreground py-2">{t("storage_empty")}</p>
               }
               </> :
             null}
@@ -1162,20 +1165,20 @@ export default function SettingsPage() {
             className="rounded-xl bg-card p-4 shadow-sm">
             
             <p className="mb-3 text-xs text-muted-foreground">
-              سيتم مسح سجل القراءة والعلامات المرجعية والمفضلة والأهداف اليومية. لن يتم حذف البيانات المحملة.
+              {t("reset_progress_desc")}
             </p>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-destructive/10 py-2.5 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20">
                   <RotateCcw className="h-4 w-4" />
-                  إعادة تعيين التقدم
+                  {t("reset_progress")}
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent dir="rtl">
+              <AlertDialogContent dir={isRTL ? "rtl" : "ltr"}>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>إعادة تعيين جميع التقدم؟</AlertDialogTitle>
+                  <AlertDialogTitle>{t("reset_progress_confirm_title")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    سيتم مسح: آخر قراءة، العلامات المرجعية، السور المفضلة، الهدف اليومي، سجل القراءة، وسلسلة الأيام. هل أنت متأكد؟
+                    {t("reset_progress_confirm_desc")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-row-reverse gap-2">
@@ -1187,14 +1190,14 @@ export default function SettingsPage() {
                       localStorage.removeItem("wise-daily-reading");
                       localStorage.removeItem("wise-streak");
                       localStorage.removeItem("wise-reading-history");
-                      toast.success("تم إعادة تعيين التقدم بنجاح");
+                      toast.success(t("reset_progress_success"));
                       setTimeout(() => window.location.reload(), 500);
                     }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    
-                    نعم، إعادة تعيين
+
+                    {t("reset_progress_confirm_btn")}
                   </AlertDialogAction>
-                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -1206,18 +1209,18 @@ export default function SettingsPage() {
         <section>
             <div className="section-title flex items-center gap-1.5">
               <Star className="h-3.5 w-3.5" />
-              رمضان
+              {t("ramadan_tab")}
             </div>
             <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.17 }}
             className="rounded-xl bg-card p-4 shadow-sm">
-            
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-lg">🌙</span>
-                  <span className="text-sm font-medium">إظهار تبويب رمضان</span>
+                  <span className="text-sm font-medium">{t("ramadan_show_tab")}</span>
                 </div>
                 <Switch
                 checked={isRamadanTabVisible()}
@@ -1227,13 +1230,13 @@ export default function SettingsPage() {
                   } else {
                     hideRamadanTab();
                   }
-                  toast.success(checked ? "تم إظهار تبويب رمضان" : "تم إخفاء تبويب رمضان");
+                  toast.success(checked ? t("ramadan_tab_shown") : t("ramadan_tab_hidden"));
                   setTimeout(() => window.location.reload(), 500);
                 }} />
-              
+
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
-                يظهر التبويب تلقائياً خلال شهر رمضان فقط
+                {t("ramadan_show_tab_desc")}
               </p>
             </motion.div>
           </section>
@@ -1260,7 +1263,7 @@ export default function SettingsPage() {
             </button>
 
             <Separator className="my-3" />
-            <p className="text-sm text-muted-foreground mb-4">{language === "ar" ? "تطبيق للقراءة والأذكار والصلاة" : "A Quran, Azkar & Prayer app"}</p>
+            <p className="text-sm text-muted-foreground mb-4">{t("about_description")}</p>
 
             {/* Check for Updates */}
             <Button
@@ -1273,8 +1276,8 @@ export default function SettingsPage() {
                 const hasUpdate = await checkForUpdate();
                 setCheckingUpdate(false);
                 if (!hasUpdate) {
-                  toast.success("أنت تستخدم أحدث نسخة", {
-                    description: "التطبيق محدث بالكامل",
+                  toast.success(t("up_to_date"), {
+                    description: t("up_to_date_desc"),
                     position: "bottom-center"
                   });
                 }
@@ -1294,7 +1297,7 @@ export default function SettingsPage() {
               onClick={async () => {
                 const shareData = {
                   title: 'Wise QURAN',
-                  text: language === "ar" ? 'تطبيق القرآن الكريم والأذكار — حمّله الآن!' : 'The Noble Quran & Azkar app — Download now!',
+                  text: t("share_app_text"),
                   url: 'https://quran.thewise.cloud'
                 };
                 if (navigator.share) {
