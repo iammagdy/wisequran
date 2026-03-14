@@ -354,6 +354,39 @@ interface Translations {
   correct: string;
   incorrect: string;
   verses: string;
+  strictness: string;
+  strictness_lenient: string;
+  strictness_normal: string;
+  strictness_strict: string;
+  islamic_feedback_excellent: string;
+  islamic_feedback_good: string;
+  islamic_feedback_weak: string;
+  my_progress: string;
+  accuracy_over_time: string;
+  no_progress_data: string;
+  partial: string;
+
+  // Listening Tab
+  listening_tab: string;
+  playback_speed: string;
+  verse_repeat: string;
+  repeat_off: string;
+  repeat_times: string;
+  now_playing_verse: string;
+  speed_label: string;
+  reciter_label: string;
+  listening_hint: string;
+
+  // HifzPage extras
+  hifz_streak: string;
+  hifz_streak_days: string;
+  daily_hifz_goal: string;
+  goal_surahs_per_day: string;
+  goal_ayahs_per_day: string;
+  set_goal: string;
+  todays_goal_progress: string;
+  hifz_goal_done: string;
+  reading_progress: string;
 }
 
 const ar: Translations = {
@@ -684,6 +717,35 @@ const ar: Translations = {
   correct: "صحيح",
   incorrect: "خطأ",
   verses: "آيات",
+  strictness: "مستوى الدقة",
+  strictness_lenient: "متساهل",
+  strictness_normal: "عادي",
+  strictness_strict: "صارم",
+  islamic_feedback_excellent: "ما شاء الله! بارك الله فيك",
+  islamic_feedback_good: "أحسنت! واصل التدريب",
+  islamic_feedback_weak: "جزاك الله خيراً، تحتاج لمزيد من المراجعة",
+  my_progress: "تقدمي",
+  accuracy_over_time: "دقة التلاوة عبر الوقت",
+  no_progress_data: "لا يوجد سجل بعد. ابدأ الاختبار لتتبع تقدمك.",
+  partial: "جزئي",
+  listening_tab: "الاستماع",
+  playback_speed: "سرعة التشغيل",
+  verse_repeat: "تكرار الآية",
+  repeat_off: "إيقاف",
+  repeat_times: "مرات",
+  now_playing_verse: "آية تعزف الآن",
+  speed_label: "السرعة",
+  reciter_label: "القارئ",
+  listening_hint: "استمع للقرآن مع عرض الآيات",
+  hifz_streak: "سلسلة الحفظ",
+  hifz_streak_days: "يوم متواصل",
+  daily_hifz_goal: "هدف الحفظ اليومي",
+  goal_surahs_per_day: "سور في اليوم",
+  goal_ayahs_per_day: "آيات في اليوم",
+  set_goal: "تحديد الهدف",
+  todays_goal_progress: "تقدم هدف اليوم",
+  hifz_goal_done: "ما شاء الله! أكملت هدف اليوم",
+  reading_progress: "تقدم القراءة",
 };
 
 const en: Translations = {
@@ -1014,6 +1076,35 @@ const en: Translations = {
   correct: "Correct",
   incorrect: "Incorrect",
   verses: "verses",
+  strictness: "Accuracy Level",
+  strictness_lenient: "Lenient",
+  strictness_normal: "Normal",
+  strictness_strict: "Strict",
+  islamic_feedback_excellent: "Mashallah! Barakallahu feek",
+  islamic_feedback_good: "Well done! Keep practicing",
+  islamic_feedback_weak: "Jazakallahu khairan — keep reviewing",
+  my_progress: "My Progress",
+  accuracy_over_time: "Accuracy Over Time",
+  no_progress_data: "No history yet. Start a test to track your progress.",
+  partial: "Partial",
+  listening_tab: "Listening",
+  playback_speed: "Playback Speed",
+  verse_repeat: "Verse Repeat",
+  repeat_off: "Off",
+  repeat_times: "times",
+  now_playing_verse: "Now Playing Verse",
+  speed_label: "Speed",
+  reciter_label: "Reciter",
+  listening_hint: "Listen to Quran with verse tracking",
+  hifz_streak: "Memorization Streak",
+  hifz_streak_days: "day streak",
+  daily_hifz_goal: "Daily Goal",
+  goal_surahs_per_day: "surahs/day",
+  goal_ayahs_per_day: "verses/day",
+  set_goal: "Set Goal",
+  todays_goal_progress: "Today's Goal Progress",
+  hifz_goal_done: "MashaAllah! Daily goal complete",
+  reading_progress: "Reading Progress",
 };
 
 interface LanguageContextValue {

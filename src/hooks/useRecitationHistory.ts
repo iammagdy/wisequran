@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useDeviceId } from "./useDeviceId";
+import type { StrictnessLevel } from "@/lib/ayah-match";
 
 export interface RecitationRecord {
   id: string;
@@ -15,6 +16,12 @@ export interface RecitationRecord {
   tested_at: string;
 }
 
+export interface PerAyahResult {
+  numberInSurah: number;
+  score: number;
+  isCorrect: boolean;
+}
+
 export interface SaveRecitationParams {
   surahNumber: number;
   ayahFrom: number;
@@ -23,6 +30,8 @@ export interface SaveRecitationParams {
   totalAyahs: number;
   correctAyahs: number;
   transcript: string;
+  strictness?: StrictnessLevel;
+  perAyah?: PerAyahResult[];
 }
 
 export function useRecitationHistory() {
@@ -31,18 +40,34 @@ export function useRecitationHistory() {
   const [loading, setLoading] = useState(false);
 
   const saveResult = useCallback(async (params: SaveRecitationParams): Promise<void> => {
-    const { error } = await supabase.from("recitation_history").insert({
-      device_id: deviceId,
-      surah_number: params.surahNumber,
-      ayah_from: params.ayahFrom,
-      ayah_to: params.ayahTo,
-      score: params.score,
-      total_ayahs: params.totalAyahs,
-      correct_ayahs: params.correctAyahs,
-      transcript: params.transcript,
-    });
-    if (error) {
-      console.error("Failed to save recitation result:", error.message);
+    const versesRange = `${params.ayahFrom}-${params.ayahTo}`;
+
+    const [legacyResult, sessionResult] = await Promise.all([
+      supabase.from("recitation_history").insert({
+        device_id: deviceId,
+        surah_number: params.surahNumber,
+        ayah_from: params.ayahFrom,
+        ayah_to: params.ayahTo,
+        score: params.score,
+        total_ayahs: params.totalAyahs,
+        correct_ayahs: params.correctAyahs,
+        transcript: params.transcript,
+      }),
+      supabase.from("recitation_sessions").insert({
+        session_id: deviceId,
+        surah_number: params.surahNumber,
+        verses_range: versesRange,
+        accuracy_score: params.score,
+        verse_results: params.perAyah ?? [],
+        strictness: params.strictness ?? "normal",
+      }),
+    ]);
+
+    if (legacyResult.error) {
+      console.error("Failed to save recitation result:", legacyResult.error.message);
+    }
+    if (sessionResult.error) {
+      console.error("Failed to save recitation session:", sessionResult.error.message);
     }
   }, [deviceId]);
 

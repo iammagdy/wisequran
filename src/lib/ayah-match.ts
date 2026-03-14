@@ -54,17 +54,26 @@ export interface AyahScoreResult {
   isCorrect: boolean;
 }
 
-export function scoreAyah(expectedText: string, spokenText: string): AyahScoreResult {
+export type StrictnessLevel = "lenient" | "normal" | "strict";
+
+const STRICTNESS_THRESHOLD: Record<StrictnessLevel, number> = {
+  lenient: 55,
+  normal: 70,
+  strict: 85,
+};
+
+export function scoreAyah(expectedText: string, spokenText: string, strictness: StrictnessLevel = "normal"): AyahScoreResult {
   const ayahScore = scoreAyahMatch(expectedText, spokenText);
   return {
     ayahScore,
-    isCorrect: ayahScore >= 70,
+    isCorrect: ayahScore >= STRICTNESS_THRESHOLD[strictness],
   };
 }
 
 export function scoreRangeRecitation(
   ayahs: { text: string; numberInSurah: number }[],
-  spokenTranscript: string
+  spokenTranscript: string,
+  strictness: StrictnessLevel = "normal"
 ): {
   overallScore: number;
   correctAyahs: number;
@@ -95,7 +104,7 @@ export function scoreRangeRecitation(
       estimatedEnd
     ).join(" ");
 
-    const { ayahScore, isCorrect } = scoreAyah(ayah.text, ayahSpokenSlice);
+    const { ayahScore, isCorrect } = scoreAyah(ayah.text, ayahSpokenSlice, strictness);
     perAyah.push({ numberInSurah: ayah.numberInSurah, score: ayahScore, isCorrect });
     if (isCorrect) correctAyahs++;
     wordOffset += ayahWordCount;

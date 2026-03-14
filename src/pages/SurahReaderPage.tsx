@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Layers, Share2, Maximize2, Globe } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Layers, Share2, Maximize2, Globe, Headphones } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
+import ListeningTab from "@/components/quran/ListeningTab";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -55,7 +56,7 @@ export default function SurahReaderPage() {
   const [focusModeActive, setFocusModeActive] = useState(false);
 
   // Tab & tafsir state
-  const [activeTab, setActiveTab] = useState<"text" | "tafsir" | "translation">("text");
+  const [activeTab, setActiveTab] = useState<"text" | "tafsir" | "translation" | "listening">("text");
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
   const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
   const [tafsirLoading, setTafsirLoading] = useState(false);
@@ -87,7 +88,7 @@ export default function SurahReaderPage() {
     hasTracked.current = false;
     setLoading(true);
     setError("");
-    setActiveTab(translationEnabled ? "translation" : "text");
+    setActiveTab((prev) => prev === "listening" ? "listening" : translationEnabled ? "translation" : "text");
     setFocusedAyah(null);
     setTafsirAyahs([]);
     setTafsirSearch("");
@@ -344,10 +345,10 @@ export default function SurahReaderPage() {
 
         {/* Tab switcher */}
         <div className="flex justify-center px-3 pt-1 pb-[4px]" dir={isRTL ? "rtl" : "ltr"}>
-          <div className="flex gap-1 p-1 rounded-2xl bg-muted/50 border-2 w-full max-w-sm">
+          <div className="flex gap-1 p-1 rounded-2xl bg-muted/50 border-2 w-full">
             <button
               onClick={() => {setActiveTab("text");setFocusedAyah(null);}}
-              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px]",
+              className={cn("flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all border min-h-[44px]",
               activeTab === "text" ?
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
@@ -356,7 +357,7 @@ export default function SurahReaderPage() {
             </button>
             <button
               onClick={() => setActiveTab("translation")}
-              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px] relative",
+              className={cn("flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all border min-h-[44px] relative",
               activeTab === "translation" ?
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
@@ -368,12 +369,22 @@ export default function SurahReaderPage() {
             </button>
             <button
               onClick={() => setActiveTab("tafsir")}
-              className={cn("flex-1 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all border min-h-[44px]",
+              className={cn("flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all border min-h-[44px]",
               activeTab === "tafsir" ?
               "bg-card text-foreground shadow-soft" :
               "text-muted-foreground hover:text-foreground border-transparent"
               )}>
               {t("tafsir_tab")}
+            </button>
+            <button
+              onClick={() => setActiveTab("listening")}
+              className={cn("flex-1 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all border min-h-[44px] flex items-center justify-center gap-1",
+              activeTab === "listening" ?
+              "bg-card text-foreground shadow-soft" :
+              "text-muted-foreground hover:text-foreground border-transparent"
+              )}>
+              <Headphones className="h-3.5 w-3.5" />
+              {t("listening_tab")}
             </button>
           </div>
         </div>
@@ -381,7 +392,17 @@ export default function SurahReaderPage() {
 
       {/* Content */}
       <div className="px-4 py-6 pt-[10px]">
-        {loading ?
+        {activeTab === "listening" ? (
+          !loading && ayahs.length > 0 ? (
+            <ListeningTab surahNumber={surahNumber} surahName={surahInfo?.name || `سورة ${surahNumber}`} ayahs={ayahs} />
+          ) : (
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) =>
+                <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+              )}
+            </div>
+          )
+        ) : loading ?
         <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) =>
           <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
@@ -445,6 +466,33 @@ export default function SurahReaderPage() {
       ) : activeTab === "text" ? (
         /* ===== Text Tab ===== */
         <>
+            {/* Reading progress bar */}
+            {ayahs.length > 0 && currentPage && (() => {
+              const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
+              const minPage = surahPages.length > 0 ? Math.min(...surahPages) : currentPage;
+              const maxPage = surahPages.length > 0 ? Math.max(...surahPages) : currentPage;
+              const totalPages = maxPage - minPage + 1;
+              const currentOffset = currentPage - minPage;
+              const pct = totalPages > 1 ? Math.round((currentOffset / (totalPages - 1)) * 100) : 100;
+              return (
+                <div className="mb-4 rounded-2xl bg-card border border-border/50 p-3 shadow-soft" dir={isRTL ? "rtl" : "ltr"}>
+                  <div className="flex items-center justify-between mb-2 text-xs">
+                    <span className="font-semibold text-muted-foreground">{t("reading_progress")}</span>
+                    <span className="font-bold text-primary">{language === "ar" ? toArabicNumerals(pct) : pct}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-primary"
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                  <p className="text-[0.625rem] text-muted-foreground mt-1.5 text-center">
+                    {language === "ar" ? `صفحة ${toArabicNumerals(currentPage)} من ${toArabicNumerals(maxPage)}` : `Page ${currentPage} of ${maxPage}`}
+                  </p>
+                </div>
+              );
+            })()}
             {surahNumber !== 1 && surahNumber !== 9 &&
           <div className="ornamental-divider mb-8 px-4">
                 <p

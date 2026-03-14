@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Mic } from "lucide-react";
+import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Mic, Flame, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
 import { useHifzReview } from "@/hooks/useHifzReview";
+import { useHifzStreak, useHifzGoal } from "@/hooks/useHifzStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
@@ -29,7 +30,10 @@ export default function HifzPage() {
   const navigate = useNavigate();
   const { getStatus, cycleStatus, stats } = useHifz();
   const review = useHifzReview();
+  const streak = useHifzStreak();
+  const goal = useHifzGoal();
   const [filter, setFilter] = useState<FilterMode>("all");
+  const [showGoalEditor, setShowGoalEditor] = useState(false);
 
   const filtered = SURAH_META.filter((s) => filter === "all" || getStatus(s.number) === filter);
   const todayQueue = review.getTodayQueue();
@@ -57,7 +61,9 @@ export default function HifzPage() {
   const handleMarkReviewed = (surahNumber: number, quality: "good" | "hard") => {
     const meta = SURAH_META.find((s) => s.number === surahNumber);
     review.markReviewed(surahNumber, quality);
+    streak.markActive();
     if (quality === "good") {
+      goal.markSurahReviewed();
       toast({
         title: language === "en" ? "Well done! ✨" : "أحسنت! ✨",
         description: language === "en"
@@ -111,6 +117,97 @@ export default function HifzPage() {
           <Progress value={stats.percentage} variant="gradient" size="sm" />
         </div>
       </motion.div>
+
+      {/* Streak + Goal Row */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }} className="mb-5 grid grid-cols-2 gap-3" dir={isRTL ? "rtl" : "ltr"}>
+        {/* Streak */}
+        <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
+            <Flame className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground tabular-nums">
+              {language === "ar" ? toArabicNumerals(streak.currentStreak) : streak.currentStreak}
+            </p>
+            <p className="text-[0.625rem] text-muted-foreground leading-tight">{t("hifz_streak_days")}</p>
+          </div>
+        </div>
+
+        {/* Daily Goal */}
+        <button
+          onClick={() => setShowGoalEditor((p) => !p)}
+          className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-start"
+        >
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <Target className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold text-foreground truncate">{t("daily_hifz_goal")}</p>
+            <p className="text-[0.625rem] text-muted-foreground">
+              {language === "ar"
+                ? `${toArabicNumerals(goal.reviewedToday)} / ${toArabicNumerals(goal.surahsPerDay)} ${t("goal_surahs_per_day")}`
+                : `${goal.reviewedToday} / ${goal.surahsPerDay} ${t("goal_surahs_per_day")}`}
+            </p>
+          </div>
+          {showGoalEditor ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+        </button>
+      </motion.div>
+
+      {/* Goal progress bar */}
+      <AnimatePresence>
+        {goal.surahsPerDay > 0 && !showGoalEditor && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-5 rounded-2xl bg-card border border-border/50 shadow-soft p-4 overflow-hidden"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <div className="flex items-center justify-between mb-2 text-xs">
+              <span className="font-semibold text-muted-foreground">{t("todays_goal_progress")}</span>
+              <span className="font-bold text-primary">
+                {language === "ar" ? toArabicNumerals(goal.goalProgress) : goal.goalProgress}%
+              </span>
+            </div>
+            <Progress value={goal.goalProgress} variant="gradient" size="sm" />
+            {goal.isGoalDone && (
+              <p className="text-xs text-primary font-semibold text-center mt-2">{t("hifz_goal_done")}</p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Goal Editor */}
+      <AnimatePresence>
+        {showGoalEditor && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-5 rounded-2xl bg-card border border-border/50 shadow-soft p-4 overflow-hidden"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <p className="text-sm font-semibold mb-3">{t("set_goal")}</p>
+            <p className="text-xs text-muted-foreground mb-2">{t("goal_surahs_per_day")}</p>
+            <div className="flex gap-2 flex-wrap">
+              {[1, 2, 3, 5, 7, 10].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => { goal.setSurahsPerDay(n); setShowGoalEditor(false); }}
+                  className={cn(
+                    "rounded-xl px-4 py-2.5 text-sm font-bold transition-all",
+                    goal.surahsPerDay === n
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/70"
+                  )}
+                >
+                  {language === "ar" ? toArabicNumerals(n) : n}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Recitation Test Banner */}
       <motion.button

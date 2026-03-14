@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useRecitationHistory } from "@/hooks/useRecitationHistory";
-import { scoreRangeRecitation } from "@/lib/ayah-match";
+import { scoreRangeRecitation, type StrictnessLevel } from "@/lib/ayah-match";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahRangeSelector from "@/components/recitation/SurahRangeSelector";
 import MicButton from "@/components/recitation/MicButton";
@@ -39,6 +39,8 @@ function UnsupportedBanner({ message, desc }: { message: string; desc: string })
   );
 }
 
+const STRICTNESS_OPTIONS: StrictnessLevel[] = ["lenient", "normal", "strict"];
+
 export default function RecitationTestPage() {
   const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
@@ -50,11 +52,13 @@ export default function RecitationTestPage() {
   );
   const [ayahFrom, setAyahFrom] = useState(1);
   const [ayahTo, setAyahTo] = useState(7);
+  const [strictness, setStrictness] = useState<StrictnessLevel>("normal");
   const [phase, setPhase] = useState<PagePhase>("setup");
   const [ayahsData, setAyahsData] = useState<Ayah[]>([]);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
@@ -103,7 +107,7 @@ export default function RecitationTestPage() {
     const fullTranscript = speech.transcript || speech.interimTranscript;
     if (!fullTranscript.trim()) return;
 
-    const { overallScore, correctAyahs, perAyah } = scoreRangeRecitation(ayahsData, fullTranscript);
+    const { overallScore, correctAyahs, perAyah } = scoreRangeRecitation(ayahsData, fullTranscript, strictness);
 
     const scoreResult: ScoreResult = {
       overallScore,
@@ -124,6 +128,8 @@ export default function RecitationTestPage() {
       totalAyahs: ayahsData.length,
       correctAyahs,
       transcript: fullTranscript,
+      strictness,
+      perAyah,
     });
   }, [speech.status, speech.transcript, phase]);
 
@@ -139,9 +145,22 @@ export default function RecitationTestPage() {
     }
   }, [showHistory, surahNumber]);
 
+  useEffect(() => {
+    if (showProgress) {
+      recitationHistory.fetchHistory(surahNumber);
+    }
+  }, [showProgress, surahNumber]);
+
   const rangeLabel = language === "ar"
     ? `${meta.name} · ${toArabicNumerals(ayahFrom)}–${toArabicNumerals(ayahTo)}`
     : `${meta.englishName} · ${ayahFrom}–${ayahTo}`;
+
+  const progressData = recitationHistory.history
+    .filter((r) => r.surah_number === surahNumber)
+    .slice(0, 10)
+    .reverse();
+
+  const maxScore = progressData.length > 0 ? Math.max(...progressData.map((r) => r.score)) : 100;
 
   return (
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
@@ -191,6 +210,39 @@ export default function RecitationTestPage() {
               onRangeChange={handleRangeChange}
             />
 
+            {/* Strictness Selector */}
+            <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4">
+              <p className="text-sm font-semibold mb-3">{t("strictness")}</p>
+              <div className="flex gap-2">
+                {STRICTNESS_OPTIONS.map((level) => (
+                  <motion.button
+                    key={level}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setStrictness(level)}
+                    className={cn(
+                      "flex-1 rounded-xl py-2.5 text-xs font-bold transition-all",
+                      strictness === level
+                        ? level === "lenient"
+                          ? "bg-primary text-primary-foreground shadow-soft"
+                          : level === "normal"
+                          ? "bg-accent text-accent-foreground shadow-soft"
+                          : "bg-destructive text-destructive-foreground shadow-soft"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70"
+                    )}
+                  >
+                    {t(`strictness_${level}` as Parameters<typeof t>[0])}
+                  </motion.button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2.5">
+                {strictness === "lenient"
+                  ? language === "ar" ? "يقبل أخطاء بسيطة في النطق" : "Accepts minor pronunciation errors"
+                  : strictness === "normal"
+                  ? language === "ar" ? "دقة متوازنة للتقييم" : "Balanced accuracy for evaluation"
+                  : language === "ar" ? "يتطلب دقة عالية في التلاوة" : "Requires high recitation accuracy"}
+              </p>
+            </div>
+
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={handleStartTest}
@@ -204,6 +256,63 @@ export default function RecitationTestPage() {
             >
               {loadingAyahs ? t("loading") : t("start_test")}
             </motion.button>
+
+            {/* My Progress Section */}
+            <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
+              <button
+                onClick={() => setShowProgress((p) => !p)}
+                className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold">{t("my_progress")}</span>
+                </div>
+                {showProgress ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+              </button>
+
+              {showProgress && (
+                <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} className="overflow-hidden">
+                  <div className="border-t border-border/40 p-4">
+                    {recitationHistory.loading ? (
+                      <div className="text-center text-sm text-muted-foreground py-4">{t("loading")}</div>
+                    ) : progressData.length === 0 ? (
+                      <div className="text-center text-sm text-muted-foreground py-4">{t("no_progress_data")}</div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-3 font-semibold">{t("accuracy_over_time")} · {language === "ar" ? meta.name : meta.englishName}</p>
+                        <div className="flex items-end gap-1.5 h-20">
+                          {progressData.map((rec, i) => {
+                            const heightPct = maxScore > 0 ? (rec.score / maxScore) * 100 : 0;
+                            const barColor =
+                              rec.score >= 85 ? "bg-primary" :
+                              rec.score >= 60 ? "bg-accent" :
+                              "bg-destructive";
+                            return (
+                              <div key={rec.id} className="flex-1 flex flex-col items-center gap-1">
+                                <span className="text-[0.55rem] font-bold tabular-nums text-muted-foreground">
+                                  {language === "ar" ? toArabicNumerals(rec.score) : rec.score}
+                                </span>
+                                <motion.div
+                                  className={cn("w-full rounded-t-md", barColor)}
+                                  initial={{ height: 0 }}
+                                  animate={{ height: `${heightPct}%` }}
+                                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                                  style={{ minHeight: 4 }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between mt-1 text-[0.6rem] text-muted-foreground/60">
+                          <span>{language === "ar" ? "الأقدم" : "Oldest"}</span>
+                          <span>{language === "ar" ? "الأحدث" : "Latest"}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </div>
 
             {/* History Section */}
             <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
@@ -346,6 +455,7 @@ export default function RecitationTestPage() {
               surahName={language === "ar" ? meta.name : meta.englishName}
               ayahFrom={ayahFrom}
               ayahTo={ayahTo}
+              strictness={strictness}
               onTryAgain={handleTryAgain}
             />
           </motion.div>
