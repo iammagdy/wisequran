@@ -139,7 +139,7 @@ html.ui-scale-xlarge { font-size: 20px; }
   }
 
   .pb-nav-with-bar {
-    padding-bottom: calc(9rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
   }
 
   .pb-surah-reader {
