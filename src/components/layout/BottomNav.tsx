@@ -32,7 +32,7 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
       <div className="glass-subtle border-t border-border/30">
-        <div className="mx-auto flex max-w-lg items-center justify-around py-2 px-2">
+        <div className="mx-auto flex max-w-lg items-center justify-around py-2 px-2" style={{ height: 'var(--nav-height)' }}>
           {tabs.map(({ path, icon: Icon, key }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             return (

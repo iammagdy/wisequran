@@ -33,7 +33,7 @@ export default function GlobalAudioBar() {
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
       className="fixed inset-x-0 z-[51] px-3 pb-3 pointer-events-none"
-      style={{ bottom: 'calc(5rem + env(safe-area-inset-bottom, 0px))' }}
+      style={{ bottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem)' }}
     >
       <div
         onClick={handleOpenNowPlaying}

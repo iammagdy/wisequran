@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    --nav-height: 5.5rem;
     --background: 40 30% 97%;
     --foreground: 150 20% 15%;
 
@@ -131,15 +132,16 @@ html.ui-scale-xlarge { font-size: 20px; }
 
   /* Bottom nav height-aware positioning */
   .bottom-above-nav {
-    bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
   }
 
   .pb-nav {
-    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px));
   }
 
+  /* GlobalAudioBar is ~4rem tall + 0.5rem gap above nav */
   .pb-nav-with-bar {
-    padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--nav-height) + 4.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .pb-surah-reader {
