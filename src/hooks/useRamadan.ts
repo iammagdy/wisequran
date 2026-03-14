@@ -47,7 +47,9 @@ export function getRamadanDay(): number {
     if (monthPart?.value === "9" && dayPart) {
       return parseInt(dayPart.value, 10);
     }
-  } catch {}
+  } catch (error) {
+    console.error("Error calculating Ramadan day from Hijri calendar:", error);
+  }
   // Fallback for preview mode
   if (localStorage.getItem("wise-ramadan-preview") === "true") {
     const saved = localStorage.getItem("wise-ramadan-day");

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, BookOpen, Bookmark, Star, Loader2, History, Flame, MoreHorizontal, BarChart3, GraduationCap } from "lucide-react";
+import { Search, BookOpen, Bookmark, Star, Loader as Loader2, History, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, GraduationCap } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -91,7 +91,7 @@ export default function QuranPage() {
   const isSurahMode = viewMode === "surahs";
 
   return (
-    <div className="px-4 pt-[15px] pb-[15px] pl-[10px]">
+    <div className="px-4 pt-4 pb-4 pl-2.5">
       {/* Header */}
       <div className="flex items-center justify-between mb-[5px] mt-0">
         <div>
@@ -152,7 +152,7 @@ export default function QuranPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-[16px] mb-[5px] pt-[2px] pb-[2px]"
+        className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-4 mb-1.5 pt-0.5 pb-0.5"
         dir="rtl">
         
         <div className="flex items-center justify-between mb-3">

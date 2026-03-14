@@ -68,7 +68,9 @@ export function useAchievements() {
         const parsed = JSON.parse(stats);
         return parsed.totalAyahs || 0;
       }
-    } catch {}
+    } catch (error) {
+      console.error("Error reading total ayahs from localStorage:", error);
+    }
     return 0;
   }, []);
   
@@ -76,7 +78,9 @@ export function useAchievements() {
     try {
       const data = localStorage.getItem("wise-goal-completions");
       if (data) return JSON.parse(data) as number;
-    } catch {}
+    } catch (error) {
+      console.error("Error reading goal completions from localStorage:", error);
+    }
     return 0;
   }, []);
 
@@ -134,7 +138,7 @@ export function useAchievements() {
     checkAndUnlock();
     const interval = setInterval(checkAndUnlock, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [checkAndUnlock]);
 
   const getAchievements = useCallback((): Achievement[] => {
     const totalAyahs = getTotalAyahs();

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader2, Search, Layers, Share2, Maximize2 } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Layers, Share2, Maximize2 } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -94,7 +94,7 @@ export default function SurahReaderPage() {
       setError("تعذر تحميل السورة. تحقق من الاتصال بالإنترنت.");
       setLoading(false);
     });
-  }, [surahNumber]);
+  }, [surahNumber, addToHistory, setLastRead]);
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && !hasTracked.current) {
@@ -102,7 +102,7 @@ export default function SurahReaderPage() {
       markActive();
       increment(ayahs.length);
     }
-  }, [loading, ayahs.length]);
+  }, [loading, ayahs.length, markActive, increment]);
 
   // Scroll to target ayah from query param
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function SurahReaderPage() {
       setTafsirError("تعذر تحميل التفسير. تحقق من الاتصال بالإنترنت.");
       setTafsirLoading(false);
     });
-  }, [activeTab, surahNumber, tafsirEdition]);
+  }, [activeTab, surahNumber, tafsirEdition, tafsirAyahs.length]);
 
   const isBookmarked = (ayahNum: number) =>
   bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);

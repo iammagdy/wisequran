@@ -1209,7 +1209,11 @@ export default function SettingsPage() {
                   url: 'https://quran.thewise.cloud'
                 };
                 if (navigator.share) {
-                  try {await navigator.share(shareData);} catch {}
+                  try {
+                    await navigator.share(shareData);
+                  } catch (error) {
+                    console.error("Error sharing app:", error);
+                  }
                 } else {
                   await navigator.clipboard.writeText(shareData.url);
                   toast.success("تم نسخ الرابط");
@@ -1323,8 +1327,8 @@ export default function SettingsPage() {
               <p
                 className="font-bold text-foreground mb-1 text-2xl"
                 style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}>
-                
-                ​مجدي صابر
+
+                مجدي صابر
               </p>
 
               <p className="text-xs text-muted-foreground mb-4">

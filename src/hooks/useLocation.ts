@@ -28,7 +28,9 @@ export function useLocation(autoFetch: boolean = false): UseLocationResult {
           return parsed;
         }
       }
-    } catch {}
+    } catch (error) {
+      console.error("Error parsing cached location data:", error);
+    }
     return null;
   });
   const [loading, setLoading] = useState(!location);
@@ -62,7 +64,9 @@ export function useLocation(autoFetch: boolean = false): UseLocationResult {
             const json = await res.json();
             data.city = json.address?.city || json.address?.town || json.address?.village || json.address?.state;
           }
-        } catch {}
+        } catch (error) {
+          console.error("Error fetching city name from reverse geocoding:", error);
+        }
 
         localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         setLocation(data);

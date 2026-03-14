@@ -80,7 +80,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       audioRef.current = null;
       cleanupBlobUrl();
     };
-  }, []);
+  }, [cleanupBlobUrl]);
 
   // Media Session API
   useEffect(() => {
@@ -100,7 +100,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         navigator.mediaSession.setActionHandler("pause", null);
       }
     };
-  }, [state.playing, state.surahName, state.playingReciterId]);
+  }, [state.playing, state.surahName, state.playingReciterId, togglePlayPause]);
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {

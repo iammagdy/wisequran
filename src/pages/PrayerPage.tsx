@@ -68,7 +68,9 @@ export default function PrayerPage() {
     try {
       const cached = localStorage.getItem("wise-user-location");
       if (cached) return JSON.parse(cached) as {latitude: number;longitude: number;city?: string;};
-    } catch {}
+    } catch (error) {
+      console.error("Error parsing cached location for prayer times:", error);
+    }
     return null;
   }, []);
 
@@ -95,7 +97,7 @@ export default function PrayerPage() {
       return fresh;
     }
     return data;
-  }, [data]);
+  }, [data, setData]);
 
   const togglePrayer = (prayerId: string) => {
     const newCompleted = todayData.completed.includes(prayerId) ?
@@ -110,7 +112,7 @@ export default function PrayerPage() {
   const heroPrayer = nextPrayer ? PRAYERS.find((p) => p.id === nextPrayer.id) : null;
 
   return (
-    <div className="px-4 pt-6 pl-[5px] pb-[20px]">
+    <div className="px-4 pt-6 pl-1.5 pb-5">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div />
@@ -130,7 +132,7 @@ export default function PrayerPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-3 rounded-2xl bg-card p-3.5 shadow-elevated text-center space-y-0.5 border border-border/50 pb-[5px] pt-[5px]">
+        className="mb-3 rounded-2xl bg-card p-3.5 shadow-elevated text-center space-y-0.5 border border-border/50 pb-1.5 pt-1.5">
         
         <p className="text-base font-bold">{getArabicDayName(new Date().getDay())}</p>
         <p className="text-sm font-semibold text-primary">{getHijriDate(new Date())}</p>
@@ -144,7 +146,7 @@ export default function PrayerPage() {
         transition={{ delay: 0.05 }}
         whileTap={{ scale: 0.97 }}
         onClick={() => navigate("/qibla")}
-        className="w-full rounded-2xl gradient-hero p-3 shadow-elevated border border-primary/10 flex items-center gap-3 text-right pb-[5px] pt-[5px] bg-[#ecf278]/[0.46] mb-[10px] mt-[10px]">
+        className="w-full rounded-2xl gradient-hero p-3 shadow-elevated border border-primary/10 flex items-center gap-3 text-right pb-1.5 pt-1.5 bg-[#D4AF37]/20 mb-2.5 mt-2.5">
         
         <div className="rounded-xl bg-primary/15 p-2.5">
           <Compass className="h-5 w-5 text-primary" />
@@ -161,7 +163,7 @@ export default function PrayerPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden pb-[5px] pt-[5px] mb-[10px]">
+        className="rounded-2xl gradient-hero p-4 shadow-elevated border border-primary/10 relative overflow-hidden pb-1.5 pt-1.5 mb-2.5">
         
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-primary blur-3xl" />

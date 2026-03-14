@@ -19,13 +19,7 @@ export default function RamadanPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  let ramadanData;
-  try {
-    ramadanData = useRamadan();
-  } catch (error) {
-    console.error("Error in useRamadan hook:", error);
-    if (!hasError) setHasError(true);
-  }
+  const ramadanData = useRamadan();
 
   const {
     toggleJuz = () => {},
