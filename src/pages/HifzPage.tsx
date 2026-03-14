@@ -233,6 +233,33 @@ export default function HifzPage() {
         <ArrowRight className={cn("h-4 w-4 opacity-70", isRTL && "rotate-180")} />
       </motion.button>
 
+      {/* Start Today's Review Card — shown only when queue has items */}
+      {todayQueue.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.07 }}
+          className="mb-5 rounded-2xl border border-primary/30 bg-primary/5 p-4 shadow-soft"
+          dir={isRTL ? "rtl" : "ltr"}
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-foreground">
+                {language === "ar"
+                  ? `لديك ${toArabicNumerals(todayQueue.length)} ${todayQueue.length === 1 ? "سورة" : "سور"} للمراجعة اليوم`
+                  : `You have ${todayQueue.length} surah${todayQueue.length === 1 ? "" : "s"} to review today`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {language === "ar" ? "ابدأ مراجعتك اليومية أدناه" : "Start your daily review below"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Today's Review Section */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir={isRTL ? "rtl" : "ltr"}>
         <div className="flex items-center justify-between mb-3">

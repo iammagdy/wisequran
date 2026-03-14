@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2 } from "lucide-react";
+import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X } from "lucide-react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
@@ -10,6 +10,9 @@ import type { Ayah } from "@/lib/quran-api";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 const REPEAT_OPTIONS = [0, 2, 3, 5, 7, 10] as const;
+
+type TimerPreset = "verse" | "chapter" | 5 | 10 | 15 | 20 | 30;
+const TIMER_PRESETS: TimerPreset[] = ["verse", "chapter", 5, 10, 15, 20, 30];
 
 interface Props {
   surahNumber: number;
@@ -26,6 +29,10 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
   const [repeatCount, setRepeatCount] = useState<number>(0);
   const [currentRepeat, setCurrentRepeat] = useState(0);
   const [showReciterPicker, setShowReciterPicker] = useState(false);
+  const [activeTimer, setActiveTimer] = useState<TimerPreset | null>(null);
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const repeatRef = useRef(repeatCount);
   const currentRepeatRef = useRef(currentRepeat);
 
@@ -47,6 +54,59 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
     } else {
       player.play(surahNumber, surahName, ayahs);
     }
+  };
+
+  const getTimerSeconds = useCallback((preset: TimerPreset): number => {
+    if (preset === "verse") return 0;
+    if (preset === "chapter") return 0;
+    return preset * 60;
+  }, []);
+
+  const startTimer = useCallback((preset: TimerPreset) => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    setActiveTimer(preset);
+
+    if (preset === "verse" || preset === "chapter") {
+      setTimerRunning(false);
+      setTimerSecondsLeft(0);
+      return;
+    }
+
+    const seconds = preset * 60;
+    setTimerSecondsLeft(seconds);
+    setTimerRunning(true);
+
+    timerIntervalRef.current = setInterval(() => {
+      setTimerSecondsLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerIntervalRef.current!);
+          setTimerRunning(false);
+          const audioEl = document.querySelector("audio") as HTMLAudioElement | null;
+          if (audioEl) audioEl.pause();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  const cancelTimer = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    setActiveTimer(null);
+    setTimerRunning(false);
+    setTimerSecondsLeft(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    };
+  }, []);
+
+  const formatTimerTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
@@ -261,6 +321,76 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
               ? `تكرار ${toArabicNumerals(currentRepeat)} من ${toArabicNumerals(repeatCount)}`
               : `Repeat ${currentRepeat} of ${repeatCount}`}
           </p>
+        )}
+      </div>
+
+      {/* Listening Timer */}
+      <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Timer className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold">
+            {language === "ar" ? "مؤقت الاستماع" : "Listening Timer"}
+          </span>
+          {timerRunning && timerSecondsLeft > 0 && (
+            <span className="ms-auto text-sm font-bold tabular-nums text-primary">
+              {formatTimerTime(timerSecondsLeft)}
+            </span>
+          )}
+          {activeTimer && (
+            <button
+              onClick={cancelTimer}
+              className={cn("ms-auto rounded-lg p-1 hover:bg-muted transition-colors text-muted-foreground", timerRunning && timerSecondsLeft > 0 && "ms-2")}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {TIMER_PRESETS.map((preset) => {
+            const label =
+              preset === "verse"
+                ? language === "ar" ? "آية واحدة" : "1 Verse"
+                : preset === "chapter"
+                ? language === "ar" ? "سورة كاملة" : "Full Chapter"
+                : `${language === "ar" ? toArabicNumerals(preset) : preset} ${language === "ar" ? "د" : "min"}`;
+            const isActive = activeTimer === preset;
+            return (
+              <motion.button
+                key={String(preset)}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => isActive ? cancelTimer() : startTimer(preset)}
+                className={cn(
+                  "rounded-xl px-3 py-2 text-xs font-bold transition-all",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-soft"
+                    : "bg-muted text-muted-foreground hover:bg-muted/70"
+                )}
+              >
+                {label}
+              </motion.button>
+            );
+          })}
+        </div>
+        {activeTimer === "verse" && (
+          <p className="text-xs text-primary font-semibold mt-2.5">
+            {language === "ar" ? "سيتوقف التشغيل بعد الآية الحالية" : "Playback will stop after current verse"}
+          </p>
+        )}
+        {activeTimer === "chapter" && (
+          <p className="text-xs text-primary font-semibold mt-2.5">
+            {language === "ar" ? "سيتوقف التشغيل بعد اكتمال السورة" : "Playback will stop after surah completes"}
+          </p>
+        )}
+        {timerRunning && timerSecondsLeft > 0 && (
+          <div className="mt-3">
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-primary"
+                animate={{ width: `${(timerSecondsLeft / (activeTimer as number * 60)) * 100}%` }}
+                transition={{ duration: 1 }}
+              />
+            </div>
+          </div>
         )}
       </div>
 

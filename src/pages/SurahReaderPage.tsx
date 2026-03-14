@@ -493,6 +493,28 @@ export default function SurahReaderPage() {
                 </div>
               );
             })()}
+            {/* Mushaf / Ayah view toggle */}
+            <div className="mb-4 flex gap-2 p-1 rounded-2xl bg-muted/50 border border-border/30" dir={isRTL ? "rtl" : "ltr"}>
+              <button
+                onClick={() => setReaderMode("ayah")}
+                className={cn(
+                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
+                  readerMode === "ayah" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("ayah_view")}
+              </button>
+              <button
+                onClick={() => setReaderMode("mushaf")}
+                className={cn(
+                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
+                  readerMode === "mushaf" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t("mushaf_view")}
+              </button>
+            </div>
+
             {surahNumber !== 1 && surahNumber !== 9 &&
           <div className="ornamental-divider mb-8 px-4">
                 <p
