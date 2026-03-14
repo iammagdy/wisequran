@@ -222,7 +222,7 @@ export default function SurahReaderPage() {
   const currentReciterName = getReciterById(audioPlayer.reciterId).name;
 
   return (
-    <div className="min-h-screen pb-surah-reader">
+    <div className={cn("min-h-screen", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
       {/* Header */}
       <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
         <div className="flex items-center justify-between px-4 py-3 pb-[5px] pt-[12px]">
