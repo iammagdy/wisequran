@@ -17,6 +17,7 @@ import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-a
 import { downloadSurahAudio, formatBytes, verifyAndRepairDownloads } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
+import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-editions";
 import { toast } from "sonner";
 import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
 import { APP_VERSION, changelog } from "@/data/changelog";
@@ -44,6 +45,8 @@ export default function SettingsPage() {
   const [fontSize, setFontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [tafsirId, setTafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+  const [translationEnabled, setTranslationEnabled] = useLocalStorage<boolean>("wise-translation-enabled", false);
+  const [translationId, setTranslationId] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [calcMethod, setCalcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [azkarNotificationsEnabled, setAzkarNotificationsEnabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
@@ -488,6 +491,58 @@ export default function SettingsPage() {
                 </div>
               </CollapsibleContent>
             </Collapsible>
+          </motion.div>
+        </section>
+
+        {/* ─── Translation ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Globe className="h-3.5 w-3.5" />
+            الترجمة
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.028 }}
+            className="rounded-xl bg-card shadow-sm overflow-hidden">
+
+            <div className="flex items-center justify-between px-4 py-3.5">
+              <span className="text-sm font-medium">إظهار الترجمة</span>
+              <Switch
+                checked={translationEnabled}
+                onCheckedChange={setTranslationEnabled} />
+            </div>
+
+            {translationEnabled && (
+              <Collapsible>
+                <CollapsibleTrigger className="flex w-full items-center justify-between border-t border-border/50 px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
+                  <span>{TRANSLATION_EDITIONS.find((t) => t.id === translationId)?.name ?? "Sahih International"}</span>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="border-t border-border/50 px-2 py-2 max-h-64 overflow-y-auto space-y-0.5">
+                    {TRANSLATION_EDITIONS.map((t) =>
+                    <button
+                      key={t.id}
+                      onClick={() => setTranslationId(t.id)}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                      translationId === t.id ?
+                      "bg-primary/10 text-primary" :
+                      "text-foreground hover:bg-muted"}`
+                      }>
+                      <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                      translationId === t.id ? "border-primary bg-primary" : "border-muted-foreground/30"}`
+                      }>
+                        {translationId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                      </div>
+                      <span className="flex-1 text-right">{t.name}</span>
+                      <span className="text-xs text-muted-foreground">{t.language}</span>
+                    </button>
+                    )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </motion.div>
         </section>
 

@@ -16,6 +16,7 @@ import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
+import { DEFAULT_TRANSLATION, TRANSLATION_EDITIONS } from "@/data/translation-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
 import FocusMode from "@/components/quran/FocusMode";
@@ -45,6 +46,8 @@ export default function SurahReaderPage() {
   const [bookmarks, setBookmarks] = useLocalStorage<{surah: number;ayah: number;}[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
+  const [translationEnabled] = useLocalStorage<boolean>("wise-translation-enabled", false);
+  const [translationEdition] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
   const [focusModeActive, setFocusModeActive] = useState(false);
 
@@ -56,6 +59,10 @@ export default function SurahReaderPage() {
   const [tafsirError, setTafsirError] = useState("");
   const [tafsirSearch, setTafsirSearch] = useState("");
   const tafsirEditionRef = useRef(tafsirEdition);
+
+  const [translationAyahs, setTranslationAyahs] = useState<TafsirAyah[]>([]);
+  const translationEditionRef = useRef(translationEdition);
+  const translationEnabledRef = useRef(translationEnabled);
 
   const { increment } = useDailyReading();
   const { markActive } = useStreak();
@@ -81,6 +88,7 @@ export default function SurahReaderPage() {
     setFocusedAyah(null);
     setTafsirAyahs([]);
     setTafsirSearch("");
+    setTranslationAyahs([]);
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()]).
     then(([ayahData, surahList]) => {
       setAyahs(ayahData);
@@ -180,6 +188,21 @@ export default function SurahReaderPage() {
       setTafsirLoading(false);
     });
   }, [activeTab, surahNumber, tafsirEdition, tafsirAyahs.length]);
+
+  // Fetch translation whenever enabled/edition/surah changes
+  useEffect(() => {
+    if (!translationEnabled) {
+      setTranslationAyahs([]);
+      return;
+    }
+    const editionChanged = translationEditionRef.current !== translationEdition;
+    const enabledChanged = translationEnabledRef.current !== translationEnabled;
+    translationEditionRef.current = translationEdition;
+    translationEnabledRef.current = translationEnabled;
+    if (!editionChanged && !enabledChanged && translationAyahs.length > 0) return;
+
+    fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
+  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
 
   const isBookmarked = (ayahNum: number) =>
   bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
@@ -467,6 +490,19 @@ export default function SurahReaderPage() {
                       
                           {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
+                        {translationEnabled && translationAyahs.length > 0 && (() => {
+                          const t = translationAyahs.find((t) => t.numberInSurah === ayah.numberInSurah);
+                          if (!t) return null;
+                          const edition = TRANSLATION_EDITIONS.find((e) => e.id === translationEdition);
+                          return (
+                            <p
+                              className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed"
+                              dir={edition?.dir ?? "ltr"}
+                              style={{ textAlign: edition?.dir === "rtl" ? "right" : "left" }}>
+                              {t.text}
+                            </p>
+                          );
+                        })()}
                       </motion.div>
                     </div>);
 
