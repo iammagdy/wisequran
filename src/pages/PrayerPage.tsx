@@ -181,7 +181,7 @@ export default function PrayerPage() {
               <span className="text-xs font-semibold text-muted-foreground">{t("next_prayer")}</span>
               {streak > 0 &&
             <span className="rounded-full badge-gradient px-2.5 py-0.5 text-xs font-bold">
-                  🔥 {toArabicNumerals(String(streak))} {t("days_streak")}
+                  🔥 {language === "ar" ? toArabicNumerals(String(streak)) : streak} {t("days_streak")}
                 </span>
             }
             </div>
@@ -210,7 +210,7 @@ export default function PrayerPage() {
         className="rounded-2xl bg-card p-3.5 shadow-elevated border border-border/50 pt-[5px] pb-[5px] mb-[10px]">
 
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="text-muted-foreground font-medium">{toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)}</span>
+          <span className="text-muted-foreground font-medium">{language === "ar" ? toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`) : `${todayData.completed.length}/${PRAYERS.length}`}</span>
           <span className="font-bold">
             {progress === 100 ? t("prayers_complete") : t("complete_prayers")}
           </span>
@@ -282,6 +282,7 @@ export default function PrayerPage() {
 
 /** Single countdown digit unit */
 function CountdownUnit({ value, label }: {value: string;label: string;}) {
+  const { language } = useLanguage();
   return (
     <div className="flex flex-col items-center">
       <motion.div
@@ -291,7 +292,7 @@ function CountdownUnit({ value, label }: {value: string;label: string;}) {
         transition={{ duration: 0.2 }}
         className="rounded-xl bg-card shadow-elevated px-3 py-2 min-w-[48px] border border-border/50">
 
-        <span className="text-2xl font-bold text-primary tabular-nums">{toArabicNumerals(value)}</span>
+        <span className="text-2xl font-bold text-primary tabular-nums">{language === "ar" ? toArabicNumerals(value) : value}</span>
       </motion.div>
       <span className="text-[0.625rem] text-muted-foreground mt-1 font-medium">{label}</span>
     </div>);

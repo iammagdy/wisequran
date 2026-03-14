@@ -97,22 +97,22 @@ export default function HifzPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl bg-card p-5 shadow-elevated border border-border/50">
         <div className="grid grid-cols-3 gap-2 mb-4 text-center" dir={isRTL ? "rtl" : "ltr"}>
           <div>
-            <p className="text-xl font-bold text-primary">{toArabicNumerals(stats.memorized)}</p>
+            <p className="text-xl font-bold text-primary">{language === "ar" ? toArabicNumerals(stats.memorized) : stats.memorized}</p>
             <p className="text-xs text-muted-foreground">{t("memorized")}</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-accent">{toArabicNumerals(stats.inProgress)}</p>
+            <p className="text-xl font-bold text-accent">{language === "ar" ? toArabicNumerals(stats.inProgress) : stats.inProgress}</p>
             <p className="text-xs text-muted-foreground">{t("in_progress")}</p>
           </div>
           <div>
-            <p className="text-xl font-bold text-muted-foreground">{toArabicNumerals(stats.notStarted)}</p>
+            <p className="text-xl font-bold text-muted-foreground">{language === "ar" ? toArabicNumerals(stats.notStarted) : stats.notStarted}</p>
             <p className="text-xs text-muted-foreground">{t("not_started")}</p>
           </div>
         </div>
         <div dir={isRTL ? "rtl" : "ltr"}>
           <div className="flex items-center justify-between mb-2 text-sm">
-            <span className="text-muted-foreground">{toArabicNumerals(stats.memorizedAyahs)} / {toArabicNumerals(stats.totalAyahs)} {t("ayah")}</span>
-            <span className="font-bold text-primary">{toArabicNumerals(stats.percentage)}%</span>
+            <span className="text-muted-foreground">{language === "ar" ? toArabicNumerals(stats.memorizedAyahs) : stats.memorizedAyahs} / {language === "ar" ? toArabicNumerals(stats.totalAyahs) : stats.totalAyahs} {t("ayah")}</span>
+            <span className="font-bold text-primary">{language === "ar" ? toArabicNumerals(stats.percentage) : stats.percentage}%</span>
           </div>
           <Progress value={stats.percentage} variant="gradient" size="sm" />
         </div>
@@ -363,15 +363,15 @@ export default function HifzPage() {
         {review.stats.totalInReview > 0 && (
           <div className="mt-3 flex gap-3 text-center">
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
-              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalInReview)}</p>
+              <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.totalInReview) : review.stats.totalInReview}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("in_review")}</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
-              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.dueToday)}</p>
+              <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.dueToday) : review.stats.dueToday}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("due_today")}</p>
             </div>
             <div className="flex-1 rounded-xl bg-muted/50 p-3">
-              <p className="text-lg font-bold text-foreground">{toArabicNumerals(review.stats.totalReviewsDone)}</p>
+              <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.totalReviewsDone) : review.stats.totalReviewsDone}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("total_reviews")}</p>
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function HifzPage() {
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
               <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
-              <span className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(surah.numberOfAyahs)} {t("ayah")}</span>
+              <span className="text-[0.625rem] text-muted-foreground">{language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}</span>
               {/* Review strength indicator for memorized surahs */}
               {reviewItem && (
                 <div className="flex gap-0.5 mt-0.5">

@@ -16,10 +16,11 @@ interface Props {
   ayahs?: Ayah[];
 }
 
-function formatTime(s: number) {
+function formatTime(s: number, lang: string) {
   const m = Math.floor(s / 60);
   const sec = Math.floor(s % 60);
-  return toArabicNumerals(`${m}:${sec.toString().padStart(2, "0")}`);
+  const base = `${m}:${sec.toString().padStart(2, "0")}`;
+  return lang === "ar" ? toArabicNumerals(base) : base;
 }
 
 const TIMER_PRESETS = [5, 10, 15, 20];
@@ -129,7 +130,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="flex items-center justify-center gap-2 rounded-xl bg-muted p-2 text-[0.625rem] text-muted-foreground"
-              dir="rtl">
+              dir={language === "ar" ? "rtl" : "ltr"}>
 
                 <WifiOff className="h-3 w-3" />
                 {t("audio_unavailable_offline")}
@@ -171,9 +172,9 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   dir="rtl" />
 
               </div>
-              <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir="rtl">
-                <span className="text-base text-[#4b9b73]">{formatTime(currentTime)}</span>
-                <span className="text-base text-[#4b9b73]">{duration > 0 ? formatTime(duration) : "--:--"}</span>
+              <div className="flex justify-between text-[0.625rem] text-muted-foreground tabular-nums" dir={language === "ar" ? "rtl" : "ltr"}>
+                <span className="text-base text-[#4b9b73]">{formatTime(currentTime, language)}</span>
+                <span className="text-base text-[#4b9b73]">{duration > 0 ? formatTime(duration, language) : "--:--"}</span>
               </div>
             </div>
 
@@ -192,7 +193,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
           </div>
 
           {/* Row 2: Surah name + reciter + status + download */}
-          <div className="flex items-center justify-between" dir="rtl">
+          <div className="flex items-center justify-between" dir={language === "ar" ? "rtl" : "ltr"}>
             <div className="flex flex-col min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="font-arabic text-sm font-bold text-foreground truncate">
@@ -224,7 +225,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               {downloading &&
               <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  {toArabicNumerals(`${dlProgress}%`)}
+                  {language === "ar" ? toArabicNumerals(`${dlProgress}%`) : `${dlProgress}%`}
                 </span>
               }
               {cached && !downloading &&
@@ -247,7 +248,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
 
                 <div className="border-t border-border/30 pt-3">
                   {!timerActive ?
-                <div className="flex gap-2" dir="rtl">
+                <div className="flex gap-2" dir={language === "ar" ? "rtl" : "ltr"}>
                       {TIMER_PRESETS.map((m) =>
                   <motion.button
                     key={m}
@@ -260,11 +261,11 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   )}
                     </div> :
 
-                <div className="flex items-center justify-between" dir="rtl">
+                <div className="flex items-center justify-between" dir={language === "ar" ? "rtl" : "ltr"}>
                       <div className="flex items-center gap-2">
                         <Timer className="h-4 w-4 text-primary" />
                         <span className="font-arabic text-base font-bold tabular-nums text-foreground">
-                          {formatTime(timerRemaining)}
+                          {formatTime(timerRemaining, language)}
                         </span>
                       </div>
                       <motion.button
@@ -283,7 +284,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         </div>
 
         <div className="px-4 pb-2">
-          <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir="rtl">
+          <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir={language === "ar" ? "rtl" : "ltr"}>
             {t("audio_disclaimer")}
           </p>
         </div>

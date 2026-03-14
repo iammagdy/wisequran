@@ -242,22 +242,22 @@ export default function SurahReaderPage() {
                 <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
                   <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors">
-                    صفحة {toArabicNumerals(currentPage)}
+                    {language === "ar" ? `صفحة ${toArabicNumerals(currentPage)}` : `${t("page")} ${currentPage}`}
                     {minPage && maxPage && minPage !== maxPage &&
                       <span className="text-primary/60 mr-1">
-                        ({toArabicNumerals(minPage)}–{toArabicNumerals(maxPage)})
+                        {language === "ar" ? `(${toArabicNumerals(minPage)}–${toArabicNumerals(maxPage)})` : `(${minPage}–${maxPage})`}
                       </span>
                       }
                   </button>
                 </PopoverTrigger>
                 <PopoverContent side="bottom" align="start" className="w-56 p-3" dir={isRTL ? "rtl" : "ltr"}>
-                  <p className="text-xs font-medium text-foreground mb-2">انتقل إلى صفحة</p>
+                  <p className="text-xs font-medium text-foreground mb-2">{t("go_to_page")}</p>
                   <form
                       onSubmit={(e) => {
                         e.preventDefault();
                         const pageNum = Number(goToPageInput);
                         if (!pageNum || pageNum < 1 || pageNum > 604) {
-                          toast({ title: "رقم صفحة غير صالح", description: "أدخل رقمًا بين ١ و ٦٠٤" });
+                          toast({ title: t("invalid_page"), description: language === "ar" ? "أدخل رقمًا بين ١ و ٦٠٤" : "Enter a number between 1 and 604" });
                           return;
                         }
                         const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
@@ -265,8 +265,10 @@ export default function SurahReaderPage() {
                         const maxPage = Math.max(...surahPages);
                         if (pageNum < minPage || pageNum > maxPage) {
                           toast({
-                            title: "صفحة خارج نطاق السورة",
-                            description: `هذه السورة تقع في الصفحات ${toArabicNumerals(minPage)} - ${toArabicNumerals(maxPage)}`
+                            title: t("page_out_of_range"),
+                            description: language === "ar"
+                              ? `هذه السورة تقع في الصفحات ${toArabicNumerals(minPage)} - ${toArabicNumerals(maxPage)}`
+                              : `This surah is on pages ${minPage} - ${maxPage}`
                           });
                           return;
                         }
@@ -290,13 +292,13 @@ export default function SurahReaderPage() {
                         max={604}
                         value={goToPageInput}
                         onChange={(e) => setGoToPageInput(e.target.value)}
-                        placeholder="رقم الصفحة"
+                        placeholder={language === "ar" ? "رقم الصفحة" : "Page number"}
                         className="text-center text-sm h-8"
                         autoFocus />
                     <button
                         type="submit"
                         className="shrink-0 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                      انتقل
+                      {t("go")}
                     </button>
                   </form>
                 </PopoverContent>
@@ -307,7 +309,7 @@ export default function SurahReaderPage() {
             <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `${t("surah")} ${surahNumber}`}</h1>
             <p className="text-[0.6875rem] text-muted-foreground">
               {surahInfo &&
-              <span>{toArabicNumerals(surahInfo.numberOfAyahs)} {t("ayah")} · {surahInfo.revelationType === "Meccan" ? t("revelation_meccan") : t("revelation_medinan")}</span>
+              <span>{language === "ar" ? toArabicNumerals(surahInfo.numberOfAyahs) : surahInfo.numberOfAyahs} {t("ayah")} · {surahInfo.revelationType === "Meccan" ? t("revelation_meccan") : t("revelation_medinan")}</span>
               }
             </p>
           </div>
@@ -503,7 +505,7 @@ export default function SurahReaderPage() {
                       {showPageSep &&
                   <div className="flex items-center gap-3 py-2 text-muted-foreground">
                           <div className="h-px flex-1 bg-border" />
-                          <span className="text-xs font-medium">صفحة {toArabicNumerals(ayah.page!)}</span>
+                          <span className="text-xs font-medium">{language === "ar" ? `صفحة ${toArabicNumerals(ayah.page!)}` : `${t("page")} ${ayah.page}`}</span>
                           <div className="h-px flex-1 bg-border" />
                         </div>
                   }
@@ -542,7 +544,7 @@ export default function SurahReaderPage() {
                           surahNumber={surahNumber} />
                           </div>
                           <div className="number-badge h-8 w-8 text-xs">
-                            {toArabicNumerals(ayah.numberInSurah)}
+                            {language === "ar" ? toArabicNumerals(ayah.numberInSurah) : ayah.numberInSurah}
                           </div>
                         </div>
                         <p
@@ -587,7 +589,7 @@ export default function SurahReaderPage() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4 text-primary" />
                     <h2 className="font-arabic text-base font-bold text-foreground">
-                      {t("tafsir_tab")} {t("ayah")} {toArabicNumerals(focusedAyah)}
+                      {t("tafsir_tab")} {t("ayah")} {language === "ar" ? toArabicNumerals(focusedAyah) : focusedAyah}
                     </h2>
                   </div>
                   <span className="text-xs text-muted-foreground">{editionName}</span>
@@ -605,7 +607,7 @@ export default function SurahReaderPage() {
                 <button
               onClick={() => setFocusedAyah(null)}
               className="text-sm text-primary hover:underline">
-                  ← عرض تفسير السورة بالكامل
+                  {language === "ar" ? "← عرض تفسير السورة بالكامل" : `← ${t("show_full_tafsir")}`}
                 </button>
               </div>) : (
 
@@ -623,12 +625,12 @@ export default function SurahReaderPage() {
                 value=""
                 onValueChange={(val) => setFocusedAyah(Number(val))}>
                     <SelectTrigger className="w-40 shrink-0 text-right">
-                      <SelectValue placeholder="انتقل إلى آية..." />
+                      <SelectValue placeholder={language === "ar" ? "انتقل إلى آية..." : t("jump_to_ayah")} />
                     </SelectTrigger>
                     <SelectContent>
                       {tafsirAyahs.map((tafsirItem) =>
                   <SelectItem key={tafsirItem.numberInSurah} value={String(tafsirItem.numberInSurah)}>
-                          {t("ayah")} {toArabicNumerals(tafsirItem.numberInSurah)}
+                          {t("ayah")} {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}
                         </SelectItem>
                   )}
                     </SelectContent>
@@ -661,10 +663,10 @@ export default function SurahReaderPage() {
                       <div className="mb-2 flex items-center gap-2">
                         <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                           <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
-                            {toArabicNumerals(tafsirItem.numberInSurah)}
+                            {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}
                           </span>
                         </span>
-                        <span className="text-xs text-muted-foreground">{t("ayah")} {toArabicNumerals(tafsirItem.numberInSurah)}</span>
+                        <span className="text-xs text-muted-foreground">{t("ayah")} {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}</span>
                       </div>
                       <p
                   className="font-arabic text-foreground/90 leading-[2.2]"

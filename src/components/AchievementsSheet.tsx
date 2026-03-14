@@ -12,7 +12,7 @@ interface Props {
 
 export function AchievementsSheet({ trigger }: Props) {
   const { achievements, unlockedCount, totalCount } = useAchievements();
-  const { t } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
 
   const categories = [
     { id: "streak", name: t("achievement_streak"), icon: "🔥" },
@@ -28,7 +28,7 @@ export function AchievementsSheet({ trigger }: Props) {
           <button className="flex items-center gap-2 rounded-xl bg-card px-4 py-2.5 shadow-soft border border-border/50 transition-all hover:shadow-elevated">
             <Trophy className="h-4 w-4 text-gold" />
             <span className="text-sm font-medium">
-              {toArabicNumerals(unlockedCount)}/{toArabicNumerals(totalCount)}
+              {language === "ar" ? toArabicNumerals(unlockedCount) : unlockedCount}/{language === "ar" ? toArabicNumerals(totalCount) : totalCount}
             </span>
           </button>
         )}
@@ -44,7 +44,7 @@ export function AchievementsSheet({ trigger }: Props) {
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-muted-foreground">{t("overall_progress")}</span>
               <span className="text-sm font-bold text-gold">
-                {toArabicNumerals(unlockedCount)} / {toArabicNumerals(totalCount)}
+                {language === "ar" ? toArabicNumerals(unlockedCount) : unlockedCount} / {language === "ar" ? toArabicNumerals(totalCount) : totalCount}
               </span>
             </div>
             <Progress value={(unlockedCount / totalCount) * 100} className="h-2" />
@@ -52,7 +52,7 @@ export function AchievementsSheet({ trigger }: Props) {
         </div>
 
         {/* Categories */}
-        <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8" dir="rtl">
+        <div className="overflow-y-auto max-h-[calc(85vh-200px)] px-6 pb-8" dir={isRTL ? "rtl" : "ltr"}>
           {categories.map((category) => {
             const categoryAchievements = achievements.filter((a) => a.category === category.id);
             const unlockedInCategory = categoryAchievements.filter((a) => a.unlocked).length;
@@ -63,7 +63,7 @@ export function AchievementsSheet({ trigger }: Props) {
                   <span className="text-lg">{category.icon}</span>
                   <h3 className="font-bold text-foreground">{category.name}</h3>
                   <span className="text-xs text-muted-foreground mr-auto">
-                    {toArabicNumerals(unlockedInCategory)}/{toArabicNumerals(categoryAchievements.length)}
+                    {language === "ar" ? toArabicNumerals(unlockedInCategory) : unlockedInCategory}/{language === "ar" ? toArabicNumerals(categoryAchievements.length) : categoryAchievements.length}
                   </span>
                 </div>
 
@@ -82,6 +82,7 @@ export function AchievementsSheet({ trigger }: Props) {
 }
 
 function AchievementCard({ achievement }: { achievement: Achievement }) {
+  const { language } = useLanguage();
   const progressPercent = achievement.target
     ? Math.min((achievement.progress || 0) / achievement.target * 100, 100)
     : 0;
@@ -128,8 +129,8 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
           {!achievement.unlocked && achievement.target && (
             <div className="mt-2">
               <div className="flex items-center justify-between text-[0.625rem] text-muted-foreground mb-1">
-                <span>{toArabicNumerals(achievement.progress || 0)}</span>
-                <span>{toArabicNumerals(achievement.target)}</span>
+                <span>{language === "ar" ? toArabicNumerals(achievement.progress || 0) : achievement.progress || 0}</span>
+                <span>{language === "ar" ? toArabicNumerals(achievement.target) : achievement.target}</span>
               </div>
               <Progress value={progressPercent} className="h-1" />
             </div>

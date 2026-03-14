@@ -48,7 +48,7 @@ export default function GlobalAudioBar() {
           />
         </div>
 
-        <div className="flex items-center gap-3 px-4 py-3" dir="rtl">
+        <div className="flex items-center gap-3 px-4 py-3" dir={language === "ar" ? "rtl" : "ltr"}>
           {/* Play/Pause */}
           <motion.button
             whileTap={{ scale: 0.9 }}
@@ -69,12 +69,12 @@ export default function GlobalAudioBar() {
           </motion.button>
 
           {/* Info — entire bar is clickable */}
-          <div className="flex-1 min-w-0 text-right pointer-events-none">
+          <div className={`flex-1 min-w-0 pointer-events-none ${language === "ar" ? "text-right" : "text-left"}`}>
             <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
             <p className="text-[0.625rem] text-muted-foreground truncate">
               {getReciterById(playingReciterId).name}
               {currentAyahInSurah !== null && totalAyahs > 0 && (
-                <span className="mr-2"> · {language === "en" ? "v." : "آية"} {toArabicNumerals(currentAyahInSurah)} {t("of")} {toArabicNumerals(totalAyahs)}</span>
+                <span className="ms-2"> · {language === "en" ? "v." : t("ayah")} {language === "ar" ? toArabicNumerals(currentAyahInSurah) : currentAyahInSurah} {t("of")} {language === "ar" ? toArabicNumerals(totalAyahs) : totalAyahs}</span>
               )}
             </p>
           </div>

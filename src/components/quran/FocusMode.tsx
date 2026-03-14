@@ -15,10 +15,11 @@ interface FocusModeProps {
   onClose: () => void;
 }
 
-function formatTime(seconds: number): string {
+function formatTime(seconds: number, lang: string): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${toArabicNumerals(String(m).padStart(2, "0"))}:${toArabicNumerals(String(s).padStart(2, "0"))}`;
+  const base = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return lang === "ar" ? toArabicNumerals(base) : base;
 }
 
 export default function FocusMode({
@@ -34,7 +35,7 @@ export default function FocusMode({
   const [controlsVisible, setControlsVisible] = useState(true);
   const hideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   // Timer
   useEffect(() => {
@@ -113,7 +114,7 @@ export default function FocusMode({
             <div className="flex items-center gap-1.5 rounded-full bg-muted/80 backdrop-blur-sm px-3 py-1.5 shadow-soft border border-border/30">
               <Timer className="h-3.5 w-3.5 text-primary" />
               <span className="text-sm font-bold text-foreground tabular-nums" dir="ltr">
-                {formatTime(elapsed)}
+                {formatTime(elapsed, language)}
               </span>
             </div>
           </motion.div>

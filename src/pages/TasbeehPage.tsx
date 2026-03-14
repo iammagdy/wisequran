@@ -74,7 +74,7 @@ export default function TasbeehPage() {
       {/* Today total - compact at top */}
       <div className="text-center mb-2">
         <span className="text-secondary-foreground text-base">{t("today_total")}: </span>
-        <span className="font-bold text-primary text-base">{toArabicNumerals(todayTotal)}</span>
+        <span className="font-bold text-primary text-base">{language === "ar" ? toArabicNumerals(todayTotal) : todayTotal}</span>
       </div>
 
       {/* Spacer to push counter down */}
@@ -142,10 +142,10 @@ export default function TasbeehPage() {
               animate={{ scale: 1 }}
               className={`text-5xl font-bold leading-none ${isComplete ? 'text-gold' : 'text-foreground'}`}>
 
-              {toArabicNumerals(count)}
+              {language === "ar" ? toArabicNumerals(count) : count}
             </motion.span>
             <span className="text-lg text-muted-foreground mt-2">
-              / {toArabicNumerals(target)}
+              / {language === "ar" ? toArabicNumerals(target) : target}
             </span>
             {isComplete &&
             <motion.span
@@ -192,7 +192,7 @@ export default function TasbeehPage() {
           className="rounded-xl"
           onClick={() => {setTarget(t);setCount(0);setShowTargetPicker(false);}}>
 
-              {toArabicNumerals(t)}
+              {language === "ar" ? toArabicNumerals(t) : t}
             </Button>
         )}
         </motion.div>

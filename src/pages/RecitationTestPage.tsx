@@ -401,7 +401,7 @@ export default function RecitationTestPage() {
                   {ayahsData.map((a) => (
                     <p key={a.numberInSurah} className="font-arabic text-base leading-loose text-center">
                       {a.text}
-                      <span className="text-muted-foreground text-sm ms-1">﴿{toArabicNumerals(a.numberInSurah)}﴾</span>
+                      <span className="text-muted-foreground text-sm ms-1">﴿{a.numberInSurah}﴾</span>
                     </p>
                   ))}
                 </div>

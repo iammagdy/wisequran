@@ -21,6 +21,7 @@ function DhikrCounter({
   isFavorite: boolean;
   onToggleFavorite: () => void;
 }) {
+  const { language } = useLanguage();
   const [remaining, setRemaining] = useState(dhikr.count);
   const done = remaining === 0;
   const progress = ((dhikr.count - remaining) / dhikr.count) * 100;
@@ -91,7 +92,7 @@ function DhikrCounter({
               : "bg-accent/90 text-accent-foreground shadow-elevated hover:shadow-elevated-lg"
           )}
         >
-          {done ? "✓" : toArabicNumerals(remaining)}
+          {done ? "✓" : (language === "ar" ? toArabicNumerals(remaining) : remaining)}
         </motion.button>
       </div>
     </motion.div>
@@ -101,11 +102,13 @@ function DhikrCounter({
 function CategoryCard({
   cat,
   isCategoryDone,
+  isRTL,
   language,
   onClick,
 }: {
   cat: AzkarCategory;
   isCategoryDone: (id: string) => boolean;
+  isRTL: boolean;
   language: string;
   onClick: () => void;
 }) {
@@ -118,18 +121,21 @@ function CategoryCard({
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
       className={cn(
-        "relative flex flex-col items-start rounded-2xl p-4 shadow-elevated border-2 transition-all hover:shadow-elevated-lg group text-right w-full",
+        "relative flex flex-col rounded-2xl p-4 shadow-elevated border-2 transition-all hover:shadow-elevated-lg group w-full",
+        isRTL ? "items-start text-right" : "items-start text-left",
         done ? "bg-primary/8 border-primary/25" : "bg-card border-border/50"
       )}
-      dir="rtl"
+      dir={isRTL ? "rtl" : "ltr"}
     >
       {done && (
-        <div className="absolute top-2.5 left-2.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+        <div className={cn("absolute top-2.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center", isRTL ? "left-2.5" : "right-2.5")}>
           <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
         </div>
       )}
-      <p className="font-bold text-sm leading-snug text-foreground mb-0.5">{cat.nameAr}</p>
-      <p className="text-xs text-muted-foreground leading-snug mb-2">{cat.name}</p>
+      <p className="font-bold text-sm leading-snug text-foreground mb-0.5">
+        {language === "ar" ? cat.nameAr : cat.name}
+      </p>
+      {language === "ar" && <p className="text-xs text-muted-foreground leading-snug mb-2">{cat.name}</p>}
       <span className="text-xs text-muted-foreground rounded-full bg-muted px-2 py-0.5">
         {language === "en"
           ? `${cat.items.length} adhkar`
@@ -273,7 +279,7 @@ export default function AzkarPage() {
                   filteredSections.map(({ section, matchingCats }) => (
                     <div key={section.id}>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-1">
-                        {section.nameAr}
+                        {language === "ar" ? section.nameAr : section.name}
                       </p>
                       <div className="grid grid-cols-2 gap-2.5">
                         {matchingCats.map((cat) => (
@@ -281,6 +287,7 @@ export default function AzkarPage() {
                             key={cat.id}
                             cat={cat}
                             isCategoryDone={isCategoryDone}
+                            isRTL={isRTL}
                             language={language}
                             onClick={() => setSelectedCategory(cat)}
                           />
@@ -308,12 +315,14 @@ export default function AzkarPage() {
                         onClick={() => toggleSection(section.id)}
                         whileTap={{ scale: 0.99 }}
                         className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
-                        dir="rtl"
+                        dir={isRTL ? "rtl" : "ltr"}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="font-bold text-base text-foreground leading-snug">{section.nameAr}</p>
-                            <p className="text-xs text-muted-foreground leading-snug">{section.name}</p>
+                          <div className={isRTL ? "text-right" : "text-left"}>
+                            <p className="font-bold text-base text-foreground leading-snug">
+                              {language === "ar" ? section.nameAr : section.name}
+                            </p>
+                            {language === "ar" && <p className="text-xs text-muted-foreground leading-snug">{section.name}</p>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -353,6 +362,7 @@ export default function AzkarPage() {
                                   key={cat.id}
                                   cat={cat}
                                   isCategoryDone={isCategoryDone}
+                                  isRTL={isRTL}
                                   language={language}
                                   onClick={() => setSelectedCategory(cat)}
                                 />
@@ -383,8 +393,10 @@ export default function AzkarPage() {
                 <ArrowRight className="h-5 w-5" />
               </motion.button>
               <div>
-                <h1 className="text-xl font-bold" dir="rtl">{selectedCategory.nameAr}</h1>
-                <p className="text-xs text-muted-foreground">{selectedCategory.name}</p>
+                <h1 className="text-xl font-bold">
+                  {language === "ar" ? selectedCategory.nameAr : selectedCategory.name}
+                </h1>
+                {language === "ar" && <p className="text-xs text-muted-foreground">{selectedCategory.name}</p>}
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useEffect } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export type AppLanguage = "ar" | "en";
@@ -1325,6 +1325,11 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useLocalStorage<AppLanguage>("wise-language", "ar");
   const isRTL = language === "ar";
+
+  useEffect(() => {
+    document.documentElement.dir = isRTL ? "rtl" : "ltr";
+    document.documentElement.lang = language;
+  }, [language, isRTL]);
 
   const t = (key: keyof Translations): string => {
     const dict = language === "en" ? en : ar;

@@ -28,7 +28,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
     seekToAyah,
   } = useAudioPlayer();
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [ayahs, setAyahs] = useState<Ayah[]>([]);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
@@ -66,12 +66,15 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
-    return `${toArabicNumerals(mins)}:${toArabicNumerals(secs.toString().padStart(2, '0'))}`;
+    if (language === "ar") {
+      return `${toArabicNumerals(mins)}:${toArabicNumerals(secs.toString().padStart(2, '0'))}`;
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-full h-full w-full p-0 border-0 bg-background rounded-none data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 [&>button:last-child]:hidden" dir="rtl">
+      <DialogContent className="max-w-full h-full w-full p-0 border-0 bg-background rounded-none data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 [&>button:last-child]:hidden">
         <div className="flex flex-col h-full safe-area-bottom">
           <div className="flex items-center justify-between px-4 py-5 border-b border-border bg-card/50 backdrop-blur-sm">
             <button
@@ -119,7 +122,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
                               : 'bg-muted text-foreground'
                           }`}
                         >
-                          {toArabicNumerals(ayah.numberInSurah)}
+                          {language === "ar" ? toArabicNumerals(ayah.numberInSurah) : ayah.numberInSurah}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p

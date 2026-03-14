@@ -15,7 +15,7 @@ export default function InstallBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const browserType = detectBrowser();
   const instructions = getInstallInstructions(browserType);
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     // Already installed or dismissed
@@ -72,7 +72,7 @@ export default function InstallBanner() {
             <X className="h-5 w-5" />
           </button>
 
-          <div className="flex items-center gap-3" dir="rtl">
+          <div className="flex items-center gap-3" dir={isRTL ? "rtl" : "ltr"}>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <Download className="h-5 w-5 text-primary" />
             </div>

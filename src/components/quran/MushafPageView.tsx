@@ -3,6 +3,7 @@ import { Bookmark, BookmarkCheck, BookOpen, ChevronLeft, ChevronRight } from "lu
 import useEmblaCarousel from "embla-carousel-react";
 import { type Ayah } from "@/lib/quran-api";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface MushafPageViewProps {
   ayahs: Ayah[];
@@ -33,6 +34,7 @@ export default function MushafPageView({
   onPageChange,
   onSeekToAyah
 }: MushafPageViewProps) {
+  const { language } = useLanguage();
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
 
   const pages = useMemo(() => {
@@ -112,7 +114,7 @@ export default function MushafPageView({
       <div className="mb-3 text-center text-xs text-muted-foreground">
         {pages.length > 0 &&
         <span>
-            {toArabicNumerals(currentSlide + 1)} / {toArabicNumerals(pages.length)}
+            {language === "ar" ? toArabicNumerals(currentSlide + 1) : currentSlide + 1} / {language === "ar" ? toArabicNumerals(pages.length) : pages.length}
           </span>
         }
       </div>
@@ -130,7 +132,7 @@ export default function MushafPageView({
               <div className="mb-4 flex items-center justify-center gap-3">
                     <div className="h-px flex-1 bg-border" />
                     <span className="text-xs font-bold text-primary">
-                      صفحة {toArabicNumerals(pageNum)}
+                      {language === "ar" ? `صفحة ${toArabicNumerals(pageNum)}` : `Page ${pageNum}`}
                     </span>
                     <div className="h-px flex-1 bg-border" />
                   </div>
@@ -179,7 +181,7 @@ export default function MushafPageView({
               pageAyahs.some((a) => a.numberInSurah === selectedAyah) &&
               <div className="mt-3 flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-2">
                       <span className="text-xs text-muted-foreground">
-                        الآية {toArabicNumerals(selectedAyah)}
+                        {language === "ar" ? `الآية ${toArabicNumerals(selectedAyah)}` : `Ayah ${selectedAyah}`}
                       </span>
                       <button
                   onClick={() => toggleBookmark(selectedAyah)}

@@ -88,7 +88,7 @@ export function DailyAyah() {
       whileTap={{ scale: 0.99 }}
       onClick={() => navigate(`/surah/${data.surah}?ayah=${data.ayah}`)}
       className="w-full rounded-2xl gradient-hero p-5 text-right shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group cursor-pointer mb-[5px] pr-[20px] pt-[5px] pb-[2px]"
-      dir="rtl">
+      dir={language === "ar" ? "rtl" : "ltr"}>
       
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
@@ -118,7 +118,7 @@ export function DailyAyah() {
         
         <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
-            {data.surahName} · {t("ayah")} {toArabicNumerals(data.ayah)}
+            {data.surahName} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
           </p>
           <div className="flex items-center gap-1">
             <button
