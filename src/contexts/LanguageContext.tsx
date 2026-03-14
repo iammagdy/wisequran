@@ -395,6 +395,10 @@ interface Translations {
   mode_listening_subtitle: string;
   mode_hifz: string;
   mode_hifz_subtitle: string;
+
+  // Mode labels (used in SurahReaderPage header pill)
+  listening_mode_label: string;
+  reading_mode_label: string;
 }
 
 const ar: Translations = {
@@ -761,6 +765,9 @@ const ar: Translations = {
   mode_listening_subtitle: "استمع للقرآن مع كبار القراء",
   mode_hifz: "الحفظ والتسميع",
   mode_hifz_subtitle: "راجع حفظك واختبر نفسك",
+
+  listening_mode_label: "وضع الاستماع",
+  reading_mode_label: "وضع القراءة",
 };
 
 const en: Translations = {
@@ -1127,6 +1134,9 @@ const en: Translations = {
   mode_listening_subtitle: "Listen with renowned reciters",
   mode_hifz: "Memorization",
   mode_hifz_subtitle: "Review and test your memorization",
+
+  listening_mode_label: "Listening Mode",
+  reading_mode_label: "Reading Mode",
 };
 
 interface LanguageContextValue {

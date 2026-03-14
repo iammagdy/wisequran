@@ -105,7 +105,7 @@ export default function QuranPage() {
 
   const handleSurahSelect = (surahNumber: number) => {
     if (view === "surahs_listening") {
-      navigate(`/surah/${surahNumber}?tab=listening`);
+      navigate(`/surah/${surahNumber}?mode=listening`);
     } else {
       navigate(`/surah/${surahNumber}`);
     }
