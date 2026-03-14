@@ -112,6 +112,8 @@ interface Translations {
   azkar_reset: string;
   times: string;
   no_favorites_azkar: string;
+  azkar_search: string;
+  azkar_no_results: string;
 
   // Prayer
   prayer_title: string;
@@ -426,6 +428,8 @@ const ar: Translations = {
   azkar_reset: "إعادة",
   times: "مرة",
   no_favorites_azkar: "لا توجد أذكار مفضلة بعد",
+  azkar_search: "بحث في الأذكار",
+  azkar_no_results: "لا توجد نتائج",
 
   prayer_title: "مواقيت الصلاة",
   prayers_title: "صلواتي اليوم",
@@ -725,6 +729,8 @@ const en: Translations = {
   azkar_reset: "Reset",
   times: "times",
   no_favorites_azkar: "No favorite adhkar yet",
+  azkar_search: "Search adhkar",
+  azkar_no_results: "No results found",
 
   prayer_title: "Prayer Times",
   prayers_title: "My Prayers Today",
