@@ -8,18 +8,21 @@ import { useLanguage } from "@/contexts/LanguageContext";
 function QuranIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      <path d="M12 7c0 0-1.5 1-1.5 2.5S12 12 12 12s1.5-1 1.5-2.5S12 7 12 7z" />
+      <path d="M2 6C2 5.45 2.45 5 3 5h8v14H3a1 1 0 0 1-1-1V6z" />
+      <path d="M22 6c0-.55-.45-1-1-1h-8v14h8a1 1 0 0 0 1-1V6z" />
+      <path d="M11 5v14" />
+      <path d="M7 9h2M7 12h2M15 9h2M15 12h2" />
     </svg>
   );
 }
 
-function MoonStarIcon({ active }: { active: boolean }) {
+function AzkarIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-      <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z" />
+      <path d="M8 13V7a1 1 0 0 1 2 0v4" />
+      <path d="M10 11V6a1 1 0 0 1 2 0v5" />
+      <path d="M12 11V7a1 1 0 0 1 2 0v4" />
+      <path d="M14 11v-2a1 1 0 0 1 2 0v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6v-3a1 1 0 0 1 2 0v2" />
     </svg>
   );
 }
@@ -27,13 +30,13 @@ function MoonStarIcon({ active }: { active: boolean }) {
 function MosqueIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 20v-1a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v1" />
-      <path d="M9 15V9" />
-      <path d="M15 15V9" />
-      <path d="M9 9a3 3 0 0 1 6 0" />
-      <path d="M7 9H5a2 2 0 0 1-2-2V6l2-2" />
-      <path d="M17 9h2a2 2 0 0 0 2-2V6l-2-2" />
-      <path d="M12 4V2" />
+      <path d="M12 2v2" />
+      <path d="M12 4c-2.5 0-4 1.8-4 4v1H7a1 1 0 0 0-1 1v8h12v-8a1 1 0 0 0-1-1h-1V8c0-2.2-1.5-4-4-4z" />
+      <path d="M8 8c0-2.2 1.8-4 4-4s4 1.8 4 4" />
+      <path d="M3 18h18" />
+      <path d="M3 21h18" />
+      <path d="M4 18v-3" />
+      <path d="M20 18v-3" />
     </svg>
   );
 }
@@ -57,8 +60,15 @@ function TasbeehIcon({ active }: { active: boolean }) {
 function RamadanIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 3a4 4 0 0 1 0 8 6 6 0 0 1-10.9-4.6A6 6 0 0 1 11 3a4 4 0 0 1 6 0z" />
-      <path d="M12 8l.5 1.5L14 10l-1.5.5L12 12l-.5-1.5L10 10l1.5-.5L12 8z" />
+      <path d="M12 2v2" />
+      <path d="M9 4h6" />
+      <path d="M8 4c0 0-2 1.5-2 5s2 5 2 5h8s2-1.5 2-5-2-5-2-5" />
+      <path d="M8 14c0 0-.5 1-.5 2h9c0-1-.5-2-.5-2" />
+      <path d="M7.5 16h9" />
+      <path d="M8.5 16v3" />
+      <path d="M15.5 16v3" />
+      <path d="M8 19h8" />
+      <line x1="12" y1="7" x2="12" y2="12" />
     </svg>
   );
 }
@@ -74,7 +84,7 @@ function SettingsIcon({ active }: { active: boolean }) {
 
 const iconMap = {
   "/": QuranIcon,
-  "/azkar": MoonStarIcon,
+  "/azkar": AzkarIcon,
   "/prayer": MosqueIcon,
   "/tasbeeh": TasbeehIcon,
   "/ramadan": RamadanIcon,
