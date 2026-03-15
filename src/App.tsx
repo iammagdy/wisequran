@@ -8,6 +8,7 @@ import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import InstallBanner from "@/components/InstallBanner";
 import SplashScreen from "@/components/SplashScreen";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import QuranPage from "@/pages/QuranPage";
 import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
@@ -63,19 +64,23 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Sonner />
-        {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-        <BrowserRouter>
-          <LanguageProvider>
-            <AudioPlayerProvider>
-              <AppContent />
-            </AudioPlayerProvider>
-          </LanguageProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Sonner />
+          {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
+          <BrowserRouter>
+            <LanguageProvider>
+              <AudioPlayerProvider>
+                <ErrorBoundary>
+                  <AppContent />
+                </ErrorBoundary>
+              </AudioPlayerProvider>
+            </LanguageProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
