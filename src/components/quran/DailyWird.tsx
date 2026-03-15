@@ -104,7 +104,7 @@ export function DailyWird() {
               </span>
             </div>
             <p className="text-sm font-bold">
-              {portion.startSurahName} {t("ayah")} {language === "en" ? portion.startAyah : toArabicNumerals(portion.startAyah)} → {portion.endSurahName} {t("ayah")} {language === "en" ? portion.endAyah : toArabicNumerals(portion.endAyah)}
+              {language === "en" ? portion.startSurahNameEn : portion.startSurahName} {t("ayah")} {language === "en" ? portion.startAyah : toArabicNumerals(portion.startAyah)} → {language === "en" ? portion.endSurahNameEn : portion.endSurahName} {t("ayah")} {language === "en" ? portion.endAyah : toArabicNumerals(portion.endAyah)}
             </p>
           </button>
         </div>

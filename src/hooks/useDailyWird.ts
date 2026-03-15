@@ -70,7 +70,9 @@ export function useDailyWird() {
             endSurah,
             endAyah,
             startSurahName: SURAH_META.find((ss) => ss.number === startSurah)?.name || "",
+            startSurahNameEn: SURAH_META.find((ss) => ss.number === startSurah)?.englishName || "",
             endSurahName: SURAH_META.find((ss) => ss.number === endSurah)?.name || "",
+            endSurahNameEn: SURAH_META.find((ss) => ss.number === endSurah)?.englishName || "",
             isDone: state.completedDays.includes(today),
           };
         }
