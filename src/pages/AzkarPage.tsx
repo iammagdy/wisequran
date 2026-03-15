@@ -4,7 +4,7 @@ import { azkarData, azkarSections, type AzkarCategory, type Dhikr } from "@/data
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { useAzkarCompletion } from "@/hooks/useAzkarCompletion";
-import { ArrowRight, RotateCcw, Heart, Star, CircleCheck as CheckCircle2, ChevronDown, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, RotateCcw, Heart, Star, CircleCheck as CheckCircle2, ChevronDown, Search, X } from "lucide-react";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -44,23 +44,24 @@ function DhikrCounter({
         done ? "bg-primary/10 border-primary/20" : "bg-card border-border/50"
       )}
     >
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 h-7">
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={onToggleFavorite}
+          aria-label={isFavorite ? "إزالة من المفضلة" : "إضافة للمفضلة"}
           className="rounded-xl p-2 transition-colors hover:bg-muted"
         >
           <Heart className={cn("h-5 w-5 transition-all", isFavorite ? "fill-primary text-primary" : "text-muted-foreground")} />
         </motion.button>
-        {!done && (
-          <div className="flex-1 mx-3 h-1.5 rounded-full bg-muted overflow-hidden">
-            <motion.div
-              className="h-full bg-primary rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
+        <div className="flex-1 mx-3 h-1.5 rounded-full bg-muted overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            animate={{ width: done ? "100%" : `${progress}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+        {done && (
+          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
         )}
       </div>
       <p
@@ -70,7 +71,9 @@ function DhikrCounter({
       >
         {dhikr.text}
       </p>
-      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{dhikr.translation}</p>
+      {language === "en" && (
+        <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{dhikr.translation}</p>
+      )}
       {dhikr.source && (
         <p className="text-xs text-muted-foreground/60 mb-3 text-right" dir="rtl">{dhikr.source}</p>
       )}
@@ -78,6 +81,7 @@ function DhikrCounter({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setRemaining(dhikr.count)}
+          aria-label="إعادة تعيين العداد"
           className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-colors"
         >
           <RotateCcw className="h-5 w-5" />
@@ -85,6 +89,7 @@ function DhikrCounter({
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={handleTap}
+          aria-label={done ? "تم" : `المتبقي: ${remaining}`}
           className={cn(
             "flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold transition-all",
             done
@@ -132,10 +137,9 @@ function CategoryCard({
           <CheckCircle2 className="h-3 w-3 text-primary-foreground" />
         </div>
       )}
-      <p className="font-bold text-sm leading-snug text-foreground mb-0.5">
+      <p className="font-bold text-sm leading-snug text-foreground mb-1.5">
         {language === "ar" ? cat.nameAr : cat.name}
       </p>
-      {language === "ar" && <p className="text-xs text-muted-foreground leading-snug mb-2">{cat.name}</p>}
       <span className="text-xs text-muted-foreground rounded-full bg-muted px-2 py-0.5">
         {language === "en"
           ? `${cat.items.length} adhkar`
@@ -151,10 +155,12 @@ export default function AzkarPage() {
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [favoriteAzkar, setFavoriteAzkar] = useLocalStorage<string[]>("wise-favorite-azkar", []);
   const [showFavorites, setShowFavorites] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["daily"]));
+  const [expandedSections, setExpandedSections] = useLocalStorage<string[]>("wise-azkar-expanded-sections", ["daily"]);
   const [searchQuery, setSearchQuery] = useState("");
   const { markActive } = useStreak();
-  const { isCategoryDone, toggleCategory } = useAzkarCompletion();
+  const { isCategoryDone } = useAzkarCompletion();
+
+  const expandedSet = useMemo(() => new Set(expandedSections), [expandedSections]);
 
   const toggleFavorite = (id: string) => {
     setFavoriteAzkar(
@@ -165,15 +171,11 @@ export default function AzkarPage() {
   };
 
   const toggleSection = (sectionId: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      if (next.has(sectionId)) {
-        next.delete(sectionId);
-      } else {
-        next.add(sectionId);
-      }
-      return next;
-    });
+    setExpandedSections(
+      expandedSet.has(sectionId)
+        ? expandedSections.filter((s) => s !== sectionId)
+        : [...expandedSections, sectionId]
+    );
   };
 
   const favoriteDhikrItems = azkarData
@@ -198,6 +200,8 @@ export default function AzkarPage() {
 
   const isSearching = searchQuery.trim().length > 0;
 
+  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+
   return (
     <div className="px-4 pb-5 pt-5" dir={isRTL ? "rtl" : "ltr"}>
       <AnimatePresence mode="wait">
@@ -216,6 +220,7 @@ export default function AzkarPage() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => { setShowFavorites(!showFavorites); setSearchQuery(""); }}
+                aria-label={t("favorites")}
                 className={cn(
                   "rounded-xl p-2.5 transition-all shadow-soft",
                   showFavorites ? "bg-primary text-primary-foreground shadow-glow" : "bg-card text-muted-foreground hover:bg-muted"
@@ -242,6 +247,7 @@ export default function AzkarPage() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
+                    aria-label="مسح البحث"
                     className={cn("absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors", isRTL ? "left-3" : "right-3")}
                   >
                     <X className="h-4 w-4" />
@@ -305,7 +311,7 @@ export default function AzkarPage() {
             ) : (
               <div className="space-y-2">
                 {azkarSections.map((section) => {
-                  const isExpanded = expandedSections.has(section.id);
+                  const isExpanded = expandedSet.has(section.id);
                   const cats = azkarData.filter((c) => c.sectionId === section.id);
                   const doneCount = cats.filter((c) => isCategoryDone(c.id)).length;
 
@@ -322,7 +328,6 @@ export default function AzkarPage() {
                             <p className="font-bold text-base text-foreground leading-snug">
                               {language === "ar" ? section.nameAr : section.name}
                             </p>
-                            {language === "ar" && <p className="text-xs text-muted-foreground leading-snug">{section.name}</p>}
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
@@ -380,23 +385,23 @@ export default function AzkarPage() {
         ) : (
           <motion.div
             key="list"
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: isRTL ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
           >
             <div className="mb-5 flex items-center gap-3">
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setSelectedCategory(null)}
-                className="rounded-xl p-2.5 hover:bg-muted transition-colors"
+                aria-label="رجوع"
+                className="rounded-xl p-2.5 hover:bg-muted transition-colors flex-shrink-0"
               >
-                <ArrowRight className="h-5 w-5" />
+                <BackIcon className="h-5 w-5" />
               </motion.button>
               <div>
                 <h1 className="text-xl font-bold">
                   {language === "ar" ? selectedCategory.nameAr : selectedCategory.name}
                 </h1>
-                {language === "ar" && <p className="text-xs text-muted-foreground">{selectedCategory.name}</p>}
               </div>
             </div>
 
