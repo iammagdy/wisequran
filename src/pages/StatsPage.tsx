@@ -11,6 +11,7 @@ import { AchievementsSheet } from "@/components/AchievementsSheet";
 import { Progress } from "@/components/ui/progress";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFadeInView } from "@/hooks/useFadeInView";
 
 export default function StatsPage() {
   const navigate = useNavigate();
@@ -20,6 +21,9 @@ export default function StatsPage() {
   const { t, language, isRTL } = useLanguage();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
+
+  const chart = useFadeInView(0);
+  const calendar = useFadeInView(0.05);
 
   return (
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
@@ -85,12 +89,14 @@ export default function StatsPage() {
       </div>
 
       {/* Weekly Chart */}
-      <div className="mb-5">
+      <div className="mb-5" ref={chart.ref} style={chart.style}>
         <WeeklyChart data={weeklyData} />
       </div>
 
       {/* Streak Calendar */}
-      <StreakCalendar data={monthlyData} />
+      <div ref={calendar.ref} style={calendar.style}>
+        <StreakCalendar data={monthlyData} />
+      </div>
 
       <div className="h-4" />
     </div>

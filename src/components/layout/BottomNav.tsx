@@ -129,6 +129,7 @@ export default function BottomNav() {
                     scale: isActive ? 1.08 : 1,
                     y: isActive ? -1 : 0,
                   }}
+                  whileTap={{ scale: 0.78 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   className="relative z-10"
                 >

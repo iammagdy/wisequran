@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger } from
 "@/components/ui/alert-dialog";
+import FadeSection from "@/components/layout/FadeSection";
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
@@ -336,10 +337,7 @@ export default function SettingsPage() {
             <Globe className="h-3.5 w-3.5" />
             {t("language")}
           </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden">
+          <FadeSection className="rounded-xl bg-card shadow-sm overflow-hidden">
             <div className="flex gap-2 p-3">
               <button
                 onClick={() => setLanguage("ar")}
@@ -358,7 +356,7 @@ export default function SettingsPage() {
                 {t("language_english")}
               </button>
             </div>
-          </motion.div>
+          </FadeSection>
         </section>
 
         {/* ─── Translation ─── */}

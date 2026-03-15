@@ -244,16 +244,24 @@ export default function PrayerPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12 + i * 0.05 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.96 }}
               onClick={() => togglePrayer(prayer.id)}
               className={cn(
-                "flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all border",
+                "flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all border relative overflow-hidden",
                 done
                   ? "bg-primary/8 border-primary/20 shadow-soft"
                   : isNext
                   ? "bg-card border-primary/30 shadow-elevated ring-1 ring-primary/20"
                   : "bg-card border-border/40 shadow-soft"
               )}>
+              {isNext && !done && (
+                <motion.div
+                  className="absolute inset-0 rounded-2xl pointer-events-none"
+                  animate={{ opacity: [0, 0.06, 0] }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  style={{ background: "hsl(var(--primary))" }}
+                />
+              )}
 
               <div className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 transition-all",
