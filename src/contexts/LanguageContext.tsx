@@ -497,6 +497,21 @@ interface Translations {
   hifz_review_card_subtitle: string;
   hifz_review_card_title_singular: string;
   hifz_review_card_title_plural: string;
+  hifz_open_surah_read: string;
+  hifz_open_surah_listen: string;
+  hifz_did_you_review: string;
+  hifz_action_start_reading: string;
+  hifz_action_start_listening: string;
+  hifz_action_continue_reading: string;
+  hifz_action_listen: string;
+  hifz_action_read_to_review: string;
+  hifz_action_listen_to_review: string;
+  hifz_action_mark_in_progress: string;
+  hifz_action_mark_memorized: string;
+  hifz_action_mark_not_started: string;
+  hifz_welcome_title: string;
+  hifz_welcome_subtitle: string;
+  hifz_start_with_fatiha: string;
 
   // Settings toast messages
   settings_toast_preview_timeout: string;
@@ -976,6 +991,21 @@ const ar: Translations = {
   hifz_review_card_subtitle: "ابدأ مراجعتك اليومية أدناه",
   hifz_review_card_title_singular: "لديك {count} سورة للمراجعة اليوم",
   hifz_review_card_title_plural: "لديك {count} سور للمراجعة اليوم",
+  hifz_open_surah_read: "اقرأ السورة",
+  hifz_open_surah_listen: "استمع للسورة",
+  hifz_did_you_review: "هل راجعت {name}؟",
+  hifz_action_start_reading: "ابدأ القراءة",
+  hifz_action_start_listening: "استمع",
+  hifz_action_continue_reading: "واصل القراءة",
+  hifz_action_listen: "استمع",
+  hifz_action_read_to_review: "اقرأ للمراجعة",
+  hifz_action_listen_to_review: "استمع للمراجعة",
+  hifz_action_mark_in_progress: "جارٍ الحفظ",
+  hifz_action_mark_memorized: "محفوظة",
+  hifz_action_mark_not_started: "إعادة",
+  hifz_welcome_title: "ابدأ رحلة الحفظ",
+  hifz_welcome_subtitle: "حدد السور التي تحفظها أو تقرأها لتتبع تقدمك",
+  hifz_start_with_fatiha: "ابدأ بسورة الفاتحة",
 
   settings_toast_preview_timeout: "انتهت مهلة تحميل المعاينة",
   settings_toast_preview_error: "تعذر تشغيل المعاينة",
@@ -1453,6 +1483,21 @@ const en: Translations = {
   hifz_review_card_subtitle: "Start your daily review below",
   hifz_review_card_title_singular: "You have {count} surah to review today",
   hifz_review_card_title_plural: "You have {count} surahs to review today",
+  hifz_open_surah_read: "Read Surah",
+  hifz_open_surah_listen: "Listen to Surah",
+  hifz_did_you_review: "Did you review {name}?",
+  hifz_action_start_reading: "Start Reading",
+  hifz_action_start_listening: "Listen",
+  hifz_action_continue_reading: "Continue Reading",
+  hifz_action_listen: "Listen",
+  hifz_action_read_to_review: "Read to Review",
+  hifz_action_listen_to_review: "Listen to Review",
+  hifz_action_mark_in_progress: "Mark In Progress",
+  hifz_action_mark_memorized: "Mark Memorized",
+  hifz_action_mark_not_started: "Reset",
+  hifz_welcome_title: "Start Your Hifz Journey",
+  hifz_welcome_subtitle: "Mark surahs you're memorizing or reading to track your progress",
+  hifz_start_with_fatiha: "Start with Al-Fatiha",
 
   settings_toast_preview_timeout: "Preview timed out",
   settings_toast_preview_error: "Could not play preview",

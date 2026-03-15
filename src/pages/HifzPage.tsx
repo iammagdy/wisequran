@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2,
+  RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp,
+  Headphones, BookOpenCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
@@ -12,6 +16,8 @@ import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type FilterMode = "all" | "memorized" | "reading" | "none";
+
+const PENDING_REVIEW_KEY = "hifz-pending-review";
 
 const STATUS_CONFIG: Record<HifzStatus, { color: string; bg: string; icon: typeof CheckCircle2 }> = {
   memorized: { color: "text-primary", bg: "bg-primary/15 border-primary/30", icon: CheckCircle2 },
@@ -28,15 +34,32 @@ function getStrengthColor(level: number): string {
 export default function HifzPage() {
   const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const { getStatus, cycleStatus, stats } = useHifz();
+  const { getStatus, cycleStatus, setStatus, stats } = useHifz();
   const review = useHifzReview();
   const streak = useHifzStreak();
   const goal = useHifzGoal();
   const [filter, setFilter] = useState<FilterMode>("all");
   const [showGoalEditor, setShowGoalEditor] = useState(false);
+  const [expandedSurah, setExpandedSurah] = useState<number | null>(null);
+  const [pendingReviewSurah, setPendingReviewSurah] = useState<number | null>(null);
 
   const filtered = SURAH_META.filter((s) => filter === "all" || getStatus(s.number) === filter);
   const todayQueue = review.getTodayQueue();
+
+  useEffect(() => {
+    const stored = localStorage.getItem(PENDING_REVIEW_KEY);
+    if (stored) {
+      const num = parseInt(stored, 10);
+      if (!isNaN(num)) {
+        const stillInQueue = todayQueue.some((item) => item.surahNumber === num);
+        if (stillInQueue) {
+          setPendingReviewSurah(num);
+        }
+      }
+      localStorage.removeItem(PENDING_REVIEW_KEY);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getStrengthLabel = (level: number): string => {
     if (level <= 1) return t("weak");
@@ -44,24 +67,34 @@ export default function HifzPage() {
     return t("strong");
   };
 
-  // Sync: when cycling status to memorized, add to review
   const handleCycleStatus = (surahNumber: number) => {
     const current = getStatus(surahNumber);
     cycleStatus(surahNumber);
-    // If cycling from reading → memorized, add to review
     if (current === "reading") {
       review.addToReview(surahNumber);
     }
-    // If cycling from memorized → none, remove from review
     if (current === "memorized") {
       review.removeFromReview(surahNumber);
     }
+  };
+
+  const handleSetStatus = (surahNumber: number, newStatus: HifzStatus) => {
+    const current = getStatus(surahNumber);
+    setStatus(surahNumber, newStatus);
+    if (newStatus === "memorized" && current !== "memorized") {
+      review.addToReview(surahNumber);
+    }
+    if (current === "memorized" && newStatus !== "memorized") {
+      review.removeFromReview(surahNumber);
+    }
+    setExpandedSurah(null);
   };
 
   const handleMarkReviewed = (surahNumber: number, quality: "good" | "hard") => {
     const meta = SURAH_META.find((s) => s.number === surahNumber);
     review.markReviewed(surahNumber, quality);
     streak.markActive();
+    if (pendingReviewSurah === surahNumber) setPendingReviewSurah(null);
     if (quality === "good") {
       goal.markSurahReviewed();
       const surahName = language === "en" ? (meta?.englishName || "") : (meta?.name || "");
@@ -76,6 +109,24 @@ export default function HifzPage() {
         description: t("hifz_toast_will_appear").replace("{name}", surahName),
       });
     }
+  };
+
+  const handleOpenSurahForReview = (surahNumber: number, mode: "read" | "listen") => {
+    localStorage.setItem(PENDING_REVIEW_KEY, String(surahNumber));
+    if (mode === "listen") {
+      navigate(`/surah/${surahNumber}?mode=listening`);
+    } else {
+      navigate(`/surah/${surahNumber}`);
+    }
+  };
+
+  const handleSurahCardTap = (surahNumber: number) => {
+    setExpandedSurah((prev) => (prev === surahNumber ? null : surahNumber));
+  };
+
+  const getSurahName = (surahNumber: number) => {
+    const meta = SURAH_META.find((s) => s.number === surahNumber);
+    return language === "en" ? (meta?.englishName || "") : (meta?.name || "");
   };
 
   return (
@@ -118,7 +169,6 @@ export default function HifzPage() {
 
       {/* Streak + Goal Row */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }} className="mb-5 grid grid-cols-2 gap-3" dir={isRTL ? "rtl" : "ltr"}>
-        {/* Streak */}
         <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
             <Flame className="h-5 w-5 text-accent" />
@@ -131,7 +181,6 @@ export default function HifzPage() {
           </div>
         </div>
 
-        {/* Daily Goal */}
         <button
           onClick={() => setShowGoalEditor((p) => !p)}
           className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-start"
@@ -207,7 +256,7 @@ export default function HifzPage() {
         )}
       </AnimatePresence>
 
-      {/* Start Today's Review Card — shown only when queue has items */}
+      {/* Start Today's Review Card */}
       {todayQueue.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -260,74 +309,111 @@ export default function HifzPage() {
         ) : (
           <div className="space-y-2.5">
             <AnimatePresence mode="popLayout">
-              {todayQueue.map((item) => (
-                <motion.div
-                  key={item.surahNumber}
-                  layout
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -50, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className={cn(
-                    "rounded-2xl bg-card p-4 border shadow-soft",
-                    item.overdueDays > 2 ? "border-destructive/30" : "border-border/50"
-                  )}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="font-arabic text-base font-bold">{item.surahName}</span>
-                      {item.overdueDays > 0 && (
-                        <span className="text-[0.625rem] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
-                          {language === "en"
-                            ? `${item.overdueDays} ${t("days")} ${t("overdue")}`
-                            : `${t("overdue")} ${toArabicNumerals(item.overdueDays)} ${t("days")}`}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[0.625rem] text-muted-foreground">{getStrengthLabel(item.level)}</span>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: 7 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full transition-colors",
-                              i <= item.level ? getStrengthColor(item.level) : "bg-muted"
-                            )}
-                          />
-                        ))}
+              {todayQueue.map((item) => {
+                const isPending = pendingReviewSurah === item.surahNumber;
+                return (
+                  <motion.div
+                    key={item.surahNumber}
+                    layout
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50, scale: 0.9 }}
+                    transition={{ duration: 0.3 }}
+                    className={cn(
+                      "rounded-2xl bg-card p-4 border shadow-soft",
+                      isPending ? "border-primary/50 ring-1 ring-primary/20" :
+                      item.overdueDays > 2 ? "border-destructive/30" : "border-border/50"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <span className="font-arabic text-base font-bold">{item.surahName}</span>
+                        {item.overdueDays > 0 && (
+                          <span className="text-[0.625rem] text-destructive font-semibold bg-destructive/10 rounded-full px-2 py-0.5">
+                            {language === "en"
+                              ? `${item.overdueDays} ${t("days")} ${t("overdue")}`
+                              : `${t("overdue")} ${toArabicNumerals(item.overdueDays)} ${t("days")}`}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[0.625rem] text-muted-foreground">{getStrengthLabel(item.level)}</span>
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 7 }).map((_, i) => (
+                            <div
+                              key={i}
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full transition-colors",
+                                i <= item.level ? getStrengthColor(item.level) : "bg-muted"
+                              )}
+                            />
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Strength bar */}
-                  <div className="h-1 w-full rounded-full bg-muted mb-3 overflow-hidden">
-                    <div
-                      className={cn("h-full rounded-full transition-all", getStrengthColor(item.level))}
-                      style={{ width: `${((item.level + 1) / 7) * 100}%` }}
-                    />
-                  </div>
+                    <div className="h-1 w-full rounded-full bg-muted mb-3 overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all", getStrengthColor(item.level))}
+                        style={{ width: `${((item.level + 1) / 7) * 100}%` }}
+                      />
+                    </div>
 
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleMarkReviewed(item.surahNumber, "good")}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-3 text-sm font-semibold hover:bg-primary/20 transition-colors min-h-[44px]"
-                    >
-                      <Check className="h-4 w-4" />
-                      {t("mastered")}
-                    </motion.button>
-                    <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => handleMarkReviewed(item.surahNumber, "hard")}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-3 text-sm font-semibold hover:bg-muted/80 transition-colors min-h-[44px]"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      {t("needs_review")}
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
+                    {/* Pending review prompt — shown when returning from surah reader */}
+                    {isPending && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="mb-3 rounded-xl bg-primary/8 border border-primary/20 px-3 py-2"
+                      >
+                        <p className="text-xs font-semibold text-primary">
+                          {t("hifz_did_you_review").replace("{name}", getSurahName(item.surahNumber))}
+                        </p>
+                      </motion.div>
+                    )}
+
+                    {/* Open surah buttons */}
+                    <div className="flex gap-2 mb-2">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleOpenSurahForReview(item.surahNumber, "read")}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-card border border-border/60 text-foreground py-2.5 text-xs font-semibold hover:bg-muted/40 transition-colors min-h-[40px]"
+                      >
+                        <BookOpenCheck className="h-3.5 w-3.5" />
+                        {t("hifz_open_surah_read")}
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleOpenSurahForReview(item.surahNumber, "listen")}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-card border border-border/60 text-foreground py-2.5 text-xs font-semibold hover:bg-muted/40 transition-colors min-h-[40px]"
+                      >
+                        <Headphones className="h-3.5 w-3.5" />
+                        {t("hifz_open_surah_listen")}
+                      </motion.button>
+                    </div>
+
+                    {/* Review quality buttons */}
+                    <div className="flex gap-2">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleMarkReviewed(item.surahNumber, "good")}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-3 text-sm font-semibold hover:bg-primary/20 transition-colors min-h-[44px]"
+                      >
+                        <Check className="h-4 w-4" />
+                        {t("mastered")}
+                      </motion.button>
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleMarkReviewed(item.surahNumber, "hard")}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-3 text-sm font-semibold hover:bg-muted/80 transition-colors min-h-[44px]"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        {t("needs_review")}
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}
@@ -372,50 +458,169 @@ export default function HifzPage() {
         ))}
       </div>
 
+      {/* Onboarding card for new users */}
+      {stats.memorized === 0 && stats.inProgress === 0 && filter === "all" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-5 rounded-2xl border border-primary/25 bg-primary/5 p-5"
+          dir={isRTL ? "rtl" : "ltr"}
+        >
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <BookOpen className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">{t("hifz_welcome_title")}</p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{t("hifz_welcome_subtitle")}</p>
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/surah/1")}
+            className="w-full rounded-xl bg-primary text-primary-foreground py-3 text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            {t("hifz_start_with_fatiha")}
+          </motion.button>
+        </motion.div>
+      )}
+
       {/* Surah Grid */}
-      <div className="grid grid-cols-3 gap-2">
-        {filtered.map((surah, i) => {
-          const status = getStatus(surah.number);
-          const config = STATUS_CONFIG[status];
-          const Icon = config.icon;
-          const reviewItem = review.getReviewItem(surah.number);
-          const statusLabel =
-            status === "memorized" ? t("memorized") :
-            status === "reading" ? t("in_progress") :
-            t("not_started");
-          return (
-            <motion.button
-              key={surah.number}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: Math.min(i * 0.01, 0.3) }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleCycleStatus(surah.number)}
-              className={cn(
-                "relative flex flex-col items-center gap-1.5 rounded-xl p-3 border transition-all",
-                config.bg
-              )}
-            >
-              <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
-              <span className="font-arabic text-sm font-bold leading-tight">{language === "ar" ? surah.name : surah.englishName}</span>
-              <span className="text-[0.625rem] text-muted-foreground">{language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}</span>
-              {/* Review strength indicator for memorized surahs */}
-              {reviewItem && (
-                <div className="flex gap-0.5 mt-0.5">
-                  {Array.from({ length: 7 }).map((_, j) => (
-                    <div
-                      key={j}
+      <div className="space-y-1.5">
+        {(() => {
+          const rows: React.ReactNode[] = [];
+          let i = 0;
+          while (i < filtered.length) {
+            const rowSurahs = filtered.slice(i, i + 3);
+            const rowIndex = i;
+            rows.push(
+              <div key={`row-${rowIndex}`} className="grid grid-cols-3 gap-2">
+                {rowSurahs.map((surah, colIdx) => {
+                  const status = getStatus(surah.number);
+                  const config = STATUS_CONFIG[status];
+                  const Icon = config.icon;
+                  const reviewItem = review.getReviewItem(surah.number);
+                  const isExpanded = expandedSurah === surah.number;
+                  return (
+                    <motion.button
+                      key={surah.number}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: Math.min((rowIndex + colIdx) * 0.01, 0.3) }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleSurahCardTap(surah.number)}
                       className={cn(
-                        "h-1 w-1 rounded-full",
-                        j <= reviewItem.level ? getStrengthColor(reviewItem.level) : "bg-muted"
+                        "relative flex flex-col items-center gap-1.5 rounded-xl p-3 border transition-all",
+                        config.bg,
+                        isExpanded && "ring-2 ring-primary/40"
                       )}
-                    />
-                  ))}
-                </div>
-              )}
-            </motion.button>
-          );
-        })}
+                    >
+                      <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
+                      <span className="font-arabic text-sm font-bold leading-tight">{language === "ar" ? surah.name : surah.englishName}</span>
+                      <span className="text-[0.625rem] text-muted-foreground">{language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}</span>
+                      {reviewItem && (
+                        <div className="flex gap-0.5 mt-0.5">
+                          {Array.from({ length: 7 }).map((_, j) => (
+                            <div
+                              key={j}
+                              className={cn(
+                                "h-1 w-1 rounded-full",
+                                j <= reviewItem.level ? getStrengthColor(reviewItem.level) : "bg-muted"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            );
+
+            // After each row, check if any surah in this row is expanded
+            const expandedInRow = rowSurahs.find((s) => s.number === expandedSurah);
+            if (expandedInRow) {
+              const status = getStatus(expandedInRow.number);
+              rows.push(
+                <AnimatePresence key={`expansion-${expandedInRow.number}`}>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="rounded-2xl bg-card border border-primary/20 shadow-soft p-4" dir={isRTL ? "rtl" : "ltr"}>
+                      <p className="text-xs font-semibold text-muted-foreground mb-3">
+                        {language === "ar" ? expandedInRow.name : expandedInRow.englishName}
+                      </p>
+
+                      {/* Navigation buttons */}
+                      <div className="flex gap-2 mb-3">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setExpandedSurah(null);
+                            navigate(`/surah/${expandedInRow.number}`);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary/10 text-primary py-2.5 text-xs font-semibold hover:bg-primary/20 transition-colors min-h-[40px]"
+                        >
+                          <BookOpenCheck className="h-3.5 w-3.5" />
+                          {status === "memorized" ? t("hifz_action_read_to_review") : status === "reading" ? t("hifz_action_continue_reading") : t("hifz_action_start_reading")}
+                        </motion.button>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => {
+                            setExpandedSurah(null);
+                            navigate(`/surah/${expandedInRow.number}?mode=listening`);
+                          }}
+                          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-muted text-muted-foreground py-2.5 text-xs font-semibold hover:bg-muted/70 transition-colors min-h-[40px]"
+                        >
+                          <Headphones className="h-3.5 w-3.5" />
+                          {status === "memorized" ? t("hifz_action_listen_to_review") : t("hifz_action_listen")}
+                        </motion.button>
+                      </div>
+
+                      {/* Status change buttons */}
+                      <div className="flex gap-2">
+                        {status !== "reading" && (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSetStatus(expandedInRow.number, "reading")}
+                            className="flex-1 rounded-xl bg-accent/10 text-accent py-2 text-xs font-semibold hover:bg-accent/20 transition-colors"
+                          >
+                            {t("hifz_action_mark_in_progress")}
+                          </motion.button>
+                        )}
+                        {status !== "memorized" && (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSetStatus(expandedInRow.number, "memorized")}
+                            className="flex-1 rounded-xl bg-primary/10 text-primary py-2 text-xs font-semibold hover:bg-primary/20 transition-colors"
+                          >
+                            {t("hifz_action_mark_memorized")}
+                          </motion.button>
+                        )}
+                        {status !== "none" && (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleSetStatus(expandedInRow.number, "none")}
+                            className="flex-1 rounded-xl bg-muted text-muted-foreground py-2 text-xs font-semibold hover:bg-muted/70 transition-colors"
+                          >
+                            {t("hifz_action_mark_not_started")}
+                          </motion.button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              );
+            }
+
+            i += 3;
+          }
+          return rows;
+        })()}
       </div>
 
       {filtered.length === 0 && (
