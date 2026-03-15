@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, ArrowRight, Bookmark, Star } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, ArrowRight, Bookmark, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -9,8 +9,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
-import { DailyAyah } from "@/components/quran/DailyAyah";
-import { DailyWird } from "@/components/quran/DailyWird";
 import ChangelogModal from "@/components/ChangelogModal";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,8 +17,8 @@ type HomeView = "home" | "surahs" | "surahs_listening";
 
 interface ModeCard {
   key: string;
-  titleKey: "mode_reading" | "mode_listening" | "mode_hifz";
-  subtitleKey: "mode_reading_subtitle" | "mode_listening_subtitle" | "mode_hifz_subtitle";
+  titleKey: "mode_reading" | "mode_listening" | "mode_hifz" | "mode_recitation";
+  subtitleKey: "mode_reading_subtitle" | "mode_listening_subtitle" | "mode_hifz_subtitle" | "mode_recitation_subtitle";
   icon: React.ReactNode;
   accentClass: string;
   borderClass: string;
@@ -95,6 +93,16 @@ export default function QuranPage() {
       borderClass: "border-emerald-500/20 hover:border-emerald-500/40",
       iconBgClass: "bg-emerald-500/10",
       route: "/hifz",
+    },
+    {
+      key: "recitation",
+      titleKey: "mode_recitation",
+      subtitleKey: "mode_recitation_subtitle",
+      icon: <Mic className="h-8 w-8" />,
+      accentClass: "text-rose-600 dark:text-rose-400",
+      borderClass: "border-rose-500/20 hover:border-rose-500/40",
+      iconBgClass: "bg-rose-500/10",
+      route: "/hifz/test",
     },
   ];
 
@@ -199,12 +207,6 @@ export default function QuranPage() {
                 <p className="text-xs text-primary font-medium mt-2 text-center">🎉 {t("goal_complete")}</p>
               )}
             </motion.div>
-
-            {/* Daily Wird */}
-            <DailyWird />
-
-            {/* Daily Ayah */}
-            <DailyAyah />
 
             {/* Continue Reading */}
             {lastRead && (

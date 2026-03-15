@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp } from "lucide-react";
+import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
@@ -34,6 +34,24 @@ function UnsupportedBanner({ message, desc }: { message: string; desc: string })
       <div>
         <p className="text-sm font-semibold text-destructive">{message}</p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+      </div>
+    </motion.div>
+  );
+}
+
+function EnglishComingSoonBanner() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 flex gap-3 mb-4"
+    >
+      <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Arabic Only — English Coming Soon</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          Speech recognition scoring is currently optimized for Arabic recitation only. English support is on its way.
+        </p>
       </div>
     </motion.div>
   );
@@ -182,6 +200,9 @@ export default function RecitationTestPage() {
         </div>
       </div>
 
+      {/* English coming soon banner */}
+      {language === "en" && <EnglishComingSoonBanner />}
+
       {/* Not supported banner */}
       {!speech.isSupported && (
         <div className="mb-4">
@@ -191,6 +212,11 @@ export default function RecitationTestPage() {
           />
         </div>
       )}
+
+      <div className={cn("relative", language === "en" && "pointer-events-none select-none")}>
+        {language === "en" && (
+          <div className="absolute inset-0 z-10 rounded-2xl bg-background/40 backdrop-blur-[1px]" />
+        )}
 
       <AnimatePresence mode="wait">
         {/* Setup Phase */}
@@ -461,6 +487,7 @@ export default function RecitationTestPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

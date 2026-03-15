@@ -457,6 +457,8 @@ interface Translations {
   mode_listening_subtitle: string;
   mode_hifz: string;
   mode_hifz_subtitle: string;
+  mode_recitation: string;
+  mode_recitation_subtitle: string;
 
   // Mode labels (used in SurahReaderPage header pill)
   listening_mode_label: string;
@@ -911,6 +913,8 @@ const ar: Translations = {
   mode_listening_subtitle: "استمع للقرآن مع كبار القراء",
   mode_hifz: "الحفظ والتسميع",
   mode_hifz_subtitle: "راجع حفظك واختبر نفسك",
+  mode_recitation: "اختبار التلاوة",
+  mode_recitation_subtitle: "اختبر تلاوتك بالميكروفون",
 
   listening_mode_label: "وضع الاستماع",
   reading_mode_label: "وضع القراءة",
@@ -970,7 +974,7 @@ const en: Translations = {
   km: "km",
   meters: "m",
 
-  quran_title: "The Noble Quran",
+  quran_title: "The Wise Quran",
   continue_reading: "Continue Reading",
   search_placeholder: "Search by name, number, or verse text...",
   daily_goal: "Daily Goal",
@@ -1361,6 +1365,8 @@ const en: Translations = {
   mode_listening_subtitle: "Listen with renowned reciters",
   mode_hifz: "Memorization",
   mode_hifz_subtitle: "Review and test your memorization",
+  mode_recitation: "Recitation Test",
+  mode_recitation_subtitle: "Test your recitation with microphone",
 
   listening_mode_label: "Listening Mode",
   reading_mode_label: "Reading Mode",
