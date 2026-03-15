@@ -5,6 +5,7 @@ import { useLocation } from "@/hooks/useLocation";
 import {
   ADHAN_STORAGE_KEY,
   DEFAULT_ADHAN_SETTINGS,
+  CHIME_URL,
   type AdhanSettings,
 } from "@/lib/adhan-settings";
 
@@ -31,13 +32,15 @@ function timeStringToMinutes(time: string): number {
 
 function todayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 function playChime(vol: number) {
-  const audio = new Audio("/adhan/reminder-chime.mp3");
+  const audio = new Audio(CHIME_URL);
   audio.volume = Math.max(0, Math.min(1, vol / 100));
-  audio.play().catch(() => {});
+  audio.play().catch((err) => {
+    console.error("[Adhan] Failed to play chime:", err);
+  });
 }
 
 export function usePrayerReminders() {
@@ -80,7 +83,8 @@ export function usePrayerReminders() {
         if (hasPreReminder) {
           const triggerMinutes = prayerMinutes - settings.preReminderMinutes;
           const preKey = `${today}-pre-${id}`;
-          if (currentMinutes === triggerMinutes && !firedRef.current.has(preKey)) {
+          const preDiff = currentMinutes - triggerMinutes;
+          if (preDiff >= 0 && preDiff < 2 && !firedRef.current.has(preKey)) {
             firedRef.current.add(preKey);
             new Notification(`تذكير: صلاة ${PRAYER_NAMES_AR[id]}`, {
               body: `صلاة ${PRAYER_NAMES_AR[id]} بعد ${settings.preReminderMinutes} دقيقة`,
@@ -96,7 +100,8 @@ export function usePrayerReminders() {
           const triggerMinutes = prayerMinutes + settings.postReminderMinutes;
           const postKey = `${today}-post-${id}`;
           const message = POST_REMINDER_MESSAGES[settings.postReminderContent] ?? POST_REMINDER_MESSAGES.simple;
-          if (currentMinutes === triggerMinutes && !firedRef.current.has(postKey)) {
+          const postDiff = currentMinutes - triggerMinutes;
+          if (postDiff >= 0 && postDiff < 2 && !firedRef.current.has(postKey)) {
             firedRef.current.add(postKey);
             new Notification(`بعد صلاة ${PRAYER_NAMES_AR[id]}`, {
               body: message,

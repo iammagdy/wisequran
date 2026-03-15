@@ -6,6 +6,7 @@ import {
   ADHAN_STORAGE_KEY,
   DEFAULT_ADHAN_SETTINGS,
   ADHAN_VOICES,
+  TAKBIR_URL,
   type AdhanSettings,
 } from "@/lib/adhan-settings";
 
@@ -13,7 +14,7 @@ const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
 function todayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 let activeAudio: HTMLAudioElement | null = null;
@@ -37,7 +38,7 @@ export function useAdhan() {
     const voice = ADHAN_VOICES.find((v) => v.id === settings.voiceId) ?? ADHAN_VOICES[0];
     let src: string;
     if (settings.takbirOnlyMode) {
-      src = "/adhan/takbir.mp3";
+      src = TAKBIR_URL;
     } else if (prayerId === "fajr" && settings.fajrSpecialAdhan) {
       src = voice.fajrFile;
     } else {
@@ -46,7 +47,8 @@ export function useAdhan() {
     const audio = new Audio(src);
     audio.volume = Math.max(0, Math.min(1, vol / 100));
     activeAudio = audio;
-    audio.play().catch(() => {
+    audio.play().catch((err) => {
+      console.error("[Adhan] Failed to play audio:", src, err);
       activeAudio = null;
     });
     audio.addEventListener("ended", () => {
@@ -65,9 +67,7 @@ export function useAdhan() {
       }
 
       const now = new Date();
-      const nowHH = now.getHours().toString().padStart(2, "0");
-      const nowMM = now.getMinutes().toString().padStart(2, "0");
-      const nowTime = `${nowHH}:${nowMM}`;
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
       const options = location
         ? { latitude: location.latitude, longitude: location.longitude }
@@ -79,7 +79,10 @@ export function useAdhan() {
         const key = `${today}-${id}`;
         const perConfig = settings.perPrayer?.[id];
         const adhanAllowed = perConfig?.adhanEnabled !== false;
-        if (prayerTime === nowTime && !playedRef.current.has(key) && adhanAllowed) {
+        const [ph, pm] = prayerTime.split(":").map(Number);
+        const prayerMinutes = ph * 60 + pm;
+        const diff = currentMinutes - prayerMinutes;
+        if (diff >= 0 && diff < 2 && !playedRef.current.has(key) && adhanAllowed) {
           playedRef.current.add(key);
           playAdhan(id, settings.adhanVolume);
         }

@@ -15,7 +15,7 @@ const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
 function todayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
 export function usePrayerNotifications() {
@@ -36,9 +36,7 @@ export function usePrayerNotifications() {
       }
 
       const now = new Date();
-      const nowHH = now.getHours().toString().padStart(2, "0");
-      const nowMM = now.getMinutes().toString().padStart(2, "0");
-      const nowTime = `${nowHH}:${nowMM}`;
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
       const options = location
         ? { latitude: location.latitude, longitude: location.longitude }
@@ -47,7 +45,10 @@ export function usePrayerNotifications() {
 
       for (const id of PRAYER_ORDER) {
         const prayerTime = times[id];
-        if (prayerTime === nowTime && !notifiedRef.current.has(id)) {
+        const [ph, pm] = prayerTime.split(":").map(Number);
+        const prayerMinutes = ph * 60 + pm;
+        const diff = currentMinutes - prayerMinutes;
+        if (diff >= 0 && diff < 2 && !notifiedRef.current.has(id)) {
           notifiedRef.current.add(id);
           new Notification(`حان وقت صلاة ${PRAYER_NAMES[id]} 🕌`, {
             body: formatArabicTime(prayerTime),

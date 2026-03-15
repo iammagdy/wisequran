@@ -59,6 +59,24 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
+            urlPattern: /^https:\/\/cdn\.islamic\.network\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "adhan-audio-cache",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/assets\.mixkit\.co\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "chime-audio-cache",
+              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
             options: {

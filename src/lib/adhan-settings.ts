@@ -43,42 +43,47 @@ export interface AdhanVoice {
   fajrFile: string;
 }
 
+const CDN = "https://cdn.islamic.network/prayer-times/audio";
+
 export const ADHAN_VOICES: AdhanVoice[] = [
   {
     id: "makkah",
     nameAr: "المسجد الحرام",
     nameEn: "Makkah Grand Mosque",
-    file: "/adhan/makkah.mp3",
-    fajrFile: "/adhan/fajr/makkah.mp3",
+    file: `${CDN}/MAKKAH_QURAN.mp3`,
+    fajrFile: `${CDN}/MAKKAH_FAJR.mp3`,
   },
   {
     id: "madinah",
     nameAr: "المسجد النبوي",
     nameEn: "Madinah Grand Mosque",
-    file: "/adhan/madinah.mp3",
-    fajrFile: "/adhan/fajr/madinah.mp3",
+    file: `${CDN}/MADINAH.mp3`,
+    fajrFile: `${CDN}/MADINAH.mp3`,
   },
   {
     id: "mishary",
     nameAr: "مشاري راشد العفاسي",
     nameEn: "Mishary Rashid Al-Afasy",
-    file: "/adhan/mishary.mp3",
-    fajrFile: "/adhan/fajr/mishary.mp3",
+    file: `${CDN}/AFASY.mp3`,
+    fajrFile: `${CDN}/AFASY_FAJR.mp3`,
   },
   {
     id: "abdulbasit",
     nameAr: "عبد الباسط عبد الصمد",
     nameEn: "Abdul Basit Abdus-Samad",
-    file: "/adhan/abdulbasit.mp3",
-    fajrFile: "/adhan/fajr/abdulbasit.mp3",
+    file: `${CDN}/ABU_BAKR_SHATRI.mp3`,
+    fajrFile: `${CDN}/ABU_BAKR_SHATRI.mp3`,
   },
   {
     id: "minshawi",
     nameAr: "محمد صديق المنشاوي",
     nameEn: "Mohamed Siddiq Al-Minshawi",
-    file: "/adhan/minshawi.mp3",
-    fajrFile: "/adhan/fajr/minshawi.mp3",
+    file: `${CDN}/EGYPT.mp3`,
+    fajrFile: `${CDN}/EGYPT_FAJR.mp3`,
   },
 ];
+
+export const TAKBIR_URL = `${CDN}/MAKKAH_QURAN.mp3`;
+export const CHIME_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
 export const ADHAN_STORAGE_KEY = "wise-adhan-settings";
