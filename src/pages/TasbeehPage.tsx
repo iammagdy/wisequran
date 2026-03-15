@@ -19,13 +19,10 @@ function getTodayKey() {
   return `wise-tasbeeh-total-${new Date().toISOString().slice(0, 10)}`;
 }
 
-function BeadRing({ progress, count, target, isComplete }: {
+function BeadRing({ progress, isComplete }: {
   progress: number;
-  count: number;
-  target: number;
   isComplete: boolean;
 }) {
-  const { language } = useLanguage();
   const BEADS = 33;
   const filledBeads = Math.round(progress * BEADS);
   const radius = 108;
@@ -56,7 +53,7 @@ function BeadRing({ progress, count, target, isComplete }: {
                 : "hsl(var(--muted))",
               opacity: filled ? 1 : 0.5,
             }}
-            transition={{ duration: 0.25, delay: isLast ? 0 : 0 }}
+            transition={{ duration: 0.25 }}
             style={{
               filter: filled && isLast
                 ? `drop-shadow(0 0 4px hsl(var(--${isComplete ? "gold" : "primary"}) / 0.7))`
@@ -65,36 +62,45 @@ function BeadRing({ progress, count, target, isComplete }: {
           />
         );
       })}
-
-      {/* Center count display */}
-      <foreignObject x={cx - 56} y={cy - 42} width="112" height="84">
-        <div className="flex flex-col items-center justify-center h-full">
-          <motion.span
-            key={count}
-            initial={{ scale: 1.15, opacity: 0.7 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.15 }}
-            className="text-[44px] font-bold leading-none tabular-nums"
-            style={{ color: isComplete ? "hsl(var(--gold))" : "hsl(var(--foreground))" }}
-          >
-            {language === "ar" ? toArabicNumerals(count) : count}
-          </motion.span>
-          <span className="text-sm text-muted-foreground mt-1">
-            / {language === "ar" ? toArabicNumerals(target) : target}
-          </span>
-          {isComplete && (
-            <motion.span
-              initial={{ opacity: 0, y: 3 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-[10px] font-bold mt-1"
-              style={{ color: "hsl(var(--gold))" }}
-            >
-              {language === "ar" ? "ما شاء الله" : "Masha'Allah"}
-            </motion.span>
-          )}
-        </div>
-      </foreignObject>
     </svg>
+  );
+}
+
+function CounterDisplay({ count, target, isComplete }: {
+  count: number;
+  target: number;
+  isComplete: boolean;
+}) {
+  const { language } = useLanguage();
+  return (
+    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+      <motion.span
+        key={count}
+        initial={{ scale: 1.15, opacity: 0.7 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.15 }}
+        className="text-[44px] font-bold leading-none tabular-nums"
+        style={{ color: isComplete ? "hsl(var(--gold-text))" : "hsl(var(--foreground))" }}
+      >
+        {language === "ar" ? toArabicNumerals(count) : count}
+      </motion.span>
+      <span className="text-sm text-muted-foreground mt-1">
+        / {language === "ar" ? toArabicNumerals(target) : target}
+      </span>
+      <AnimatePresence>
+        {isComplete && (
+          <motion.span
+            initial={{ opacity: 0, y: 3 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 3 }}
+            className="text-[10px] font-bold mt-1"
+            style={{ color: "hsl(var(--gold-text))" }}
+          >
+            {language === "ar" ? "ما شاء الله" : "Masha'Allah"}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -234,6 +240,9 @@ export default function TasbeehPage() {
           >
             <BeadRing
               progress={progress}
+              isComplete={isComplete}
+            />
+            <CounterDisplay
               count={count}
               target={target}
               isComplete={isComplete}

@@ -123,7 +123,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
           {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-4 border-b border-border/50"
-            style={{ background: 'linear-gradient(to bottom, hsl(var(--primary) / 0.06), transparent)' }}
+            style={{ background: 'hsl(var(--card))' }}
           >
             <button
               onClick={() => onOpenChange(false)}

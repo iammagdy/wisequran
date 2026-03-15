@@ -78,7 +78,7 @@ export default function QuranPage() {
       titleKey: "mode_listening",
       subtitleKey: "mode_listening_subtitle",
       icon: <Headphones className="h-7 w-7" />,
-      accentColor: "text-amber-600 dark:text-amber-400",
+      accentColor: "text-amber-700 dark:text-amber-400",
       bgGradient: "from-amber-500/18 to-amber-500/6",
       borderColor: "border-amber-500/20",
       view: "surahs_listening",

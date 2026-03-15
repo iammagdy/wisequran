@@ -347,7 +347,7 @@ export default function SurahReaderPage() {
             {isListeningMode && (
               <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 border border-amber-500/20">
                 <Headphones className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
-                <span className="text-[0.6875rem] font-semibold text-amber-600 dark:text-amber-400 truncate max-w-[80px]">
+                <span className="text-[0.6875rem] font-semibold text-amber-700 dark:text-amber-400 truncate max-w-[80px]">
                   {currentReciterName}
                 </span>
               </div>

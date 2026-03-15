@@ -172,9 +172,9 @@ export default function PrayerPage() {
 
           <div className="flex items-center justify-center gap-2">
             <CountdownUnit value={heroTime.h} label={t("hour")} />
-            <span className="text-2xl font-bold text-primary/30 mb-5">:</span>
+            <span className="text-2xl font-bold text-primary/60 mb-5">:</span>
             <CountdownUnit value={heroTime.m} label={t("minute")} animate={heroTime.s === "00"} />
-            <span className="text-2xl font-bold text-primary/30 mb-5">:</span>
+            <span className="text-2xl font-bold text-primary/60 mb-5">:</span>
             <CountdownUnit value={heroTime.s} label={t("second")} animate />
           </div>
         </motion.div>

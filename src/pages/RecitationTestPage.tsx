@@ -48,7 +48,7 @@ function EnglishComingSoonBanner() {
     >
       <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
       <div>
-        <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">Arabic Only — English Coming Soon</p>
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Arabic Only — English Coming Soon</p>
         <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
           Speech recognition scoring is currently optimized for Arabic recitation only. English support is on its way.
         </p>

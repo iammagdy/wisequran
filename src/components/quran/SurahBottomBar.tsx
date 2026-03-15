@@ -317,7 +317,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         </div>
 
         <div className="px-4 pb-2">
-          <p className="text-center text-[0.5625rem] text-muted-foreground/50" dir={language === "ar" ? "rtl" : "ltr"}>
+          <p className="text-center text-[0.5625rem] text-muted-foreground/70" dir={language === "ar" ? "rtl" : "ltr"}>
             {t("audio_disclaimer")}
           </p>
         </div>

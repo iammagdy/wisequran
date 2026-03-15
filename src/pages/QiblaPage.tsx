@@ -236,7 +236,7 @@ export default function QiblaPage() {
                 className="relative w-64 h-64"
               >
                 {/* N/S/E/W labels */}
-                <span className="absolute top-2 left-1/2 -translate-x-1/2 text-sm font-bold text-destructive">N</span>
+                <span className="absolute top-2 left-1/2 -translate-x-1/2 text-sm font-bold text-red-500">N</span>
                 <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-sm font-bold text-muted-foreground">S</span>
                 <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">E</span>
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">W</span>
