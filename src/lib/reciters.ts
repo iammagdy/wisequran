@@ -22,17 +22,17 @@ export const RECITERS: Reciter[] = [
   { id: "ajamy", name: "أحمد العجمي", nameEn: "Ahmed Al-Ajamy", folder: "ar.ahmedajamy", hasAyahAudio: true },
   { id: "mahermuaiqly", name: "ماهر المعيقلي", nameEn: "Maher Al-Muaiqly", folder: "ar.mahermuaiqly", hasAyahAudio: true },
   // Reciters without per-ayah CDN audio (full-surah only)
-  { id: "islamsobhi", name: "إسلام صبحي", nameEn: "Islam Sobhi", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 158 },
+  { id: "islamsobhi", name: "إسلام صبحي", nameEn: "Islam Sobhi", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "yasser", name: "ياسر الدوسري", nameEn: "Yasser Al-Dosari", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "baleela", name: "بندر بليلة", nameEn: "Bandar Baleela", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "khalilaljalil", name: "خالد الجليل", nameEn: "Khalid Al-Jalil", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 100 },
+  { id: "khalilaljalil", name: "خالد الجليل", nameEn: "Khalid Al-Jalil", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "qatami", name: "ناصر القطامي", nameEn: "Nasser Al-Qatami", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "juhany", name: "عبدالله الجهني", nameEn: "Abdullah Al-Juhany", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "faresabbad", name: "فارس عباد", nameEn: "Fares Abbad", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "alousi", name: "عبدالرحمن العوسي", nameEn: "Abdurrahman Al-Alousi", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 145 },
+  { id: "alousi", name: "عبدالرحمن العوسي", nameEn: "Abdurrahman Al-Alousi", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "luhaidan", name: "محمد اللحيدان", nameEn: "Muhammad Al-Luhaidan", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "abdullahmousa", name: "عبدالله الموسى", nameEn: "Abdullah Al-Mousa", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 172 },
-  { id: "nufais", name: "أحمد النفيس", nameEn: "Ahmed Al-Nufais", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 192 },
+  { id: "abdullahmousa", name: "عبدالله الموسى", nameEn: "Abdullah Al-Mousa", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "nufais", name: "أحمد النفيس", nameEn: "Ahmed Al-Nufais", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "ayyub", name: "محمد أيوب", nameEn: "Muhammad Ayyub", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "idrisabkar", name: "إدريس أبكر", nameEn: "Idris Abkar", folder: "ar.alafasy", hasAyahAudio: false },
 ];
@@ -55,6 +55,11 @@ const CUSTOM_CDN_RECITERS: Record<string, string> = {
   baleela: "https://download.quranicaudio.com/quran/bandar_baleela",
   juhany: "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee",
   faresabbad: "https://download.quranicaudio.com/quran/fares",
+  islamsobhi: "https://server14.mp3quran.net/islam/Rewayat-Hafs-A-n-Assem",
+  khalilaljalil: "https://server10.mp3quran.net/jleel",
+  alousi: "https://server6.mp3quran.net/aloosi",
+  abdullahmousa: "https://server14.mp3quran.net/mousa/Rewayat-Hafs-A-n-Assem",
+  nufais: "https://server16.mp3quran.net/nufais/Rewayat-Hafs-A-n-Assem",
 };
 
 // Cache for dynamically resolved mp3quran.net server URLs
@@ -137,10 +142,14 @@ export async function getReciterAudioUrls(reciterId: string, surahNumber: number
   const padded = surahNumber.toString().padStart(3, "0");
   const urls: string[] = [];
 
-  // 1. download.quranicaudio.com — most reliable with proper CORS headers
-  const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
-  if (qaPath) {
-    urls.push(`https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`);
+  // 1. download.quranicaudio.com — only add if this reciter is the true owner of that folder
+  // (hasAyahAudio reciters each have a unique folder; hasAyahAudio:false reciters all share
+  //  "ar.alafasy" as a placeholder, so we must NOT look up the quranic audio map for them)
+  if (reciter.hasAyahAudio) {
+    const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
+    if (qaPath) {
+      urls.push(`https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`);
+    }
   }
 
   // 2. Custom CDN (mp3quran.net etc.) for reciters that have it
@@ -158,8 +167,10 @@ export async function getReciterAudioUrls(reciterId: string, surahNumber: number
     }
   }
 
-  // 4. cdn.islamic.network as last resort
-  urls.push(`https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`);
+  // 4. cdn.islamic.network as last resort — only for reciters with their own unique folder
+  if (reciter.hasAyahAudio) {
+    urls.push(`https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`);
+  }
 
   return urls;
 }

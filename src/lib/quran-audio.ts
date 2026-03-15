@@ -1,5 +1,5 @@
 import { saveAudio, getAudio, deleteAudio, checkStorageQuota } from "./db";
-import { getReciterAudioUrls } from "./reciters";
+import { getReciterAudioUrls, getReciterAudioUrl } from "./reciters";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
 
@@ -14,7 +14,7 @@ function isValidAudioFile(buffer: ArrayBuffer): boolean {
   if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return true;
   const textStart = new TextDecoder().decode(bytes.slice(0, 50)).trim().toLowerCase();
   if (textStart.startsWith("<!doctype") || textStart.startsWith("<html") || textStart.startsWith("<head")) return false;
-  return false;
+  return true;
 }
 
 /**
@@ -31,8 +31,8 @@ export async function resolveAudioSource(
   }
 
   if (navigator.onLine) {
-    const urls = await getReciterAudioUrls(reciterId, surahNumber);
-    return { url: urls[0], cached: false };
+    const url = await getReciterAudioUrl(reciterId, surahNumber);
+    return { url, cached: false };
   }
 
   return null;
