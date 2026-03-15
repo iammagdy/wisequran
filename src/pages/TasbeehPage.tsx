@@ -31,34 +31,33 @@ function BeadRing({ progress, isComplete }: {
 
   return (
     <svg width="256" height="256" viewBox="0 0 256 256" className="block">
+      <circle
+        cx={cx}
+        cy={cy}
+        r={72}
+        className="fill-card stroke-border"
+        strokeWidth={1}
+      />
       {Array.from({ length: BEADS }).map((_, i) => {
         const angle = (i / BEADS) * 2 * Math.PI - Math.PI / 2;
         const bx = cx + radius * Math.cos(angle);
         const by = cy + radius * Math.sin(angle);
         const filled = i < filledBeads;
-        const isLast = i === filledBeads - 1 && filled;
 
         return (
-          <motion.circle
+          <circle
             key={i}
             cx={bx}
             cy={by}
             r={filled ? 5.5 : 4}
-            initial={false}
-            animate={{
-              fill: filled
+            className={
+              filled
                 ? isComplete
-                  ? "hsl(var(--gold))"
-                  : "hsl(var(--primary))"
-                : "hsl(var(--muted))",
-              opacity: filled ? 1 : 0.5,
-            }}
-            transition={{ duration: 0.25 }}
-            style={{
-              filter: filled && isLast
-                ? `drop-shadow(0 0 4px hsl(var(--${isComplete ? "gold" : "primary"}) / 0.7))`
-                : "none"
-            }}
+                  ? "fill-amber-500"
+                  : "fill-primary"
+                : "fill-muted"
+            }
+            opacity={filled ? 1 : 0.6}
           />
         );
       })}
@@ -79,8 +78,7 @@ function CounterDisplay({ count, target, isComplete }: {
         initial={{ scale: 1.15, opacity: 0.7 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.15 }}
-        className="text-[44px] font-bold leading-none tabular-nums"
-        style={{ color: isComplete ? "hsl(var(--gold-text))" : "hsl(var(--foreground))" }}
+        className={`text-[44px] font-bold leading-none tabular-nums ${isComplete ? "text-amber-600 dark:text-amber-400" : "text-foreground"}`}
       >
         {language === "ar" ? toArabicNumerals(count) : count}
       </motion.span>
@@ -93,8 +91,7 @@ function CounterDisplay({ count, target, isComplete }: {
             initial={{ opacity: 0, y: 3 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 3 }}
-            className="text-[10px] font-bold mt-1"
-            style={{ color: "hsl(var(--gold-text))" }}
+            className="text-[10px] font-bold mt-1 text-amber-600 dark:text-amber-400"
           >
             {language === "ar" ? "ما شاء الله" : "Masha'Allah"}
           </motion.span>
@@ -233,7 +230,7 @@ export default function TasbeehPage() {
           )}
 
           <motion.button
-            className="relative select-none outline-none focus:outline-none"
+            className="relative block select-none outline-none focus:outline-none"
             whileTap={{ scale: 0.96 }}
             onTap={handleTap}
             style={{ WebkitTapHighlightColor: "transparent" }}
