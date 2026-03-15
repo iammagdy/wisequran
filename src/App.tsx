@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -60,11 +60,11 @@ const App = () => {
     return !!sessionStorage.getItem("splashShown");
   });
 
-  const handleSplashComplete = () => {
+  const handleSplashComplete = useCallback(() => {
     sessionStorage.setItem("splashShown", "true");
     setShowSplash(false);
     setAppReady(true);
-  };
+  }, []);
 
   return (
     <ErrorBoundary>
