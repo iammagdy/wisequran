@@ -54,13 +54,16 @@ const AppContent = () => {
 
 const App = () => {
   const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash once per session
     return !sessionStorage.getItem("splashShown");
+  });
+  const [appReady, setAppReady] = useState(() => {
+    return !!sessionStorage.getItem("splashShown");
   });
 
   const handleSplashComplete = () => {
     sessionStorage.setItem("splashShown", "true");
     setShowSplash(false);
+    setAppReady(true);
   };
 
   return (
@@ -69,15 +72,17 @@ const App = () => {
         <TooltipProvider>
           <Sonner />
           {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-          <BrowserRouter>
-            <LanguageProvider>
-              <AudioPlayerProvider>
-                <ErrorBoundary>
-                  <AppContent />
-                </ErrorBoundary>
-              </AudioPlayerProvider>
-            </LanguageProvider>
-          </BrowserRouter>
+          {appReady && (
+            <BrowserRouter>
+              <LanguageProvider>
+                <AudioPlayerProvider>
+                  <ErrorBoundary>
+                    <AppContent />
+                  </ErrorBoundary>
+                </AudioPlayerProvider>
+              </LanguageProvider>
+            </BrowserRouter>
+          )}
         </TooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>

@@ -2,26 +2,44 @@ import { Component, type ReactNode, type ErrorInfo } from "react";
 
 interface Props {
   children: ReactNode;
+  silent?: boolean;
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
+  retryCount: number;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null };
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-  static getDerivedStateFromError(error: Error): State {
+  state: State = { hasError: false, error: null, retryCount: 0 };
+
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("App crashed:", error, info.componentStack);
+
+    if (this.state.retryCount < 2) {
+      this.retryTimer = setTimeout(() => {
+        this.setState((prev) => ({
+          hasError: false,
+          error: null,
+          retryCount: prev.retryCount + 1,
+        }));
+      }, 1000);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.retryTimer) clearTimeout(this.retryTimer);
   }
 
   render() {
-    if (this.state.hasError) {
+    if (this.state.hasError && this.state.retryCount >= 2) {
       return (
         <div
           dir="rtl"
@@ -48,6 +66,8 @@ export default class ErrorBoundary extends Component<Props, State> {
         </div>
       );
     }
+
+    if (this.state.hasError) return null;
 
     return this.props.children;
   }

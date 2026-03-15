@@ -33,7 +33,7 @@ export function useLocation(autoFetch: boolean = false): UseLocationResult {
     }
     return null;
   });
-  const [loading, setLoading] = useState(!location);
+  const [loading, setLoading] = useState(autoFetch && !location);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLocation = useCallback(() => {
