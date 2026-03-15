@@ -1,6 +1,7 @@
 export interface JuzEntry {
   juzNumber: number;
   name: string;
+  nameEn: string;
   startSurah: number;
   startAyah: number;
   endSurah: number;
@@ -25,37 +26,46 @@ const juzNames = [
   "الجزء السادس والعشرون", "الجزء السابع والعشرون", "الجزء الثامن والعشرون", "الجزء التاسع والعشرون", "الجزء الثلاثون",
 ];
 
+const juzNamesEn = [
+  "Juz 1", "Juz 2", "Juz 3", "Juz 4", "Juz 5",
+  "Juz 6", "Juz 7", "Juz 8", "Juz 9", "Juz 10",
+  "Juz 11", "Juz 12", "Juz 13", "Juz 14", "Juz 15",
+  "Juz 16", "Juz 17", "Juz 18", "Juz 19", "Juz 20",
+  "Juz 21", "Juz 22", "Juz 23", "Juz 24", "Juz 25",
+  "Juz 26", "Juz 27", "Juz 28", "Juz 29", "Juz 30",
+];
+
 export const juzData: JuzEntry[] = [
-  { juzNumber: 1, name: juzNames[0], startSurah: 1, startAyah: 1, endSurah: 2, endAyah: 141 },
-  { juzNumber: 2, name: juzNames[1], startSurah: 2, startAyah: 142, endSurah: 2, endAyah: 252 },
-  { juzNumber: 3, name: juzNames[2], startSurah: 2, startAyah: 253, endSurah: 3, endAyah: 92 },
-  { juzNumber: 4, name: juzNames[3], startSurah: 3, startAyah: 93, endSurah: 4, endAyah: 23 },
-  { juzNumber: 5, name: juzNames[4], startSurah: 4, startAyah: 24, endSurah: 4, endAyah: 147 },
-  { juzNumber: 6, name: juzNames[5], startSurah: 4, startAyah: 148, endSurah: 5, endAyah: 81 },
-  { juzNumber: 7, name: juzNames[6], startSurah: 5, startAyah: 82, endSurah: 6, endAyah: 110 },
-  { juzNumber: 8, name: juzNames[7], startSurah: 6, startAyah: 111, endSurah: 7, endAyah: 87 },
-  { juzNumber: 9, name: juzNames[8], startSurah: 7, startAyah: 88, endSurah: 8, endAyah: 40 },
-  { juzNumber: 10, name: juzNames[9], startSurah: 8, startAyah: 41, endSurah: 9, endAyah: 92 },
-  { juzNumber: 11, name: juzNames[10], startSurah: 9, startAyah: 93, endSurah: 11, endAyah: 5 },
-  { juzNumber: 12, name: juzNames[11], startSurah: 11, startAyah: 6, endSurah: 12, endAyah: 52 },
-  { juzNumber: 13, name: juzNames[12], startSurah: 12, startAyah: 53, endSurah: 14, endAyah: 52 },
-  { juzNumber: 14, name: juzNames[13], startSurah: 15, startAyah: 1, endSurah: 16, endAyah: 128 },
-  { juzNumber: 15, name: juzNames[14], startSurah: 17, startAyah: 1, endSurah: 18, endAyah: 74 },
-  { juzNumber: 16, name: juzNames[15], startSurah: 18, startAyah: 75, endSurah: 20, endAyah: 135 },
-  { juzNumber: 17, name: juzNames[16], startSurah: 21, startAyah: 1, endSurah: 22, endAyah: 78 },
-  { juzNumber: 18, name: juzNames[17], startSurah: 23, startAyah: 1, endSurah: 25, endAyah: 20 },
-  { juzNumber: 19, name: juzNames[18], startSurah: 25, startAyah: 21, endSurah: 27, endAyah: 55 },
-  { juzNumber: 20, name: juzNames[19], startSurah: 27, startAyah: 56, endSurah: 29, endAyah: 45 },
-  { juzNumber: 21, name: juzNames[20], startSurah: 29, startAyah: 46, endSurah: 33, endAyah: 30 },
-  { juzNumber: 22, name: juzNames[21], startSurah: 33, startAyah: 31, endSurah: 36, endAyah: 27 },
-  { juzNumber: 23, name: juzNames[22], startSurah: 36, startAyah: 28, endSurah: 39, endAyah: 31 },
-  { juzNumber: 24, name: juzNames[23], startSurah: 39, startAyah: 32, endSurah: 41, endAyah: 46 },
-  { juzNumber: 25, name: juzNames[24], startSurah: 41, startAyah: 47, endSurah: 45, endAyah: 37 },
-  { juzNumber: 26, name: juzNames[25], startSurah: 46, startAyah: 1, endSurah: 51, endAyah: 30 },
-  { juzNumber: 27, name: juzNames[26], startSurah: 51, startAyah: 31, endSurah: 57, endAyah: 29 },
-  { juzNumber: 28, name: juzNames[27], startSurah: 58, startAyah: 1, endSurah: 66, endAyah: 12 },
-  { juzNumber: 29, name: juzNames[28], startSurah: 67, startAyah: 1, endSurah: 77, endAyah: 50 },
-  { juzNumber: 30, name: juzNames[29], startSurah: 78, startAyah: 1, endSurah: 114, endAyah: 6 },
+  { juzNumber: 1, name: juzNames[0], nameEn: juzNamesEn[0], startSurah: 1, startAyah: 1, endSurah: 2, endAyah: 141 },
+  { juzNumber: 2, name: juzNames[1], nameEn: juzNamesEn[1], startSurah: 2, startAyah: 142, endSurah: 2, endAyah: 252 },
+  { juzNumber: 3, name: juzNames[2], nameEn: juzNamesEn[2], startSurah: 2, startAyah: 253, endSurah: 3, endAyah: 92 },
+  { juzNumber: 4, name: juzNames[3], nameEn: juzNamesEn[3], startSurah: 3, startAyah: 93, endSurah: 4, endAyah: 23 },
+  { juzNumber: 5, name: juzNames[4], nameEn: juzNamesEn[4], startSurah: 4, startAyah: 24, endSurah: 4, endAyah: 147 },
+  { juzNumber: 6, name: juzNames[5], nameEn: juzNamesEn[5], startSurah: 4, startAyah: 148, endSurah: 5, endAyah: 81 },
+  { juzNumber: 7, name: juzNames[6], nameEn: juzNamesEn[6], startSurah: 5, startAyah: 82, endSurah: 6, endAyah: 110 },
+  { juzNumber: 8, name: juzNames[7], nameEn: juzNamesEn[7], startSurah: 6, startAyah: 111, endSurah: 7, endAyah: 87 },
+  { juzNumber: 9, name: juzNames[8], nameEn: juzNamesEn[8], startSurah: 7, startAyah: 88, endSurah: 8, endAyah: 40 },
+  { juzNumber: 10, name: juzNames[9], nameEn: juzNamesEn[9], startSurah: 8, startAyah: 41, endSurah: 9, endAyah: 92 },
+  { juzNumber: 11, name: juzNames[10], nameEn: juzNamesEn[10], startSurah: 9, startAyah: 93, endSurah: 11, endAyah: 5 },
+  { juzNumber: 12, name: juzNames[11], nameEn: juzNamesEn[11], startSurah: 11, startAyah: 6, endSurah: 12, endAyah: 52 },
+  { juzNumber: 13, name: juzNames[12], nameEn: juzNamesEn[12], startSurah: 12, startAyah: 53, endSurah: 14, endAyah: 52 },
+  { juzNumber: 14, name: juzNames[13], nameEn: juzNamesEn[13], startSurah: 15, startAyah: 1, endSurah: 16, endAyah: 128 },
+  { juzNumber: 15, name: juzNames[14], nameEn: juzNamesEn[14], startSurah: 17, startAyah: 1, endSurah: 18, endAyah: 74 },
+  { juzNumber: 16, name: juzNames[15], nameEn: juzNamesEn[15], startSurah: 18, startAyah: 75, endSurah: 20, endAyah: 135 },
+  { juzNumber: 17, name: juzNames[16], nameEn: juzNamesEn[16], startSurah: 21, startAyah: 1, endSurah: 22, endAyah: 78 },
+  { juzNumber: 18, name: juzNames[17], nameEn: juzNamesEn[17], startSurah: 23, startAyah: 1, endSurah: 25, endAyah: 20 },
+  { juzNumber: 19, name: juzNames[18], nameEn: juzNamesEn[18], startSurah: 25, startAyah: 21, endSurah: 27, endAyah: 55 },
+  { juzNumber: 20, name: juzNames[19], nameEn: juzNamesEn[19], startSurah: 27, startAyah: 56, endSurah: 29, endAyah: 45 },
+  { juzNumber: 21, name: juzNames[20], nameEn: juzNamesEn[20], startSurah: 29, startAyah: 46, endSurah: 33, endAyah: 30 },
+  { juzNumber: 22, name: juzNames[21], nameEn: juzNamesEn[21], startSurah: 33, startAyah: 31, endSurah: 36, endAyah: 27 },
+  { juzNumber: 23, name: juzNames[22], nameEn: juzNamesEn[22], startSurah: 36, startAyah: 28, endSurah: 39, endAyah: 31 },
+  { juzNumber: 24, name: juzNames[23], nameEn: juzNamesEn[23], startSurah: 39, startAyah: 32, endSurah: 41, endAyah: 46 },
+  { juzNumber: 25, name: juzNames[24], nameEn: juzNamesEn[24], startSurah: 41, startAyah: 47, endSurah: 45, endAyah: 37 },
+  { juzNumber: 26, name: juzNames[25], nameEn: juzNamesEn[25], startSurah: 46, startAyah: 1, endSurah: 51, endAyah: 30 },
+  { juzNumber: 27, name: juzNames[26], nameEn: juzNamesEn[26], startSurah: 51, startAyah: 31, endSurah: 57, endAyah: 29 },
+  { juzNumber: 28, name: juzNames[27], nameEn: juzNamesEn[27], startSurah: 58, startAyah: 1, endSurah: 66, endAyah: 12 },
+  { juzNumber: 29, name: juzNames[28], nameEn: juzNamesEn[28], startSurah: 67, startAyah: 1, endSurah: 77, endAyah: 50 },
+  { juzNumber: 30, name: juzNames[29], nameEn: juzNamesEn[29], startSurah: 78, startAyah: 1, endSurah: 114, endAyah: 6 },
 ];
 
 export const hizbData: HizbEntry[] = [

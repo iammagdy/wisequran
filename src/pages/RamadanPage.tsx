@@ -192,7 +192,9 @@ export default function RamadanPage() {
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">{t("today_juz")}</p>
                 <p className="font-bold text-foreground">
-                  {juzData[todayJuz - 1]?.name || (language === "ar" ? `الجزء ${toArabicNumerals(todayJuz)}` : `Juz ${todayJuz}`)}
+                  {language === "ar"
+                    ? (juzData[todayJuz - 1]?.name || `الجزء ${toArabicNumerals(todayJuz)}`)
+                    : (juzData[todayJuz - 1]?.nameEn || `Juz ${todayJuz}`)}
                 </p>
               </div>
               <div className="flex gap-2">

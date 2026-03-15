@@ -485,6 +485,34 @@ interface Translations {
   prayer_source: string;
   mode_loud: string;
   mode_silent: string;
+
+  // HifzPage toast messages
+  hifz_toast_well_done: string;
+  hifz_toast_reviewed_surah: string;
+  hifz_toast_keep_going: string;
+  hifz_toast_will_appear: string;
+  hifz_recitation_test_btn: string;
+  hifz_recitation_test_desc: string;
+  hifz_review_count: string;
+  hifz_review_card_subtitle: string;
+  hifz_review_card_title_singular: string;
+  hifz_review_card_title_plural: string;
+
+  // Settings toast messages
+  settings_toast_preview_timeout: string;
+  settings_toast_preview_error: string;
+  settings_toast_download_failed: string;
+  settings_toast_quran_downloaded: string;
+  settings_toast_data_cleared: string;
+  settings_toast_audio_downloaded: string;
+  settings_toast_audio_cleared: string;
+  settings_toast_tafsir_cleared: string;
+  settings_toast_verify_failed: string;
+  settings_toast_recitation_downloaded: string;
+  settings_toast_recitation_failed: string;
+
+  // DailyAyah toast
+  could_not_play_audio: string;
 }
 
 const ar: Translations = {
@@ -937,6 +965,31 @@ const ar: Translations = {
   prayer_source: "المصدر: صفة صلاة النبي ﷺ — الشيخ الألباني | islamqa.info",
   mode_loud: "جهرًا",
   mode_silent: "سرًا",
+
+  hifz_toast_well_done: "أحسنت! ✨",
+  hifz_toast_reviewed_surah: "تمت مراجعة سورة",
+  hifz_toast_keep_going: "ستتحسن إن شاء الله",
+  hifz_toast_will_appear: "ستظهر سورة {name} في مراجعة الغد",
+  hifz_recitation_test_btn: "اختبار التلاوة",
+  hifz_recitation_test_desc: "اختبر حفظك بالتلاوة الصوتية",
+  hifz_review_count: "تمت مراجعة {count}",
+  hifz_review_card_subtitle: "ابدأ مراجعتك اليومية أدناه",
+  hifz_review_card_title_singular: "لديك {count} سورة للمراجعة اليوم",
+  hifz_review_card_title_plural: "لديك {count} سور للمراجعة اليوم",
+
+  settings_toast_preview_timeout: "انتهت مهلة تحميل المعاينة",
+  settings_toast_preview_error: "تعذر تشغيل المعاينة",
+  settings_toast_download_failed: "فشل تحميل القرآن، تحقق من الاتصال بالإنترنت",
+  settings_toast_quran_downloaded: "تم تحميل القرآن الكريم بالكامل",
+  settings_toast_data_cleared: "تم مسح البيانات المحملة",
+  settings_toast_audio_downloaded: "تم تحميل جميع التلاوات",
+  settings_toast_audio_cleared: "تم مسح جميع التلاوات",
+  settings_toast_tafsir_cleared: "تم مسح جميع التفاسير المحملة",
+  settings_toast_verify_failed: "فشل التحقق من التحميلات",
+  settings_toast_recitation_downloaded: "تم تحميل التلاوة",
+  settings_toast_recitation_failed: "فشل تحميل التلاوة",
+
+  could_not_play_audio: "تعذر تشغيل الصوت",
 };
 
 const en: Translations = {
@@ -1389,6 +1442,31 @@ const en: Translations = {
   prayer_source: "Source: Prayer description from the Sunnah of the Prophet ﷺ | islamqa.info",
   mode_loud: "Aloud",
   mode_silent: "Silent",
+
+  hifz_toast_well_done: "Well done! ✨",
+  hifz_toast_reviewed_surah: "Reviewed Surah",
+  hifz_toast_keep_going: "Keep going, you'll improve",
+  hifz_toast_will_appear: "Surah {name} will appear in tomorrow's review",
+  hifz_recitation_test_btn: "Recitation Test",
+  hifz_recitation_test_desc: "Test your memory with voice recitation",
+  hifz_review_count: "Reviewed {count}",
+  hifz_review_card_subtitle: "Start your daily review below",
+  hifz_review_card_title_singular: "You have {count} surah to review today",
+  hifz_review_card_title_plural: "You have {count} surahs to review today",
+
+  settings_toast_preview_timeout: "Preview timed out",
+  settings_toast_preview_error: "Could not play preview",
+  settings_toast_download_failed: "Download failed, check your internet connection",
+  settings_toast_quran_downloaded: "The entire Quran has been downloaded",
+  settings_toast_data_cleared: "Downloaded data cleared",
+  settings_toast_audio_downloaded: "All recitations downloaded",
+  settings_toast_audio_cleared: "All recitations cleared",
+  settings_toast_tafsir_cleared: "All downloaded tafsir cleared",
+  settings_toast_verify_failed: "Failed to verify downloads",
+  settings_toast_recitation_downloaded: "Recitation downloaded",
+  settings_toast_recitation_failed: "Failed to download recitation",
+
+  could_not_play_audio: "Could not play audio",
 };
 
 interface LanguageContextValue {

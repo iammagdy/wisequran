@@ -124,7 +124,7 @@ export default function SettingsPage() {
         previewAudioRef.current = null;
         setPreviewLoading(null);
         setPreviewingReciter(null);
-        toast.error(language === "ar" ? "انتهت مهلة تحميل المعاينة" : "Preview timed out");
+        toast.error(t("settings_toast_preview_timeout"));
       }
     }, 10000);
 
@@ -145,7 +145,7 @@ export default function SettingsPage() {
       clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(null);
-      toast.error(language === "ar" ? "تعذر تشغيل المعاينة" : "Could not play preview");
+      toast.error(t("settings_toast_preview_error"));
     }, { once: true });
 
     // Set src after listeners are attached
@@ -209,14 +209,14 @@ export default function SettingsPage() {
     try {
       await downloadAllSurahs((percent) => setDownloadProgress(percent));
     } catch {
-      toast.error(language === "ar" ? "فشل تحميل القرآن، تحقق من الاتصال بالإنترنت" : "Download failed, check your internet connection");
+      toast.error(t("settings_toast_download_failed"));
     }
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
     refreshStorageStats();
     if (updated.length === 114) {
-      toast.success(language === "ar" ? "تم تحميل القرآن الكريم بالكامل" : "The entire Quran has been downloaded");
+      toast.success(t("settings_toast_quran_downloaded"));
     }
   };
 
@@ -225,7 +225,7 @@ export default function SettingsPage() {
     setDownloadedSurahs([]);
     setDownloadedAudio([]);
     refreshStorageStats();
-    toast.success(language === "ar" ? "تم مسح البيانات المحملة" : "Downloaded data cleared");
+    toast.success(t("settings_toast_data_cleared"));
   };
 
   const handleDownloadAllAudio = async () => {
@@ -241,14 +241,14 @@ export default function SettingsPage() {
     setDownloadedAudio(updated);
     setAudioDownloading(false);
     refreshStorageStats();
-    toast.success(language === "ar" ? "تم تحميل جميع التلاوات" : "All recitations downloaded");
+    toast.success(t("settings_toast_audio_downloaded"));
   };
 
   const handleClearAllAudio = async () => {
     await clearAllAudio();
     setDownloadedAudio([]);
     refreshStorageStats();
-    toast.success(language === "ar" ? "تم مسح جميع التلاوات" : "All recitations cleared");
+    toast.success(t("settings_toast_audio_cleared"));
   };
 
   const handleDownloadSingleAudio = async (num: number) => {
@@ -258,9 +258,9 @@ export default function SettingsPage() {
       const updated = await getAllDownloadedAudio(reciterId);
       setDownloadedAudio(updated);
       refreshStorageStats();
-      toast.success(language === "ar" ? `تم تحميل التلاوة (${formatBytes(size)})` : `Recitation downloaded (${formatBytes(size)})`);
+      toast.success(`${t("settings_toast_recitation_downloaded")} (${formatBytes(size)})`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : (language === "ar" ? "فشل تحميل التلاوة" : "Failed to download recitation"));
+      toast.error(e instanceof Error ? e.message : t("settings_toast_recitation_failed"));
     }
     setSingleAudioDownloading(null);
   };
@@ -275,7 +275,7 @@ export default function SettingsPage() {
   const handleClearTafsir = async () => {
     await clearAllTafsir();
     refreshStorageStats();
-    toast.success(language === "ar" ? "تم مسح جميع التفاسير المحملة" : "All downloaded tafsir cleared");
+    toast.success(t("settings_toast_tafsir_cleared"));
   };
 
   const handleVerifyDownloads = async () => {
@@ -295,18 +295,21 @@ export default function SettingsPage() {
       refreshStorageStats();
 
       if (result.corrupted.length === 0) {
+        const validCount = language === "ar" ? toArabicNumerals(result.valid.length) : result.valid.length;
         toast.success(language === "ar"
-          ? `تم التحقق من جميع الملفات ✓ (${toArabicNumerals(result.valid.length)} ملف سليم)`
-          : `All files verified ✓ (${result.valid.length} valid)`);
+          ? `تم التحقق من جميع الملفات ✓ (${validCount} ملف سليم)`
+          : `All files verified ✓ (${validCount} valid)`);
       } else {
+        const validCount = language === "ar" ? toArabicNumerals(result.valid.length) : result.valid.length;
+        const corruptCount = language === "ar" ? toArabicNumerals(result.corrupted.length) : result.corrupted.length;
         toast.success(language === "ar"
-          ? `تم إصلاح التحميلات\nملفات سليمة: ${toArabicNumerals(result.valid.length)}\nملفات تالفة تم حذفها: ${toArabicNumerals(result.corrupted.length)}`
-          : `Downloads repaired\nValid: ${result.valid.length}\nCorrupted removed: ${result.corrupted.length}`,
+          ? `تم إصلاح التحميلات\nملفات سليمة: ${validCount}\nملفات تالفة تم حذفها: ${corruptCount}`
+          : `Downloads repaired\nValid: ${validCount}\nCorrupted removed: ${corruptCount}`,
           { duration: 5000 }
         );
       }
     } catch (e) {
-      toast.error(language === "ar" ? "فشل التحقق من التحميلات" : "Failed to verify downloads");
+      toast.error(t("settings_toast_verify_failed"));
     } finally {
       setVerifying(false);
       setVerifyProgress({ current: 0, total: 0 });

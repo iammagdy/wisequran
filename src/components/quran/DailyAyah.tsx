@@ -169,7 +169,7 @@ export function DailyAyah() {
                   `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${getGlobalAyahNumber(data.surah, data.ayah)}.mp3`
                 );
                 audio.play().catch(() => {
-                  toast({ title: language === "en" ? "Could not play audio" : "تعذر تشغيل الصوت" });
+                  toast({ title: t("could_not_play_audio") });
                 });
               }}
               className="p-1.5 rounded-lg hover:bg-primary/10 transition-colors">

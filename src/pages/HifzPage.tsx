@@ -64,18 +64,16 @@ export default function HifzPage() {
     streak.markActive();
     if (quality === "good") {
       goal.markSurahReviewed();
+      const surahName = language === "en" ? (meta?.englishName || "") : (meta?.name || "");
       toast({
-        title: language === "en" ? "Well done! ✨" : "أحسنت! ✨",
-        description: language === "en"
-          ? `Reviewed Surah ${meta?.englishName || ""}`
-          : `تمت مراجعة سورة ${meta?.name || ""}`,
+        title: t("hifz_toast_well_done"),
+        description: `${t("hifz_toast_reviewed_surah")} ${surahName}`,
       });
     } else {
+      const surahName = language === "en" ? (meta?.englishName || "") : (meta?.name || "");
       toast({
-        title: language === "en" ? "Keep going, you'll improve" : "ستتحسن إن شاء الله",
-        description: language === "en"
-          ? `Surah ${meta?.englishName || ""} will appear in tomorrow's review`
-          : `ستظهر سورة ${meta?.name || ""} في مراجعة الغد`,
+        title: t("hifz_toast_keep_going"),
+        description: t("hifz_toast_will_appear").replace("{name}", surahName),
       });
     }
   };
@@ -224,10 +222,10 @@ export default function HifzPage() {
         </div>
         <div className="text-start flex-1">
           <p className="text-sm font-bold">
-            {language === "en" ? "Recitation Test" : "اختبار التلاوة"}
+            {t("hifz_recitation_test_btn")}
           </p>
           <p className="text-xs opacity-80">
-            {language === "en" ? "Test your memory with voice recitation" : "اختبر حفظك بالتلاوة الصوتية"}
+            {t("hifz_recitation_test_desc")}
           </p>
         </div>
         <ArrowRight className={cn("h-4 w-4 opacity-70", isRTL && "rotate-180")} />
@@ -248,12 +246,13 @@ export default function HifzPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-foreground">
-                {language === "ar"
-                  ? `لديك ${toArabicNumerals(todayQueue.length)} ${todayQueue.length === 1 ? "سورة" : "سور"} للمراجعة اليوم`
-                  : `You have ${todayQueue.length} surah${todayQueue.length === 1 ? "" : "s"} to review today`}
+                {(todayQueue.length === 1
+                  ? t("hifz_review_card_title_singular")
+                  : t("hifz_review_card_title_plural")
+                ).replace("{count}", language === "ar" ? toArabicNumerals(todayQueue.length) : String(todayQueue.length))}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {language === "ar" ? "ابدأ مراجعتك اليومية أدناه" : "Start your daily review below"}
+                {t("hifz_review_card_subtitle")}
               </p>
             </div>
           </div>
@@ -269,9 +268,7 @@ export default function HifzPage() {
           </div>
           {review.stats.reviewedToday > 0 && (
             <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1">
-              {language === "en"
-                ? `Reviewed ${review.stats.reviewedToday}`
-                : `تمت مراجعة ${toArabicNumerals(review.stats.reviewedToday)}`}
+              {t("hifz_review_count").replace("{count}", language === "ar" ? toArabicNumerals(review.stats.reviewedToday) : String(review.stats.reviewedToday))}
             </span>
           )}
         </div>
