@@ -150,11 +150,11 @@ export default function QuranPage() {
               </motion.button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => navigate("/stats")} className="gap-2 text-right flex-row-reverse">
+              <DropdownMenuItem onClick={() => navigate("/stats")} className={cn("gap-2", isRTL ? "text-right flex-row-reverse" : "text-left")}>
                 <BarChart3 className="h-4 w-4" />
                 {t("statistics")}
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/hifz")} className="gap-2 text-right flex-row-reverse">
+              <DropdownMenuItem onClick={() => navigate("/hifz")} className={cn("gap-2", isRTL ? "text-right flex-row-reverse" : "text-left")}>
                 <GraduationCap className="h-4 w-4" />
                 {t("memorization")}
               </DropdownMenuItem>
@@ -214,7 +214,7 @@ export default function QuranPage() {
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate(`/surah/${lastRead.surah}`)}
-                className="flex w-full items-center rounded-2xl bg-card py-3 px-4 text-right shadow-elevated border border-primary/10 hover-lift gap-3 mb-[3px]">
+                className={cn("flex w-full items-center rounded-2xl bg-card py-3 px-4 shadow-elevated border border-primary/10 hover-lift gap-3 mb-[3px]", isRTL ? "text-right" : "text-left")}>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
                   <BookOpen className="h-5 w-5 text-primary" />
                 </div>
@@ -224,7 +224,7 @@ export default function QuranPage() {
                     {t("surah")} {getSurahName(lastRead.surah)} — {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
                   </p>
                 </div>
-                <span className="text-xs text-primary/60 shrink-0">←</span>
+                <span className="text-xs text-primary/60 shrink-0">{isRTL ? "←" : "→"}</span>
               </motion.button>
             )}
 

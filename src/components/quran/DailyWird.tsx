@@ -19,7 +19,7 @@ export function DailyWird() {
   const { state, startPlan, resetPlan, markTodayDone, getTodayPortion, progress } = useDailyWird();
   const [showSetup, setShowSetup] = useState(false);
   const portion = getTodayPortion();
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
 
   if (!state) {
     return (
@@ -91,7 +91,7 @@ export function DailyWird() {
             navigate(`/surah/${portion.startSurah}?ayah=${portion.startAyah}`);
           }}
           className={cn(
-            "flex-1 rounded-xl p-3 text-right transition-all",
+            `flex-1 rounded-xl p-3 ${isRTL ? "text-right" : "text-left"} transition-all`,
             portion.isDone ?
             "bg-primary/10 border border-primary/20" :
             "bg-muted/50 hover:bg-muted"

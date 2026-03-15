@@ -152,7 +152,7 @@ export default function PrayerPage() {
         transition={{ delay: 0.05 }}
         whileTap={{ scale: 0.97 }}
         onClick={() => navigate("/qibla")}
-        className="w-full rounded-2xl gradient-hero p-3 shadow-elevated border border-primary/10 flex items-center gap-3 text-right pb-1.5 pt-1.5 bg-[#D4AF37]/20 mb-2.5 mt-2.5">
+        className={cn("w-full rounded-2xl gradient-hero p-3 shadow-elevated border border-primary/10 flex items-center gap-3 pb-1.5 pt-1.5 bg-[#D4AF37]/20 mb-2.5 mt-2.5", isRTL ? "text-right" : "text-left")}>
 
         <div className="rounded-xl bg-primary/15 p-2.5">
           <Compass className="h-5 w-5 text-primary" />
@@ -244,7 +244,7 @@ export default function PrayerPage() {
               )}>
 
               <span className="text-xl">{prayer.icon}</span>
-              <div className="flex-1 text-right">
+              <div className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
                 <p className={cn("font-bold text-sm", done && "line-through text-muted-foreground")}>
                   {t(prayer.id as any)}
                 </p>
