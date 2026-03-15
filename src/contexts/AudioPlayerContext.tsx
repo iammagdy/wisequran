@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useRef, useCallback, useEffect, type ReactNode } from "react";
 import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl } from "@/lib/reciters";
+import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl, getReciterAudioUrls } from "@/lib/reciters";
 import { fetchChapterRecitation, findCurrentAyahByTime, type AyahTimestamp } from "@/lib/ayah-timestamps";
 import { SURAH_META } from "@/data/surah-meta";
 import { toast } from "sonner";
@@ -122,6 +122,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [state.playing, state.surahName, state.playingReciterId]);
 
+  const fallbackUrlsRef = useRef<string[]>([]);
+  const fallbackIndexRef = useRef(0);
+  const activeSurahForRetryRef = useRef<number | null>(null);
+  const activeReciterForRetryRef = useRef<string>("");
+
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
       setState((s) => ({ ...s, duration: audio.duration, loading: false }));
@@ -146,15 +151,27 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       onAyahEndedRef.current?.();
     });
     audio.addEventListener("error", () => {
+      const nextIndex = fallbackIndexRef.current;
+      const fallbacks = fallbackUrlsRef.current;
+
+      if (nextIndex < fallbacks.length && audioRef.current === audio) {
+        const nextUrl = fallbacks[nextIndex];
+        fallbackIndexRef.current = nextIndex + 1;
+        audio.src = nextUrl;
+        audio.load();
+        audio.play().catch(() => {});
+        return;
+      }
+
       setState((s) => ({ ...s, loading: false }));
-      toast.error("تعذر تشغيل الصوت");
+      toast.error("تعذر تشغيل الصوت. يرجى المحاولة مرة أخرى.");
     });
     // Sync playing state if browser pauses audio (e.g. interruption)
     audio.addEventListener("pause", () => {
       setState((s) => ({ ...s, playing: false }));
     });
     audio.addEventListener("play", () => {
-      setState((s) => ({ ...s, playing: true }));
+      setState((s) => ({ ...s, playing: true, loading: false }));
     });
   }, []);
 
@@ -176,6 +193,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     cleanupBlobUrl();
 
     surahNumberRef.current = surahNumber;
+    activeSurahForRetryRef.current = surahNumber;
+    activeReciterForRetryRef.current = currentReciterId;
 
     // Create Audio element IMMEDIATELY to preserve user gesture context
     const audio = new Audio();
@@ -200,63 +219,70 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       totalAyahs: 0,
     }));
 
-    let audioUrl: string | null = null;
+    let primaryUrl: string | null = null;
 
+    // Try QF API first (has timestamps for ayah highlighting)
     try {
       const qfData = await fetchChapterRecitation(currentReciterId, surahNumber);
       if (qfData) {
         timestampsRef.current = qfData.timestamps;
-        audioUrl = qfData.audioUrl;
+        primaryUrl = qfData.audioUrl;
         setState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
       }
     } catch {
-      // QF API failed, fall back to normal source
+      // QF API failed, fall back to normal sources
     }
 
-    if (!audioUrl) {
-      const source = await resolveAudioSource(currentReciterId, surahNumber);
-      if (!source) {
-        setState((s) => ({ ...s, offline: true, loading: false }));
-        audioRef.current = null;
-        return;
+    // Check cached audio
+    if (!primaryUrl) {
+      const cached = await resolveAudioSource(currentReciterId, surahNumber);
+      if (cached?.cached) {
+        primaryUrl = cached.url;
+        blobUrlRef.current = cached.url;
       }
-      audioUrl = source.url;
-      if (source.cached) blobUrlRef.current = source.url;
     }
 
-    if (stoppedRef.current) {
+    if (stoppedRef.current || audioRef.current !== audio) {
+      return;
+    }
+
+    // Build ordered fallback URL list from all available sources
+    const allUrls = await getReciterAudioUrls(currentReciterId, surahNumber);
+
+    if (!primaryUrl && !navigator.onLine) {
+      setState((s) => ({ ...s, offline: true, loading: false }));
       audioRef.current = null;
       return;
     }
 
-    audio.src = audioUrl;
+    // Deduplicate: primary first, then the rest
+    const orderedUrls: string[] = [];
+    if (primaryUrl) orderedUrls.push(primaryUrl);
+    for (const u of allUrls) {
+      if (!orderedUrls.includes(u)) orderedUrls.push(u);
+    }
+
+    if (orderedUrls.length === 0) {
+      setState((s) => ({ ...s, offline: true, loading: false }));
+      audioRef.current = null;
+      return;
+    }
+
+    // Set fallbacks (everything after index 0) for the error handler
+    fallbackUrlsRef.current = orderedUrls.slice(1);
+    fallbackIndexRef.current = 0;
+
+    audio.src = orderedUrls[0];
+    audio.load();
+
     try {
       await audio.play();
-      if (!blobUrlRef.current && audioUrl) {
-        cachePlayingAudio(currentReciterId, surahNumber, audioUrl).catch(() => {});
+      if (!blobUrlRef.current) {
+        cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
       }
-      return;
     } catch {
-      // Primary source failed, try fallback
+      // The error event listener will handle retrying the next URL automatically
     }
-
-    const fallback = await resolveAudioSource(currentReciterId, surahNumber);
-    if (fallback) {
-      if (fallback.cached) blobUrlRef.current = fallback.url;
-      audio.src = fallback.url;
-      try {
-        await audio.play();
-        if (!fallback.cached) {
-          cachePlayingAudio(currentReciterId, surahNumber, fallback.url).catch(() => {});
-        }
-        return;
-      } catch {
-        // Fallback also failed
-      }
-    }
-
-    audioRef.current = null;
-    setState((s) => ({ ...s, loading: false }));
   }, [cleanupBlobUrl, setupAudioListeners]);
 
   const togglePlayPause = useCallback(async () => {

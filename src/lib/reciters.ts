@@ -15,7 +15,8 @@ export const RECITERS: Reciter[] = [
   { id: "alafasy", name: "مشاري العفاسي", nameEn: "Mishary Alafasy", folder: "ar.alafasy", hasAyahAudio: true, qfApiId: 7 },
   { id: "husary", name: "محمود خليل الحصري", nameEn: "Mahmoud Khalil Al-Husary", folder: "ar.husary", hasAyahAudio: true, qfApiId: 6 },
   { id: "minshawi", name: "محمد صديق المنشاوي", nameEn: "Muhammad Siddiq Al-Minshawi", folder: "ar.minshawi", hasAyahAudio: true, qfApiId: 9 },
-  { id: "abdulbasit", name: "عبد الباسط عبد الصمد", nameEn: "Abdul Basit Abdul Samad", folder: "ar.abdulbasitmurattal", hasAyahAudio: true, qfApiId: 2 },
+  { id: "abdulbasit", name: "عبد الباسط عبد الصمد (مرتّل)", nameEn: "Abdul Basit Abdul Samad (Murattal)", folder: "ar.abdulbasitmurattal", hasAyahAudio: true, qfApiId: 2 },
+  { id: "abdulbasitmujawwad", name: "عبد الباسط عبد الصمد (مجوّد)", nameEn: "Abdul Basit Abdul Samad (Mujawwad)", folder: "ar.abdulbasitmujawwad", hasAyahAudio: false },
   { id: "sudais", name: "عبد الرحمن السديس", nameEn: "Abdurrahman Al-Sudais", folder: "ar.abdurrahmaansudais", hasAyahAudio: true, qfApiId: 3 },
   { id: "shuraym", name: "سعود الشريم", nameEn: "Saud Al-Shuraym", folder: "ar.saoodshuraym", hasAyahAudio: true, qfApiId: 10 },
   { id: "rifai", name: "هاني الرفاعي", nameEn: "Hani Al-Rifai", folder: "ar.hanirifai", hasAyahAudio: true, qfApiId: 5 },
@@ -26,15 +27,14 @@ export const RECITERS: Reciter[] = [
   { id: "yasser", name: "ياسر الدوسري", nameEn: "Yasser Al-Dosari", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "baleela", name: "بندر بليلة", nameEn: "Bandar Baleela", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "khalilaljalil", name: "خالد الجليل", nameEn: "Khalid Al-Jalil", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "qatami", name: "ناصر القطامي", nameEn: "Nasser Al-Qatami", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "juhany", name: "عبدالله الجهني", nameEn: "Abdullah Al-Juhany", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "faresabbad", name: "فارس عباد", nameEn: "Fares Abbad", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "alousi", name: "عبدالرحمن العوسي", nameEn: "Abdurrahman Al-Alousi", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "luhaidan", name: "محمد اللحيدان", nameEn: "Muhammad Al-Luhaidan", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "abdullahmousa", name: "عبدالله الموسى", nameEn: "Abdullah Al-Mousa", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "nufais", name: "أحمد النفيس", nameEn: "Ahmed Al-Nufais", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "ayyub", name: "محمد أيوب", nameEn: "Muhammad Ayyub", folder: "ar.alafasy", hasAyahAudio: false },
   { id: "idrisabkar", name: "إدريس أبكر", nameEn: "Idris Abkar", folder: "ar.alafasy", hasAyahAudio: false },
+  // Egyptian reciters
+  { id: "rifaat", name: "محمد رفعت", nameEn: "Muhammad Rifaat", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "tablawi", name: "محمد الطبلاوي", nameEn: "Muhammad Al-Tablawi", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "bahtimi", name: "كامل يوسف البهتيمي", nameEn: "Kamil Yusuf Al-Bahtimi", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "mustafaismail", name: "مصطفى إسماعيل", nameEn: "Mustafa Ismail", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "shahat", name: "رمضان شحات", nameEn: "Ramadan Shahat", folder: "ar.alafasy", hasAyahAudio: false },
 ];
 
 export const DEFAULT_RECITER = "alafasy";
@@ -48,18 +48,18 @@ const CUSTOM_CDN_RECITERS: Record<string, string> = {
   ajamy: "https://server10.mp3quran.net/ajm",
   mahermuaiqly: "https://server12.mp3quran.net/maher",
   yasser: "https://server11.mp3quran.net/yasser",
-  qatami: "https://server6.mp3quran.net/qtm",
-  luhaidan: "https://server8.mp3quran.net/lhdan",
   ayyub: "https://server8.mp3quran.net/ayyub",
   idrisabkar: "https://server6.mp3quran.net/abkr",
   baleela: "https://download.quranicaudio.com/quran/bandar_baleela",
-  juhany: "https://download.quranicaudio.com/quran/abdullaah_3awwaad_al-juhaynee",
-  faresabbad: "https://download.quranicaudio.com/quran/fares",
   islamsobhi: "https://server14.mp3quran.net/islam/Rewayat-Hafs-A-n-Assem",
   khalilaljalil: "https://server10.mp3quran.net/jleel",
-  alousi: "https://server6.mp3quran.net/aloosi",
-  abdullahmousa: "https://server14.mp3quran.net/mousa/Rewayat-Hafs-A-n-Assem",
-  nufais: "https://server16.mp3quran.net/nufais/Rewayat-Hafs-A-n-Assem",
+  abdulbasitmujawwad: "https://download.quranicaudio.com/quran/abdulbasit_abdulsamad_mujawwad",
+  // Egyptian reciters
+  rifaat: "https://download.quranicaudio.com/quran/muhammad_rifaat",
+  tablawi: "https://server7.mp3quran.net/tablawi",
+  bahtimi: "https://download.quranicaudio.com/quran/kamel_yusuf_al-bahtimi",
+  mustafaismail: "https://download.quranicaudio.com/quran/mustafa_ismail",
+  shahat: "https://server8.mp3quran.net/shahat",
 };
 
 // Cache for dynamically resolved mp3quran.net server URLs
