@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -153,27 +152,24 @@ export default function QuranPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
-                <MoreHorizontal className="h-5 w-5" />
-              </motion.button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[160px]">
-              <DropdownMenuItem onClick={() => navigate("/stats")} className={cn("gap-2", isRTL ? "text-right flex-row-reverse" : "text-left")}>
-                <BarChart3 className="h-4 w-4" />
-                {t("statistics")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/hifz")} className={cn("gap-2", isRTL ? "text-right flex-row-reverse" : "text-left")}>
-                <GraduationCap className="h-4 w-4" />
-                {t("memorization")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {view === "home" && (
+          <div className="flex items-center gap-1.5">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate("/stats")}
+              aria-label={t("statistics")}
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              <BarChart3 className="h-5 w-5" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate("/hifz")}
+              aria-label={t("memorization")}
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              <GraduationCap className="h-5 w-5" />
+            </motion.button>
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">

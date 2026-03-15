@@ -21,7 +21,9 @@ export default function AppShell({ children }: Props) {
 
   return (
     <div className="min-h-screen bg-background gradient-spiritual pattern-islamic" style={{ backgroundBlendMode: "normal" }}>
-      <main className={showGlobalBar ? "pb-nav-with-bar" : "pb-nav"}>{children}</main>
+      <main className={showGlobalBar ? "pb-nav-with-bar" : "pb-nav"}>
+        <div className="max-w-lg mx-auto w-full">{children}</div>
+      </main>
       <AnimatePresence>
         {showGlobalBar && <GlobalAudioBar />}
       </AnimatePresence>
