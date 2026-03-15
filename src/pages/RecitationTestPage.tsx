@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles, Check, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useRecitationHistory } from "@/hooks/useRecitationHistory";
-import { scoreRangeRecitation, type StrictnessLevel } from "@/lib/ayah-match";
+import { scoreRangeRecitation, scoreAyah, type StrictnessLevel } from "@/lib/ayah-match";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahRangeSelector from "@/components/recitation/SurahRangeSelector";
 import MicButton from "@/components/recitation/MicButton";
@@ -77,6 +77,8 @@ export default function RecitationTestPage() {
   const [result, setResult] = useState<ScoreResult | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
+  const [liveAyahScores, setLiveAyahScores] = useState<Record<number, { score: number; isCorrect: boolean }>>({});
+  const ayahRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
@@ -110,6 +112,7 @@ export default function RecitationTestPage() {
   const handleStartTest = async () => {
     await loadAyahs();
     speech.reset();
+    setLiveAyahScores({});
     setPhase("recording");
   };
 
@@ -119,37 +122,45 @@ export default function RecitationTestPage() {
 
   useEffect(() => {
     if (phase !== "recording") return;
-    if (speech.status !== "done") return;
     if (!speech.transcript && !speech.interimTranscript) return;
 
-    const fullTranscript = speech.transcript || speech.interimTranscript;
+    const fullTranscript = speech.transcript + " " + speech.interimTranscript;
     if (!fullTranscript.trim()) return;
 
-    const { overallScore, correctAyahs, perAyah } = scoreRangeRecitation(ayahsData, fullTranscript, strictness);
-
-    const scoreResult: ScoreResult = {
-      overallScore,
-      correctAyahs,
-      totalAyahs: ayahsData.length,
-      perAyah,
-      transcript: fullTranscript,
-    };
-
-    setResult(scoreResult);
-    setPhase("result");
-
-    recitationHistory.saveResult({
-      surahNumber,
-      ayahFrom,
-      ayahTo,
-      score: overallScore,
-      totalAyahs: ayahsData.length,
-      correctAyahs,
-      transcript: fullTranscript,
-      strictness,
-      perAyah,
+    const newScores: Record<number, { score: number; isCorrect: boolean }> = {};
+    ayahsData.forEach(ayah => {
+      const result = scoreAyah(ayah.text, fullTranscript, strictness);
+      newScores[ayah.numberInSurah] = result;
     });
-  }, [speech.status, speech.transcript, phase]);
+    setLiveAyahScores(newScores);
+
+    if (speech.status === "done") {
+      const { overallScore, correctAyahs, perAyah } = scoreRangeRecitation(ayahsData, fullTranscript, strictness);
+
+      const scoreResult: ScoreResult = {
+        overallScore,
+        correctAyahs,
+        totalAyahs: ayahsData.length,
+        perAyah,
+        transcript: fullTranscript,
+      };
+
+      setResult(scoreResult);
+      setPhase("result");
+
+      recitationHistory.saveResult({
+        surahNumber,
+        ayahFrom,
+        ayahTo,
+        score: overallScore,
+        totalAyahs: ayahsData.length,
+        correctAyahs,
+        transcript: fullTranscript,
+        strictness,
+        perAyah,
+      });
+    }
+  }, [speech.status, speech.transcript, speech.interimTranscript, phase, ayahsData, strictness, surahNumber, ayahFrom, ayahTo, recitationHistory]);
 
   const handleTryAgain = () => {
     speech.reset();
@@ -420,20 +431,86 @@ export default function RecitationTestPage() {
               </p>
             </div>
 
-            {/* Ayah preview (blurred until done) */}
-            {ayahsData.length > 0 && (
-              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 max-h-48 overflow-y-auto">
-                <div className={cn("space-y-2", speech.status === "done" ? "" : "blur-sm select-none pointer-events-none")} dir="rtl">
-                  {ayahsData.map((a) => (
-                    <p key={a.numberInSurah} className="font-arabic text-base leading-loose text-center">
-                      {a.text}
-                      <span className="text-muted-foreground text-sm ms-1">﴿{a.numberInSurah}﴾</span>
-                    </p>
-                  ))}
+            {/* Live scoring panel */}
+            {speech.status === "listening" && Object.keys(liveAyahScores).length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl bg-card border border-border/50 shadow-soft p-4"
+              >
+                <div className="flex items-center justify-center gap-6">
+                  <div className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {language === "ar" ? "صحيح" : "Correct"}
+                    </span>
+                    <span className="text-lg font-bold tabular-nums">
+                      {language === "ar"
+                        ? toArabicNumerals(Object.values(liveAyahScores).filter(s => s.isCorrect).length)
+                        : Object.values(liveAyahScores).filter(s => s.isCorrect).length}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <X className="h-4 w-4 text-destructive" />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {language === "ar" ? "خطأ" : "Wrong"}
+                    </span>
+                    <span className="text-lg font-bold tabular-nums">
+                      {language === "ar"
+                        ? toArabicNumerals(Object.values(liveAyahScores).filter(s => !s.isCorrect).length)
+                        : Object.values(liveAyahScores).filter(s => !s.isCorrect).length}
+                    </span>
+                  </div>
                 </div>
-                {speech.status !== "done" && (
+              </motion.div>
+            )}
+
+            {/* Ayah preview with live highlighting */}
+            {ayahsData.length > 0 && (
+              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 max-h-96 overflow-y-auto">
+                <div className="space-y-3" dir="rtl">
+                  {ayahsData.map((a, index) => {
+                    const liveScore = liveAyahScores[a.numberInSurah];
+                    const isCorrect = liveScore?.isCorrect;
+                    const hasScore = liveScore !== undefined;
+
+                    return (
+                      <motion.div
+                        key={a.numberInSurah}
+                        ref={el => { ayahRefs.current[index] = el; }}
+                        animate={{
+                          opacity: speech.status === "done" || hasScore ? 1 : 0.5,
+                        }}
+                        className={cn(
+                          "rounded-xl p-3 transition-all",
+                          hasScore && isCorrect && "bg-emerald-500/20 border-2 border-emerald-500",
+                          hasScore && !isCorrect && "bg-destructive/20 border-2 border-destructive",
+                          !hasScore && "bg-muted/30"
+                        )}
+                      >
+                        <p className="font-arabic text-base leading-loose text-center">
+                          {a.text}
+                          <span className="text-muted-foreground text-sm ms-2">﴿{a.numberInSurah}﴾</span>
+                        </p>
+                        {hasScore && (
+                          <div className="flex items-center justify-center gap-2 mt-2">
+                            {isCorrect ? (
+                              <Check className="h-3 w-3 text-emerald-600" />
+                            ) : (
+                              <X className="h-3 w-3 text-destructive" />
+                            )}
+                            <span className="text-xs font-medium">
+                              {language === "ar" ? toArabicNumerals(liveScore.ayahScore) : liveScore.ayahScore}%
+                            </span>
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                {speech.status !== "done" && Object.keys(liveAyahScores).length === 0 && (
                   <p className="text-xs text-muted-foreground text-center mt-2">
-                    {language === "ar" ? "متن مخفي أثناء الاختبار" : "Text hidden during test"}
+                    {language === "ar" ? "ابدأ القراءة..." : "Start reciting..."}
                   </p>
                 )}
               </div>

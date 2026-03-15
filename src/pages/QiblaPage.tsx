@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone, Compass, Camera, CircleCheck as CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLocation, calculateDistance, getMagneticDeclination } from "@/hooks/useLocation";
@@ -47,6 +47,10 @@ export default function QiblaPage() {
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [showCalibration, setShowCalibration] = useState(false);
   const [isAligned, setIsAligned] = useState(false);
+  const [mode, setMode] = useState<"2D" | "3D">("2D");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const lastVibration = useRef(0);
   const smoothedHeading = useRef<number | null>(null);
 
@@ -160,6 +164,43 @@ export default function QiblaPage() {
     ? qiblaBearing - activeHeading
     : 0;
 
+  useEffect(() => {
+    if (mode !== "3D") return;
+
+    let stream: MediaStream | null = null;
+
+    const startCamera = async () => {
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
+        });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          stream = mediaStream;
+          setCameraReady(true);
+          setCameraError(null);
+        }
+      } catch (err) {
+        console.error("Camera error:", err);
+        setCameraError(
+          language === "ar"
+            ? "يرجى السماح بالوصول إلى الكاميرا"
+            : "Please allow camera access"
+        );
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      setCameraReady(false);
+    };
+  }, [mode, language]);
+
   const compassError = compassErrorKey ? t(compassErrorKey) : null;
   const error = locationError || compassError;
 
@@ -205,7 +246,131 @@ export default function QiblaPage() {
         </motion.div>
       ) : (
         <>
-          {/* Accuracy Indicator */}
+          {/* Mode Selector */}
+          <div className="flex gap-2 rounded-2xl bg-muted/40 p-1.5 w-full max-w-sm mb-6">
+            <button
+              onClick={() => setMode("2D")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all",
+                mode === "2D"
+                  ? "bg-card shadow-soft text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Compass className="h-4 w-4" />
+              {language === "ar" ? "قبلة 2D" : "2D Compass"}
+            </button>
+            <button
+              onClick={() => setMode("3D")}
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all",
+                mode === "3D"
+                  ? "bg-card shadow-soft text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Camera className="h-4 w-4" />
+              {language === "ar" ? "قبلة 3D" : "3D AR"}
+            </button>
+          </div>
+
+          {/* 3D AR Mode */}
+          {mode === "3D" && qiblaBearing !== null && (
+            <AnimatePresence mode="wait">
+              {cameraError ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="rounded-2xl bg-destructive/10 p-8 text-center w-full"
+                >
+                  <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
+                  <p className="text-destructive text-sm">{cameraError}</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden shadow-elevated bg-black"
+                >
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+
+                  {cameraReady && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: qiblaBearing - (correctedHeading || 0) }}
+                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
+                        className="relative"
+                      >
+                        <motion.div
+                          animate={{
+                            scale: isAligned ? [1, 1.2, 1] : 1,
+                          }}
+                          transition={{
+                            duration: 0.5,
+                            repeat: isAligned ? Infinity : 0,
+                          }}
+                          className={cn(
+                            "text-8xl drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]",
+                            isAligned && "drop-shadow-[0_0_30px_rgba(34,197,94,0.8)]"
+                          )}
+                        >
+                          🕋
+                        </motion.div>
+
+                        <motion.div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                          <div className={cn(
+                            "px-4 py-2 rounded-full font-bold text-sm shadow-lg backdrop-blur-sm",
+                            isAligned
+                              ? "bg-emerald-500/90 text-white"
+                              : "bg-black/60 text-white"
+                          )}>
+                            {isAligned
+                              ? (language === "ar" ? "✓ اتجاه القبلة" : "✓ Qibla Direction")
+                              : (language === "ar" ? "وجّه الكاميرا" : "Point Camera")}
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    </div>
+                  )}
+
+                  {isAligned && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute top-8 left-1/2 -translate-x-1/2"
+                    >
+                      <div className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="text-sm font-bold">
+                          {language === "ar" ? "متجه نحو القبلة" : "Aligned with Qibla"}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
+                    <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
+                      <p className="text-white text-xs font-medium">
+                        {language === "ar" ? `الاتجاه: ${Math.round(qiblaBearing)}°` : `Bearing: ${Math.round(qiblaBearing)}°`}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+
+          {/* 2D Compass Mode */}
+          {mode === "2D" && (
+            <>
+              {/* Accuracy Indicator */}
           <div className="flex items-center justify-center gap-4 mb-4 w-full">
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">{t("compass_accuracy")}</span>
@@ -417,12 +582,14 @@ export default function QiblaPage() {
             )}
           </div>
 
-          {/* No compass hint */}
-          {heading === null && !compassErrorKey && (
-            <div className="flex items-center gap-2 mt-4 text-muted-foreground">
-              <Smartphone className="h-4 w-4 animate-pulse" />
-              <span className="text-sm">{t("move_device")}</span>
-            </div>
+              {/* No compass hint */}
+              {heading === null && !compassErrorKey && (
+                <div className="flex items-center gap-2 mt-4 text-muted-foreground">
+                  <Smartphone className="h-4 w-4 animate-pulse" />
+                  <span className="text-sm">{t("move_device")}</span>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
