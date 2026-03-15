@@ -118,7 +118,7 @@ export default function QuranPage() {
     view === "surahs_listening" ? t("mode_listening") : t("mode_reading");
 
   return (
-    <div className="px-4 pt-4 pb-4 pl-2.5">
+    <div className="px-4 pt-4 pb-4 pl-2.5" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-[5px] mt-0">
@@ -246,7 +246,7 @@ export default function QuranPage() {
                   <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl", card.iconBgClass, card.accentClass)}>
                     {card.icon}
                   </div>
-                  <div className="flex-1 text-right">
+                  <div className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
                     <p className={cn("text-xl font-bold font-arabic leading-tight", card.accentClass)}>
                       {t(card.titleKey)}
                     </p>
@@ -289,7 +289,7 @@ export default function QuranPage() {
                     <div className="number-badge h-11 w-11 text-sm">
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                     </div>
-                    <div className="flex-1 text-right">
+                    <div className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
                       <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors">
                         {language === "ar" ? surah.name : surah.englishName}
                       </p>

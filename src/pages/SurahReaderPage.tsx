@@ -16,7 +16,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
-import { DEFAULT_TAFSIR, TAFSIR_EDITIONS } from "@/data/tafsir-editions";
+import { DEFAULT_TAFSIR, TAFSIR_EDITIONS, ENGLISH_TAFSIR_ID } from "@/data/tafsir-editions";
 import { DEFAULT_TRANSLATION, TRANSLATION_EDITIONS } from "@/data/translation-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
@@ -76,7 +76,10 @@ export default function SurahReaderPage() {
   const hasTracked = useRef(false);
 
   const isFavorite = favorites.includes(surahNumber);
-  const editionName = (() => { const ed = TAFSIR_EDITIONS.find((e) => e.id === tafsirEdition); return language === "en" ? (ed?.nameEn ?? tafsirEdition) : (ed?.name ?? tafsirEdition); })();
+  const effectiveTafsirEdition = language === "en" && tafsirEdition.startsWith("ar.")
+    ? ENGLISH_TAFSIR_ID
+    : tafsirEdition;
+  const editionName = (() => { const ed = TAFSIR_EDITIONS.find((e) => e.id === effectiveTafsirEdition); return language === "en" ? (ed?.nameEn ?? effectiveTafsirEdition) : (ed?.name ?? effectiveTafsirEdition); })();
   const displaySurahName = surahInfo
     ? (language === "ar" ? surahInfo.name : surahInfo.englishName)
     : `${t("surah")} ${surahNumber}`;
@@ -173,15 +176,15 @@ export default function SurahReaderPage() {
 
   useEffect(() => {
     if (activeTab !== "tafsir") return;
-    if (tafsirEditionRef.current !== tafsirEdition) {
+    if (tafsirEditionRef.current !== effectiveTafsirEdition) {
       setTafsirAyahs([]);
-      tafsirEditionRef.current = tafsirEdition;
+      tafsirEditionRef.current = effectiveTafsirEdition;
     }
-    if (tafsirAyahs.length > 0 && tafsirEditionRef.current === tafsirEdition) return;
+    if (tafsirAyahs.length > 0 && tafsirEditionRef.current === effectiveTafsirEdition) return;
 
     setTafsirLoading(true);
     setTafsirError("");
-    fetchTafsir(surahNumber, tafsirEdition).
+    fetchTafsir(surahNumber, effectiveTafsirEdition).
     then((data) => {
       setTafsirAyahs(data);
       setTafsirLoading(false);
@@ -190,7 +193,7 @@ export default function SurahReaderPage() {
       setTafsirError(t("error_loading"));
       setTafsirLoading(false);
     });
-  }, [activeTab, surahNumber, tafsirEdition, tafsirAyahs.length]);
+  }, [activeTab, surahNumber, effectiveTafsirEdition, tafsirAyahs.length]);
 
   useEffect(() => {
     if (!translationEnabled) {
@@ -632,6 +635,9 @@ export default function SurahReaderPage() {
                   <h2 className="font-arabic text-base font-bold text-foreground">{t("tafsir_tab")} {t("surah")}</h2>
                   <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
                 </div>
+                {language === "en" && tafsirEdition.startsWith("ar.") && (
+                  <p className="text-xs text-primary/70 -mt-2 mb-2">{t("tafsir_english_note")}</p>
+                )}
 
                 {/* Ayah picker + Search input */}
                 <div className="flex gap-2 mb-2">

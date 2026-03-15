@@ -156,6 +156,19 @@ export function formatArabicTime(time24: string): string {
   return toArabicTime(time24);
 }
 
+/** Format a 24h time string to a localized 12h format based on language */
+export function formatLocalizedTime(time24: string, language: string): string {
+  if (language === "en") {
+    const [hStr, mStr] = time24.split(":");
+    let h = parseInt(hStr);
+    const period = h >= 12 ? "PM" : "AM";
+    if (h > 12) h -= 12;
+    if (h === 0) h = 12;
+    return `${h}:${mStr} ${period}`;
+  }
+  return toArabicTime(time24);
+}
+
 /** Get seconds remaining until a specific prayer time. Negative if passed. */
 export function getSecondsUntilPrayer(prayerTime: string, now: Date, timezone?: string): number {
   const localNow = timezone 

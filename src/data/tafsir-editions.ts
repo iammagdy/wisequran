@@ -11,6 +11,9 @@ export const TAFSIR_EDITIONS: TafsirEdition[] = [
   { id: "ar.baghawi", name: "تفسير البغوي", nameEn: "Tafsir Al-Baghawi" },
   { id: "ar.waseet", name: "التفسير الوسيط", nameEn: "Al-Waseet Tafsir" },
   { id: "ar.miqbas", name: "تنوير المقباس", nameEn: "Tanwir Al-Miqbas" },
+  { id: "en.ahmedali", name: "ابن كثير (إنجليزي)", nameEn: "Ibn Kathir (English)" },
 ];
+
+export const ENGLISH_TAFSIR_ID = "en.ahmedali";
 
 export const DEFAULT_TAFSIR = "ar.muyassar";

@@ -116,7 +116,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
               "font-bold text-sm",
               achievement.unlocked ? "text-foreground" : "text-muted-foreground"
             )}>
-              {achievement.title}
+              {language === "en" && achievement.titleEn ? achievement.titleEn : achievement.title}
             </h4>
             {achievement.unlocked ? (
               <CheckCircle className="h-4 w-4 text-primary shrink-0" />
@@ -124,7 +124,9 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
               <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{achievement.description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {language === "en" && achievement.descriptionEn ? achievement.descriptionEn : achievement.description}
+          </p>
 
           {!achievement.unlocked && achievement.target && (
             <div className="mt-2">
@@ -144,7 +146,7 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
 // New unlock notification overlay
 export function AchievementUnlockNotification() {
   const { newUnlock, dismissNewUnlock } = useAchievements();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -210,8 +212,12 @@ export function AchievementUnlockNotification() {
               transition={{ delay: 0.3 }}
             >
               <p className="text-xs text-gold font-semibold mb-1">{t("new_achievement")}</p>
-              <h3 className="text-xl font-bold text-foreground mb-2">{newUnlock.title}</h3>
-              <p className="text-sm text-muted-foreground">{newUnlock.description}</p>
+              <h3 className="text-xl font-bold text-foreground mb-2">
+                {language === "en" && newUnlock.titleEn ? newUnlock.titleEn : newUnlock.title}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {language === "en" && newUnlock.descriptionEn ? newUnlock.descriptionEn : newUnlock.description}
+              </p>
             </motion.div>
           </motion.div>
         </motion.div>

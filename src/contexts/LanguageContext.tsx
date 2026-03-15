@@ -361,8 +361,12 @@ interface Translations {
   whats_new: string;
   update_notes: string;
   app_updated: string;
+  app_updated_title: string;
   show_all_changelog: string;
   ok_thanks: string;
+  whats_new_button: string;
+  update_auto_dismiss: string;
+  tafsir_english_note: string;
 
   // Install banner
   install_title: string;
@@ -820,8 +824,12 @@ const ar: Translations = {
   whats_new: "ما الجديد في الإصدار",
   update_notes: "ملاحظات التحديث",
   app_updated: "تم تحديث التطبيق بنجاح",
+  app_updated_title: "تم التحديث ✓",
   show_all_changelog: "عرض كل سجل التحديثات",
   ok_thanks: "حسناً، شكراً!",
+  whats_new_button: "ما الجديد؟",
+  update_auto_dismiss: "سيُغلق تلقائياً خلال...",
+  tafsir_english_note: "عرض التفسير بالإنجليزية",
 
   install_title: "ثبّت التطبيق",
   install_description: "أضف التطبيق إلى شاشتك الرئيسية للوصول السريع",
@@ -1266,8 +1274,12 @@ const en: Translations = {
   whats_new: "What's New in Version",
   update_notes: "Update Notes",
   app_updated: "App updated successfully",
+  app_updated_title: "App Updated ✓",
   show_all_changelog: "Show all changelog",
   ok_thanks: "OK, Thanks!",
+  whats_new_button: "What's New?",
+  update_auto_dismiss: "Auto-closing in...",
+  tafsir_english_note: "Showing English interpretation",
 
   install_title: "Install App",
   install_description: "Add to your home screen for quick access",

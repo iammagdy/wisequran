@@ -15,6 +15,7 @@ interface CachedAyah {
   ayah: number;
   text: string;
   surahName: string;
+  translationText?: string;
 }
 
 function getGlobalAyahNumber(surah: number, ayah: number): number {
@@ -36,23 +37,40 @@ export function DailyAyah() {
       const cached = localStorage.getItem(cacheKey);
 
       if (cached) {
-        setData(JSON.parse(cached));
+        const parsed: CachedAyah = JSON.parse(cached);
+        if (language === "en" && !parsed.translationText) {
+          try {
+            const resp = await fetch(`https://api.alquran.cloud/v1/surah/${parsed.surah}/en.sahih`);
+            const json = await resp.json();
+            const tAyah = json?.data?.ayahs?.find((a: { numberInSurah: number }) => a.numberInSurah === parsed.ayah);
+            if (tAyah) {
+              parsed.translationText = tAyah.text;
+              localStorage.setItem(cacheKey, JSON.stringify(parsed));
+            }
+          } catch { /* ignore */ }
+        }
+        setData(parsed);
         setLoading(false);
         return;
       }
 
       const ref: DailyAyahRef = getDailyAyahReference();
       try {
-        const ayahs: Ayah[] = await fetchSurahAyahs(ref.surah);
+        const [ayahs, translationResp] = await Promise.all([
+          fetchSurahAyahs(ref.surah),
+          fetch(`https://api.alquran.cloud/v1/surah/${ref.surah}/en.sahih`).then((r) => r.json()).catch(() => null),
+        ]);
         const ayah = ayahs.find((a) => a.numberInSurah === ref.ayah);
         const surahMeta = SURAH_META.find((s) => s.number === ref.surah);
+        const tAyah = translationResp?.data?.ayahs?.find((a: { numberInSurah: number }) => a.numberInSurah === ref.ayah);
 
         if (ayah && surahMeta) {
           const entry: CachedAyah = {
             surah: ref.surah,
             ayah: ref.ayah,
             text: ayah.text,
-            surahName: surahMeta.name
+            surahName: surahMeta.name,
+            translationText: tAyah?.text,
           };
           localStorage.setItem(cacheKey, JSON.stringify(entry));
           setData(entry);
@@ -64,7 +82,7 @@ export function DailyAyah() {
     };
 
     load();
-  }, []);
+  }, [language]);
 
   if (loading) {
     return (
@@ -112,9 +130,14 @@ export function DailyAyah() {
           <span className="text-xs font-semibold text-primary">{t("daily_ayah")}</span>
         </div>
         
-        <p className="font-arabic text-lg leading-loose text-foreground/90 line-clamp-3 mb-[5px] mt-0">
+        <p className="font-arabic text-lg leading-loose text-foreground/90 line-clamp-3 mb-[5px] mt-0" dir="rtl">
           {data.text}
         </p>
+        {language === "en" && data.translationText && (
+          <p className="text-sm text-muted-foreground leading-relaxed mb-[5px] line-clamp-2" dir="ltr" style={{ textAlign: "left" }}>
+            {data.translationText}
+          </p>
+        )}
         
         <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">

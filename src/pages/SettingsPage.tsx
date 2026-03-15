@@ -1262,7 +1262,17 @@ export default function SettingsPage() {
             </button>
 
             <Separator className="my-3" />
-            <p className="text-sm text-muted-foreground mb-4">{t("about_description")}</p>
+            <p className="text-sm text-muted-foreground mb-2">{t("about_description")}</p>
+
+            {/* What's New button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 mb-3"
+              onClick={() => setShowChangelog(true)}>
+              <Sparkles className="h-3.5 w-3.5" />
+              {t("whats_new_button")}
+            </Button>
 
             {/* Check for Updates */}
             <Button
@@ -1331,8 +1341,8 @@ export default function SettingsPage() {
                       <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
                       <span className="text-xs text-muted-foreground">{entry.date}</span>
                     </div>
-                    <ul className="space-y-1.5 pr-4">
-                      {entry.changes.map((change, i) =>
+                    <ul className="space-y-1.5 pr-4" dir={language === "ar" ? "rtl" : "ltr"}>
+                      {(language === "en" ? entry.changesEn : entry.changes).map((change, i) =>
                     <li key={i} className="flex items-start gap-2 text-sm text-foreground">
                           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                           {change}

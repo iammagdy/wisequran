@@ -10,7 +10,7 @@ import { Compass, MapPin, ChevronLeft } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import {
   calculatePrayerTimes,
-  formatArabicTime,
+  formatLocalizedTime,
   getNextPrayer,
   getSecondsUntilPrayer,
   type PrayerTimes,
@@ -249,7 +249,7 @@ export default function PrayerPage() {
                   {t(prayer.id as any)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {formatArabicTime(time)}
+                  {formatLocalizedTime(time, language)}
                 </p>
               </div>
               {!done && !isPassed &&

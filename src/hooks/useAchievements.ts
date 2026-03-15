@@ -8,7 +8,9 @@ import { SURAH_META } from "@/data/surah-meta";
 export interface Achievement {
   id: string;
   title: string;
+  titleEn?: string;
   description: string;
+  descriptionEn?: string;
   icon: string;
   category: "streak" | "reading" | "hifz" | "goals";
   unlocked: boolean;
@@ -24,29 +26,29 @@ interface AchievementState {
 
 const ACHIEVEMENT_DEFINITIONS: Omit<Achievement, "unlocked" | "unlockedAt" | "progress">[] = [
   // Streak achievements
-  { id: "streak_3", title: "بداية موفقة", description: "٣ أيام متواصلة من القراءة", icon: "🔥", category: "streak", target: 3 },
-  { id: "streak_7", title: "أسبوع كامل", description: "٧ أيام متواصلة من القراءة", icon: "🔥", category: "streak", target: 7 },
-  { id: "streak_30", title: "شهر من الإلتزام", description: "٣٠ يوم متواصل", icon: "🏆", category: "streak", target: 30 },
-  { id: "streak_100", title: "المثابر", description: "١٠٠ يوم متواصل", icon: "👑", category: "streak", target: 100 },
-  { id: "streak_365", title: "سنة كاملة", description: "٣٦٥ يوم متواصل", icon: "💎", category: "streak", target: 365 },
-  
+  { id: "streak_3", title: "بداية موفقة", titleEn: "Good Start", description: "٣ أيام متواصلة من القراءة", descriptionEn: "3 consecutive reading days", icon: "🔥", category: "streak", target: 3 },
+  { id: "streak_7", title: "أسبوع كامل", titleEn: "Full Week", description: "٧ أيام متواصلة من القراءة", descriptionEn: "7 consecutive reading days", icon: "🔥", category: "streak", target: 7 },
+  { id: "streak_30", title: "شهر من الإلتزام", titleEn: "Month of Commitment", description: "٣٠ يوم متواصل", descriptionEn: "30 consecutive days", icon: "🏆", category: "streak", target: 30 },
+  { id: "streak_100", title: "المثابر", titleEn: "The Persistent", description: "١٠٠ يوم متواصل", descriptionEn: "100 consecutive days", icon: "👑", category: "streak", target: 100 },
+  { id: "streak_365", title: "سنة كاملة", titleEn: "Full Year", description: "٣٦٥ يوم متواصل", descriptionEn: "365 consecutive days", icon: "💎", category: "streak", target: 365 },
+
   // Reading achievements
-  { id: "read_100", title: "القارئ", description: "قراءة ١٠٠ آية", icon: "📖", category: "reading", target: 100 },
-  { id: "read_1000", title: "الحافظ", description: "قراءة ١٠٠٠ آية", icon: "📚", category: "reading", target: 1000 },
-  { id: "read_5000", title: "المتقن", description: "قراءة ٥٠٠٠ آية", icon: "🌟", category: "reading", target: 5000 },
-  { id: "read_6236", title: "ختمة القرآن", description: "قراءة القرآن كاملاً", icon: "🏅", category: "reading", target: 6236 },
-  
+  { id: "read_100", title: "القارئ", titleEn: "The Reader", description: "قراءة ١٠٠ آية", descriptionEn: "Read 100 verses", icon: "📖", category: "reading", target: 100 },
+  { id: "read_1000", title: "الحافظ", titleEn: "The Memorizer", description: "قراءة ١٠٠٠ آية", descriptionEn: "Read 1,000 verses", icon: "📚", category: "reading", target: 1000 },
+  { id: "read_5000", title: "المتقن", titleEn: "The Proficient", description: "قراءة ٥٠٠٠ آية", descriptionEn: "Read 5,000 verses", icon: "🌟", category: "reading", target: 5000 },
+  { id: "read_6236", title: "ختمة القرآن", titleEn: "Quran Completion", description: "قراءة القرآن كاملاً", descriptionEn: "Read the entire Quran", icon: "🏅", category: "reading", target: 6236 },
+
   // Hifz achievements
-  { id: "hifz_1", title: "أول سورة", description: "حفظ أول سورة", icon: "🎯", category: "hifz", target: 1 },
-  { id: "hifz_10", title: "عشر سور", description: "حفظ ١٠ سور", icon: "⭐", category: "hifz", target: 10 },
-  { id: "hifz_30", title: "جزء كامل", description: "حفظ ٣٠ سورة", icon: "🌙", category: "hifz", target: 30 },
-  { id: "hifz_50", title: "نصف الطريق", description: "حفظ ٥٠ سورة", icon: "🏆", category: "hifz", target: 50 },
-  { id: "hifz_114", title: "حافظ القرآن", description: "حفظ القرآن كاملاً", icon: "👑", category: "hifz", target: 114 },
-  
+  { id: "hifz_1", title: "أول سورة", titleEn: "First Surah", description: "حفظ أول سورة", descriptionEn: "Memorize the first surah", icon: "🎯", category: "hifz", target: 1 },
+  { id: "hifz_10", title: "عشر سور", titleEn: "Ten Surahs", description: "حفظ ١٠ سور", descriptionEn: "Memorize 10 surahs", icon: "⭐", category: "hifz", target: 10 },
+  { id: "hifz_30", title: "جزء كامل", titleEn: "Full Juz", description: "حفظ ٣٠ سورة", descriptionEn: "Memorize 30 surahs", icon: "🌙", category: "hifz", target: 30 },
+  { id: "hifz_50", title: "نصف الطريق", titleEn: "Halfway There", description: "حفظ ٥٠ سورة", descriptionEn: "Memorize 50 surahs", icon: "🏆", category: "hifz", target: 50 },
+  { id: "hifz_114", title: "حافظ القرآن", titleEn: "Hafidh of Quran", description: "حفظ القرآن كاملاً", descriptionEn: "Memorize all 114 surahs", icon: "👑", category: "hifz", target: 114 },
+
   // Goal achievements
-  { id: "goal_first", title: "أول هدف", description: "تحقيق الهدف اليومي لأول مرة", icon: "🎯", category: "goals", target: 1 },
-  { id: "goal_7", title: "أسبوع من النجاح", description: "تحقيق الهدف اليومي ٧ مرات", icon: "🏅", category: "goals", target: 7 },
-  { id: "goal_30", title: "شهر من الإنجاز", description: "تحقيق الهدف اليومي ٣٠ مرة", icon: "🏆", category: "goals", target: 30 },
+  { id: "goal_first", title: "أول هدف", titleEn: "First Goal", description: "تحقيق الهدف اليومي لأول مرة", descriptionEn: "Complete your daily goal for the first time", icon: "🎯", category: "goals", target: 1 },
+  { id: "goal_7", title: "أسبوع من النجاح", titleEn: "Week of Success", description: "تحقيق الهدف اليومي ٧ مرات", descriptionEn: "Complete your daily goal 7 times", icon: "🏅", category: "goals", target: 7 },
+  { id: "goal_30", title: "شهر من الإنجاز", titleEn: "Month of Achievement", description: "تحقيق الهدف اليومي ٣٠ مرة", descriptionEn: "Complete your daily goal 30 times", icon: "🏆", category: "goals", target: 30 },
 ];
 
 export function useAchievements() {

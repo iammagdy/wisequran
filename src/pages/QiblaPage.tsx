@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLocation, calculateDistance, getMagneticDeclination } from "@/hooks/useLocation";
@@ -143,7 +143,7 @@ export default function QiblaPage() {
           onClick={() => navigate(-1)}
           className="rounded-xl p-2.5 hover:bg-muted transition-colors"
         >
-          <ArrowRight className="h-5 w-5" />
+          {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
         </motion.button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold heading-decorated">{t("qibla_title")}</h1>
@@ -206,7 +206,7 @@ export default function QiblaPage() {
           </div>
 
           {/* Compass */}
-          <div className={cn(
+          <div dir="ltr" className={cn(
             "relative w-72 h-72 mb-6 transition-all duration-300",
             isAligned && "scale-105"
           )}>
