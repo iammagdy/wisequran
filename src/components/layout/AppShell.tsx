@@ -20,7 +20,7 @@ export default function AppShell({ children }: Props) {
   useTheme();
 
   return (
-    <div className="min-h-screen bg-background gradient-spiritual">
+    <div className="min-h-screen bg-background gradient-spiritual pattern-islamic" style={{ backgroundBlendMode: "normal" }}>
       <main className={showGlobalBar ? "pb-nav-with-bar" : "pb-nav"}>{children}</main>
       <AnimatePresence>
         {showGlobalBar && <GlobalAudioBar />}

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+Arabic:wght@400;500;600;700&family=Scheherazade+New:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,88 +6,90 @@
 
 @layer base {
   :root {
-    --nav-height: 5.5rem;
-    --background: 40 30% 97%;
-    --foreground: 150 20% 15%;
+    --nav-height: 5rem;
+    --background: 38 28% 96%;
+    --foreground: 155 25% 12%;
 
-    --card: 40 25% 95%;
-    --card-foreground: 150 20% 15%;
+    --card: 38 22% 98%;
+    --card-foreground: 155 25% 12%;
 
-    --popover: 40 30% 97%;
-    --popover-foreground: 150 20% 15%;
+    --popover: 38 28% 98%;
+    --popover-foreground: 155 25% 12%;
 
-    --primary: 150 35% 30%;
-    --primary-foreground: 40 30% 97%;
+    --primary: 152 42% 26%;
+    --primary-foreground: 38 28% 97%;
 
-    --secondary: 40 30% 90%;
-    --secondary-foreground: 150 20% 15%;
+    --secondary: 38 28% 89%;
+    --secondary-foreground: 155 25% 12%;
 
-    --muted: 40 20% 92%;
-    --muted-foreground: 150 10% 45%;
+    --muted: 38 18% 91%;
+    --muted-foreground: 150 12% 42%;
 
-    --accent: 42 80% 55%;
-    --accent-foreground: 150 20% 15%;
+    --accent: 40 85% 50%;
+    --accent-foreground: 155 25% 12%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
-    --ring: 150 35% 30%;
+    --border: 38 18% 85%;
+    --input: 38 18% 85%;
+    --ring: 152 42% 26%;
 
-    --radius: 0.75rem;
+    --radius: 0.875rem;
 
-    --gold: 42 80% 55%;
-    --gold-foreground: 40 30% 97%;
-    --surface: 40 25% 93%;
-    --surface-elevated: 40 30% 98%;
+    --gold: 40 85% 50%;
+    --gold-light: 40 90% 62%;
+    --gold-foreground: 155 25% 10%;
+    --surface: 38 22% 92%;
+    --surface-elevated: 38 28% 99%;
 
-    /* Enhanced shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(150 20% 15% / 0.06);
-    --shadow-md: 0 4px 16px -4px hsl(150 20% 15% / 0.08);
-    --shadow-lg: 0 8px 32px -8px hsl(150 20% 15% / 0.12);
-    --shadow-glow: 0 0 20px -5px hsl(var(--primary) / 0.25);
+    --shadow-soft: 0 2px 10px -2px hsl(155 25% 12% / 0.07);
+    --shadow-md: 0 4px 20px -4px hsl(155 25% 12% / 0.1);
+    --shadow-lg: 0 10px 40px -8px hsl(155 25% 12% / 0.15);
+    --shadow-glow: 0 0 24px -4px hsl(var(--primary) / 0.28);
+    --shadow-gold: 0 0 20px -4px hsl(var(--gold) / 0.35);
   }
 
   .dark {
-    --background: 220 30% 8%;
-    --foreground: 40 20% 90%;
+    --background: 216 28% 7%;
+    --foreground: 38 22% 88%;
 
-    --card: 220 25% 12%;
-    --card-foreground: 40 20% 90%;
+    --card: 216 24% 11%;
+    --card-foreground: 38 22% 88%;
 
-    --popover: 220 25% 12%;
-    --popover-foreground: 40 20% 90%;
+    --popover: 216 24% 11%;
+    --popover-foreground: 38 22% 88%;
 
-    --primary: 150 35% 45%;
-    --primary-foreground: 220 30% 8%;
+    --primary: 152 38% 48%;
+    --primary-foreground: 216 28% 7%;
 
-    --secondary: 220 20% 18%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 216 18% 17%;
+    --secondary-foreground: 38 22% 88%;
 
-    --muted: 220 15% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 216 14% 15%;
+    --muted-foreground: 216 8% 52%;
 
-    --accent: 42 75% 50%;
-    --accent-foreground: 220 30% 8%;
+    --accent: 40 80% 52%;
+    --accent-foreground: 216 28% 7%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 150 35% 45%;
+    --border: 216 14% 19%;
+    --input: 216 14% 19%;
+    --ring: 152 38% 48%;
 
-    --gold: 42 75% 50%;
-    --gold-foreground: 220 30% 8%;
-    --surface: 220 20% 14%;
-    --surface-elevated: 220 25% 16%;
+    --gold: 40 80% 52%;
+    --gold-light: 40 85% 64%;
+    --gold-foreground: 216 28% 7%;
+    --surface: 216 18% 13%;
+    --surface-elevated: 216 24% 15%;
 
-    /* Enhanced shadows for dark mode */
-    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
-    --shadow-md: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
-    --shadow-lg: 0 8px 32px -8px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 20px -5px hsl(var(--primary) / 0.35);
+    --shadow-soft: 0 2px 10px -2px hsl(0 0% 0% / 0.35);
+    --shadow-md: 0 4px 20px -4px hsl(0 0% 0% / 0.45);
+    --shadow-lg: 0 10px 40px -8px hsl(0 0% 0% / 0.55);
+    --shadow-glow: 0 0 24px -4px hsl(var(--primary) / 0.38);
+    --shadow-gold: 0 0 20px -4px hsl(var(--gold) / 0.4);
   }
 }
 
@@ -206,22 +208,54 @@ html.ui-scale-xlarge { font-size: 20px; }
   /* Spiritual gradient background */
   .gradient-spiritual {
     background: radial-gradient(
-      circle at 20% 30%,
-      hsl(var(--primary) / 0.08) 0%,
-      transparent 60%
+      ellipse at 15% 20%,
+      hsl(var(--primary) / 0.1) 0%,
+      transparent 55%
     ),
     radial-gradient(
-      circle at 80% 70%,
-      hsl(var(--accent) / 0.06) 0%,
+      ellipse at 85% 75%,
+      hsl(var(--gold) / 0.07) 0%,
       transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 50% 95%,
+      hsl(var(--primary) / 0.05) 0%,
+      transparent 40%
     );
   }
 
   .gradient-hero {
     background: linear-gradient(
+      145deg,
+      hsl(var(--primary) / 0.14) 0%,
+      hsl(var(--primary) / 0.06) 45%,
+      hsl(var(--gold) / 0.08) 75%,
+      transparent 100%
+    );
+  }
+
+  .gradient-card {
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--surface-elevated)) 100%
+    );
+  }
+
+  .gradient-gold-card {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gold) / 0.15) 0%,
+      hsl(var(--gold) / 0.05) 60%,
+      transparent 100%
+    );
+  }
+
+  .gradient-primary-card {
+    background: linear-gradient(
       135deg,
       hsl(var(--primary) / 0.12) 0%,
-      hsl(var(--accent) / 0.08) 50%,
+      hsl(var(--primary) / 0.04) 60%,
       transparent 100%
     );
   }
@@ -430,6 +464,64 @@ html.ui-scale-xlarge { font-size: 20px; }
   /* Streak flame glow */
   .streak-glow {
     text-shadow: 0 0 10px hsl(var(--accent) / 0.6);
+  }
+
+  /* Islamic geometric pattern overlay */
+  .pattern-islamic {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.04'%3E%3Cpath d='M30 0l8.66 15H21.34L30 0zM0 30l8.66-15h17.32L17.32 30H0zm60 0l-8.66-15H34.02L42.68 30H60zM30 60l-8.66-15h17.32L30 60zM0 30l8.66 15H0V30zm60 0l-8.66 15H60V30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .dark .pattern-islamic {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M30 0l8.66 15H21.34L30 0zM0 30l8.66-15h17.32L17.32 30H0zm60 0l-8.66-15H34.02L42.68 30H60zM30 60l-8.66-15h17.32L30 60zM0 30l8.66 15H0V30zm60 0l-8.66 15H60V30z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* Gold shadow */
+  .shadow-gold {
+    box-shadow: var(--shadow-gold);
+  }
+
+  /* Nav floating style */
+  .nav-floating {
+    box-shadow: 0 -1px 0 0 hsl(var(--border) / 0.5), 0 -8px 24px -8px hsl(0 0% 0% / 0.08);
+  }
+
+  .dark .nav-floating {
+    box-shadow: 0 -1px 0 0 hsl(var(--border) / 0.6), 0 -8px 24px -8px hsl(0 0% 0% / 0.4);
+  }
+
+  /* Bead counter dots */
+  .bead-dot {
+    transition: all 0.25s ease;
+  }
+
+  .bead-dot.active {
+    background: hsl(var(--primary));
+    box-shadow: 0 0 6px hsl(var(--primary) / 0.5);
+  }
+
+  /* Gold accent border */
+  .border-gold {
+    border-color: hsl(var(--gold) / 0.4);
+  }
+
+  /* Arabesque divider */
+  .arabesque-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .arabesque-divider::before,
+  .arabesque-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to var(--dir, right), transparent, hsl(var(--gold) / 0.4), transparent);
+  }
+
+  /* Soft inner shadow for depth */
+  .inset-highlight {
+    box-shadow: inset 0 1px 0 hsl(255 100% 100% / 0.06);
   }
 }
 

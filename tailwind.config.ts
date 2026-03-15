@@ -49,6 +49,7 @@ export default {
         },
         gold: {
           DEFAULT: "hsl(var(--gold))",
+          light: "hsl(var(--gold-light))",
           foreground: "hsl(var(--gold-foreground))",
         },
         surface: {
@@ -110,6 +111,17 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-4px)" },
         },
+        "bead-fill": {
+          "0%": { transform: "scale(0.5)", opacity: "0" },
+          "60%": { transform: "scale(1.2)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "prayer-complete": {
+          "0%": { transform: "scale(1)" },
+          "30%": { transform: "scale(1.15)" },
+          "60%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -122,6 +134,8 @@ export default {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
         shimmer: "shimmer 2s linear infinite",
         float: "float 3s ease-in-out infinite",
+        "bead-fill": "bead-fill 0.3s ease-out forwards",
+        "prayer-complete": "prayer-complete 0.4s ease-out",
       },
     },
   },

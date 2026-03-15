@@ -20,9 +20,9 @@ interface ModeCard {
   titleKey: "mode_reading" | "mode_listening" | "mode_hifz" | "mode_recitation";
   subtitleKey: "mode_reading_subtitle" | "mode_listening_subtitle" | "mode_hifz_subtitle" | "mode_recitation_subtitle";
   icon: React.ReactNode;
-  accentClass: string;
-  borderClass: string;
-  iconBgClass: string;
+  accentColor: string;
+  bgGradient: string;
+  borderColor: string;
   view?: HomeView;
   route?: string;
 }
@@ -68,40 +68,40 @@ export default function QuranPage() {
       key: "reading",
       titleKey: "mode_reading",
       subtitleKey: "mode_reading_subtitle",
-      icon: <BookOpen className="h-8 w-8" />,
-      accentClass: "text-primary",
-      borderClass: "border-primary/20 hover:border-primary/40",
-      iconBgClass: "bg-primary/10",
+      icon: <BookOpen className="h-7 w-7" />,
+      accentColor: "text-primary",
+      bgGradient: "from-primary/18 to-primary/6",
+      borderColor: "border-primary/20",
       view: "surahs",
     },
     {
       key: "listening",
       titleKey: "mode_listening",
       subtitleKey: "mode_listening_subtitle",
-      icon: <Headphones className="h-8 w-8" />,
-      accentClass: "text-amber-500 dark:text-amber-400",
-      borderClass: "border-amber-500/20 hover:border-amber-500/40",
-      iconBgClass: "bg-amber-500/10",
+      icon: <Headphones className="h-7 w-7" />,
+      accentColor: "text-amber-600 dark:text-amber-400",
+      bgGradient: "from-amber-500/18 to-amber-500/6",
+      borderColor: "border-amber-500/20",
       view: "surahs_listening",
     },
     {
       key: "hifz",
       titleKey: "mode_hifz",
       subtitleKey: "mode_hifz_subtitle",
-      icon: <GraduationCap className="h-8 w-8" />,
-      accentClass: "text-emerald-600 dark:text-emerald-400",
-      borderClass: "border-emerald-500/20 hover:border-emerald-500/40",
-      iconBgClass: "bg-emerald-500/10",
+      icon: <GraduationCap className="h-7 w-7" />,
+      accentColor: "text-emerald-700 dark:text-emerald-400",
+      bgGradient: "from-emerald-600/18 to-emerald-600/6",
+      borderColor: "border-emerald-600/20",
       route: "/hifz",
     },
     {
       key: "recitation",
       titleKey: "mode_recitation",
       subtitleKey: "mode_recitation_subtitle",
-      icon: <Mic className="h-8 w-8" />,
-      accentClass: "text-rose-600 dark:text-rose-400",
-      borderClass: "border-rose-500/20 hover:border-rose-500/40",
-      iconBgClass: "bg-rose-500/10",
+      icon: <Mic className="h-7 w-7" />,
+      accentColor: "text-rose-600 dark:text-rose-400",
+      bgGradient: "from-rose-500/18 to-rose-500/6",
+      borderColor: "border-rose-500/20",
       route: "/hifz/test",
     },
   ];
@@ -126,34 +126,32 @@ export default function QuranPage() {
     view === "surahs_listening" ? t("mode_listening") : t("mode_reading");
 
   return (
-    <div className="px-4 pt-4 pb-4 pl-2.5" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="px-4 pt-4 pb-4" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-[5px] mt-0">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
           {view !== "home" && (
             <motion.button
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setView("home")}
-              className="rounded-xl p-2.5 transition-all bg-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="rounded-xl p-2.5 bg-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft border border-border/40"
               dir={isRTL ? "rtl" : "ltr"}>
               <ArrowRight className={cn("h-5 w-5", isRTL ? "" : "rotate-180")} />
             </motion.button>
           )}
-          <div>
-            <h1 className="text-2xl font-bold heading-decorated">
-              {view !== "home" ? surahListTitle : t("quran_title")}
-            </h1>
-          </div>
+          <h1 className="text-2xl font-bold heading-decorated">
+            {view !== "home" ? surahListTitle : t("quran_title")}
+          </h1>
         </div>
         <div className="flex items-center gap-1.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <motion.button
                 whileTap={{ scale: 0.9 }}
-                className="rounded-xl p-3 transition-all shadow-soft min-h-[44px] min-w-[44px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted">
+                className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
                 <MoreHorizontal className="h-5 w-5" />
               </motion.button>
             </DropdownMenuTrigger>
@@ -182,82 +180,107 @@ export default function QuranPage() {
             exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
             transition={{ duration: 0.22 }}>
 
-            {/* Daily Goal + Streak */}
+            {/* Daily Goal + Streak Banner */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl bg-card p-4 shadow-elevated border border-border/50 pl-4 mb-1.5 pt-0.5 pb-0.5"
+              className="rounded-2xl gradient-hero border border-primary/12 shadow-elevated p-4 mb-3 relative overflow-hidden"
               dir={isRTL ? "rtl" : "ltr"}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground font-medium">
-                    {t("today")}: <span className="text-foreground font-bold">{language === "en" ? todayCount : toArabicNumerals(todayCount)}</span> / {language === "en" ? goal : toArabicNumerals(goal)} {t("ayah")}
+
+              <div className="absolute inset-0 pattern-islamic opacity-70 pointer-events-none" />
+
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-sm text-foreground/70 font-medium">
+                    {t("today")}{" "}
+                    <span className="text-foreground font-bold">
+                      {language === "en" ? todayCount : toArabicNumerals(todayCount)}
+                    </span>
+                    {" / "}
+                    {language === "en" ? goal : toArabicNumerals(goal)}{" "}
+                    {t("ayah")}
                   </span>
+                  {streak > 0 && (
+                    <motion.div
+                      initial={{ scale: 0.8 }}
+                      animate={{ scale: 1 }}
+                      className="flex items-center gap-1.5 rounded-full bg-accent/20 border border-accent/30 px-2.5 py-1">
+                      <Flame className="h-3.5 w-3.5 text-accent streak-glow" />
+                      <span className="text-xs font-bold text-accent">
+                        {language === "en" ? streak : toArabicNumerals(streak)}
+                      </span>
+                      <span className="text-[10px] text-accent/80 font-medium">{t("days")}</span>
+                    </motion.div>
+                  )}
                 </div>
-                {streak > 0 && (
-                  <div className="flex items-center gap-1.5 rounded-full bg-accent/15 px-3 py-1">
-                    <Flame className="h-4 w-4 text-accent streak-glow" />
-                    <span className="text-sm font-bold text-accent">{language === "en" ? streak : toArabicNumerals(streak)}</span>
-                    <span className="text-xs text-accent/80">{t("days")}</span>
-                  </div>
+                <Progress value={progress} variant="gradient" size="sm" />
+                {progress >= 100 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-xs text-primary font-semibold mt-2 text-center">
+                    ✨ {t("goal_complete")}
+                  </motion.p>
                 )}
               </div>
-              <Progress value={progress} variant="gradient" size="sm" />
-              {progress >= 100 && (
-                <p className="text-xs text-primary font-medium mt-2 text-center">🎉 {t("goal_complete")}</p>
-              )}
             </motion.div>
 
             {/* Continue Reading */}
             {lastRead && (
               <motion.button
-                initial={{ opacity: 0, y: -10 }}
+                initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate(`/surah/${lastRead.surah}`)}
-                className={cn("flex w-full items-center rounded-2xl bg-card py-3 px-4 shadow-elevated border border-primary/10 hover-lift gap-3 mb-[3px]", isRTL ? "text-right" : "text-left")}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                  <BookOpen className="h-5 w-5 text-primary" />
+                className={cn(
+                  "flex w-full items-center rounded-2xl bg-card py-3.5 px-4 shadow-elevated border border-gold/25 hover-lift gap-3 mb-3 gradient-gold-card",
+                  isRTL ? "text-right" : "text-left"
+                )}>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 border border-gold/20">
+                  <BookOpen className="h-5 w-5 text-gold" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground font-medium">{t("continue_reading")}</p>
-                  <p className="text-sm font-bold truncate">
-                    {t("surah")} {getSurahName(lastRead.surah)} — {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">{t("continue_reading")}</p>
+                  <p className="text-sm font-bold truncate text-foreground">
+                    {t("surah")} {getSurahName(lastRead.surah)}{" "}
+                    <span className="text-muted-foreground font-normal">·</span>{" "}
+                    {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
                   </p>
                 </div>
-                <span className="text-xs text-primary/60 shrink-0">{isRTL ? "←" : "→"}</span>
+                <div className="shrink-0 w-6 h-6 rounded-full bg-gold/15 flex items-center justify-center">
+                  <span className="text-gold text-sm">{isRTL ? "←" : "→"}</span>
+                </div>
               </motion.button>
             )}
 
-            {/* Mode Selection Cards */}
-            <div className="mt-4 space-y-3" dir={isRTL ? "rtl" : "ltr"}>
+            {/* Mode Selection Cards — 2×2 Grid */}
+            <div className="grid grid-cols-2 gap-2.5 mt-1" dir={isRTL ? "rtl" : "ltr"}>
               {modeCards.map((card, i) => (
                 <motion.button
                   key={card.key}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.08 + i * 0.1, duration: 0.3, ease: "easeOut" }}
-                  whileHover={{ scale: 1.015 }}
-                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ delay: 0.06 + i * 0.07, duration: 0.3, ease: "easeOut" }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => handleModeCard(card)}
                   className={cn(
-                    "flex w-full items-center gap-4 rounded-2xl bg-card px-5 py-5 shadow-elevated border transition-all",
-                    card.borderClass
+                    "flex flex-col items-start gap-2.5 rounded-2xl bg-card px-4 py-4 shadow-elevated border transition-all relative overflow-hidden",
+                    card.borderColor
                   )}>
-                  <div className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl", card.iconBgClass, card.accentClass)}>
+
+                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-100 pointer-events-none", card.bgGradient)} />
+
+                  <div className={cn("relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card/60 shadow-soft border border-border/30", card.accentColor)}>
                     {card.icon}
                   </div>
-                  <div className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
-                    <p className={cn("text-xl font-bold font-arabic leading-tight", card.accentClass)}>
+
+                  <div className={cn("relative z-10 text-start")}>
+                    <p className={cn("text-sm font-bold leading-tight mb-0.5", card.accentColor)}>
                       {t(card.titleKey)}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-0.5 font-arabic">
+                    <p className="text-[11px] text-muted-foreground leading-snug">
                       {t(card.subtitleKey)}
                     </p>
-                  </div>
-                  <div className={cn("shrink-0 opacity-40", card.accentClass)}>
-                    <ArrowRight className={cn("h-5 w-5", isRTL ? "rotate-180" : "")} />
                   </div>
                 </motion.button>
               ))}
@@ -274,37 +297,41 @@ export default function QuranPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: isRTL ? -20 : 20 }}
             transition={{ duration: 0.22 }}
-            className="space-y-2 mt-2">
+            className="space-y-1.5 mt-1">
 
             {loadingSurahs
               ? Array.from({ length: 10 }).map((_, i) => (
-                  <div key={i} className="h-[72px] rounded-xl shimmer" />
+                  <div key={i} className="h-[68px] rounded-xl shimmer" />
                 ))
               : surahs.map((surah, i) => (
                   <motion.button
                     key={surah.number}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i * 0.015, 0.4) }}
+                    transition={{ delay: Math.min(i * 0.012, 0.35) }}
                     onClick={() => handleSurahSelect(surah.number)}
-                    className="flex w-full items-center gap-4 rounded-xl bg-card p-4 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group pt-[2px] pb-[2px]">
-                    <div className="number-badge h-11 w-11 text-sm">
+                    className="flex w-full items-center gap-3.5 rounded-xl bg-card px-4 py-3 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group border border-border/30 hover:border-primary/20">
+
+                    <div className="number-badge h-10 w-10 text-[13px] shrink-0 rounded-xl">
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                     </div>
-                    <div className={cn("flex-1", isRTL ? "text-right" : "text-left")}>
-                      <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors">
+
+                    <div className={cn("flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
+                      <p className="font-arabic text-base font-bold group-hover:text-primary transition-colors leading-tight">
                         {language === "ar" ? surah.name : surah.englishName}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)} {t("ayahs")} · {getRevelationType(surah.revelationType)}
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)}{" "}
+                        {t("ayahs")} · {getRevelationType(surah.revelationType)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1">
+
+                    <div className="flex items-center gap-1 shrink-0">
                       {favorites.includes(surah.number) && (
-                        <Star className="h-4 w-4 fill-gold text-gold" />
+                        <Star className="h-3.5 w-3.5 fill-gold text-gold" />
                       )}
                       {bookmarkedSurahs.includes(surah.number) && (
-                        <Bookmark className="h-4 w-4 text-primary fill-primary/20" />
+                        <Bookmark className="h-3.5 w-3.5 text-primary fill-primary/20" />
                       )}
                     </div>
                   </motion.button>
@@ -314,7 +341,6 @@ export default function QuranPage() {
 
       </AnimatePresence>
 
-      {/* Safe area spacer */}
       <div className="h-4" />
 
       <ChangelogModal

@@ -1,25 +1,110 @@
 import { useState, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
-import { RotateCcw, Target, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion, AnimatePresence } from "framer-motion";
+import { RotateCcw, Target, Sparkles, ChevronDown } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const DHIKR_OPTIONS = [
-  { value: "سبحان الله",  labelAr: "سبحان الله",   labelEn: "SubhanAllah" },
-  { value: "الحمد لله",   labelAr: "الحمد لله",    labelEn: "Alhamdulillah" },
-  { value: "الله أكبر",   labelAr: "الله أكبر",    labelEn: "Allahu Akbar" },
+  { value: "سبحان الله",      labelAr: "سبحان الله",      labelEn: "SubhanAllah" },
+  { value: "الحمد لله",       labelAr: "الحمد لله",       labelEn: "Alhamdulillah" },
+  { value: "الله أكبر",       labelAr: "الله أكبر",       labelEn: "Allahu Akbar" },
   { value: "لا إله إلا الله", labelAr: "لا إله إلا الله", labelEn: "La ilaha illa Allah" },
-  { value: "أستغفر الله", labelAr: "أستغفر الله",  labelEn: "Astaghfirullah" },
+  { value: "أستغفر الله",     labelAr: "أستغفر الله",     labelEn: "Astaghfirullah" },
 ];
-
 
 const TARGET_OPTIONS = [33, 99, 100, 500, 1000];
 
 function getTodayKey() {
   return `wise-tasbeeh-total-${new Date().toISOString().slice(0, 10)}`;
+}
+
+function BeadRing({ progress, count, target, isComplete }: {
+  progress: number;
+  count: number;
+  target: number;
+  isComplete: boolean;
+}) {
+  const { language } = useLanguage();
+  const BEADS = 33;
+  const filledBeads = Math.round(progress * BEADS);
+  const radius = 108;
+  const cx = 128;
+  const cy = 128;
+
+  return (
+    <svg width="256" height="256" viewBox="0 0 256 256" className="block">
+      {Array.from({ length: BEADS }).map((_, i) => {
+        const angle = (i / BEADS) * 2 * Math.PI - Math.PI / 2;
+        const bx = cx + radius * Math.cos(angle);
+        const by = cy + radius * Math.sin(angle);
+        const filled = i < filledBeads;
+        const isLast = i === filledBeads - 1 && filled;
+
+        return (
+          <motion.circle
+            key={i}
+            cx={bx}
+            cy={by}
+            r={filled ? 5.5 : 4}
+            initial={false}
+            animate={{
+              fill: filled
+                ? isComplete
+                  ? "hsl(var(--gold))"
+                  : "hsl(var(--primary))"
+                : "hsl(var(--muted))",
+              opacity: filled ? 1 : 0.5,
+            }}
+            transition={{ duration: 0.25, delay: isLast ? 0 : 0 }}
+            style={{
+              filter: filled && isLast
+                ? `drop-shadow(0 0 4px hsl(var(--${isComplete ? "gold" : "primary"}) / 0.7))`
+                : "none"
+            }}
+          />
+        );
+      })}
+
+      {/* Center spacer connecting line */}
+      <path
+        d={`M ${cx} ${cy - 20} L ${cx} ${cy - radius + 14}`}
+        stroke="hsl(var(--border))"
+        strokeWidth="1.5"
+        strokeDasharray="3 4"
+        opacity="0.5"
+      />
+
+      {/* Center count display */}
+      <foreignObject x={cx - 56} y={cy - 42} width="112" height="84">
+        <div className="flex flex-col items-center justify-center h-full">
+          <motion.span
+            key={count}
+            initial={{ scale: 1.15, opacity: 0.7 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            className="text-[44px] font-bold leading-none tabular-nums"
+            style={{ color: isComplete ? "hsl(var(--gold))" : "hsl(var(--foreground))" }}
+          >
+            {language === "ar" ? toArabicNumerals(count) : count}
+          </motion.span>
+          <span className="text-sm text-muted-foreground mt-1">
+            / {language === "ar" ? toArabicNumerals(target) : target}
+          </span>
+          {isComplete && (
+            <motion.span
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[10px] font-bold mt-1"
+              style={{ color: "hsl(var(--gold))" }}
+            >
+              ماشاء الله
+            </motion.span>
+          )}
+        </div>
+      </foreignObject>
+    </svg>
+  );
 }
 
 export default function TasbeehPage() {
@@ -29,10 +114,13 @@ export default function TasbeehPage() {
   const [dhikr, setDhikr] = useLocalStorage("wise-tasbeeh-dhikr", DHIKR_OPTIONS[0].value);
   const [todayTotal, setTodayTotal] = useLocalStorage(getTodayKey(), 0);
   const [showTargetPicker, setShowTargetPicker] = useState(false);
+  const [showDhikrPicker, setShowDhikrPicker] = useState(false);
   const [showSparkle, setShowSparkle] = useState(false);
 
   const progress = useMemo(() => Math.min(count / target, 1), [count, target]);
   const isComplete = count >= target;
+
+  const currentDhikr = DHIKR_OPTIONS.find(d => d.value === dhikr) ?? DHIKR_OPTIONS[0];
 
   const handleTap = useCallback(() => {
     if (navigator.vibrate) navigator.vibrate(10);
@@ -40,168 +128,177 @@ export default function TasbeehPage() {
     setTodayTotal((t) => t + 1);
     if ((count + 1) % 33 === 0) {
       setShowSparkle(true);
-      setTimeout(() => setShowSparkle(false), 1000);
+      setTimeout(() => setShowSparkle(false), 1200);
     }
   }, [setCount, setTodayTotal, count]);
 
   const handleReset = useCallback(() => {
     setCount(0);
+    setShowTargetPicker(false);
   }, [setCount]);
 
-  const radius = 110;
-  const stroke = 8;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference * (1 - progress);
-
   return (
-    <div className="flex flex-col px-4 pt-6 min-h-[calc(100dvh-4rem)] pb-[20px]" dir={language === "en" ? "ltr" : "rtl"}>
-      {/* Header */}
-      <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">{t("tasbeeh_title")}</h1>
+    <div
+      className="flex flex-col px-4 pt-5 min-h-[calc(100dvh-4rem)] pb-5 relative overflow-hidden"
+      dir={language === "en" ? "ltr" : "rtl"}
+    >
+      {/* Subtle arabesque background */}
+      <div className="absolute inset-0 pattern-islamic pointer-events-none opacity-60" />
+      <div className="absolute inset-0 gradient-spiritual pointer-events-none" />
 
-      {/* Dhikr selector */}
-      <div className="flex justify-center mb-3">
-        <Select value={dhikr} onValueChange={(v) => {setDhikr(v);setCount(0);}}>
-          <SelectTrigger className="w-full max-w-[224px] text-center justify-center text-base font-bold rounded-xl h-11 shadow-soft border-border/50">
-            <SelectValue>
-              {DHIKR_OPTIONS.find(d => d.value === dhikr)?.[language === "ar" ? "labelAr" : "labelEn"] ?? dhikr}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {DHIKR_OPTIONS.map((d) => (
-              <SelectItem key={d.value} value={d.value} className="text-base font-medium">
-                {language === "ar" ? d.labelAr : d.labelEn}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <div className="relative z-10 flex flex-col flex-1">
+        {/* Header */}
+        <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">{t("tasbeeh_title")}</h1>
 
-      {/* Today total - compact at top */}
-      <div className="text-center mb-2">
-        <span className="text-secondary-foreground text-base">{t("today_total")}: </span>
-        <span className="font-bold text-primary text-base">{language === "ar" ? toArabicNumerals(todayTotal) : todayTotal}</span>
-      </div>
-
-      {/* Spacer to push counter down */}
-      <div className="flex-1" />
-
-      {/* Counter circle - positioned at bottom for thumb reach */}
-      <div className="flex items-center justify-center relative mb-4">
-        {showSparkle &&
-        <motion.div
-          initial={{ scale: 0, opacity: 1 }}
-          animate={{ scale: 2, opacity: 0 }}
-          className="absolute inset-0 flex items-center justify-center pointer-events-none">
-
-            <Sparkles className="h-16 w-16 text-gold" />
-          </motion.div>
-        }
-
-        <motion.button
-          className="relative select-none outline-none focus:outline-none"
-          whileTap={{ scale: 0.95 }}
-          onTap={handleTap}
-          style={{ WebkitTapHighlightColor: "transparent" }}>
-
-          <div className={`absolute inset-4 rounded-full transition-all duration-500 ${isComplete ? 'bg-primary/20 animate-glow-pulse' : ''}`} />
-
-          <svg width={2 * (radius + stroke + 8)} height={2 * (radius + stroke + 8)} className="block">
-            <circle
-              cx={radius + stroke + 8}
-              cy={radius + stroke + 8}
-              r={radius + 4}
-              fill="none"
-              stroke="hsl(var(--border) / 0.3)"
-              strokeWidth={1}
-              strokeDasharray="4 8" />
-
-            <circle
-              cx={radius + stroke + 8}
-              cy={radius + stroke + 8}
-              r={radius}
-              fill="none"
-              stroke="hsl(var(--muted))"
-              strokeWidth={stroke} />
-
-            <circle
-              cx={radius + stroke + 8}
-              cy={radius + stroke + 8}
-              r={radius}
-              fill="none"
-              stroke={isComplete ? "hsl(var(--gold))" : "hsl(var(--primary))"}
-              strokeWidth={stroke}
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={dashOffset}
-              transform={`rotate(-90 ${radius + stroke + 8} ${radius + stroke + 8})`}
-              className="transition-all duration-300"
-              style={{
-                filter: isComplete ? "drop-shadow(0 0 8px hsl(var(--gold) / 0.5))" : "drop-shadow(0 0 6px hsl(var(--primary) / 0.3))"
-              }} />
-
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <motion.span
-              key={count}
-              initial={{ scale: 1.2 }}
-              animate={{ scale: 1 }}
-              className={`text-5xl font-bold leading-none ${isComplete ? 'text-gold' : 'text-foreground'}`}>
-
-              {language === "ar" ? toArabicNumerals(count) : count}
-            </motion.span>
-            <span className="text-lg text-muted-foreground mt-2">
-              / {language === "ar" ? toArabicNumerals(target) : target}
+        {/* Today total badge */}
+        <div className="flex justify-center mb-3">
+          <div className="flex items-center gap-2 bg-card border border-border/40 rounded-full px-4 py-1.5 shadow-soft">
+            <span className="text-xs text-muted-foreground">{t("today_total")}:</span>
+            <span className="font-bold text-primary text-sm">
+              {language === "ar" ? toArabicNumerals(todayTotal) : todayTotal}
             </span>
-            {isComplete &&
-            <motion.span
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-xs text-gold font-semibold mt-2">
-
-                {t("mashaallah")}
-              </motion.span>
-            }
           </div>
-        </motion.button>
+        </div>
+
+        {/* Dhikr selector */}
+        <div className="flex justify-center mb-4">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => { setShowDhikrPicker(!showDhikrPicker); setShowTargetPicker(false); }}
+            className="flex items-center gap-2 bg-card border border-border/40 rounded-2xl px-5 py-2.5 shadow-soft min-w-[200px] justify-between"
+          >
+            <span className="font-bold text-base font-arabic text-foreground">
+              {language === "ar" ? currentDhikr.labelAr : currentDhikr.labelEn}
+            </span>
+            <motion.div animate={{ rotate: showDhikrPicker ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </motion.div>
+          </motion.button>
+        </div>
+
+        <AnimatePresence>
+          {showDhikrPicker && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.97 }}
+              transition={{ duration: 0.18 }}
+              className="mx-auto w-full max-w-[280px] mb-4 bg-card border border-border/40 rounded-2xl shadow-elevated overflow-hidden"
+            >
+              {DHIKR_OPTIONS.map((d, i) => (
+                <motion.button
+                  key={d.value}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setDhikr(d.value);
+                    setCount(0);
+                    setShowDhikrPicker(false);
+                  }}
+                  className={`w-full px-4 py-3 text-center font-arabic font-semibold text-sm transition-colors ${
+                    d.value === dhikr
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted/50"
+                  } ${i > 0 ? "border-t border-border/30" : ""}`}
+                >
+                  {language === "ar" ? d.labelAr : d.labelEn}
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Bead Ring Counter */}
+        <div className="flex items-center justify-center relative mb-4">
+          {showSparkle && (
+            <motion.div
+              initial={{ scale: 0.5, opacity: 1 }}
+              animate={{ scale: 2.2, opacity: 0 }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+              <Sparkles className="h-12 w-12 text-gold" />
+            </motion.div>
+          )}
+
+          {isComplete && (
+            <motion.div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              animate={{ opacity: [0.3, 0.1, 0.3] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{
+                background: "radial-gradient(circle, hsl(var(--gold) / 0.15) 0%, transparent 70%)"
+              }}
+            />
+          )}
+
+          <motion.button
+            className="relative select-none outline-none focus:outline-none"
+            whileTap={{ scale: 0.96 }}
+            onTap={handleTap}
+            style={{ WebkitTapHighlightColor: "transparent" }}
+          >
+            <BeadRing
+              progress={progress}
+              count={count}
+              target={target}
+              isComplete={isComplete}
+            />
+          </motion.button>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex gap-2.5 justify-center mb-3">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleReset}
+            className="flex items-center gap-2 bg-card border border-border/40 rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted shadow-soft transition-all"
+          >
+            <RotateCcw className="h-4 w-4" />
+            {t("reset")}
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { setShowTargetPicker(!showTargetPicker); setShowDhikrPicker(false); }}
+            className={`flex items-center gap-2 border rounded-xl px-4 py-2.5 text-sm font-semibold transition-all shadow-soft ${
+              showTargetPicker
+                ? "bg-primary/10 border-primary/30 text-primary"
+                : "bg-card border-border/40 text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            <Target className="h-4 w-4" />
+            {t("target")}: {language === "ar" ? toArabicNumerals(target) : target}
+          </motion.button>
+        </div>
+
+        {/* Target picker */}
+        <AnimatePresence>
+          {showTargetPicker && (
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              className="flex flex-wrap gap-2 justify-center mb-2"
+            >
+              {TARGET_OPTIONS.map((opt) => (
+                <motion.button
+                  key={opt}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => { setTarget(opt); setCount(0); setShowTargetPicker(false); }}
+                  className={`px-4 py-1.5 rounded-xl text-sm font-bold transition-all border ${
+                    target === opt
+                      ? "bg-primary text-primary-foreground border-primary shadow-glow"
+                      : "bg-card border-border/40 text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {language === "ar" ? toArabicNumerals(opt) : opt}
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Actions - right above bottom nav */}
-      <div className="flex gap-3 justify-center mb-2">
-        <Button variant="outline" size="default" onClick={handleReset} className="gap-2 rounded-xl shadow-soft">
-          <RotateCcw className="h-4 w-4" />
-          {t("reset")}
-        </Button>
-        <Button
-          variant="outline"
-          size="default"
-          className="gap-2 rounded-xl shadow-soft"
-          onClick={() => setShowTargetPicker(!showTargetPicker)}>
-
-          <Target className="h-4 w-4" />
-          {t("target")}
-        </Button>
-      </div>
-
-      {/* Target picker */}
-      {showTargetPicker &&
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap gap-2 justify-center mb-2">
-
-          {TARGET_OPTIONS.map((t) =>
-        <Button
-          key={t}
-          size="sm"
-          variant={target === t ? "gradient" : "secondary"}
-          className="rounded-xl"
-          onClick={() => {setTarget(t);setCount(0);setShowTargetPicker(false);}}>
-
-              {language === "ar" ? toArabicNumerals(t) : t}
-            </Button>
-        )}
-        </motion.div>
-      }
-    </div>);
-
+    </div>
+  );
 }
