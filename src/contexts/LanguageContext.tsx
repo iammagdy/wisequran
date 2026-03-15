@@ -457,6 +457,28 @@ interface Translations {
   // Mode labels (used in SurahReaderPage header pill)
   listening_mode_label: string;
   reading_mode_label: string;
+
+  // Iftar Countdown
+  iftar_time: string;
+  iftar_dua_text: string;
+  time_until_iftar: string;
+  calculating_time: string;
+
+  // Daily Dua Card
+  daily_dua_label: string;
+  dua_copied: string;
+  copy_failed: string;
+
+  // Prayer Guide
+  prayer_guide_title: string;
+  wudu_guide: string;
+  prayer_steps_guide: string;
+  rakat_count_label: string;
+  recitation_guide: string;
+  recitation_guide_desc: string;
+  prayer_source: string;
+  mode_loud: string;
+  mode_silent: string;
 }
 
 const ar: Translations = {
@@ -884,6 +906,25 @@ const ar: Translations = {
 
   listening_mode_label: "وضع الاستماع",
   reading_mode_label: "وضع القراءة",
+
+  iftar_time: "حان وقت الإفطار! 🎉",
+  iftar_dua_text: "ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله",
+  time_until_iftar: "⏱️ باقي على الإفطار",
+  calculating_time: "جارٍ حساب الوقت...",
+
+  daily_dua_label: "🤲 دعاء اليوم",
+  dua_copied: "تم نسخ الدعاء",
+  copy_failed: "تعذر النسخ",
+
+  prayer_guide_title: "📖 دليل الصلاة",
+  wudu_guide: "كيفية الوضوء",
+  prayer_steps_guide: "كيفية الصلاة",
+  rakat_count_label: "عدد الركعات",
+  recitation_guide: "الجهر والسر في القراءة",
+  recitation_guide_desc: "الإمام يجهر بالقراءة في بعض الصلوات ويُسرّ في أخرى",
+  prayer_source: "المصدر: صفة صلاة النبي ﷺ — الشيخ الألباني | islamqa.info",
+  mode_loud: "جهرًا",
+  mode_silent: "سرًا",
 };
 
 const en: Translations = {
@@ -1311,6 +1352,25 @@ const en: Translations = {
 
   listening_mode_label: "Listening Mode",
   reading_mode_label: "Reading Mode",
+
+  iftar_time: "Iftar Time! 🎉",
+  iftar_dua_text: "Thirst is gone, the veins are refreshed, and the reward is confirmed — if Allah wills",
+  time_until_iftar: "⏱️ Time until Iftar",
+  calculating_time: "Calculating...",
+
+  daily_dua_label: "🤲 Daily Dua",
+  dua_copied: "Dua copied",
+  copy_failed: "Failed to copy",
+
+  prayer_guide_title: "📖 Prayer Guide",
+  wudu_guide: "How to Perform Wudu",
+  prayer_steps_guide: "How to Perform Salah",
+  rakat_count_label: "Rak'ahs",
+  recitation_guide: "Audible & Silent Recitation",
+  recitation_guide_desc: "The imam recites aloud in some prayers and silently in others",
+  prayer_source: "Source: Prayer description from the Sunnah of the Prophet ﷺ | islamqa.info",
+  mode_loud: "Aloud",
+  mode_silent: "Silent",
 };
 
 interface LanguageContextValue {

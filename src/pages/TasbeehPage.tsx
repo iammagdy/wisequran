@@ -8,11 +8,12 @@ import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const DHIKR_OPTIONS = [
-"سبحان الله",
-"الحمد لله",
-"الله أكبر",
-"لا إله إلا الله",
-"أستغفر الله"];
+  { value: "سبحان الله",  labelAr: "سبحان الله",   labelEn: "SubhanAllah" },
+  { value: "الحمد لله",   labelAr: "الحمد لله",    labelEn: "Alhamdulillah" },
+  { value: "الله أكبر",   labelAr: "الله أكبر",    labelEn: "Allahu Akbar" },
+  { value: "لا إله إلا الله", labelAr: "لا إله إلا الله", labelEn: "La ilaha illa Allah" },
+  { value: "أستغفر الله", labelAr: "أستغفر الله",  labelEn: "Astaghfirullah" },
+];
 
 
 const TARGET_OPTIONS = [33, 99, 100, 500, 1000];
@@ -25,7 +26,7 @@ export default function TasbeehPage() {
   const { t, language } = useLanguage();
   const [target, setTarget] = useLocalStorage("wise-tasbeeh-target", 33);
   const [count, setCount] = useLocalStorage("wise-tasbeeh-count", 0);
-  const [dhikr, setDhikr] = useLocalStorage("wise-tasbeeh-dhikr", DHIKR_OPTIONS[0]);
+  const [dhikr, setDhikr] = useLocalStorage("wise-tasbeeh-dhikr", DHIKR_OPTIONS[0].value);
   const [todayTotal, setTodayTotal] = useLocalStorage(getTodayKey(), 0);
   const [showTargetPicker, setShowTargetPicker] = useState(false);
   const [showSparkle, setShowSparkle] = useState(false);
@@ -61,12 +62,16 @@ export default function TasbeehPage() {
       <div className="flex justify-center mb-3">
         <Select value={dhikr} onValueChange={(v) => {setDhikr(v);setCount(0);}}>
           <SelectTrigger className="w-full max-w-[224px] text-center justify-center text-base font-bold rounded-xl h-11 shadow-soft border-border/50">
-            <SelectValue />
+            <SelectValue>
+              {DHIKR_OPTIONS.find(d => d.value === dhikr)?.[language === "ar" ? "labelAr" : "labelEn"] ?? dhikr}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {DHIKR_OPTIONS.map((d) =>
-            <SelectItem key={d} value={d} className="text-right text-base font-medium">{d}</SelectItem>
-            )}
+            {DHIKR_OPTIONS.map((d) => (
+              <SelectItem key={d.value} value={d.value} className="text-base font-medium">
+                {language === "ar" ? d.labelAr : d.labelEn}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

@@ -4,7 +4,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { cn, getArabicDayName, getHijriDate, getGregorianDateArabic, toArabicNumerals } from "@/lib/utils";
+import { cn, getDayName, getHijriDateLocalized, getGregorianDateLocalized, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Compass, MapPin, ChevronLeft } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
@@ -140,9 +140,9 @@ export default function PrayerPage() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-3 rounded-2xl bg-card p-3.5 shadow-elevated text-center space-y-0.5 border border-border/50 pb-1.5 pt-1.5">
 
-        <p className="text-base font-bold">{getArabicDayName(new Date().getDay())}</p>
-        <p className="text-sm font-semibold text-primary">{getHijriDate(new Date())}</p>
-        <p className="text-muted-foreground text-sm">{getGregorianDateArabic(new Date())}</p>
+        <p className="text-base font-bold">{getDayName(new Date().getDay(), language)}</p>
+        <p className="text-sm font-semibold text-primary">{getHijriDateLocalized(new Date(), language)}</p>
+        <p className="text-muted-foreground text-sm">{getGregorianDateLocalized(new Date(), language)}</p>
       </motion.div>
 
       {/* Qibla Banner — compact, prominent */}

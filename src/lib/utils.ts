@@ -49,3 +49,28 @@ export function getHijriDate(date: Date): string {
 export function getGregorianDateArabic(date: Date): string {
   return new Intl.DateTimeFormat("ar-EG", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
+
+/** Locale-aware day name */
+export function getDayName(dayIndex: number, language: string): string {
+  if (language === "en") {
+    const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return names[dayIndex] ?? "";
+  }
+  return getArabicDayName(dayIndex);
+}
+
+/** Locale-aware Hijri date */
+export function getHijriDateLocalized(date: Date, language: string): string {
+  if (language === "en") {
+    return new Intl.DateTimeFormat("en-u-ca-islamic", { day: "numeric", month: "long", year: "numeric" }).format(date);
+  }
+  return getHijriDate(date);
+}
+
+/** Locale-aware Gregorian date */
+export function getGregorianDateLocalized(date: Date, language: string): string {
+  if (language === "en") {
+    return new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(date);
+  }
+  return getGregorianDateArabic(date);
+}

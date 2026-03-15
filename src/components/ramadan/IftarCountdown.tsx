@@ -3,10 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
 import { toArabicNumerals } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function IftarCountdown() {
   const { location } = useLocation();
-  const [remaining, setRemaining] = useState<number | null>(null); // seconds
+  const { t, language } = useLanguage();
+  const [remaining, setRemaining] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const notifiedRef = useRef(false);
 
@@ -14,8 +16,8 @@ export default function IftarCountdown() {
     const tick = () => {
       const now = new Date();
       const options = location ?
-      { latitude: location.latitude, longitude: location.longitude } :
-      {};
+        { latitude: location.latitude, longitude: location.longitude } :
+        {};
       const times = calculatePrayerTimes(now, options);
       const [h, m] = times.maghrib.split(":").map(Number);
 
@@ -27,15 +29,15 @@ export default function IftarCountdown() {
         setPassed(true);
         setRemaining(0);
 
-        // Send notification once
         if (!notifiedRef.current) {
           notifiedRef.current = true;
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("حان وقت الإفطار! 🎉🍽️", {
-              body: "اللهم لك صمت وعلى رزقك أفطرت",
+            const isAr = language === "ar";
+            new Notification(t("iftar_time"), {
+              body: t("iftar_dua_text"),
               icon: "/icons/icon-192.png",
-              dir: "rtl",
-              lang: "ar"
+              dir: isAr ? "rtl" : "ltr",
+              lang: isAr ? "ar" : "en",
             });
           }
         }
@@ -48,9 +50,8 @@ export default function IftarCountdown() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [location]);
+  }, [location, language]);
 
-  // Reset notification flag at midnight
   useEffect(() => {
     const checkMidnight = () => {
       const now = new Date();
@@ -64,31 +65,35 @@ export default function IftarCountdown() {
 
   const formatTime = (totalSeconds: number) => {
     const hrs = Math.floor(totalSeconds / 3600);
-    const mins = Math.floor(totalSeconds % 3600 / 60);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
     const secs = totalSeconds % 60;
-    return `${toArabicNumerals(hrs.toString().padStart(2, "0"))} : ${toArabicNumerals(mins.toString().padStart(2, "0"))} : ${toArabicNumerals(secs.toString().padStart(2, "0"))}`;
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    if (language === "ar") {
+      return `${toArabicNumerals(pad(hrs))} : ${toArabicNumerals(pad(mins))} : ${toArabicNumerals(pad(secs))}`;
+    }
+    return `${pad(hrs)} : ${pad(mins)} : ${pad(secs)}`;
   };
 
   return (
     <Card className="border-amber-300/40 dark:border-amber-600/30 overflow-hidden">
       <CardContent className="p-4 text-center space-y-2">
-        {passed ?
-        <>
+        {passed ? (
+          <>
             <p className="text-2xl">🎉</p>
-            <p className="text-lg font-bold text-foreground">حان وقت الإفطار!</p>
-            <p className="text-xs text-muted-foreground">ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله</p>
-          </> :
-        remaining !== null ?
-        <>
-            <p className="text-xs text-muted-foreground">⏱️ باقي على الإفطار</p>
+            <p className="text-lg font-bold text-foreground">{t("iftar_time")}</p>
+            <p className="text-xs text-muted-foreground">{t("iftar_dua_text")}</p>
+          </>
+        ) : remaining !== null ? (
+          <>
+            <p className="text-xs text-muted-foreground">{t("time_until_iftar")}</p>
             <p className="text-2xl font-bold tracking-wider text-foreground font-sans" dir="ltr">
               {formatTime(remaining)}
             </p>
-          </> :
-
-        <p className="text-sm text-muted-foreground">جارٍ حساب الوقت...</p>
-        }
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">{t("calculating_time")}</p>
+        )}
       </CardContent>
-    </Card>);
-
+    </Card>
+  );
 }

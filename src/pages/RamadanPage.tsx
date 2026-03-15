@@ -161,7 +161,7 @@ export default function RamadanPage() {
                           done ? "line-through text-muted-foreground" : "text-foreground"
                         )}>
 
-                        {item.label}
+                        {language === "ar" ? item.labelAr : item.labelEn}
                       </span>
                     </button>
                   </motion.div>);
@@ -259,10 +259,10 @@ export default function RamadanPage() {
                   <CardContent className="p-4 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xl">{activity.emoji}</span>
-                      <h3 className="font-bold text-sm text-foreground">{activity.title}</h3>
+                      <h3 className="font-bold text-sm text-foreground">{language === "ar" ? activity.titleAr : activity.titleEn}</h3>
                     </div>
                     <p className="text-xs leading-relaxed text-muted-foreground">
-                      {activity.description}
+                      {language === "ar" ? activity.descriptionAr : activity.descriptionEn}
                     </p>
                   </CardContent>
                 </Card>

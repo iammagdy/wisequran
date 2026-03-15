@@ -1,73 +1,92 @@
 export interface RamadanChecklistItem {
   id: string;
-  label: string;
+  labelAr: string;
+  labelEn: string;
   emoji: string;
 }
 
 export const DAILY_CHECKLIST: RamadanChecklistItem[] = [
-  { id: "quran-juz", label: "قراءة الجزء اليومي", emoji: "📖" },
-  { id: "taraweeh", label: "صلاة التراويح", emoji: "🕌" },
-  { id: "qiyam", label: "قيام الليل", emoji: "🌙" },
-  { id: "sadaqah", label: "صدقة", emoji: "💝" },
-  { id: "iftar-dua", label: "دعاء الإفطار", emoji: "🤲" },
-  { id: "feed-fasting", label: "إطعام صائم", emoji: "🍽️" },
-  { id: "dhikr", label: "أذكار الصباح والمساء", emoji: "📿" },
-  { id: "istighfar", label: "الاستغفار ١٠٠ مرة", emoji: "🙏" },
+  { id: "quran-juz",   labelAr: "قراءة الجزء اليومي",      labelEn: "Read the daily Juz",        emoji: "📖" },
+  { id: "taraweeh",    labelAr: "صلاة التراويح",            labelEn: "Taraweeh prayer",            emoji: "🕌" },
+  { id: "qiyam",       labelAr: "قيام الليل",               labelEn: "Qiyam al-Layl",              emoji: "🌙" },
+  { id: "sadaqah",     labelAr: "صدقة",                     labelEn: "Give charity",               emoji: "💝" },
+  { id: "iftar-dua",   labelAr: "دعاء الإفطار",             labelEn: "Iftar supplication",         emoji: "🤲" },
+  { id: "feed-fasting",labelAr: "إطعام صائم",               labelEn: "Feed a fasting person",      emoji: "🍽️" },
+  { id: "dhikr",       labelAr: "أذكار الصباح والمساء",     labelEn: "Morning & evening dhikr",    emoji: "📿" },
+  { id: "istighfar",   labelAr: "الاستغفار ١٠٠ مرة",        labelEn: "Istighfar 100 times",        emoji: "🙏" },
 ];
 
 export interface RamadanActivity {
-  title: string;
-  description: string;
+  titleAr: string;
+  titleEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
   emoji: string;
   category: "dua" | "dhikr" | "fadail" | "tip";
 }
 
 export const RAMADAN_ACTIVITIES: RamadanActivity[] = [
   {
-    title: "دعاء الإفطار",
-    description: "ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله",
+    titleAr: "دعاء الإفطار",
+    titleEn: "Iftar Supplication",
+    descriptionAr: "ذهب الظمأ وابتلت العروق وثبت الأجر إن شاء الله",
+    descriptionEn: "Thirst is gone, the veins are refreshed, and the reward is confirmed — if Allah wills",
     emoji: "🤲",
     category: "dua",
   },
   {
-    title: "دعاء ليلة القدر",
-    description: "اللهم إنك عفو تحب العفو فاعف عني",
+    titleAr: "دعاء ليلة القدر",
+    titleEn: "Laylat al-Qadr Dua",
+    descriptionAr: "اللهم إنك عفو تحب العفو فاعف عني",
+    descriptionEn: "O Allah, You are Pardoning and love pardon, so pardon me",
     emoji: "✨",
     category: "dua",
   },
   {
-    title: "فضل الصيام",
-    description: "من صام رمضان إيماناً واحتساباً غُفر له ما تقدم من ذنبه",
+    titleAr: "فضل الصيام",
+    titleEn: "Virtue of Fasting",
+    descriptionAr: "من صام رمضان إيماناً واحتساباً غُفر له ما تقدم من ذنبه",
+    descriptionEn: "Whoever fasts Ramadan with faith and seeking reward shall have his past sins forgiven",
     emoji: "🌟",
     category: "fadail",
   },
   {
-    title: "فضل القيام",
-    description: "من قام رمضان إيماناً واحتساباً غُفر له ما تقدم من ذنبه",
+    titleAr: "فضل القيام",
+    titleEn: "Virtue of Night Prayer",
+    descriptionAr: "من قام رمضان إيماناً واحتساباً غُفر له ما تقدم من ذنبه",
+    descriptionEn: "Whoever prays during Ramadan with faith and seeking reward shall have his past sins forgiven",
     emoji: "🕌",
     category: "fadail",
   },
   {
-    title: "أذكار الصيام",
-    description: "إذا شتمه أحد أو قاتله فليقل: إني صائم",
+    titleAr: "أذكار الصيام",
+    titleEn: "Fasting Dhikr",
+    descriptionAr: "إذا شتمه أحد أو قاتله فليقل: إني صائم",
+    descriptionEn: "If someone insults or argues with him, let him say: I am fasting",
     emoji: "📿",
     category: "dhikr",
   },
   {
-    title: "العشر الأواخر",
-    description: "كان النبي ﷺ إذا دخل العشر الأواخر أحيا الليل وأيقظ أهله وشدّ المئزر",
+    titleAr: "العشر الأواخر",
+    titleEn: "Last Ten Nights",
+    descriptionAr: "كان النبي ﷺ إذا دخل العشر الأواخر أحيا الليل وأيقظ أهله وشدّ المئزر",
+    descriptionEn: "When the last ten nights began, the Prophet ﷺ would stay up all night, wake his family and strive in worship",
     emoji: "🌙",
     category: "fadail",
   },
   {
-    title: "تعجيل الفطور",
-    description: "لا يزال الناس بخير ما عجّلوا الفطر",
+    titleAr: "تعجيل الفطور",
+    titleEn: "Hasten the Iftar",
+    descriptionAr: "لا يزال الناس بخير ما عجّلوا الفطر",
+    descriptionEn: "People will remain upon goodness as long as they hasten the breaking of the fast",
     emoji: "🍽️",
     category: "tip",
   },
   {
-    title: "السحور بركة",
-    description: "تسحّروا فإنّ في السحور بركة",
+    titleAr: "السحور بركة",
+    titleEn: "Suhoor is Blessed",
+    descriptionAr: "تسحّروا فإنّ في السحور بركة",
+    descriptionEn: "Eat suhoor, for indeed there is blessing in suhoor",
     emoji: "🌅",
     category: "tip",
   },
