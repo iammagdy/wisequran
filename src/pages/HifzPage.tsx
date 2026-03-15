@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Mic, Flame, Target, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2, RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";
@@ -206,30 +206,6 @@ export default function HifzPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Recitation Test Banner */}
-      <motion.button
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => navigate("/hifz/test")}
-        className="w-full mb-5 rounded-2xl bg-primary text-primary-foreground p-4 flex items-center gap-3 shadow-elevated hover:bg-primary/90 transition-colors"
-        dir={isRTL ? "rtl" : "ltr"}
-      >
-        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-          <Mic className="h-5 w-5" />
-        </div>
-        <div className="text-start flex-1">
-          <p className="text-sm font-bold">
-            {t("hifz_recitation_test_btn")}
-          </p>
-          <p className="text-xs opacity-80">
-            {t("hifz_recitation_test_desc")}
-          </p>
-        </div>
-        <ArrowRight className={cn("h-4 w-4 opacity-70", isRTL && "rotate-180")} />
-      </motion.button>
 
       {/* Start Today's Review Card — shown only when queue has items */}
       {todayQueue.length > 0 && (
