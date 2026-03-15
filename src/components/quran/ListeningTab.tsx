@@ -7,6 +7,7 @@ import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Ayah } from "@/lib/quran-api";
+import type { TafsirAyah } from "@/lib/tafsir-api";
 
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 const REPEAT_OPTIONS = [0, 2, 3, 5, 7, 10] as const;
@@ -18,9 +19,10 @@ interface Props {
   surahNumber: number;
   surahName: string;
   ayahs: Ayah[];
+  translationAyahs?: TafsirAyah[];
 }
 
-export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
+export default function ListeningTab({ surahNumber, surahName, ayahs, translationAyahs = [] }: Props) {
   const { t, language, isRTL } = useLanguage();
   const player = useAudioPlayer();
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
@@ -33,11 +35,13 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
   const [timerSecondsLeft, setTimerSecondsLeft] = useState<number>(0);
   const [timerRunning, setTimerRunning] = useState(false);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const repeatRef = useRef(repeatCount);
+  const repeatCountRef = useRef(repeatCount);
   const currentRepeatRef = useRef(currentRepeat);
+  const activeTimerRef = useRef(activeTimer);
 
-  repeatRef.current = repeatCount;
+  repeatCountRef.current = repeatCount;
   currentRepeatRef.current = currentRepeat;
+  activeTimerRef.current = activeTimer;
 
   const isThisSurah = player.surahNumber === surahNumber;
   const playing = isThisSurah && player.playing;
@@ -56,10 +60,17 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
     }
   };
 
-  const getTimerSeconds = useCallback((preset: TimerPreset): number => {
-    if (preset === "verse") return 0;
-    if (preset === "chapter") return 0;
-    return preset * 60;
+  const formatTimerTime = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const cancelTimer = useCallback(() => {
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    setActiveTimer(null);
+    setTimerRunning(false);
+    setTimerSecondsLeft(0);
   }, []);
 
   const startTimer = useCallback((preset: TimerPreset) => {
@@ -81,21 +92,13 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
         if (prev <= 1) {
           clearInterval(timerIntervalRef.current!);
           setTimerRunning(false);
-          const audioEl = document.querySelector("audio") as HTMLAudioElement | null;
-          if (audioEl) audioEl.pause();
+          player.stop();
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-  }, []);
-
-  const cancelTimer = useCallback(() => {
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    setActiveTimer(null);
-    setTimerRunning(false);
-    setTimerSecondsLeft(0);
-  }, []);
+  }, [player]);
 
   useEffect(() => {
     return () => {
@@ -103,18 +106,46 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
     };
   }, []);
 
-  const formatTimerTime = (seconds: number): string => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+  useEffect(() => {
+    player.setPlaybackRate(speed);
+  }, [speed, player]);
 
   useEffect(() => {
-    const audioEl = document.querySelector("audio") as HTMLAudioElement | null;
-    if (audioEl) {
-      audioEl.playbackRate = speed;
+    if (repeatCountRef.current === 0 && activeTimerRef.current !== "verse" && activeTimerRef.current !== "chapter") {
+      player.setOnAyahEnded(null);
+      return;
     }
-  }, [speed, playing]);
+
+    const handleEnded = () => {
+      const timer = activeTimerRef.current;
+
+      if (timer === "verse") {
+        player.stop();
+        cancelTimer();
+        return;
+      }
+
+      if (timer === "chapter") {
+        return;
+      }
+
+      const maxRepeats = repeatCountRef.current;
+      if (maxRepeats === 0) return;
+
+      const next = currentRepeatRef.current + 1;
+      if (next < maxRepeats) {
+        currentRepeatRef.current = next;
+        setCurrentRepeat(next);
+        if (isThisSurah) player.seek(0);
+      } else {
+        currentRepeatRef.current = 0;
+        setCurrentRepeat(0);
+      }
+    };
+
+    player.setOnAyahEnded(handleEnded);
+    return () => player.setOnAyahEnded(null);
+  }, [repeatCount, activeTimer, player, cancelTimer, isThisSurah]);
 
   const currentIndex = currentAyah
     ? ayahs.findIndex((a) => a.numberInSurah === currentAyah.numberInSurah)
@@ -124,6 +155,9 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
     ayahs.length > 0 && currentIndex >= 0
       ? Math.round(((currentIndex + 1) / ayahs.length) * 100)
       : 0;
+
+  const reciterDisplayName = (r: typeof currentReciter) =>
+    language === "en" && r.nameEn ? r.nameEn : r.name;
 
   return (
     <div className="space-y-4 pb-40" dir={isRTL ? "rtl" : "ltr"}>
@@ -157,6 +191,14 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
                 >
                   {stripBismillah(currentAyah.text, surahNumber, currentAyah.numberInSurah)}
                 </p>
+                {translationAyahs.length > 0 && (() => {
+                  const tAyah = translationAyahs.find((ta) => ta.numberInSurah === currentAyah.numberInSurah);
+                  return tAyah ? (
+                    <p className="text-sm text-muted-foreground mt-3 leading-relaxed mx-auto max-w-sm text-center" dir="ltr">
+                      {tAyah.text}
+                    </p>
+                  ) : null;
+                })()}
               </motion.div>
             </AnimatePresence>
           ) : (
@@ -220,7 +262,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
             <span className="text-sm font-semibold">{t("reciter_label")}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground font-arabic">{currentReciter.name}</span>
+            <span className="text-sm text-muted-foreground">{reciterDisplayName(currentReciter)}</span>
             <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", showReciterPicker && "rotate-180")} />
           </div>
         </button>
@@ -245,11 +287,11 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
                       }
                     }}
                     className={cn(
-                      "w-full text-start px-4 py-3 text-sm font-arabic hover:bg-muted/40 transition-colors",
+                      "w-full text-start px-4 py-3 text-sm hover:bg-muted/40 transition-colors",
                       r.id === reciterId && "text-primary font-semibold bg-primary/5"
                     )}
                   >
-                    {r.name}
+                    {reciterDisplayName(r)}
                   </button>
                 ))}
               </div>
@@ -303,6 +345,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
               onClick={() => {
                 setRepeatCount(r);
                 setCurrentRepeat(0);
+                currentRepeatRef.current = 0;
               }}
               className={cn(
                 "flex-1 rounded-xl py-2.5 text-xs font-bold transition-all",
@@ -403,6 +446,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
           <div className="max-h-72 overflow-y-auto divide-y divide-border/30">
             {ayahs.map((ayah) => {
               const isCurrent = currentAyah?.numberInSurah === ayah.numberInSurah;
+              const tAyah = translationAyahs.find((ta) => ta.numberInSurah === ayah.numberInSurah);
               return (
                 <motion.button
                   key={ayah.numberInSurah}
@@ -421,12 +465,19 @@ export default function ListeningTab({ surahNumber, surahName, ayahs }: Props) {
                     )}>
                       {language === "ar" ? toArabicNumerals(ayah.numberInSurah) : ayah.numberInSurah}
                     </span>
-                    <p className={cn(
-                      "font-arabic text-sm leading-loose flex-1",
-                      isCurrent && "text-primary font-semibold"
-                    )}>
-                      {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
-                    </p>
+                    <div className="flex-1">
+                      <p className={cn(
+                        "font-arabic text-sm leading-loose",
+                        isCurrent && "text-primary font-semibold"
+                      )}>
+                        {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
+                      </p>
+                      {tAyah && (
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed" dir="ltr">
+                          {tAyah.text}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </motion.button>
               );

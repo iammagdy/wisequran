@@ -86,7 +86,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
             </button>
             <div className="flex-1 text-center px-4">
               <h2 className="font-arabic text-xl font-bold text-foreground">{surahName}</h2>
-              <p className="text-sm text-foreground/70 mt-0.5 font-medium">{reciter.name}</p>
+              <p className="text-sm text-foreground/70 mt-0.5 font-medium">{language === "en" && reciter.nameEn ? reciter.nameEn : reciter.name}</p>
             </div>
             <div className="w-12" />
           </div>

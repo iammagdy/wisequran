@@ -29,6 +29,8 @@ interface AudioPlayerContextType extends AudioPlayerState {
   seek: (time: number) => void;
   seekToAyah: (ayahNumber: number) => void;
   stop: () => void;
+  setPlaybackRate: (rate: number) => void;
+  setOnAyahEnded: (cb: (() => void) | null) => void;
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
@@ -58,6 +60,7 @@ const INITIAL_STATE: AudioPlayerState = {
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const blobUrlRef = useRef<string | null>(null);
+  const onAyahEndedRef = useRef<(() => void) | null>(null);
   const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   // Ayah timestamp refs for highlighting
@@ -132,6 +135,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     });
     audio.addEventListener("ended", () => {
       setState((s) => ({ ...s, playing: false, currentAyahInSurah: null }));
+      onAyahEndedRef.current?.();
     });
     audio.addEventListener("error", () => {
       setState((s) => ({ ...s, loading: false }));
@@ -273,6 +277,16 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     setState(INITIAL_STATE);
   }, [cleanupBlobUrl]);
 
+  const setPlaybackRate = useCallback((rate: number) => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = rate;
+    }
+  }, []);
+
+  const setOnAyahEnded = useCallback((cb: (() => void) | null) => {
+    onAyahEndedRef.current = cb;
+  }, []);
+
   const seekToAyah = useCallback((ayahNumber: number) => {
     const ts = timestampsRef.current.find((t) => t.numberInSurah === ayahNumber);
     if (ts && audioRef.current) {
@@ -292,6 +306,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         seek,
         seekToAyah,
         stop,
+        setPlaybackRate,
+        setOnAyahEnded,
       }}
     >
       {children}

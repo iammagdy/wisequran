@@ -72,7 +72,7 @@ export default function GlobalAudioBar() {
           <div className={`flex-1 min-w-0 pointer-events-none ${language === "ar" ? "text-right" : "text-left"}`}>
             <p className="font-arabic text-sm font-bold text-foreground truncate">{surahName}</p>
             <p className="text-[0.625rem] text-muted-foreground truncate">
-              {getReciterById(playingReciterId).name}
+              {(() => { const r = getReciterById(playingReciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })()}
               {currentAyahInSurah !== null && totalAyahs > 0 && (
                 <span className="ms-2"> · {language === "en" ? "v." : t("ayah")} {language === "ar" ? toArabicNumerals(currentAyahInSurah) : currentAyahInSurah} {t("of")} {language === "ar" ? toArabicNumerals(totalAyahs) : totalAyahs}</span>
               )}

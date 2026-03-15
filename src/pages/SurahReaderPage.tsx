@@ -196,7 +196,7 @@ export default function SurahReaderPage() {
   }, [activeTab, surahNumber, effectiveTafsirEdition, tafsirAyahs.length]);
 
   useEffect(() => {
-    if (!translationEnabled) {
+    if (!translationEnabled && !isListeningMode) {
       setTranslationAyahs([]);
       return;
     }
@@ -207,7 +207,7 @@ export default function SurahReaderPage() {
     if (!editionChanged && !enabledChanged && translationAyahs.length > 0) return;
 
     fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
-  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
+  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length, isListeningMode]);
 
   const isBookmarked = (ayahNum: number) =>
   bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
@@ -225,7 +225,7 @@ export default function SurahReaderPage() {
     setActiveTab("tafsir");
   };
 
-  const currentReciterName = getReciterById(audioPlayer.reciterId).name;
+  const currentReciterName = (() => { const r = getReciterById(audioPlayer.reciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })();
 
   return (
     <div className={cn("min-h-screen", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
@@ -393,7 +393,7 @@ export default function SurahReaderPage() {
         {/* ===== LISTENING MODE ===== */}
         {isListeningMode ? (
           !loading && ayahs.length > 0 ? (
-            <ListeningTab surahNumber={surahNumber} surahName={displaySurahName} ayahs={ayahs} />
+            <ListeningTab surahNumber={surahNumber} surahName={displaySurahName} ayahs={ayahs} translationAyahs={translationAyahs} />
           ) : loading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) =>
