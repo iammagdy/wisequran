@@ -23,6 +23,7 @@ import RecitationTestPage from "@/pages/RecitationTestPage";
 import QiblaPage from "@/pages/QiblaPage";
 import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
+import SignInPage from "@/pages/SignInPage";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -36,26 +37,34 @@ const AppContent = () => {
   useAdhan();
   usePrayerReminders();
   return (
-    <>
-      <AppShell>
-        <Routes>
-          <Route path="/" element={<QuranPage />} />
-          <Route path="/surah/:id" element={<SurahReaderPage />} />
-          <Route path="/azkar" element={<AzkarPage />} />
-          <Route path="/prayer" element={<PrayerPage />} />
-          <Route path="/tasbeeh" element={<TasbeehPage />} />
-          <Route path="/stats" element={<StatsPage />} />
-          <Route path="/hifz" element={<HifzPage />} />
-          <Route path="/hifz/test" element={<RecitationTestPage />} />
-          <Route path="/qibla" element={<QiblaPage />} />
-          <Route path="/ramadan" element={<RamadanPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AppShell>
-      <InstallBanner />
-      <SaveProgressBanner />
-    </>
+    <Routes>
+      <Route path="/signin" element={<SignInPage />} />
+      <Route
+        path="*"
+        element={
+          <>
+            <AppShell>
+              <Routes>
+                <Route path="/" element={<QuranPage />} />
+                <Route path="/surah/:id" element={<SurahReaderPage />} />
+                <Route path="/azkar" element={<AzkarPage />} />
+                <Route path="/prayer" element={<PrayerPage />} />
+                <Route path="/tasbeeh" element={<TasbeehPage />} />
+                <Route path="/stats" element={<StatsPage />} />
+                <Route path="/hifz" element={<HifzPage />} />
+                <Route path="/hifz/test" element={<RecitationTestPage />} />
+                <Route path="/qibla" element={<QiblaPage />} />
+                <Route path="/ramadan" element={<RamadanPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AppShell>
+            <InstallBanner />
+            <SaveProgressBanner />
+          </>
+        }
+      />
+    </Routes>
   );
 };
 

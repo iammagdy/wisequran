@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
@@ -44,6 +46,8 @@ import FadeSection from "@/components/layout/FadeSection";
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const { t, language, setLanguage, isRTL } = useLanguage();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const { checkForUpdate } = useServiceWorkerUpdate();
@@ -363,6 +367,60 @@ export default function SettingsPage() {
       <p className="mb-6 text-sm text-muted-foreground">{t("settings_subtitle")}</p>
 
       <div className="space-y-6">
+        {/* ─── Account ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <User className="h-3.5 w-3.5" />
+            {isRTL ? "الحساب" : "Account"}
+          </div>
+          <FadeSection className="rounded-xl bg-card shadow-sm overflow-hidden">
+            {user ? (
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-primary uppercase">
+                      {user.email?.[0] ?? "U"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? "حساب نشط" : "Active account"}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+                  onClick={async () => { await signOut(); }}
+                >
+                  <LogOut className="h-4 w-4 me-2" />
+                  {isRTL ? "تسجيل الخروج" : "Sign Out"}
+                </Button>
+              </div>
+            ) : (
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center shrink-0">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{isRTL ? "غير مسجّل" : "Not signed in"}</p>
+                    <p className="text-xs text-muted-foreground">{isRTL ? "سجّل الدخول لحفظ تقدمك عبر أجهزتك" : "Sign in to save progress across devices"}</p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  onClick={() => navigate("/signin")}
+                >
+                  <LogIn className="h-4 w-4 me-2" />
+                  {isRTL ? "تسجيل الدخول" : "Sign In"}
+                </Button>
+              </div>
+            )}
+          </FadeSection>
+        </section>
+
         {/* ─── Language ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
