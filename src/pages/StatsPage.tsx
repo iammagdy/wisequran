@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Clock, Flame, Trophy } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Clock, Flame, Trophy } from "lucide-react";
 import { useReadingStats } from "@/hooks/useReadingStats";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
@@ -18,6 +18,7 @@ export default function StatsPage() {
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
   const { t, language, isRTL } = useLanguage();
+
   const progress = Math.min((todayCount / goal) * 100, 100);
 
   return (
@@ -27,9 +28,9 @@ export default function StatsPage() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)}
-          className="rounded-xl bg-card p-2.5 shadow-soft"
+          className="rounded-xl bg-card p-2.5 shadow-soft border border-border/40"
         >
-          <ArrowRight className="h-5 w-5 text-foreground" />
+          {isRTL ? <ArrowRight className="h-5 w-5 text-foreground" /> : <ArrowLeft className="h-5 w-5 text-foreground" />}
         </motion.button>
         <h1 className="text-2xl font-bold heading-decorated flex-1">{t("statistics")}</h1>
         <AchievementsSheet />

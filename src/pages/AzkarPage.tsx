@@ -26,21 +26,21 @@ function BeadProgressBar({ total, remaining }: { total: number; remaining: numbe
   const filledBeads = Math.round((filled / total) * maxBeads);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       {Array.from({ length: maxBeads }).map((_, i) => (
         <motion.div
           key={i}
           initial={false}
           animate={{
-            scale: i < filledBeads ? 1 : 0.75,
-            opacity: i < filledBeads ? 1 : 0.3,
+            scale: i < filledBeads ? 1 : 0.8,
+            opacity: i < filledBeads ? 1 : 0.35,
           }}
           transition={{ duration: 0.2, delay: i * 0.02 }}
           className={cn(
             "rounded-full transition-colors",
             i < filledBeads
-              ? "bg-primary w-2.5 h-2.5"
-              : "bg-muted w-2 h-2"
+              ? "bg-primary w-3 h-3"
+              : "bg-muted w-2.5 h-2.5"
           )}
         />
       ))}
@@ -61,7 +61,7 @@ function DhikrCounter({
   isFavorite: boolean;
   onToggleFavorite: () => void;
 }) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [remaining, setRemaining] = useState(dhikr.count);
   const done = remaining === 0;
 
@@ -126,20 +126,20 @@ function DhikrCounter({
         <p className="text-[11px] text-muted-foreground/50 mb-3 text-right" dir="rtl">{dhikr.source}</p>
       )}
 
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center gap-2 mt-2">
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => setRemaining(dhikr.count)}
-          className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-colors"
+          className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
         >
           <RotateCcw className="h-4 w-4" />
         </motion.button>
 
         <motion.button
-          whileTap={{ scale: 0.88 }}
+          whileTap={{ scale: 0.97 }}
           onClick={handleTap}
           className={cn(
-            "flex h-[60px] w-[60px] items-center justify-center rounded-full text-lg font-bold transition-all shadow-elevated",
+            "flex flex-1 items-center justify-center rounded-xl text-base font-bold transition-all shadow-soft min-h-[48px] gap-2",
             done
               ? "bg-primary text-primary-foreground"
               : "bg-gradient-to-br from-accent to-accent/80 text-accent-foreground"
@@ -150,7 +150,15 @@ function DhikrCounter({
               : "0 4px 14px -2px hsl(var(--accent) / 0.35)"
           }}
         >
-          {done ? "✓" : (language === "ar" ? toArabicNumerals(remaining) : remaining)}
+          {done
+            ? "✓"
+            : <>
+                <span className="text-lg font-bold tabular-nums">
+                  {language === "ar" ? toArabicNumerals(remaining) : remaining}
+                </span>
+                <span className="text-sm opacity-80">{t("times")}</span>
+              </>
+          }
         </motion.button>
       </div>
     </motion.div>
@@ -385,7 +393,8 @@ export default function AzkarPage() {
                       key={section.id}
                       className={cn(
                         "rounded-2xl border shadow-soft overflow-hidden transition-all",
-                        allSectionDone ? "bg-primary/5 border-primary/15" : "bg-card border-border/40"
+                        allSectionDone ? "bg-primary/5 border-primary/15" :
+                        isExpanded ? "bg-card border-primary/20" : "bg-card border-border/40"
                       )}
                     >
                       <motion.button

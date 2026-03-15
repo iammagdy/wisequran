@@ -66,15 +66,6 @@ function BeadRing({ progress, count, target, isComplete }: {
         );
       })}
 
-      {/* Center spacer connecting line */}
-      <path
-        d={`M ${cx} ${cy - 20} L ${cx} ${cy - radius + 14}`}
-        stroke="hsl(var(--border))"
-        strokeWidth="1.5"
-        strokeDasharray="3 4"
-        opacity="0.5"
-      />
-
       {/* Center count display */}
       <foreignObject x={cx - 56} y={cy - 42} width="112" height="84">
         <div className="flex flex-col items-center justify-center h-full">
@@ -98,7 +89,7 @@ function BeadRing({ progress, count, target, isComplete }: {
               className="text-[10px] font-bold mt-1"
               style={{ color: "hsl(var(--gold))" }}
             >
-              ماشاء الله
+              {language === "ar" ? "ما شاء الله" : "Masha'Allah"}
             </motion.span>
           )}
         </div>
@@ -137,10 +128,13 @@ export default function TasbeehPage() {
     setShowTargetPicker(false);
   }, [setCount]);
 
+  const anyPickerOpen = showTargetPicker || showDhikrPicker;
+
   return (
     <div
       className="flex flex-col px-4 pt-5 min-h-[calc(100dvh-4rem)] pb-5 relative overflow-hidden"
       dir={language === "en" ? "ltr" : "rtl"}
+      onClick={anyPickerOpen ? () => { setShowTargetPicker(false); setShowDhikrPicker(false); } : undefined}
     >
       {/* Subtle arabesque background */}
       <div className="absolute inset-0 pattern-islamic pointer-events-none opacity-60" />

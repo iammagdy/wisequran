@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, ArrowRight, Bookmark, Star } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, Flame, MoveHorizontal as MoreHorizontal, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
@@ -126,10 +126,10 @@ export default function QuranPage() {
     view === "surahs_listening" ? t("mode_listening") : t("mode_reading");
 
   return (
-    <div className="px-4 pt-4 pb-4" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="px-4 pt-6 pb-6" dir={isRTL ? "rtl" : "ltr"}>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           {view !== "home" && (
             <motion.button
@@ -139,12 +139,19 @@ export default function QuranPage() {
               onClick={() => setView("home")}
               className="rounded-xl p-2.5 bg-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft border border-border/40"
               dir={isRTL ? "rtl" : "ltr"}>
-              <ArrowRight className={cn("h-5 w-5", isRTL ? "" : "rotate-180")} />
+              {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
             </motion.button>
           )}
-          <h1 className="text-2xl font-bold heading-decorated">
-            {view !== "home" ? surahListTitle : t("quran_title")}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold heading-decorated">
+              {view !== "home" ? surahListTitle : t("quran_title")}
+            </h1>
+            {(view === "surahs" || view === "surahs_listening") && surahs.length > 0 && (
+              <span className="text-xs font-semibold text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+                {language === "ar" ? toArabicNumerals(surahs.length) : surahs.length}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-1.5">
           <DropdownMenu>
@@ -247,8 +254,11 @@ export default function QuranPage() {
                     {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
                   </p>
                 </div>
-                <div className="shrink-0 w-6 h-6 rounded-full bg-gold/15 flex items-center justify-center">
-                  <span className="text-gold text-sm">{isRTL ? "←" : "→"}</span>
+                <div className="shrink-0 w-7 h-7 rounded-full bg-gold/15 flex items-center justify-center">
+                  {isRTL
+                    ? <ArrowLeft className="h-3.5 w-3.5 text-gold" />
+                    : <ChevronRight className="h-3.5 w-3.5 text-gold" />
+                  }
                 </div>
               </motion.button>
             )}
@@ -270,7 +280,8 @@ export default function QuranPage() {
 
                   <div className={cn("absolute inset-0 bg-gradient-to-br opacity-100 pointer-events-none", card.bgGradient)} />
 
-                  <div className={cn("relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card/60 shadow-soft border border-border/30", card.accentColor)}>
+                  <div className={cn("relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-soft border border-border/20", card.accentColor)}
+                    style={{ background: `hsl(var(--card) / 0.7)` }}>
                     {card.icon}
                   </div>
 

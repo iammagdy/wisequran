@@ -154,7 +154,7 @@ export default function RecitationScoreCard({ score, correctAyahs, totalAyahs, p
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.05 * idx }}
-                  className={cn("flex items-center gap-3 px-4 py-3 border-s-2", borderClass)}
+                  className={cn("flex items-center gap-3 px-4 py-3", isRTL ? "border-r-2" : "border-l-2", borderClass)}
                 >
                   <span className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0", badgeClass)}>
                     {language === "ar" ? toArabicNumerals(a.numberInSurah) : a.numberInSurah}

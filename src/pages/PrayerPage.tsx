@@ -173,9 +173,9 @@ export default function PrayerPage() {
           <div className="flex items-center justify-center gap-2">
             <CountdownUnit value={heroTime.h} label={t("hour")} />
             <span className="text-2xl font-bold text-primary/30 mb-5">:</span>
-            <CountdownUnit value={heroTime.m} label={t("minute")} />
+            <CountdownUnit value={heroTime.m} label={t("minute")} animate={heroTime.s === "00"} />
             <span className="text-2xl font-bold text-primary/30 mb-5">:</span>
-            <CountdownUnit value={heroTime.s} label={t("second")} />
+            <CountdownUnit value={heroTime.s} label={t("second")} animate />
           </div>
         </motion.div>
       )}
@@ -185,7 +185,7 @@ export default function PrayerPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="rounded-2xl bg-primary/10 border border-primary/20 shadow-elevated p-4 mb-3 text-center">
-          <p className="text-xl mb-1">✨</p>
+          <Flame className="h-6 w-6 text-accent mx-auto mb-1" />
           <p className="font-bold text-primary text-base">{t("prayers_complete")}</p>
         </motion.div>
       )}
@@ -292,12 +292,6 @@ export default function PrayerPage() {
                 </div>
               )}
 
-              {!done && (
-                <div className={cn(
-                  "w-5 h-5 rounded-full border-2 shrink-0 transition-all",
-                  isNext ? "border-primary" : "border-border"
-                )} />
-              )}
             </motion.button>
           );
         })}
@@ -310,20 +304,27 @@ export default function PrayerPage() {
   );
 }
 
-function CountdownUnit({ value, label }: {value: string;label: string;}) {
+function CountdownUnit({ value, label, animate: shouldAnimate = false }: {value: string;label: string; animate?: boolean}) {
   const { language } = useLanguage();
   return (
     <div className="flex flex-col items-center gap-1">
-      <motion.div
-        key={value}
-        initial={{ y: -5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.18 }}
-        className="rounded-xl bg-primary/8 border border-primary/15 px-3.5 py-2 min-w-[52px] text-center">
-        <span className="text-2xl font-bold text-primary tabular-nums">
-          {language === "ar" ? toArabicNumerals(value) : value}
-        </span>
-      </motion.div>
+      <div className="rounded-xl bg-primary/8 border border-primary/15 px-3.5 py-2 min-w-[52px] text-center relative overflow-hidden">
+        {shouldAnimate ? (
+          <motion.span
+            key={value}
+            initial={{ y: -8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            className="text-2xl font-bold text-primary tabular-nums block"
+          >
+            {language === "ar" ? toArabicNumerals(value) : value}
+          </motion.span>
+        ) : (
+          <span className="text-2xl font-bold text-primary tabular-nums block">
+            {language === "ar" ? toArabicNumerals(value) : value}
+          </span>
+        )}
+      </div>
       <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
     </div>
   );

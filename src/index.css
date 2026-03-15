@@ -549,9 +549,35 @@ html.ui-scale-xlarge { font-size: 20px; }
   content: "";
   position: absolute;
   bottom: -4px;
-  right: 0;
+  left: 0;
   width: 40%;
   height: 3px;
-  background: linear-gradient(to left, hsl(var(--primary)), transparent);
+  background: linear-gradient(to right, hsl(var(--primary)), transparent);
   border-radius: 2px;
+}
+
+[dir="rtl"] .heading-decorated::after {
+  left: auto;
+  right: 0;
+  background: linear-gradient(to left, hsl(var(--primary)), transparent);
+}
+
+/* Section heading with left accent bar */
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+  padding-left: 0.625rem;
+  border-left: 2px solid hsl(var(--primary) / 0.6);
+  margin-bottom: 0.75rem;
+}
+
+[dir="rtl"] .section-heading {
+  padding-left: 0;
+  padding-right: 0.625rem;
+  border-left: none;
+  border-right: 2px solid hsl(var(--primary) / 0.6);
 }

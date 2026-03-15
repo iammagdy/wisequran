@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
@@ -190,9 +190,9 @@ export default function RecitationTestPage() {
             speech.reset();
             navigate(-1);
           }}
-          className="rounded-xl p-2.5 hover:bg-muted transition-colors"
+          className="rounded-xl p-2.5 bg-card border border-border/40 shadow-soft hover:bg-muted transition-colors"
         >
-          <ArrowRight className="h-5 w-5" />
+          {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
         </motion.button>
         <div>
           <h1 className="text-2xl font-bold heading-decorated">{t("recitation_test")}</h1>
@@ -448,6 +448,20 @@ export default function RecitationTestPage() {
                 interimTranscript={speech.interimTranscript}
               />
             </div>
+
+            {speech.status === "idle" && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-xl bg-muted/40 border border-border/30 px-4 py-3 text-center"
+              >
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {language === "ar"
+                    ? "اضغط على الميكروفون واقرأ الآيات بصوت واضح ومتوسط"
+                    : "Tap the mic and recite clearly at a steady pace"}
+                </p>
+              </motion.div>
+            )}
 
             {speech.error && speech.status === "error" && (
               <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-4 py-3 text-center">

@@ -119,7 +119,7 @@ export default function BottomNav() {
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-2xl bg-primary/12"
+                    className="absolute inset-0 rounded-xl bg-primary/10"
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
                   />
                 )}
@@ -148,9 +148,9 @@ export default function BottomNav() {
                 </motion.div>
 
                 <motion.span
-                  animate={{ opacity: isActive ? 1 : 0.6 }}
+                  animate={{ opacity: isActive ? 1 : 0.65 }}
                   className={cn(
-                    "relative z-10 text-[10px] font-semibold transition-all duration-200 leading-none",
+                    "relative z-10 text-[11px] font-semibold transition-all duration-200 leading-none",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >

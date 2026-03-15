@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2,
+  ArrowLeft, ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2,
   RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp,
   Headphones, BookOpenCheck,
 } from "lucide-react";
@@ -133,8 +133,8 @@ export default function HifzPage() {
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="rounded-xl p-2.5 hover:bg-muted transition-colors">
-          <ArrowRight className="h-5 w-5" />
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="rounded-xl p-2.5 bg-card border border-border/40 shadow-soft hover:bg-muted transition-colors">
+          {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
         </motion.button>
         <div>
           <h1 className="text-2xl font-bold heading-decorated">{t("hifz_title")}</h1>
@@ -288,8 +288,10 @@ export default function HifzPage() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir={isRTL ? "rtl" : "ltr"}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold">{t("today_review")}</h2>
+            <h2 className="section-heading">
+              <Clock className="h-4 w-4 text-primary" />
+              {t("today_review")}
+            </h2>
           </div>
           {review.stats.reviewedToday > 0 && (
             <span className="text-xs font-semibold text-primary bg-primary/10 rounded-full px-2.5 py-1">
@@ -305,6 +307,15 @@ export default function HifzPage() {
             <p className="text-xs text-muted-foreground mt-1">
               {review.stats.totalInReview > 0 ? t("all_reviews_done") : t("add_memorized_hint")}
             </p>
+            {review.stats.totalInReview === 0 && (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setFilter("none")}
+                className="mt-3 rounded-xl bg-primary text-primary-foreground text-xs font-semibold px-4 py-2 hover:opacity-90 transition-opacity"
+              >
+                {t("start_hifz")}
+              </motion.button>
+            )}
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -372,28 +383,8 @@ export default function HifzPage() {
                       </motion.div>
                     )}
 
-                    {/* Open surah buttons */}
+                    {/* Review quality buttons - primary actions */}
                     <div className="flex gap-2 mb-2">
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleOpenSurahForReview(item.surahNumber, "read")}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-card border border-border/60 text-foreground py-2.5 text-xs font-semibold hover:bg-muted/40 transition-colors min-h-[40px]"
-                      >
-                        <BookOpenCheck className="h-3.5 w-3.5" />
-                        {t("hifz_open_surah_read")}
-                      </motion.button>
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handleOpenSurahForReview(item.surahNumber, "listen")}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-card border border-border/60 text-foreground py-2.5 text-xs font-semibold hover:bg-muted/40 transition-colors min-h-[40px]"
-                      >
-                        <Headphones className="h-3.5 w-3.5" />
-                        {t("hifz_open_surah_listen")}
-                      </motion.button>
-                    </div>
-
-                    {/* Review quality buttons */}
-                    <div className="flex gap-2">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleMarkReviewed(item.surahNumber, "good")}
@@ -410,6 +401,25 @@ export default function HifzPage() {
                         <RotateCcw className="h-4 w-4" />
                         {t("needs_review")}
                       </motion.button>
+                    </div>
+
+                    {/* Open surah — tertiary links */}
+                    <div className="flex gap-3 justify-center pt-0.5">
+                      <button
+                        onClick={() => handleOpenSurahForReview(item.surahNumber, "read")}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <BookOpenCheck className="h-3 w-3" />
+                        {t("hifz_open_surah_read")}
+                      </button>
+                      <span className="text-border text-xs">·</span>
+                      <button
+                        onClick={() => handleOpenSurahForReview(item.surahNumber, "listen")}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Headphones className="h-3 w-3" />
+                        {t("hifz_open_surah_listen")}
+                      </button>
                     </div>
                   </motion.div>
                 );
@@ -491,10 +501,10 @@ export default function HifzPage() {
           const rows: React.ReactNode[] = [];
           let i = 0;
           while (i < filtered.length) {
-            const rowSurahs = filtered.slice(i, i + 3);
+            const rowSurahs = filtered.slice(i, i + 2);
             const rowIndex = i;
             rows.push(
-              <div key={`row-${rowIndex}`} className="grid grid-cols-3 gap-2">
+              <div key={`row-${rowIndex}`} className="grid grid-cols-2 gap-2.5">
                 {rowSurahs.map((surah, colIdx) => {
                   const status = getStatus(surah.number);
                   const config = STATUS_CONFIG[status];
@@ -510,21 +520,32 @@ export default function HifzPage() {
                       whileTap={{ scale: 0.95 }}
                       onClick={() => handleSurahCardTap(surah.number)}
                       className={cn(
-                        "relative flex flex-col items-center gap-1.5 rounded-xl p-3 border transition-all",
+                        "relative flex flex-col items-start gap-2 rounded-xl px-3.5 py-3.5 border transition-all w-full",
                         config.bg,
                         isExpanded && "ring-2 ring-primary/40"
                       )}
                     >
-                      <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
-                      <span className="font-arabic text-sm font-bold leading-tight">{language === "ar" ? surah.name : surah.englishName}</span>
-                      <span className="text-[0.625rem] text-muted-foreground">{language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}</span>
+                      <div className="flex items-center justify-between w-full">
+                        <Icon className={cn("h-4 w-4", config.color)} />
+                        <span className="text-[0.625rem] text-muted-foreground tabular-nums">
+                          {language === "ar" ? toArabicNumerals(surah.number) : surah.number}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-arabic text-sm font-bold leading-tight block">
+                          {language === "ar" ? surah.name : surah.englishName}
+                        </span>
+                        <span className="text-[0.625rem] text-muted-foreground mt-0.5 block">
+                          {language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}
+                        </span>
+                      </div>
                       {reviewItem && (
-                        <div className="flex gap-0.5 mt-0.5">
-                          {Array.from({ length: 7 }).map((_, j) => (
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: 5 }).map((_, j) => (
                             <div
                               key={j}
                               className={cn(
-                                "h-1 w-1 rounded-full",
+                                "h-1.5 w-1.5 rounded-full",
                                 j <= reviewItem.level ? getStrengthColor(reviewItem.level) : "bg-muted"
                               )}
                             />
@@ -617,7 +638,7 @@ export default function HifzPage() {
               );
             }
 
-            i += 3;
+            i += 2;
           }
           return rows;
         })()}
