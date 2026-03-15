@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles, Loader as Loader2 } from "lucide-react";
+import { ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
@@ -439,34 +439,15 @@ export default function RecitationTestPage() {
               </div>
             )}
 
-            {/* Processing overlay for iOS Whisper mode */}
-            {speech.status === "processing" && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl bg-primary/5 border border-primary/20 p-5 flex flex-col items-center gap-3"
-              >
-                <Loader2 className="h-7 w-7 text-primary animate-spin" />
-                <p className="text-sm font-semibold text-primary">{t("processing")}</p>
-                <p className="text-xs text-muted-foreground text-center">
-                  {language === "ar"
-                    ? "يتم تحليل تلاوتك بواسطة الذكاء الاصطناعي..."
-                    : "AI is analyzing your recitation..."}
-                </p>
-              </motion.div>
-            )}
-
             {/* Mic */}
-            {speech.status !== "processing" && (
-              <div className="flex flex-col items-center">
-                <MicButton
-                  status={speech.status}
-                  onStart={speech.start}
-                  onStop={handleStopAndEvaluate}
-                  interimTranscript={speech.interimTranscript}
-                />
-              </div>
-            )}
+            <div className="flex flex-col items-center">
+              <MicButton
+                status={speech.status}
+                onStart={speech.start}
+                onStop={handleStopAndEvaluate}
+                interimTranscript={speech.interimTranscript}
+              />
+            </div>
 
             {speech.error && speech.status === "error" && (
               <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-4 py-3 text-center">
