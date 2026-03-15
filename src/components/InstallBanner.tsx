@@ -18,7 +18,6 @@ export default function InstallBanner() {
   const { t, isRTL } = useLanguage();
 
   useEffect(() => {
-    // Already installed or dismissed
     if (window.matchMedia("(display-mode: standalone)").matches) return;
     if ((navigator as any).standalone === true) return;
     if (localStorage.getItem("wise-install-dismissed")) return;
@@ -26,18 +25,13 @@ export default function InstallBanner() {
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShow(true);
+      setTimeout(() => setShow(true), 2000);
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // Show banner for all browsers (with manual instructions if no prompt)
-    // Small delay to avoid flash
-    const timer = setTimeout(() => setShow(true), 2000);
-
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
-      clearTimeout(timer);
     };
   }, []);
 

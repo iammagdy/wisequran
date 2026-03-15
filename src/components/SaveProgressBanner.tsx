@@ -18,7 +18,7 @@ export default function SaveProgressBanner() {
     if (loading) return;
     if (user) { setShow(false); return; }
     if (localStorage.getItem(DISMISSED_KEY)) return;
-    const timer = setTimeout(() => setShow(true), 3500);
+    const timer = setTimeout(() => setShow(true), 5000);
     return () => clearTimeout(timer);
   }, [user, loading]);
 
@@ -35,7 +35,7 @@ export default function SaveProgressBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 60 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-32 left-3 right-3 z-40 rounded-xl border border-primary/20 bg-card p-4 shadow-lg"
+          className="fixed bottom-24 left-3 right-3 z-40 rounded-xl border border-primary/20 bg-card p-4 shadow-lg"
           dir={isRTL ? "rtl" : "ltr"}
         >
           <div className="flex items-start gap-3">
