@@ -76,7 +76,7 @@ export default function SurahReaderPage() {
   const hasTracked = useRef(false);
 
   const isFavorite = favorites.includes(surahNumber);
-  const editionName = TAFSIR_EDITIONS.find((e) => e.id === tafsirEdition)?.name || tafsirEdition;
+  const editionName = (() => { const ed = TAFSIR_EDITIONS.find((e) => e.id === tafsirEdition); return language === "en" ? (ed?.nameEn ?? tafsirEdition) : (ed?.name ?? tafsirEdition); })();
   const displaySurahName = surahInfo
     ? (language === "ar" ? surahInfo.name : surahInfo.englishName)
     : `${t("surah")} ${surahNumber}`;
@@ -607,6 +607,15 @@ export default function SurahReaderPage() {
                     {tafsirAyahs.find((a) => a.numberInSurah === focusedAyah)?.text ||
                 t("no_tafsir")}
                   </p>
+                  {language === "en" && translationAyahs.length > 0 && (() => {
+                    const tAyah = translationAyahs.find((tA) => tA.numberInSurah === focusedAyah);
+                    if (!tAyah) return null;
+                    return (
+                      <p className="mt-3 border-t border-border/30 pt-3 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
+                        {tAyah.text}
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 <button
@@ -678,6 +687,15 @@ export default function SurahReaderPage() {
                   style={{ fontSize: 17 }}>
                         <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
                       </p>
+                      {language === "en" && translationAyahs.length > 0 && (() => {
+                        const tAyah = translationAyahs.find((tA) => tA.numberInSurah === tafsirItem.numberInSurah);
+                        if (!tAyah) return null;
+                        return (
+                          <p className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
+                            {tAyah.text}
+                          </p>
+                        );
+                      })()}
                     </div>
               );
             })()}

@@ -471,11 +471,10 @@ export default function SettingsPage() {
                 max={40}
                 step={2} />
 
-              <p
-                className="mt-3 text-center font-arabic text-muted-foreground"
-                style={{ fontSize }}>
-                بِسْمِ اللَّهِ
-              </p>
+              <div className="mt-3 text-center text-muted-foreground space-y-0.5">
+                <p className="font-arabic" style={{ fontSize }}>بِسْمِ اللَّهِ</p>
+                {language === "en" && <p className="text-xs text-muted-foreground/70">In the Name of Allah</p>}
+              </div>
             </div>
           </motion.div>
         </section>
@@ -494,7 +493,7 @@ export default function SettingsPage() {
 
             <Collapsible>
               <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{RECITERS.find((r) => r.id === reciterId)?.name ?? "مشاري العفاسي"}</span>
+                <span className="font-arabic">{(() => { const r = RECITERS.find((r) => r.id === reciterId); return language === "en" ? (r?.nameEn ?? "Mishary Alafasy") : (r?.name ?? "مشاري العفاسي"); })()}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -517,7 +516,7 @@ export default function SettingsPage() {
                       }>
                           {reciterId === r.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                         </div>
-                        <span className="font-arabic truncate">{r.name}</span>
+                        <span className="font-arabic truncate">{language === "en" ? r.nameEn : r.name}</span>
                       </button>
                       <button
                       onClick={(e) => {e.stopPropagation();togglePreview(r);}}
@@ -554,7 +553,7 @@ export default function SettingsPage() {
 
             <Collapsible>
               <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3.5 text-sm font-medium hover:bg-muted/50 transition-colors">
-                <span className="font-arabic">{TAFSIR_EDITIONS.find((t) => t.id === tafsirId)?.name ?? "تفسير الميسر"}</span>
+                <span className="font-arabic">{(() => { const ed = TAFSIR_EDITIONS.find((e) => e.id === tafsirId); return language === "en" ? (ed?.nameEn ?? "Al-Muyassar Tafsir") : (ed?.name ?? "تفسير الميسر"); })()}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -574,7 +573,7 @@ export default function SettingsPage() {
                     }>
                         {tafsirId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                       </div>
-                      <span className="font-arabic">{t.name}</span>
+                      <span className="font-arabic">{language === "en" ? t.nameEn : t.name}</span>
                     </button>
                   )}
                 </div>
@@ -740,7 +739,7 @@ export default function SettingsPage() {
                 "bg-muted text-muted-foreground hover:bg-muted/80"}`
                 }>
                 
-                  {toArabicNumerals(v)}
+                  {language === "en" ? v : toArabicNumerals(v)}
                 </button>
               )}
             </div>
@@ -771,7 +770,7 @@ export default function SettingsPage() {
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium">{t("downloads_quran_text")}</span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
-                  {toArabicNumerals(`${downloadedSurahs.length}/114`)}
+                  {language === "en" ? `${downloadedSurahs.length}/114` : toArabicNumerals(`${downloadedSurahs.length}/114`)}
                 </span>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">{t("downloads_quran_desc")}</p>
@@ -785,7 +784,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    {t("downloads_downloading")} {toArabicNumerals(`${downloadProgress}%`)}
+                    {t("downloads_downloading")} {language === "en" ? `${downloadProgress}%` : toArabicNumerals(`${downloadProgress}%`)}
                   </p>
                 </div> :
 
@@ -830,7 +829,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium">{t("downloads_audio")}</span>
                 </div>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] text-muted-foreground">
-                  {toArabicNumerals(`${downloadedAudio.length}/114`)}
+                  {language === "en" ? `${downloadedAudio.length}/114` : toArabicNumerals(`${downloadedAudio.length}/114`)}
                 </span>
               </div>
               <p className="mb-3 text-xs text-muted-foreground">{t("downloads_audio_desc")}</p>
@@ -844,7 +843,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    {t("downloads_downloading_audio")} {toArabicNumerals(`${audioDownloadProgress}%`)}
+                    {t("downloads_downloading_audio")} {language === "en" ? `${audioDownloadProgress}%` : toArabicNumerals(`${audioDownloadProgress}%`)}
                   </p>
                 </div> :
               verifying ?
@@ -856,7 +855,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    {t("downloads_verifying")} {toArabicNumerals(`${verifyProgress.current}/${verifyProgress.total}`)}
+                    {t("downloads_verifying")} {language === "en" ? `${verifyProgress.current}/${verifyProgress.total}` : toArabicNumerals(`${verifyProgress.current}/${verifyProgress.total}`)}
                   </p>
                 </div> :
 
@@ -936,8 +935,8 @@ export default function SettingsPage() {
                           className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm ${idx % 2 === 0 ? "bg-background/50" : ""}`}>
                           
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-muted-foreground w-6 text-center">{toArabicNumerals(s.number)}</span>
-                              <span className="font-arabic text-sm">{s.name}</span>
+                              <span className="text-xs text-muted-foreground w-6 text-center">{language === "en" ? s.number : toArabicNumerals(s.number)}</span>
+                              <span className="font-arabic text-sm">{language === "en" ? s.englishName : s.name}</span>
                               {isDownloaded && <Check className="h-3 w-3 text-primary" />}
                             </div>
                             <div>
@@ -1090,7 +1089,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{t("storage_quran_text")}</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.surahCount)} {t("storage_surahs_count")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{language === "en" ? storageStats.surahCount : toArabicNumerals(storageStats.surahCount)} {t("storage_surahs_count")}</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.quranText)}</span>
@@ -1103,7 +1102,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{t("storage_audio")}</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.audioCount)} {t("storage_audio_count")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{language === "en" ? storageStats.audioCount : toArabicNumerals(storageStats.audioCount)} {t("storage_audio_count")}</p>
                       </div>
                     </div>
                     <span className="text-xs text-muted-foreground">{formatBytes(storageStats.audio)}</span>
@@ -1116,7 +1115,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">{t("storage_tafsir")}</p>
-                        <p className="text-[0.625rem] text-muted-foreground">{toArabicNumerals(storageStats.tafsirCount)} {t("storage_tafsir_count")}</p>
+                        <p className="text-[0.625rem] text-muted-foreground">{language === "en" ? storageStats.tafsirCount : toArabicNumerals(storageStats.tafsirCount)} {t("storage_tafsir_count")}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1413,18 +1412,18 @@ export default function SettingsPage() {
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', delay: 0.4 }}>
                 
-                المطوّر ✦
+                {language === "en" ? "Developer ✦" : "المطوّر ✦"}
               </motion.span>
 
               <p
                 className="font-bold text-foreground mb-1 text-2xl"
                 style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}>
 
-                مجدي صابر
+                {language === "en" ? "Magdy Saber" : "مجدي صابر"}
               </p>
 
               <p className="text-xs text-muted-foreground mb-4">
-                صنع بـ ❤️ في رمضان 🌙
+                {language === "en" ? "Made with ❤️ in Ramadan 🌙" : "صنع بـ ❤️ في رمضان 🌙"}
               </p>
 
               <div className="flex items-center justify-center gap-3">

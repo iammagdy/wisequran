@@ -1,6 +1,7 @@
 export interface Reciter {
   id: string;
   name: string;
+  nameEn: string;
   folder: string;
   /** Whether per-ayah audio is available on cdn.islamic.network */
   hasAyahAudio: boolean;
@@ -11,29 +12,29 @@ export interface Reciter {
 }
 
 export const RECITERS: Reciter[] = [
-  { id: "alafasy", name: "مشاري العفاسي", folder: "ar.alafasy", hasAyahAudio: true, qfApiId: 7 },
-  { id: "husary", name: "محمود خليل الحصري", folder: "ar.husary", hasAyahAudio: true, qfApiId: 6 },
-  { id: "minshawi", name: "محمد صديق المنشاوي", folder: "ar.minshawi", hasAyahAudio: true, qfApiId: 9 },
-  { id: "abdulbasit", name: "عبد الباسط عبد الصمد", folder: "ar.abdulbasitmurattal", hasAyahAudio: true, qfApiId: 2 },
-  { id: "sudais", name: "عبد الرحمن السديس", folder: "ar.abdurrahmaansudais", hasAyahAudio: true, qfApiId: 3 },
-  { id: "shuraym", name: "سعود الشريم", folder: "ar.saoodshuraym", hasAyahAudio: true, qfApiId: 10 },
-  { id: "rifai", name: "هاني الرفاعي", folder: "ar.hanirifai", hasAyahAudio: true, qfApiId: 5 },
-  { id: "ajamy", name: "أحمد العجمي", folder: "ar.ahmedajamy", hasAyahAudio: true },
-  { id: "mahermuaiqly", name: "ماهر المعيقلي", folder: "ar.mahermuaiqly", hasAyahAudio: true },
+  { id: "alafasy", name: "مشاري العفاسي", nameEn: "Mishary Alafasy", folder: "ar.alafasy", hasAyahAudio: true, qfApiId: 7 },
+  { id: "husary", name: "محمود خليل الحصري", nameEn: "Mahmoud Khalil Al-Husary", folder: "ar.husary", hasAyahAudio: true, qfApiId: 6 },
+  { id: "minshawi", name: "محمد صديق المنشاوي", nameEn: "Muhammad Siddiq Al-Minshawi", folder: "ar.minshawi", hasAyahAudio: true, qfApiId: 9 },
+  { id: "abdulbasit", name: "عبد الباسط عبد الصمد", nameEn: "Abdul Basit Abdul Samad", folder: "ar.abdulbasitmurattal", hasAyahAudio: true, qfApiId: 2 },
+  { id: "sudais", name: "عبد الرحمن السديس", nameEn: "Abdurrahman Al-Sudais", folder: "ar.abdurrahmaansudais", hasAyahAudio: true, qfApiId: 3 },
+  { id: "shuraym", name: "سعود الشريم", nameEn: "Saud Al-Shuraym", folder: "ar.saoodshuraym", hasAyahAudio: true, qfApiId: 10 },
+  { id: "rifai", name: "هاني الرفاعي", nameEn: "Hani Al-Rifai", folder: "ar.hanirifai", hasAyahAudio: true, qfApiId: 5 },
+  { id: "ajamy", name: "أحمد العجمي", nameEn: "Ahmed Al-Ajamy", folder: "ar.ahmedajamy", hasAyahAudio: true },
+  { id: "mahermuaiqly", name: "ماهر المعيقلي", nameEn: "Maher Al-Muaiqly", folder: "ar.mahermuaiqly", hasAyahAudio: true },
   // Reciters without per-ayah CDN audio (full-surah only)
-  { id: "islamsobhi", name: "إسلام صبحي", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 158 },
-  { id: "yasser", name: "ياسر الدوسري", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "baleela", name: "بندر بليلة", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "khalilaljalil", name: "خالد الجليل", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 100 },
-  { id: "qatami", name: "ناصر القطامي", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "juhany", name: "عبدالله الجهني", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "faresabbad", name: "فارس عباد", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "alousi", name: "عبدالرحمن العوسي", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 145 },
-  { id: "luhaidan", name: "محمد اللحيدان", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "abdullahmousa", name: "عبدالله الموسى", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 172 },
-  { id: "nufais", name: "أحمد النفيس", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 192 },
-  { id: "ayyub", name: "محمد أيوب", folder: "ar.alafasy", hasAyahAudio: false },
-  { id: "idrisabkar", name: "إدريس أبكر", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "islamsobhi", name: "إسلام صبحي", nameEn: "Islam Sobhi", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 158 },
+  { id: "yasser", name: "ياسر الدوسري", nameEn: "Yasser Al-Dosari", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "baleela", name: "بندر بليلة", nameEn: "Bandar Baleela", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "khalilaljalil", name: "خالد الجليل", nameEn: "Khalid Al-Jalil", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 100 },
+  { id: "qatami", name: "ناصر القطامي", nameEn: "Nasser Al-Qatami", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "juhany", name: "عبدالله الجهني", nameEn: "Abdullah Al-Juhany", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "faresabbad", name: "فارس عباد", nameEn: "Fares Abbad", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "alousi", name: "عبدالرحمن العوسي", nameEn: "Abdurrahman Al-Alousi", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 145 },
+  { id: "luhaidan", name: "محمد اللحيدان", nameEn: "Muhammad Al-Luhaidan", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "abdullahmousa", name: "عبدالله الموسى", nameEn: "Abdullah Al-Mousa", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 172 },
+  { id: "nufais", name: "أحمد النفيس", nameEn: "Ahmed Al-Nufais", folder: "ar.alafasy", hasAyahAudio: false, mp3quranId: 192 },
+  { id: "ayyub", name: "محمد أيوب", nameEn: "Muhammad Ayyub", folder: "ar.alafasy", hasAyahAudio: false },
+  { id: "idrisabkar", name: "إدريس أبكر", nameEn: "Idris Abkar", folder: "ar.alafasy", hasAyahAudio: false },
 ];
 
 export const DEFAULT_RECITER = "alafasy";

@@ -1,15 +1,16 @@
 export interface TafsirEdition {
   id: string;
   name: string;
+  nameEn: string;
 }
 
 export const TAFSIR_EDITIONS: TafsirEdition[] = [
-  { id: "ar.muyassar", name: "تفسير الميسر" },
-  { id: "ar.jalalayn", name: "تفسير الجلالين" },
-  { id: "ar.qurtubi", name: "تفسير القرطبي" },
-  { id: "ar.baghawi", name: "تفسير البغوي" },
-  { id: "ar.waseet", name: "التفسير الوسيط" },
-  { id: "ar.miqbas", name: "تنوير المقباس" },
+  { id: "ar.muyassar", name: "تفسير الميسر", nameEn: "Al-Muyassar Tafsir" },
+  { id: "ar.jalalayn", name: "تفسير الجلالين", nameEn: "Tafsir Al-Jalalayn" },
+  { id: "ar.qurtubi", name: "تفسير القرطبي", nameEn: "Tafsir Al-Qurtubi" },
+  { id: "ar.baghawi", name: "تفسير البغوي", nameEn: "Tafsir Al-Baghawi" },
+  { id: "ar.waseet", name: "التفسير الوسيط", nameEn: "Al-Waseet Tafsir" },
+  { id: "ar.miqbas", name: "تنوير المقباس", nameEn: "Tanwir Al-Miqbas" },
 ];
 
 export const DEFAULT_TAFSIR = "ar.muyassar";
