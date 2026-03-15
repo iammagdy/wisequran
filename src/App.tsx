@@ -53,26 +53,19 @@ const AppContent = () => {
 };
 
 const App = () => {
-  const [showSplash, setShowSplash] = useState(() => {
-    return !sessionStorage.getItem("splashShown");
-  });
-  const [appReady, setAppReady] = useState(() => {
-    return !!sessionStorage.getItem("splashShown");
-  });
+  const [appReady, setAppReady] = useState(false);
 
   const handleSplashComplete = useCallback(() => {
-    sessionStorage.setItem("splashShown", "true");
-    setShowSplash(false);
     setAppReady(true);
   }, []);
 
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Sonner />
-          {showSplash && <SplashScreen onComplete={handleSplashComplete} />}
-          {appReady && (
+    <>
+      <SplashScreen onComplete={handleSplashComplete} />
+      {appReady && (
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Sonner />
             <BrowserRouter>
               <LanguageProvider>
                 <AudioPlayerProvider>
@@ -82,10 +75,10 @@ const App = () => {
                 </AudioPlayerProvider>
               </LanguageProvider>
             </BrowserRouter>
-          )}
-        </TooltipProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+          </TooltipProvider>
+        </QueryClientProvider>
+      )}
+    </>
   );
 };
 
