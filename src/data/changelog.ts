@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.4.0";
+export const APP_VERSION = "2.5.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,26 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.5.0",
+    date: "2026-03-16",
+    changes: [
+      "إصلاح مشكلة تداخل شعارات التثبيت والحفظ في أسفل الشاشة",
+      "إصلاح نظام التسجيل والدخول للعمل بدون تأكيد البريد الإلكتروني",
+      "تحسين رسائل الأخطاء في نظام المصادقة مع إضافة سجلات تفصيلية للمطورين",
+      "إضافة التحقق من إنشاء الجلسة بعد التسجيل لضمان تسجيل الدخول التلقائي",
+      "تحسين استقرار وموثوقية عملية إنشاء الحسابات الجديدة",
+      "تحسين معالجة الأخطاء غير المتوقعة في نظام المصادقة",
+    ],
+    changesEn: [
+      "Fixed UI overlap between install banner and save progress banner at the bottom of the screen",
+      "Fixed sign up and sign in system to work without email confirmation requirement",
+      "Improved authentication error messages with detailed developer logging",
+      "Added session validation after signup to ensure automatic login works correctly",
+      "Improved stability and reliability of new account creation process",
+      "Enhanced error handling for unexpected errors in authentication system",
+    ],
+  },
   {
     version: "2.4.0",
     date: "2026-03-15",
