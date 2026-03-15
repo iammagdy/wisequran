@@ -224,6 +224,11 @@ interface Translations {
   azkar_reminder_enabled: string;
   azkar_reminder_disabled: string;
   azkar_reminder_hint: string;
+  reading_reminder: string;
+  reading_reminder_enabled: string;
+  reading_reminder_disabled: string;
+  reading_reminder_hint: string;
+  reading_reminder_time: string;
   prayer_method: string;
   daily_reading_goal: string;
   daily_verse_count: string;
@@ -739,6 +744,11 @@ const ar: Translations = {
   azkar_reminder_enabled: "تم تفعيل تذكير الأذكار",
   azkar_reminder_disabled: "تم إيقاف تذكير الأذكار",
   azkar_reminder_hint: "تذكير عند الفجر والمغرب لقراءة الأذكار",
+  reading_reminder: "تذكير القراءة اليومية",
+  reading_reminder_enabled: "تم تفعيل تذكير القراءة اليومية",
+  reading_reminder_disabled: "تم إيقاف تذكير القراءة اليومية",
+  reading_reminder_hint: "تذكير يومي لقراءة وردك من القرآن الكريم",
+  reading_reminder_time: "وقت التذكير",
   prayer_method: "طريقة حساب أوقات الصلاة",
   daily_reading_goal: "هدف القراءة اليومي",
   daily_verse_count: "عدد الآيات يومياً",
@@ -1231,6 +1241,11 @@ const en: Translations = {
   azkar_reminder_enabled: "Azkar reminder enabled",
   azkar_reminder_disabled: "Azkar reminder disabled",
   azkar_reminder_hint: "Reminded at Fajr and Maghrib to read your Azkar",
+  reading_reminder: "Daily Reading Reminder",
+  reading_reminder_enabled: "Daily reading reminder enabled",
+  reading_reminder_disabled: "Daily reading reminder disabled",
+  reading_reminder_hint: "Get reminded every day to read your Quran",
+  reading_reminder_time: "Reminder time",
   prayer_method: "Prayer Calculation Method",
   daily_reading_goal: "Daily Reading Goal",
   daily_verse_count: "Daily verse count",

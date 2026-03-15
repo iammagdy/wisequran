@@ -12,6 +12,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
+import { useReadingReminder } from "@/hooks/useReadingReminder";
 import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio, getStorageStats, clearAllTafsir } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio, formatBytes, verifyAndRepairDownloads } from "@/lib/quran-audio";
@@ -55,6 +56,13 @@ export default function SettingsPage() {
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
   );
+  const {
+    enabled: readingReminderEnabled,
+    time: readingReminderTime,
+    enableReminder: enableReadingReminder,
+    disableReminder: disableReadingReminder,
+    updateTime: updateReadingReminderTime,
+  } = useReadingReminder();
   const { goal, setGoal } = useDailyReading();
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
   const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
@@ -672,6 +680,52 @@ export default function SettingsPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               {t("azkar_reminder_hint")}
+            </p>
+
+            <Separator className="my-4" />
+
+            {/* Reading Reminder */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {readingReminderEnabled ?
+                <Bell className="h-4.5 w-4.5 text-primary" /> :
+                <BellOff className="h-4.5 w-4.5 text-muted-foreground" />
+                }
+                <span className="text-sm font-medium">{t("reading_reminder")}</span>
+              </div>
+              <Switch
+                checked={readingReminderEnabled}
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    if (!("Notification" in window)) {
+                      toast.error(t("notifications_not_supported"));
+                      return;
+                    }
+                    const success = await enableReadingReminder(readingReminderTime);
+                    if (success) {
+                      toast.success(t("reading_reminder_enabled"));
+                    } else {
+                      toast.error(t("notifications_permission_denied"));
+                    }
+                  } else {
+                    disableReadingReminder();
+                    toast.success(t("reading_reminder_disabled"));
+                  }
+                }} />
+            </div>
+            {readingReminderEnabled && (
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-muted-foreground">{t("reading_reminder_time")}</span>
+                <input
+                  type="time"
+                  value={readingReminderTime}
+                  onChange={(e) => updateReadingReminderTime(e.target.value)}
+                  className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              {t("reading_reminder_hint")}
             </p>
           </motion.div>
         </section>
