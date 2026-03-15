@@ -940,7 +940,7 @@ const ar: Translations = {
   mode_listening: "الاستماع",
   mode_listening_subtitle: "استمع للقرآن مع كبار القراء",
   mode_hifz: "الحفظ",
-  mode_hifz_subtitle: "راجع حفظك و اختبر نفسك",
+  mode_hifz_subtitle: "تتبع آياتك المحفوظة وراجعها يومياً",
   mode_recitation: "التسميع",
   mode_recitation_subtitle: "راجع حفظك و اختبر نفسك",
 
