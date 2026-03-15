@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { useStreak } from "./useStreak";
 import { useDailyReading } from "./useDailyReading";
 import { useHifz } from "./useHifz";
-import { SURAH_META } from "@/data/surah-meta";
 
 export interface Achievement {
   id: string;
@@ -57,12 +56,20 @@ export function useAchievements() {
     lastChecked: new Date().toISOString(),
   });
   const [newUnlock, setNewUnlock] = useState<Achievement | null>(null);
-  
+
   const { streak } = useStreak();
   const { todayCount, goal } = useDailyReading();
   const { stats: hifzStats } = useHifz();
-  
-  // Get total reading stats from localStorage
+
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const streakRef = useRef(streak);
+  streakRef.current = streak;
+
+  const hifzMemorizedRef = useRef(hifzStats.memorized);
+  hifzMemorizedRef.current = hifzStats.memorized;
+
   const getTotalAyahs = useCallback(() => {
     try {
       const stats = localStorage.getItem("wise-reading-stats");
@@ -75,7 +82,7 @@ export function useAchievements() {
     }
     return 0;
   }, []);
-  
+
   const getGoalCompletions = useCallback(() => {
     try {
       const data = localStorage.getItem("wise-goal-completions");
@@ -87,18 +94,19 @@ export function useAchievements() {
   }, []);
 
   const checkAndUnlock = useCallback(() => {
+    const currentState = stateRef.current;
     const totalAyahs = getTotalAyahs();
-    const memorizedCount = hifzStats.memorized;
+    const memorizedCount = hifzMemorizedRef.current;
     const goalCompletions = getGoalCompletions();
-    const currentStreak = streak;
-    
+    const currentStreak = streakRef.current;
+
     const newUnlocks: string[] = [];
-    
+
     for (const def of ACHIEVEMENT_DEFINITIONS) {
-      if (state.unlocked[def.id]) continue;
-      
+      if (currentState.unlocked[def.id]) continue;
+
       let shouldUnlock = false;
-      
+
       switch (def.category) {
         case "streak":
           shouldUnlock = currentStreak >= (def.target || 0);
@@ -113,27 +121,28 @@ export function useAchievements() {
           shouldUnlock = goalCompletions >= (def.target || 0);
           break;
       }
-      
+
       if (shouldUnlock) {
         newUnlocks.push(def.id);
       }
     }
-    
+
     if (newUnlocks.length > 0) {
       const now = new Date().toISOString();
-      const updatedUnlocked = { ...state.unlocked };
-      newUnlocks.forEach((id) => {
-        updatedUnlocked[id] = now;
+      setState((prev) => {
+        const updatedUnlocked = { ...prev.unlocked };
+        newUnlocks.forEach((id) => {
+          updatedUnlocked[id] = now;
+        });
+        return { unlocked: updatedUnlocked, lastChecked: now };
       });
-      
-      setState({ unlocked: updatedUnlocked, lastChecked: now });
-      
+
       const firstNew = ACHIEVEMENT_DEFINITIONS.find((d) => d.id === newUnlocks[0]);
       if (firstNew) {
         setNewUnlock({ ...firstNew, unlocked: true, unlockedAt: now });
       }
     }
-  }, [state, setState, streak, hifzStats.memorized, getTotalAyahs, getGoalCompletions]);
+  }, [setState, getTotalAyahs, getGoalCompletions]);
 
   // Check for new achievements periodically
   useEffect(() => {

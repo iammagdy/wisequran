@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
 interface ReminderSettings {
@@ -63,27 +63,12 @@ export function useReadingReminder() {
     setSettings((prev) => ({ ...prev, time }));
   }, [setSettings]);
 
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
   // Check and send notification
   useEffect(() => {
     if (!settings.enabled || !permissionGranted) return;
-
-    const checkAndNotify = () => {
-      const now = new Date();
-      const todayKey = now.toISOString().slice(0, 10);
-      const [targetH, targetM] = settings.time.split(":").map(Number);
-      
-      // Already notified today
-      if (settings.lastNotified?.startsWith(todayKey)) return;
-      
-      const currentMinutes = now.getHours() * 60 + now.getMinutes();
-      const targetMinutes = targetH * 60 + targetM;
-      
-      // Within 1 minute of target time
-      if (Math.abs(currentMinutes - targetMinutes) <= 1) {
-        showNotification();
-        setSettings((prev) => ({ ...prev, lastNotified: now.toISOString() }));
-      }
-    };
 
     const showNotification = () => {
       if ("Notification" in window && Notification.permission === "granted") {
@@ -97,12 +82,28 @@ export function useReadingReminder() {
       }
     };
 
-    // Check every minute
+    const checkAndNotify = () => {
+      const current = settingsRef.current;
+      const now = new Date();
+      const todayKey = now.toISOString().slice(0, 10);
+      const [targetH, targetM] = current.time.split(":").map(Number);
+
+      if (current.lastNotified?.startsWith(todayKey)) return;
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const targetMinutes = targetH * 60 + targetM;
+
+      if (Math.abs(currentMinutes - targetMinutes) <= 1) {
+        showNotification();
+        setSettings((prev) => ({ ...prev, lastNotified: now.toISOString() }));
+      }
+    };
+
     const interval = setInterval(checkAndNotify, 60000);
-    checkAndNotify(); // Initial check
-    
+    checkAndNotify();
+
     return () => clearInterval(interval);
-  }, [settings, permissionGranted, setSettings]);
+  }, [settings.enabled, settings.time, permissionGranted, setSettings]);
 
   return {
     enabled: settings.enabled,
