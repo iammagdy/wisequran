@@ -44,15 +44,12 @@ function MosqueIcon({ active }: { active: boolean }) {
 function TasbeehIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="2" />
-      <circle cx="12" cy="5" r="1.5" />
-      <circle cx="17.6" cy="7.4" r="1.5" />
-      <circle cx="19" cy="13.5" r="1.5" />
-      <circle cx="15.5" cy="18.5" r="1.5" />
-      <circle cx="8.5" cy="18.5" r="1.5" />
-      <circle cx="5" cy="13.5" r="1.5" />
-      <circle cx="6.4" cy="7.4" r="1.5" />
-      <path d="M12 10V7.5" strokeDasharray="1 2" />
+      <path d="M6 3a3 3 0 0 1 3 3v10a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z" />
+      <path d="M6 3v2" />
+      <path d="M3 8h6" />
+      <path d="M3 11h6" />
+      <path d="M3 14h6" />
+      <path d="M15 3l1 3h4l-3 3 1 4-3-2-3 2 1-4-3-3h4z" />
     </svg>
   );
 }
@@ -60,15 +57,8 @@ function TasbeehIcon({ active }: { active: boolean }) {
 function RamadanIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2v2" />
-      <path d="M9 4h6" />
-      <path d="M8 4c0 0-2 1.5-2 5s2 5 2 5h8s2-1.5 2-5-2-5-2-5" />
-      <path d="M8 14c0 0-.5 1-.5 2h9c0-1-.5-2-.5-2" />
-      <path d="M7.5 16h9" />
-      <path d="M8.5 16v3" />
-      <path d="M15.5 16v3" />
-      <path d="M8 19h8" />
-      <line x1="12" y1="7" x2="12" y2="12" />
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+      <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z" />
     </svg>
   );
 }
