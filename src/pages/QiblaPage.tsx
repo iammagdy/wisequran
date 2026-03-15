@@ -40,6 +40,7 @@ export default function QiblaPage() {
   const { t, language, isRTL } = useLanguage();
 
   const [heading, setHeading] = useState<number | null>(null);
+  const [isIOSCompass, setIsIOSCompass] = useState(false);
   const [compassAccuracy, setCompassAccuracy] = useState<AccuracyLevel>("medium");
   const [compassErrorKey, setCompassErrorKey] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -47,13 +48,19 @@ export default function QiblaPage() {
   const [showCalibration, setShowCalibration] = useState(false);
   const [isAligned, setIsAligned] = useState(false);
   const lastVibration = useRef(0);
+  const smoothedHeading = useRef<number | null>(null);
 
   const qiblaBearing = location ? calculateQibla(location.latitude, location.longitude) : null;
   const distanceToKaaba = location ? calculateDistance(location.latitude, location.longitude, KAABA_LAT, KAABA_LNG) : null;
   const magneticDeclination = location ? getMagneticDeclination(location.latitude, location.longitude) : 0;
 
-  // Apply magnetic declination correction
-  const correctedHeading = heading !== null ? (heading + magneticDeclination + 360) % 360 : null;
+  // iOS webkitCompassHeading already returns True North (declination applied internally)
+  // Android alpha needs manual screen-orientation compensation + declination
+  const correctedHeading = heading !== null
+    ? isIOSCompass
+      ? heading
+      : (heading + magneticDeclination + 360) % 360
+    : null;
   const activeHeading = isLocked ? lockedHeading : correctedHeading;
 
   // Device orientation
@@ -61,17 +68,39 @@ export default function QiblaPage() {
     if (isLocked) return;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      // @ts-ignore – webkitCompassHeading is Safari-specific
-      const compassHeading = e.webkitCompassHeading ?? (e.alpha !== null ? (360 - e.alpha) % 360 : null);
+      // @ts-ignore – webkitCompassHeading is Safari/iOS specific and already True North
+      const webkitHeading: number | undefined = e.webkitCompassHeading;
 
-      // @ts-ignore – webkitCompassAccuracy is Safari-specific
+      // @ts-ignore
       const accuracy = e.webkitCompassAccuracy;
 
-      if (compassHeading !== null) {
-        setHeading(compassHeading);
+      let rawHeading: number | null = null;
 
-        // Set accuracy level
-        if (accuracy !== undefined) {
+      if (webkitHeading != null && webkitHeading >= 0) {
+        // iOS: already compensated for True North, no further declination needed
+        setIsIOSCompass(true);
+        rawHeading = webkitHeading;
+      } else if (e.alpha !== null) {
+        // Android/Chrome: alpha is CCW from South, need to convert + screen orientation
+        const screenAngle = (window.screen?.orientation?.angle ?? 0);
+        rawHeading = (360 - e.alpha + screenAngle) % 360;
+        setIsIOSCompass(false);
+      }
+
+      if (rawHeading !== null) {
+        // Exponential smoothing to reduce jitter (factor 0.15 = smooth, 1.0 = raw)
+        if (smoothedHeading.current === null) {
+          smoothedHeading.current = rawHeading;
+        } else {
+          // Handle wraparound at 0/360
+          let diff = rawHeading - smoothedHeading.current;
+          if (diff > 180) diff -= 360;
+          if (diff < -180) diff += 360;
+          smoothedHeading.current = (smoothedHeading.current + diff * 0.2 + 360) % 360;
+        }
+        setHeading(smoothedHeading.current);
+
+        if (accuracy != null && accuracy >= 0) {
           if (accuracy < 15) setCompassAccuracy("high");
           else if (accuracy < 30) setCompassAccuracy("medium");
           else setCompassAccuracy("low");
@@ -232,7 +261,7 @@ export default function QiblaPage() {
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
                 animate={{ rotate: activeHeading !== null ? -activeHeading : 0 }}
-                transition={{ type: "spring", stiffness: 60, damping: 20 }}
+                transition={{ type: "spring", stiffness: 120, damping: 25 }}
                 className="relative w-64 h-64"
               >
                 {/* N/S/E/W labels */}
@@ -261,7 +290,7 @@ export default function QiblaPage() {
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div
                 animate={{ rotate: needleRotation }}
-                transition={{ type: "spring", stiffness: 60, damping: 20 }}
+                transition={{ type: "spring", stiffness: 120, damping: 25 }}
                 className="relative w-full h-full"
               >
                 {/* Needle pointing up */}

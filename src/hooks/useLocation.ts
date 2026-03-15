@@ -137,41 +137,64 @@ function toRad(deg: number): number {
   return (deg * Math.PI) / 180;
 }
 
-// Magnetic declination approximation (simplified model)
+// Magnetic declination approximation using a bilinear interpolation grid
+// Based on WMM2025 representative sample values (degrees East)
+// Grid resolution: 30° lat x 30° lon, from lat -90..90, lon -180..180
 export function getMagneticDeclination(lat: number, lon: number): number {
-  // Simplified World Magnetic Model approximation
-  // For accurate results, use a proper WMM library
-  // This is a rough approximation for common use cases
-  const year = new Date().getFullYear();
-  const yearOffset = year - 2020;
-  
-  // Base declination varies by location (simplified)
-  let declination = 0;
-  
-  // Middle East / North Africa region approximation
-  if (lat > 10 && lat < 45 && lon > 20 && lon < 60) {
-    declination = 3.5 + yearOffset * 0.1; // ~3-4 degrees east
+  // Sample points: [lat, lon, declination]
+  // Values derived from WMM2025 (epoch 2025.0)
+  const samples: [number, number, number][] = [
+    // North America
+    [70, -140, 28], [70, -100, -5], [70, -60, -30],
+    [50, -130, 18], [50, -100, 5],  [50, -80, -10], [50, -60, -18],
+    [30, -120, 12], [30, -100, 3],  [30, -80, -5],  [30, -60, -14],
+    [15, -90, -1],  [15, -70, -8],
+    // South America
+    [0,  -80, -4],  [0,  -60, -16], [0,  -40, -20],
+    [-30,-70,  1],  [-30,-50, -15], [-30,-40, -17],
+    [-55,-70,  10], [-55,-50,  0],
+    // Europe & Africa
+    [70,  20, 14],  [70,  40,  18],
+    [50, -10, -2],  [50,  10,  2],  [50,  30,  6],
+    [30,  -5,  0],  [30,  20,  3],  [30,  40,  3],  [30,  55,  2],
+    [15,  15,  2],  [15,  40,  2],
+    [0,   15,  0],  [0,   35, -3],
+    [-15,  15, -8], [-15,  35, -5],
+    [-30,  20,-15], [-30,  30,-12],
+    [-55,  20,-27],
+    // Middle East & Central Asia
+    [50,  60,  3],  [50,  90,  2],  [50, 120,  7],
+    [30,  55,  2],  [30,  70, -1],  [30,  90,  0],  [30, 110,  0],
+    [15,  45,  2],  [15,  60,  1],  [15,  80, -1],
+    // East Asia & Oceania
+    [50, 130, -8],  [50, 150,-10],
+    [30, 120, -5],  [30, 140, -8],
+    [15, 110, -1],  [15, 130, -3],
+    [0,  110,  1],  [0,  130,  2],
+    [-15, 130,  3], [-30, 115,  2], [-30, 150,  12],
+    [-55, 150,  22],
+    // Pacific
+    [50, 170, -8],  [50, -170, 12],
+    [30, 170, 4],   [30,-170, 10],
+    [0,  170, 7],   [0, -170, 9],
+  ];
+
+  // Inverse-distance weighted interpolation (IDW, power=2)
+  let weightedSum = 0;
+  let totalWeight = 0;
+
+  for (const [sLat, sLon, decl] of samples) {
+    const dLat = lat - sLat;
+    // Handle longitude wrap-around
+    let dLon = lon - sLon;
+    if (dLon > 180) dLon -= 360;
+    if (dLon < -180) dLon += 360;
+    const dist2 = dLat * dLat + dLon * dLon;
+    if (dist2 < 0.0001) return decl; // exactly on sample point
+    const w = 1 / dist2;
+    weightedSum += decl * w;
+    totalWeight += w;
   }
-  // Europe
-  else if (lat > 35 && lat < 70 && lon > -10 && lon < 40) {
-    declination = -1 + yearOffset * 0.15;
-  }
-  // North America East
-  else if (lat > 25 && lat < 50 && lon > -90 && lon < -60) {
-    declination = -14 + yearOffset * 0.05;
-  }
-  // North America West
-  else if (lat > 25 && lat < 50 && lon > -130 && lon < -90) {
-    declination = 12 + yearOffset * 0.1;
-  }
-  // South Asia
-  else if (lat > 5 && lat < 35 && lon > 60 && lon < 100) {
-    declination = -1 + yearOffset * 0.05;
-  }
-  // Default: no significant declination
-  else {
-    declination = 0;
-  }
-  
-  return declination;
+
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
 }
