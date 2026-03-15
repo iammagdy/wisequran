@@ -39,14 +39,7 @@ export default function SaveProgressBanner() {
             className="fixed bottom-20 left-3 right-3 z-40 rounded-xl border border-primary/20 bg-card p-4 shadow-lg"
             dir={isRTL ? "rtl" : "ltr"}
           >
-            <button
-              onClick={dismiss}
-              className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} rounded-full p-1.5 bg-muted/80 hover:bg-muted text-muted-foreground transition-colors`}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/15">
                 <CloudUpload className="h-5 w-5 text-primary" />
               </div>
@@ -54,17 +47,23 @@ export default function SaveProgressBanner() {
                 <p className="text-sm font-semibold text-foreground leading-snug">
                   {isRTL ? "احفظ تقدمك عبر أجهزتك" : "Save progress across devices"}
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2.5">
                   {isRTL ? "سجّل الدخول لمزامنة بياناتك" : "Sign in to sync your data"}
                 </p>
+                <Button
+                  size="sm"
+                  className="text-xs px-3"
+                  onClick={() => setAuthOpen(true)}
+                >
+                  {isRTL ? "تسجيل الدخول" : "Sign In"}
+                </Button>
               </div>
-              <Button
-                size="sm"
-                className="shrink-0 text-xs px-3"
-                onClick={() => setAuthOpen(true)}
+              <button
+                onClick={dismiss}
+                className="shrink-0 rounded-full p-1.5 bg-muted/80 hover:bg-muted text-muted-foreground transition-colors"
               >
-                {isRTL ? "تسجيل الدخول" : "Sign In"}
-              </Button>
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           </motion.div>
         )}
