@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.3.0";
+export const APP_VERSION = "2.4.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.4.0",
+    date: "2026-03-15",
+    changes: [
+      "إصلاح حلقة لا نهائية في نظام الإنجازات كانت تُبطئ التطبيق",
+      "إصلاح حلقة لا نهائية في تذكير القراءة اليومي كانت تستنزف بطارية الجهاز",
+      "تحسين استقرار التطبيق بشكل عام عند استخدام الإنجازات والتذكيرات",
+    ],
+    changesEn: [
+      "Fixed an infinite loop in the Achievements system that was slowing down the app",
+      "Fixed an infinite loop in the daily reading reminder that was draining device battery",
+      "Improved overall app stability when using Achievements and Reminders",
+    ],
+  },
   {
     version: "2.3.0",
     date: "2026-03-14",
