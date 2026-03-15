@@ -118,13 +118,16 @@ export function DailyAyah() {
         
         <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
-            {data.surahName} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
+            {language === "ar" ? data.surahName : (SURAH_META.find(s => s.number === data.surah)?.englishName ?? data.surahName)} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const shareText = `${data.text}\n\n— ${data.surahName}، آية ${data.ayah}`;
+                const displayName = language === "ar" ? data.surahName : (SURAH_META.find(s => s.number === data.surah)?.englishName ?? data.surahName);
+                const shareText = language === "ar"
+                  ? `${data.text}\n\n— ${displayName}، آية ${data.ayah}`
+                  : `${data.text}\n\n— ${displayName}, verse ${data.ayah}`;
                 if (navigator.share) {
                   navigator.share({ text: shareText }).catch(() => {});
                 } else {

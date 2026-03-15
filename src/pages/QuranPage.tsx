@@ -59,8 +59,11 @@ export default function QuranPage() {
   const getRevelationType = (type: string) =>
     type === "Meccan" ? t("revelation_meccan") : t("revelation_medinan");
 
-  const getSurahName = (num: number) =>
-    surahs.find((s) => s.number === num)?.name || String(num);
+  const getSurahName = (num: number) => {
+    const s = surahs.find((s) => s.number === num);
+    if (!s) return String(num);
+    return language === "ar" ? s.name : s.englishName;
+  };
 
   const modeCards: ModeCard[] = [
     {
@@ -287,7 +290,9 @@ export default function QuranPage() {
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                     </div>
                     <div className="flex-1 text-right">
-                      <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors">{surah.name}</p>
+                      <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors">
+                        {language === "ar" ? surah.name : surah.englishName}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)} {t("ayahs")} · {getRevelationType(surah.revelationType)}
                       </p>

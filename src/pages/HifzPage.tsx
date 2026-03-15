@@ -67,14 +67,14 @@ export default function HifzPage() {
       toast({
         title: language === "en" ? "Well done! ✨" : "أحسنت! ✨",
         description: language === "en"
-          ? `Reviewed Surah ${meta?.name || ""}`
+          ? `Reviewed Surah ${meta?.englishName || ""}`
           : `تمت مراجعة سورة ${meta?.name || ""}`,
       });
     } else {
       toast({
         title: language === "en" ? "Keep going, you'll improve" : "ستتحسن إن شاء الله",
         description: language === "en"
-          ? `Surah ${meta?.name || ""} will appear in tomorrow's review`
+          ? `Surah ${meta?.englishName || ""} will appear in tomorrow's review`
           : `ستظهر سورة ${meta?.name || ""} في مراجعة الغد`,
       });
     }
@@ -424,7 +424,7 @@ export default function HifzPage() {
               )}
             >
               <Icon className={cn("h-4 w-4", config.color, status === "reading" && "animate-none")} />
-              <span className="font-arabic text-sm font-bold leading-tight">{surah.name}</span>
+              <span className="font-arabic text-sm font-bold leading-tight">{language === "ar" ? surah.name : surah.englishName}</span>
               <span className="text-[0.625rem] text-muted-foreground">{language === "ar" ? toArabicNumerals(surah.numberOfAyahs) : surah.numberOfAyahs} {t("ayah")}</span>
               {/* Review strength indicator for memorized surahs */}
               {reviewItem && (

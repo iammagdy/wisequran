@@ -77,6 +77,9 @@ export default function SurahReaderPage() {
 
   const isFavorite = favorites.includes(surahNumber);
   const editionName = TAFSIR_EDITIONS.find((e) => e.id === tafsirEdition)?.name || tafsirEdition;
+  const displaySurahName = surahInfo
+    ? (language === "ar" ? surahInfo.name : surahInfo.englishName)
+    : `${t("surah")} ${surahNumber}`;
 
   const toggleFavorite = () => {
     if (isFavorite) {
@@ -306,7 +309,9 @@ export default function SurahReaderPage() {
             })()}
           </div>
           <div className="text-center flex-1">
-            <h1 className="font-arabic text-xl font-bold">{surahInfo?.name || `${t("surah")} ${surahNumber}`}</h1>
+            <h1 className="font-arabic text-xl font-bold">
+              {surahInfo ? (language === "ar" ? surahInfo.name : surahInfo.englishName) : `${t("surah")} ${surahNumber}`}
+            </h1>
             <p className="text-[0.6875rem] text-muted-foreground">
               {surahInfo &&
               <span>{language === "ar" ? toArabicNumerals(surahInfo.numberOfAyahs) : surahInfo.numberOfAyahs} {t("ayah")} · {surahInfo.revelationType === "Meccan" ? t("revelation_meccan") : t("revelation_medinan")}</span>
@@ -385,7 +390,7 @@ export default function SurahReaderPage() {
         {/* ===== LISTENING MODE ===== */}
         {isListeningMode ? (
           !loading && ayahs.length > 0 ? (
-            <ListeningTab surahNumber={surahNumber} surahName={surahInfo?.name || `سورة ${surahNumber}`} ayahs={ayahs} />
+            <ListeningTab surahNumber={surahNumber} surahName={displaySurahName} ayahs={ayahs} />
           ) : loading ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) =>
@@ -539,7 +544,7 @@ export default function SurahReaderPage() {
                             </motion.button>
                             <ShareAyahCard
                           ayahText={ayah.text}
-                          surahName={surahInfo?.name || ""}
+                          surahName={displaySurahName}
                           ayahNumber={ayah.numberInSurah}
                           surahNumber={surahNumber} />
                           </div>
@@ -686,7 +691,7 @@ export default function SurahReaderPage() {
       {isListeningMode && (
         <SurahBottomBar
           surahNumber={surahNumber}
-          surahName={surahInfo?.name || `${t("surah")} ${surahNumber}`}
+          surahName={displaySurahName}
           ayahs={ayahs} />
       )}
 
@@ -698,7 +703,7 @@ export default function SurahReaderPage() {
             ayahs={ayahs}
             fontSize={fontSize}
             surahNumber={surahNumber}
-            surahName={surahInfo?.name || `${t("surah")} ${surahNumber}`}
+            surahName={displaySurahName}
             playingAyah={null}
             onSeekToAyah={() => {}}
             onClose={() => setFocusModeActive(false)} />

@@ -4,7 +4,6 @@ import { AnimatePresence } from "framer-motion";
 import BottomNav from "./BottomNav";
 import GlobalAudioBar from "@/components/quran/GlobalAudioBar";
 import { AchievementUnlockNotification } from "@/components/AchievementsSheet";
-import UpdateNotification from "@/components/UpdateNotification";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -27,7 +26,6 @@ export default function AppShell({ children }: Props) {
         {showGlobalBar && <GlobalAudioBar />}
       </AnimatePresence>
       <BottomNav />
-      <UpdateNotification />
       <AchievementUnlockNotification />
     </div>
   );

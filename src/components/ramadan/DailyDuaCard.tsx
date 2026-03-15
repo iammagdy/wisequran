@@ -16,7 +16,7 @@ export default function DailyDuaCard({ ramadanDay }: DailyDuaCardProps) {
   const handleShare = async () => {
     const text = language === "ar"
       ? `🤲 دعاء اليوم ${ramadanDay} من رمضان\n\n${dua.text}\n\n— ${dua.source}`
-      : `🤲 Day ${ramadanDay} Ramadan Dua\n\n${dua.text}\n\n— ${dua.source}`;
+      : `🤲 Day ${ramadanDay} Ramadan Dua\n\n${dua.textEn}\n\n— ${dua.sourceEn}`;
 
     if (navigator.share) {
       try {
@@ -48,8 +48,12 @@ export default function DailyDuaCard({ ramadanDay }: DailyDuaCardProps) {
             )}
           </Button>
         </div>
-        <p className="text-sm leading-relaxed font-arabic text-foreground" dir="rtl">{dua.text}</p>
-        <p className="text-[0.625rem] text-muted-foreground">{dua.source}</p>
+        {language === "ar" ? (
+          <p className="text-sm leading-relaxed font-arabic text-foreground" dir="rtl">{dua.text}</p>
+        ) : (
+          <p className="text-sm leading-relaxed text-foreground">{dua.textEn}</p>
+        )}
+        <p className="text-[0.625rem] text-muted-foreground">{language === "ar" ? dua.source : dua.sourceEn}</p>
       </CardContent>
     </Card>
   );

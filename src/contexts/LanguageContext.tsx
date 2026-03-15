@@ -1389,6 +1389,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.dir = isRTL ? "rtl" : "ltr";
     document.documentElement.lang = language;
+
+    if (language === "en") {
+      localStorage.setItem("wise-translation-enabled", "true");
+    }
   }, [language, isRTL]);
 
   const t = (key: keyof Translations): string => {
