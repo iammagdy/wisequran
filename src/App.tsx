@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AppShell from "@/components/layout/AppShell";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import InstallBanner from "@/components/InstallBanner";
+import SaveProgressBanner from "@/components/SaveProgressBanner";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import QuranPage from "@/pages/QuranPage";
@@ -23,12 +25,16 @@ import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
+import { useAdhan } from "@/hooks/useAdhan";
+import { usePrayerReminders } from "@/hooks/usePrayerReminders";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   usePrayerNotifications();
   useAzkarNotifications();
+  useAdhan();
+  usePrayerReminders();
   return (
     <>
       <AppShell>
@@ -48,6 +54,7 @@ const AppContent = () => {
         </Routes>
       </AppShell>
       <InstallBanner />
+      <SaveProgressBanner />
     </>
   );
 };
@@ -67,13 +74,15 @@ const App = () => {
           <TooltipProvider>
             <Sonner />
             <BrowserRouter>
-              <LanguageProvider>
-                <AudioPlayerProvider>
-                  <ErrorBoundary>
-                    <AppContent />
-                  </ErrorBoundary>
-                </AudioPlayerProvider>
-              </LanguageProvider>
+              <AuthProvider>
+                <LanguageProvider>
+                  <AudioPlayerProvider>
+                    <ErrorBoundary>
+                      <AppContent />
+                    </ErrorBoundary>
+                  </AudioPlayerProvider>
+                </LanguageProvider>
+              </AuthProvider>
             </BrowserRouter>
           </TooltipProvider>
         </QueryClientProvider>

@@ -1,0 +1,76 @@
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, CloudUpload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import AuthModal from "@/components/AuthModal";
+
+const DISMISSED_KEY = "wise-save-progress-dismissed";
+
+export default function SaveProgressBanner() {
+  const { user, loading } = useAuth();
+  const { isRTL } = useLanguage();
+  const [show, setShow] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (user) { setShow(false); return; }
+    if (localStorage.getItem(DISMISSED_KEY)) return;
+    const timer = setTimeout(() => setShow(true), 3500);
+    return () => clearTimeout(timer);
+  }, [user, loading]);
+
+  const dismiss = () => {
+    setShow(false);
+    localStorage.setItem(DISMISSED_KEY, "1");
+  };
+
+  return (
+    <>
+      <AnimatePresence>
+        {show && !user && (
+          <motion.div
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            className="fixed bottom-20 left-3 right-3 z-40 rounded-xl border border-primary/20 bg-card p-4 shadow-lg"
+            dir={isRTL ? "rtl" : "ltr"}
+          >
+            <button
+              onClick={dismiss}
+              className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} rounded-full p-1.5 bg-muted/80 hover:bg-muted text-muted-foreground transition-colors`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/15">
+                <CloudUpload className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground leading-snug">
+                  {isRTL ? "احفظ تقدمك عبر أجهزتك" : "Save progress across devices"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {isRTL ? "سجّل الدخول لمزامنة بياناتك" : "Sign in to sync your data"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                className="shrink-0 text-xs px-3"
+                onClick={() => setAuthOpen(true)}
+              >
+                {isRTL ? "تسجيل الدخول" : "Sign In"}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+    </>
+  );
+}

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square } from "lucide-react";
+import { ADHAN_VOICES, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   const [translationEnabled, setTranslationEnabled] = useLocalStorage<boolean>("wise-translation-enabled", false);
   const [translationId, setTranslationId] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [calcMethod, setCalcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
+  const [adhanSettings, setAdhanSettings] = useLocalStorage<AdhanSettings>(ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const [azkarNotificationsEnabled, setAzkarNotificationsEnabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
@@ -89,6 +91,36 @@ export default function SettingsPage() {
     } catch {/* ignore */}
     setLoadingStats(false);
   }, []);
+
+  // Adhan voice preview
+  const [previewingAdhan, setPreviewingAdhan] = useState<string | null>(null);
+  const adhanPreviewRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopAdhanPreview = useCallback(() => {
+    if (adhanPreviewRef.current) {
+      adhanPreviewRef.current.pause();
+      adhanPreviewRef.current.src = "";
+      adhanPreviewRef.current = null;
+    }
+    setPreviewingAdhan(null);
+  }, []);
+
+  const toggleAdhanPreview = useCallback((voiceId: string, src: string) => {
+    if (previewingAdhan === voiceId) {
+      stopAdhanPreview();
+      return;
+    }
+    stopAdhanPreview();
+    const audio = new Audio(src);
+    audio.volume = Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100));
+    adhanPreviewRef.current = audio;
+    setPreviewingAdhan(voiceId);
+    audio.play().catch(() => setPreviewingAdhan(null));
+    audio.addEventListener("ended", () => {
+      adhanPreviewRef.current = null;
+      setPreviewingAdhan(null);
+    });
+  }, [previewingAdhan, stopAdhanPreview, adhanSettings.adhanVolume]);
 
   // Preview reciter audio
   const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
@@ -725,6 +757,254 @@ export default function SettingsPage() {
             <p className="text-xs text-muted-foreground">
               {t("reading_reminder_hint")}
             </p>
+          </motion.div>
+        </section>
+
+        {/* ─── Adhan & Reminders ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Music className="h-3.5 w-3.5" />
+            {language === "ar" ? "الأذان والتذكيرات" : "Adhan & Reminders"}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="rounded-xl bg-card p-4 shadow-sm space-y-4">
+
+            {/* Enable Adhan */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{language === "ar" ? "تشغيل الأذان" : "Play Adhan"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{language === "ar" ? "يُشغَّل عند دخول وقت الصلاة" : "Plays at prayer time"}</p>
+              </div>
+              <Switch
+                checked={adhanSettings.adhanEnabled}
+                onCheckedChange={(v) => setAdhanSettings({ ...adhanSettings, adhanEnabled: v })}
+              />
+            </div>
+
+            {adhanSettings.adhanEnabled && (
+              <>
+                <Separator />
+
+                {/* Voice Picker */}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    {language === "ar" ? "صوت المؤذن" : "Muezzin Voice"}
+                  </p>
+                  <div className="space-y-1.5">
+                    {ADHAN_VOICES.map((voice) => (
+                      <div
+                        key={voice.id}
+                        className={`flex items-center justify-between rounded-xl px-3 py-2.5 border transition-colors ${
+                          adhanSettings.voiceId === voice.id
+                            ? "bg-primary/8 border-primary/20"
+                            : "bg-muted/40 border-border/40"
+                        }`}
+                      >
+                        <button
+                          onClick={() => setAdhanSettings({ ...adhanSettings, voiceId: voice.id })}
+                          className="flex items-center gap-2.5 flex-1 min-w-0"
+                        >
+                          <div className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
+                            adhanSettings.voiceId === voice.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                          }`}>
+                            {adhanSettings.voiceId === voice.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                          </div>
+                          <span className="text-sm font-medium truncate">
+                            {language === "ar" ? voice.nameAr : voice.nameEn}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => toggleAdhanPreview(voice.id, voice.file)}
+                          className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0 ${
+                            previewingAdhan === voice.id
+                              ? "bg-primary/15 text-primary"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                        >
+                          {previewingAdhan === voice.id
+                            ? <><Square className="h-3 w-3" /> {language === "ar" ? "إيقاف" : "Stop"}</>
+                            : <><Play className="h-3 w-3" /> {language === "ar" ? "معاينة" : "Preview"}</>
+                          }
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Fajr special + takbir toggles */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{language === "ar" ? "أذان الفجر الخاص" : "Special Fajr Adhan"}</p>
+                      <p className="text-xs text-muted-foreground">{language === "ar" ? "يتضمن الصلاة خير من النوم" : "Includes Assalatu Khayrun Minan Nawm"}</p>
+                    </div>
+                    <Switch
+                      checked={adhanSettings.fajrSpecialAdhan}
+                      onCheckedChange={(v) => setAdhanSettings({ ...adhanSettings, fajrSpecialAdhan: v })}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{language === "ar" ? "وضع التكبير فقط" : "Takbir Only Mode"}</p>
+                      <p className="text-xs text-muted-foreground">{language === "ar" ? "يعزف تكبير قصير بدلًا من الأذان" : "Plays short takbir instead of full adhan"}</p>
+                    </div>
+                    <Switch
+                      checked={adhanSettings.takbirOnlyMode}
+                      onCheckedChange={(v) => setAdhanSettings({ ...adhanSettings, takbirOnlyMode: v })}
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Adhan Volume */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-medium flex items-center gap-1.5">
+                      <Volume2 className="h-4 w-4 text-muted-foreground" />
+                      {language === "ar" ? "مستوى صوت الأذان" : "Adhan Volume"}
+                    </p>
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {language === "ar" ? toArabicNumerals(String(adhanSettings.adhanVolume)) : adhanSettings.adhanVolume}%
+                    </span>
+                  </div>
+                  <Slider
+                    value={[adhanSettings.adhanVolume]}
+                    onValueChange={([v]) => setAdhanSettings({ ...adhanSettings, adhanVolume: v })}
+                    min={0} max={100} step={5}
+                  />
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Pre-prayer reminder */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{language === "ar" ? "تذكير قبل الصلاة" : "Pre-Prayer Reminder"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {language === "ar" ? "إشعار قبل دخول وقت الصلاة" : "Notification before prayer time"}
+                </p>
+              </div>
+              <select
+                value={adhanSettings.preReminderMinutes}
+                onChange={(e) => setAdhanSettings({ ...adhanSettings, preReminderMinutes: Number(e.target.value) })}
+                className="rounded-lg border border-border bg-muted text-sm px-2 py-1.5 outline-none focus:border-primary transition-colors"
+              >
+                <option value={0}>{language === "ar" ? "لا شيء" : "None"}</option>
+                <option value={5}>{language === "ar" ? "٥ دقائق" : "5 min"}</option>
+                <option value={10}>{language === "ar" ? "١٠ دقائق" : "10 min"}</option>
+                <option value={15}>{language === "ar" ? "١٥ دقيقة" : "15 min"}</option>
+                <option value={30}>{language === "ar" ? "٣٠ دقيقة" : "30 min"}</option>
+                <option value={60}>{language === "ar" ? "ساعة" : "1 hour"}</option>
+              </select>
+            </div>
+
+            {/* Post-prayer reminder */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">{language === "ar" ? "تذكير بعد الصلاة" : "Post-Prayer Reminder"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {language === "ar" ? "تذكير بالأذكار والأوراد" : "Reminder for post-prayer adhkar"}
+                </p>
+              </div>
+              <select
+                value={adhanSettings.postReminderMinutes}
+                onChange={(e) => setAdhanSettings({ ...adhanSettings, postReminderMinutes: Number(e.target.value) })}
+                className="rounded-lg border border-border bg-muted text-sm px-2 py-1.5 outline-none focus:border-primary transition-colors"
+              >
+                <option value={0}>{language === "ar" ? "لا شيء" : "None"}</option>
+                <option value={30}>{language === "ar" ? "٣٠ دقيقة" : "30 min"}</option>
+                <option value={60}>{language === "ar" ? "ساعة" : "1 hour"}</option>
+                <option value={120}>{language === "ar" ? "ساعتان" : "2 hours"}</option>
+              </select>
+            </div>
+
+            {adhanSettings.postReminderMinutes > 0 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{language === "ar" ? "نوع المحتوى" : "Reminder content"}</p>
+                <select
+                  value={adhanSettings.postReminderContent}
+                  onChange={(e) => setAdhanSettings({ ...adhanSettings, postReminderContent: e.target.value as AdhanSettings["postReminderContent"] })}
+                  className="rounded-lg border border-border bg-muted text-sm px-2 py-1.5 outline-none focus:border-primary transition-colors"
+                >
+                  <option value="simple">{language === "ar" ? "تذكير بسيط" : "Simple"}</option>
+                  <option value="dhikr">{language === "ar" ? "تسبيح" : "Dhikr"}</option>
+                  <option value="quran">{language === "ar" ? "آية قرآنية" : "Quran verse"}</option>
+                </select>
+              </div>
+            )}
+
+            {/* Chime volume */}
+            {(adhanSettings.preReminderMinutes > 0 || adhanSettings.postReminderMinutes > 0) && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium flex items-center gap-1.5">
+                    <Bell className="h-4 w-4 text-muted-foreground" />
+                    {language === "ar" ? "مستوى صوت التذكيرات" : "Reminder Chime Volume"}
+                  </p>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {language === "ar" ? toArabicNumerals(String(adhanSettings.reminderVolume)) : adhanSettings.reminderVolume}%
+                  </span>
+                </div>
+                <Slider
+                  value={[adhanSettings.reminderVolume]}
+                  onValueChange={([v]) => setAdhanSettings({ ...adhanSettings, reminderVolume: v })}
+                  min={0} max={100} step={5}
+                />
+              </div>
+            )}
+
+            <Separator />
+
+            {/* Per-prayer overrides */}
+            <Collapsible>
+              <CollapsibleTrigger className="flex w-full items-center justify-between text-sm font-medium hover:text-primary transition-colors">
+                <span>{language === "ar" ? "إعدادات كل صلاة" : "Per-Prayer Settings"}</span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform [[data-state=open]>&]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3 space-y-2.5">
+                  {(["fajr","dhuhr","asr","maghrib","isha"] as const).map((id) => {
+                    const names: Record<string,string> = { fajr: language==="ar"?"الفجر":"Fajr", dhuhr: language==="ar"?"الظهر":"Dhuhr", asr: language==="ar"?"العصر":"Asr", maghrib: language==="ar"?"المغرب":"Maghrib", isha: language==="ar"?"العشاء":"Isha" };
+                    const cfg = adhanSettings.perPrayer?.[id] ?? { adhanEnabled: true, reminderEnabled: true };
+                    const update = (patch: Partial<typeof cfg>) =>
+                      setAdhanSettings({ ...adhanSettings, perPrayer: { ...adhanSettings.perPrayer, [id]: { ...cfg, ...patch } } });
+                    return (
+                      <div key={id} className="rounded-xl bg-muted/40 border border-border/30 px-3 py-2.5">
+                        <p className="text-sm font-semibold mb-2">{names[id]}</p>
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={cfg.adhanEnabled}
+                              onChange={(e) => update({ adhanEnabled: e.target.checked })}
+                              className="accent-primary"
+                            />
+                            {language === "ar" ? "أذان" : "Adhan"}
+                          </label>
+                          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={cfg.reminderEnabled}
+                              onChange={(e) => update({ reminderEnabled: e.target.checked })}
+                              className="accent-primary"
+                            />
+                            {language === "ar" ? "تذكير" : "Reminder"}
+                          </label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </motion.div>
         </section>
 

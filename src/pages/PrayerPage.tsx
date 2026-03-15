@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { Progress } from "@/components/ui/progress";
 import { cn, getDayName, getHijriDateLocalized, getGregorianDateLocalized, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass, MapPin, ChevronLeft, Flame } from "lucide-react";
+import { Compass, MapPin, ChevronLeft, Flame, History, Search } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
+import PrayerHistorySheet from "@/components/prayer/PrayerHistorySheet";
+import CitySearchModal from "@/components/prayer/CitySearchModal";
 import {
   calculatePrayerTimes,
   formatLocalizedTime,
@@ -16,6 +18,10 @@ import {
   type CalculationMethod } from
 "@/lib/prayer-times";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import type { City } from "@/data/cities";
+import { useLocation } from "@/hooks/useLocation";
 
 const PRAYERS = [
 { id: "fajr", icon: "🌅", timeOfDay: "dawn" },
@@ -61,14 +67,20 @@ function formatCompactCountdown(totalSeconds: number, language: string): string 
 export default function PrayerPage() {
   const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { refresh: refreshGPS } = useLocation();
   const [data, setData] = useLocalStorage<DayData>("wise-prayer-today", {
     date: getTodayKey(),
     completed: []
   });
   const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [citySearchOpen, setCitySearchOpen] = useState(false);
 
   const cachedLocation = useMemo(() => {
     try {
+      const manual = localStorage.getItem("wise-manual-location");
+      if (manual) return JSON.parse(manual) as {latitude: number;longitude: number;city?: string;};
       const cached = localStorage.getItem("wise-user-location");
       if (cached) return JSON.parse(cached) as {latitude: number;longitude: number;city?: string;};
     } catch (error) {
@@ -76,6 +88,18 @@ export default function PrayerPage() {
     }
     return null;
   }, []);
+
+  const handleSelectCity = useCallback((city: City) => {
+    const loc = { latitude: city.lat, longitude: city.lng, city: language === "ar" ? city.nameAr : city.name, timestamp: Date.now() };
+    localStorage.setItem("wise-manual-location", JSON.stringify(loc));
+    window.location.reload();
+  }, [language]);
+
+  const handleUseGPS = useCallback(() => {
+    localStorage.removeItem("wise-manual-location");
+    refreshGPS();
+    window.location.reload();
+  }, [refreshGPS]);
 
   const { streak } = useStreak();
 
@@ -102,12 +126,24 @@ export default function PrayerPage() {
     return data;
   }, [data, setData]);
 
-  const togglePrayer = (prayerId: string) => {
-    const newCompleted = todayData.completed.includes(prayerId) ?
-    todayData.completed.filter((p) => p !== prayerId) :
-    [...todayData.completed, prayerId];
+  const togglePrayer = useCallback((prayerId: string) => {
+    const isCompleting = !todayData.completed.includes(prayerId);
+    const newCompleted = isCompleting
+      ? [...todayData.completed, prayerId]
+      : todayData.completed.filter((p) => p !== prayerId);
     setData({ ...todayData, completed: newCompleted });
-  };
+
+    if (user) {
+      const today = getTodayKey();
+      supabase.from("user_prayer_history").upsert({
+        user_id: user.id,
+        date: today,
+        prayer_name: prayerId,
+        completed: isCompleting,
+        completed_at: isCompleting ? new Date().toISOString() : null,
+      }, { onConflict: "user_id,date,prayer_name" }).then(() => {});
+    }
+  }, [todayData, setData, user]);
 
   const progress = todayData.completed.length / PRAYERS.length * 100;
 
@@ -119,14 +155,33 @@ export default function PrayerPage() {
   return (
     <div className="px-4 pt-5 pb-5" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold heading-decorated">{t("prayers_title")}</h1>
-        {cachedLocation?.city && (
-          <div className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft">
-            <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate max-w-[100px]">{cachedLocation.city}</span>
-          </div>
-        )}
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold heading-decorated shrink-0">{t("prayers_title")}</h1>
+        <div className="flex items-center gap-2">
+          {cachedLocation?.city && (
+            <button
+              onClick={() => setCitySearchOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+            >
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate max-w-[80px]">{cachedLocation.city}</span>
+            </button>
+          )}
+          {!cachedLocation?.city && (
+            <button
+              onClick={() => setCitySearchOpen(true)}
+              className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+            >
+              <Search className="h-3 w-3 shrink-0" />
+            </button>
+          )}
+          <button
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+          >
+            <History className="h-3 w-3" />
+          </button>
+        </div>
       </div>
 
       {/* Date + Hijri Card */}
@@ -308,6 +363,13 @@ export default function PrayerPage() {
       {/* Prayer Guide */}
       <PrayerGuideCard />
 
+      <PrayerHistorySheet open={historyOpen} onClose={() => setHistoryOpen(false)} />
+      <CitySearchModal
+        open={citySearchOpen}
+        onClose={() => setCitySearchOpen(false)}
+        onSelectCity={handleSelectCity}
+        onUseGPS={handleUseGPS}
+      />
     </div>
   );
 }
