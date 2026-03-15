@@ -1533,6 +1533,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     if (language === "en") {
       localStorage.setItem("wise-translation-enabled", "true");
+    } else {
+      localStorage.setItem("wise-translation-enabled", "false");
     }
   }, [language, isRTL]);
 

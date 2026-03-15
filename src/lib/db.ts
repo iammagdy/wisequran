@@ -46,7 +46,9 @@ function tafsirKey(editionId: string, surahNumber: number): string {
   return `${editionId}-${surahNumber}`;
 }
 
-export async function getDB() {
+let dbPromise: ReturnType<typeof openDB<WiseQuranDB>> | null = null;
+
+function openDatabase() {
   return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion) {
       if (!db.objectStoreNames.contains("surahs")) {
@@ -55,7 +57,6 @@ export async function getDB() {
       if (!db.objectStoreNames.contains("azkar")) {
         db.createObjectStore("azkar", { keyPath: "category" });
       }
-      // v2->v3: recreate audio store with string key
       if (db.objectStoreNames.contains("audio") && oldVersion < 3) {
         db.deleteObjectStore("audio");
       }
@@ -67,6 +68,16 @@ export async function getDB() {
       }
     },
   });
+}
+
+export async function getDB() {
+  if (!dbPromise) {
+    dbPromise = openDatabase().catch((err) => {
+      dbPromise = null;
+      throw err;
+    });
+  }
+  return dbPromise;
 }
 
 export async function saveSurah(number: number, ayahs: any[]) {
