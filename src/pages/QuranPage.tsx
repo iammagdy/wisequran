@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble } from "lucide-react";
@@ -125,16 +125,18 @@ export default function QuranPage() {
   const surahListTitle =
     view === "surahs_listening" ? t("mode_listening") : t("mode_reading");
 
-  const filteredSurahs = surahSearch.trim()
-    ? surahs.filter((s) => {
-        const q = surahSearch.toLowerCase().trim();
-        return (
-          s.englishName.toLowerCase().includes(q) ||
-          s.name.includes(q) ||
-          String(s.number).includes(q)
-        );
-      })
-    : surahs;
+  // Memoize the filtered surahs to prevent unnecessary recalculations on every render
+  const filteredSurahs = useMemo(() => {
+    if (!surahSearch.trim()) return surahs;
+    const q = surahSearch.toLowerCase().trim();
+    return surahs.filter((s) => {
+      return (
+        s.englishName.toLowerCase().includes(q) ||
+        s.name.includes(q) ||
+        String(s.number).includes(q)
+      );
+    });
+  }, [surahs, surahSearch]);
 
   return (
     <div className="px-4 pt-6 pb-6" dir={isRTL ? "rtl" : "ltr"}>
