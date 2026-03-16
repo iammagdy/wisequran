@@ -91,7 +91,8 @@ export default function HifzPage() {
   };
 
   const handleMarkReviewed = (surahNumber: number, quality: "good" | "hard") => {
-    const meta = SURAH_META.find((s) => s.number === surahNumber);
+    // ⚡ Bolt: O(1) direct indexing
+    const meta = SURAH_META[surahNumber - 1];
     review.markReviewed(surahNumber, quality);
     streak.markActive();
     if (pendingReviewSurah === surahNumber) setPendingReviewSurah(null);
@@ -125,7 +126,8 @@ export default function HifzPage() {
   };
 
   const getSurahName = (surahNumber: number) => {
-    const meta = SURAH_META.find((s) => s.number === surahNumber);
+    // ⚡ Bolt: O(1) direct indexing
+    const meta = SURAH_META[surahNumber - 1];
     return language === "en" ? (meta?.englishName || "") : (meta?.name || "");
   };
 

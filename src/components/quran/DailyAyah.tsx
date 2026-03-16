@@ -65,7 +65,8 @@ export function DailyAyah() {
           fetch(`https://api.alquran.cloud/v1/surah/${ref.surah}/en.sahih`).then((r) => r.json()).catch(() => null),
         ]);
         const ayah = ayahs.find((a) => a.numberInSurah === ref.ayah);
-        const surahMeta = SURAH_META.find((s) => s.number === ref.surah);
+        // ⚡ Bolt: O(1) direct indexing
+        const surahMeta = SURAH_META[ref.surah - 1];
         const tAyah = translationResp?.data?.ayahs?.find((a: { numberInSurah: number }) => a.numberInSurah === ref.ayah);
 
         if (ayah && surahMeta) {
@@ -145,13 +146,13 @@ export function DailyAyah() {
         
         <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
-            {language === "ar" ? data.surahName : (SURAH_META.find(s => s.number === data.surah)?.englishName ?? data.surahName)} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
+            {language === "ar" ? data.surahName : (SURAH_META[data.surah - 1]?.englishName ?? data.surahName)} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const displayName = language === "ar" ? data.surahName : (SURAH_META.find(s => s.number === data.surah)?.englishName ?? data.surahName);
+                const displayName = language === "ar" ? data.surahName : (SURAH_META[data.surah - 1]?.englishName ?? data.surahName);
                 const shareText = language === "ar"
                   ? `${data.text}\n\n— ${displayName}، آية ${data.ayah}`
                   : `${data.text}\n\n— ${displayName}, verse ${data.ayah}`;

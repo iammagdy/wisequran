@@ -23,7 +23,8 @@ export function SurahSelectorForSleep({ selected, language, onChange }: SurahSel
   );
 
   const displayList = showAll ? allFiltered : suggestedSurahs;
-  const selectedSurah = SURAH_META.find((s) => s.number === selected);
+  // ⚡ Bolt: O(1) direct indexing
+  const selectedSurah = SURAH_META[selected - 1];
 
   return (
     <div className="space-y-2">

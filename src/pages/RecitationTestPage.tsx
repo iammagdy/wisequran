@@ -83,7 +83,8 @@ export default function RecitationTestPage() {
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
 
-  const meta = SURAH_META.find((s) => s.number === surahNumber)!;
+  // ⚡ Bolt: O(1) direct indexing
+  const meta = SURAH_META[surahNumber - 1];
 
   useEffect(() => {
     setAyahFrom(1);
@@ -376,7 +377,8 @@ export default function RecitationTestPage() {
                     ) : (
                       <div className="divide-y divide-border/40 max-h-72 overflow-y-auto">
                         {recitationHistory.history.map((rec) => {
-                          const recMeta = SURAH_META.find((s) => s.number === rec.surah_number);
+                          // ⚡ Bolt: O(1) direct indexing
+                          const recMeta = SURAH_META[rec.surah_number - 1];
                           const date = new Date(rec.tested_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" });
                           return (
                             <div key={rec.id} className="flex items-center gap-3 px-4 py-3">
