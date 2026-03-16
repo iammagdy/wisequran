@@ -209,7 +209,7 @@ export default function SurahReaderPage() {
   }, [activeTab, surahNumber, effectiveTafsirEdition, tafsirAyahs.length]);
 
   useEffect(() => {
-    if (!translationEnabled && !isListeningMode) {
+    if (!translationEnabled) {
       setTranslationAyahs([]);
       return;
     }
@@ -220,7 +220,7 @@ export default function SurahReaderPage() {
     if (!editionChanged && !enabledChanged && translationAyahs.length > 0) return;
 
     fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
-  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length, isListeningMode]);
+  }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
 
   const isBookmarked = (ayahNum: number) =>
   bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
