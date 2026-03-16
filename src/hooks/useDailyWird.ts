@@ -62,6 +62,8 @@ export function useDailyWird() {
         if (count === endAyahGlobal) {
           endSurah = s.number;
           endAyah = a;
+          const startMeta = SURAH_META[startSurah - 1];
+          const endMeta = SURAH_META[endSurah - 1];
           return {
             dayIndex: dayIndex + 1,
             totalDays: state.plan,
@@ -69,10 +71,10 @@ export function useDailyWird() {
             startAyah,
             endSurah,
             endAyah,
-            startSurahName: SURAH_META.find((ss) => ss.number === startSurah)?.name || "",
-            startSurahNameEn: SURAH_META.find((ss) => ss.number === startSurah)?.englishName || "",
-            endSurahName: SURAH_META.find((ss) => ss.number === endSurah)?.name || "",
-            endSurahNameEn: SURAH_META.find((ss) => ss.number === endSurah)?.englishName || "",
+            startSurahName: startMeta?.name || "",
+            startSurahNameEn: startMeta?.englishName || "",
+            endSurahName: endMeta?.name || "",
+            endSurahNameEn: endMeta?.englishName || "",
             isDone: state.completedDays.includes(today),
           };
         }
