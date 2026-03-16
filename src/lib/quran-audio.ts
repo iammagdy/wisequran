@@ -134,7 +134,7 @@ export async function downloadSurahAudio(
 
       try {
         await saveAudio(reciterId, surahNumber, buf);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e.name === 'QuotaExceededError') {
           throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
         }
