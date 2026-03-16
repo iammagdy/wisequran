@@ -42,7 +42,7 @@ export async function resolveAudioSource(
  * Fetch audio from a URL. Simple approach: plain fetch + arrayBuffer.
  * Reports progress only if Content-Length is available.
  */
-async function fetchAudioFromUrl(
+export async function fetchAudioFromUrl(
   url: string,
   onProgress?: (pct: number) => void
 ): Promise<ArrayBuffer> {
