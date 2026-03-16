@@ -114,21 +114,21 @@ export interface ReminderSound {
 export const REMINDER_SOUNDS: ReminderSound[] = [
   {
     id: "chime",
-    nameAr: "رنّة هادئة",
-    nameEn: "Gentle Chime",
-    file: "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3",
-  },
-  {
-    id: "adhan_short",
-    nameAr: "تكبير قصير",
-    nameEn: "Short Takbir",
+    nameAr: "أذان — مكة المكرمة",
+    nameEn: "Adhan — Makkah",
     file: "/audio/adhan/makkah.mp3",
   },
   {
-    id: "notification",
-    nameAr: "نغمة إشعار",
-    nameEn: "Notification Tone",
-    file: "https://assets.mixkit.co/active_storage/sfx/1/1-preview.mp3",
+    id: "adhan_madinah",
+    nameAr: "أذان — المدينة المنورة",
+    nameEn: "Adhan — Madinah",
+    file: "/audio/adhan/madinah.mp3",
+  },
+  {
+    id: "adhan_afasy",
+    nameAr: "أذان — مشاري العفاسي",
+    nameEn: "Adhan — Al-Afasy",
+    file: "/audio/adhan/afasy.mp3",
   },
   {
     id: "silent",
@@ -139,6 +139,6 @@ export const REMINDER_SOUNDS: ReminderSound[] = [
 ];
 
 export const TAKBIR_URL = "/audio/adhan/makkah.mp3";
-export const CHIME_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
+export const CHIME_URL = "/audio/adhan/makkah.mp3";
 
 export const ADHAN_STORAGE_KEY = "wise-adhan-settings";
