@@ -23,6 +23,12 @@ interface ScoreResult {
   transcript: string;
 }
 
+interface RevealedAyah {
+  numberInSurah: number;
+  score: number;
+  isCorrect: boolean;
+}
+
 function UnsupportedBanner({ message, desc }: { message: string; desc: string }) {
   return (
     <motion.div
@@ -78,7 +84,10 @@ export default function RecitationTestPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
   const [liveAyahScores, setLiveAyahScores] = useState<Record<number, { score: number; isCorrect: boolean }>>({});
+  const [revealedAyahs, setRevealedAyahs] = useState<RevealedAyah[]>([]);
+  const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const ayahRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
@@ -114,6 +123,8 @@ export default function RecitationTestPage() {
     await loadAyahs();
     speech.reset();
     setLiveAyahScores({});
+    setRevealedAyahs([]);
+    setCurrentAyahIndex(0);
     setPhase("recording");
   };
 
@@ -135,8 +146,26 @@ export default function RecitationTestPage() {
     });
     setLiveAyahScores(newScores);
 
+    setRevealedAyahs(prev => {
+      const updated = [...prev];
+      ayahsData.forEach((ayah, idx) => {
+        const scored = newScores[ayah.numberInSurah];
+        if (!scored) return;
+        const alreadyRevealed = updated.some(r => r.numberInSurah === ayah.numberInSurah);
+        if (!alreadyRevealed && scored.isCorrect) {
+          updated.push({ numberInSurah: ayah.numberInSurah, score: scored.score, isCorrect: true });
+          setCurrentAyahIndex(Math.min(idx + 1, ayahsData.length - 1));
+        }
+      });
+      return updated;
+    });
+
     if (speech.status === "done") {
       const { overallScore, correctAyahs, perAyah } = scoreRangeRecitation(ayahsData, fullTranscript, strictness);
+
+      setRevealedAyahs(
+        perAyah.map(p => ({ numberInSurah: p.numberInSurah, score: p.score, isCorrect: p.isCorrect }))
+      );
 
       const scoreResult: ScoreResult = {
         overallScore,
@@ -163,9 +192,22 @@ export default function RecitationTestPage() {
     }
   }, [speech.status, speech.transcript, speech.interimTranscript, phase, ayahsData, strictness, surahNumber, ayahFrom, ayahTo, recitationHistory]);
 
+  useEffect(() => {
+    if (revealedAyahs.length === 0) return;
+    const lastRevealed = revealedAyahs[revealedAyahs.length - 1];
+    const ayahIndex = ayahsData.findIndex(a => a.numberInSurah === lastRevealed.numberInSurah);
+    const el = ayahRefs.current[ayahIndex];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [revealedAyahs.length]);
+
   const handleTryAgain = () => {
     speech.reset();
     setResult(null);
+    setRevealedAyahs([]);
+    setCurrentAyahIndex(0);
+    setLiveAyahScores({});
     setPhase("setup");
   };
 
@@ -434,7 +476,7 @@ export default function RecitationTestPage() {
             </div>
 
             {/* Live scoring panel */}
-            {speech.status === "listening" && Object.keys(liveAyahScores).length > 0 && (
+            {speech.status === "listening" && revealedAyahs.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -448,8 +490,8 @@ export default function RecitationTestPage() {
                     </span>
                     <span className="text-lg font-bold tabular-nums">
                       {language === "ar"
-                        ? toArabicNumerals(Object.values(liveAyahScores).filter(s => s.isCorrect).length)
-                        : Object.values(liveAyahScores).filter(s => s.isCorrect).length}
+                        ? toArabicNumerals(revealedAyahs.filter(r => r.isCorrect).length)
+                        : revealedAyahs.filter(r => r.isCorrect).length}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -459,60 +501,90 @@ export default function RecitationTestPage() {
                     </span>
                     <span className="text-lg font-bold tabular-nums">
                       {language === "ar"
-                        ? toArabicNumerals(Object.values(liveAyahScores).filter(s => !s.isCorrect).length)
-                        : Object.values(liveAyahScores).filter(s => !s.isCorrect).length}
+                        ? toArabicNumerals(revealedAyahs.filter(r => !r.isCorrect).length)
+                        : revealedAyahs.filter(r => !r.isCorrect).length}
                     </span>
                   </div>
                 </div>
               </motion.div>
             )}
 
-            {/* Ayah preview with live highlighting */}
+            {/* Ayah progressive reveal panel */}
             {ayahsData.length > 0 && (
-              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 max-h-96 overflow-y-auto">
+              <div
+                ref={containerRef}
+                className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 max-h-96 overflow-y-auto"
+              >
                 <div className="space-y-3" dir="rtl">
                   {ayahsData.map((a, index) => {
-                    const liveScore = liveAyahScores[a.numberInSurah];
-                    const isCorrect = liveScore?.isCorrect;
-                    const hasScore = liveScore !== undefined;
+                    const revealed = revealedAyahs.find(r => r.numberInSurah === a.numberInSurah);
+                    const isRevealed = revealed !== undefined;
+                    const isCurrent = index === currentAyahIndex && !isRevealed && speech.status === "listening";
 
                     return (
                       <motion.div
                         key={a.numberInSurah}
                         ref={el => { ayahRefs.current[index] = el; }}
+                        initial={false}
                         animate={{
-                          opacity: speech.status === "done" || hasScore ? 1 : 0.5,
+                          filter: isRevealed ? "blur(0px)" : "blur(6px)",
+                          opacity: isRevealed ? 1 : isCurrent ? 0.35 : 0.2,
+                          scale: isRevealed ? 1 : 0.98,
                         }}
+                        transition={{ duration: 0.5, ease: "easeOut" }}
                         className={cn(
-                          "rounded-xl p-3 transition-all",
-                          hasScore && isCorrect && "bg-emerald-500/20 border-2 border-emerald-500",
-                          hasScore && !isCorrect && "bg-destructive/20 border-2 border-destructive",
-                          !hasScore && "bg-muted/30"
+                          "rounded-xl p-3 transition-colors select-none",
+                          isRevealed && revealed.isCorrect && "bg-emerald-500/15 border-2 border-emerald-500/70",
+                          isRevealed && !revealed.isCorrect && "bg-destructive/15 border-2 border-destructive/70",
+                          !isRevealed && isCurrent && "bg-primary/10 border-2 border-primary/40",
+                          !isRevealed && !isCurrent && "bg-muted/20 border border-border/20"
                         )}
                       >
-                        <p className="font-arabic text-base leading-loose text-center">
+                        <p
+                          className={cn(
+                            "font-arabic text-base leading-loose text-center",
+                            !isRevealed && "pointer-events-none"
+                          )}
+                        >
                           {a.text}
                           <span className="text-muted-foreground text-sm ms-2">﴿{a.numberInSurah}﴾</span>
                         </p>
-                        {hasScore && (
-                          <div className="flex items-center justify-center gap-2 mt-2">
-                            {isCorrect ? (
+                        {isRevealed && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="flex items-center justify-center gap-2 mt-2"
+                          >
+                            {revealed.isCorrect ? (
                               <Check className="h-3 w-3 text-emerald-600" />
                             ) : (
                               <X className="h-3 w-3 text-destructive" />
                             )}
                             <span className="text-xs font-medium">
-                              {language === "ar" ? toArabicNumerals(liveScore.ayahScore) : liveScore.ayahScore}%
+                              {language === "ar" ? toArabicNumerals(revealed.score) : revealed.score}%
                             </span>
-                          </div>
+                          </motion.div>
+                        )}
+                        {!isRevealed && isCurrent && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: [0.4, 1, 0.4] }}
+                            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                            className="flex items-center justify-center mt-2"
+                          >
+                            <span className="text-xs text-primary/70 font-medium">
+                              {language === "ar" ? "اتلُ هذه الآية..." : "Recite this verse..."}
+                            </span>
+                          </motion.div>
                         )}
                       </motion.div>
                     );
                   })}
                 </div>
-                {speech.status !== "done" && Object.keys(liveAyahScores).length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    {language === "ar" ? "ابدأ القراءة..." : "Start reciting..."}
+                {speech.status === "idle" && revealedAyahs.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center mt-3">
+                    {language === "ar" ? "اضغط الميكروفون وابدأ التلاوة من الذاكرة" : "Tap the mic and recite from memory"}
                   </p>
                 )}
               </div>
