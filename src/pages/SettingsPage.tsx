@@ -101,6 +101,8 @@ export default function SettingsPage() {
   const [adhanPreviewLoading, setAdhanPreviewLoading] = useState<string | null>(null);
   const adhanPreviewRef = useRef<HTMLAudioElement | null>(null);
   const adhanPreviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [previewingReminder, setPreviewingReminder] = useState<string | null>(null);
+  const reminderPreviewRef = useRef<HTMLAudioElement | null>(null);
 
   const stopAdhanPreview = useCallback(() => {
     if (adhanPreviewTimeoutRef.current) {
@@ -254,6 +256,10 @@ export default function SettingsPage() {
       if (adhanPreviewTimeoutRef.current) {
         clearTimeout(adhanPreviewTimeoutRef.current);
         adhanPreviewTimeoutRef.current = null;
+      }
+      if (reminderPreviewRef.current) {
+        reminderPreviewRef.current.pause();
+        reminderPreviewRef.current = null;
       }
     };
   }, []);
@@ -955,16 +961,18 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={() => toggleAdhanPreview(voice.id, voice.file)}
-                          className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0 ${
-                            previewingAdhan === voice.id || adhanPreviewLoading === voice.id
-                              ? "bg-primary/15 text-primary"
-                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all shrink-0 ${
+                            previewingAdhan === voice.id
+                              ? "bg-destructive/15 text-destructive border border-destructive/20"
+                              : adhanPreviewLoading === voice.id
+                                ? "bg-primary/15 text-primary border border-primary/20"
+                                : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"
                           }`}
                         >
                           {adhanPreviewLoading === voice.id
-                            ? <><Loader2 className="h-3 w-3 animate-spin" /> {language === "ar" ? "جاري التحميل..." : "Loading..."}</>
+                            ? <><Loader2 className="h-3 w-3 animate-spin" /> {language === "ar" ? "إيقاف" : "Stop"}</>
                             : previewingAdhan === voice.id
-                              ? <><Square className="h-3 w-3" /> {language === "ar" ? "إيقاف" : "Stop"}</>
+                              ? <><Square className="h-3 w-3 fill-current" /> {language === "ar" ? "إيقاف" : "Stop"}</>
                               : <><Play className="h-3 w-3" /> {language === "ar" ? "معاينة" : "Preview"}</>
                           }
                         </button>
@@ -1112,14 +1120,38 @@ export default function SettingsPage() {
                       {sound.file && (
                         <button
                           onClick={() => {
+                            if (previewingReminder === sound.id) {
+                              if (reminderPreviewRef.current) {
+                                reminderPreviewRef.current.pause();
+                                reminderPreviewRef.current = null;
+                              }
+                              setPreviewingReminder(null);
+                              return;
+                            }
+                            if (reminderPreviewRef.current) {
+                              reminderPreviewRef.current.pause();
+                              reminderPreviewRef.current = null;
+                            }
                             const audio = new Audio(sound.file);
                             audio.volume = Math.max(0, Math.min(1, adhanSettings.reminderVolume / 100));
-                            audio.play().catch(() => {});
+                            reminderPreviewRef.current = audio;
+                            setPreviewingReminder(sound.id);
+                            audio.addEventListener("ended", () => {
+                              setPreviewingReminder(null);
+                              reminderPreviewRef.current = null;
+                            }, { once: true });
+                            audio.play().catch(() => { setPreviewingReminder(null); });
                           }}
-                          className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors shrink-0"
+                          className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all shrink-0 ${
+                            previewingReminder === sound.id
+                              ? "bg-destructive/15 text-destructive border border-destructive/20"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80 border border-transparent"
+                          }`}
                         >
-                          <Play className="h-3 w-3" />
-                          {language === "ar" ? "معاينة" : "Preview"}
+                          {previewingReminder === sound.id
+                            ? <><Square className="h-3 w-3 fill-current" /> {language === "ar" ? "إيقاف" : "Stop"}</>
+                            : <><Play className="h-3 w-3" /> {language === "ar" ? "معاينة" : "Preview"}</>
+                          }
                         </button>
                       )}
                     </div>
