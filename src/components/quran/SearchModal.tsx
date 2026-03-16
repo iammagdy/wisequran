@@ -125,7 +125,7 @@ export function SearchModal({ open, onClose, ayahs, surahNumber, translationAyah
                 dir={language === "ar" ? "rtl" : "ltr"}
               />
               {query && (
-                <button onClick={() => setQuery("")} className="p-1 rounded-full hover:bg-muted transition-colors">
+                <button onClick={() => setQuery("")} className="p-1 rounded-full hover:bg-muted transition-colors" aria-label={language === "ar" ? "مسح البحث" : "Clear search"}>
                   <X className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               )}
@@ -149,12 +149,14 @@ export function SearchModal({ open, onClose, ayahs, surahNumber, translationAyah
                     <button
                       onClick={goToPrev}
                       className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      aria-label={language === "ar" ? "النتيجة السابقة" : "Previous result"}
                     >
                       <ChevronUp className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={goToNext}
                       className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      aria-label={language === "ar" ? "النتيجة التالية" : "Next result"}
                     >
                       <ChevronDown className="h-3.5 w-3.5" />
                     </button>
