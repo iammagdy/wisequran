@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -174,7 +174,7 @@ export default function QuranPage() {
               onClick={() => navigate("/sleep")}
               aria-label="Sleep Mode"
               className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
-              <span className="text-sm font-bold leading-none">Zzz</span>
+              <BedDouble className="h-4 w-4" />
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.9 }}
