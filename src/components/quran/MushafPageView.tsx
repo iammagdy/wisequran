@@ -156,6 +156,7 @@ export default function MushafPageView({
                   
                       {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                       <button
+                    aria-label={language === "ar" ? `الآية ${ayah.numberInSurah}` : `Ayah ${ayah.numberInSurah}`}
                     onClick={() => {
                       if (playingAyah !== null && onSeekToAyah) {
                         onSeekToAyah(ayah.numberInSurah);
@@ -184,6 +185,7 @@ export default function MushafPageView({
                         {language === "ar" ? `الآية ${toArabicNumerals(selectedAyah)}` : `Ayah ${selectedAyah}`}
                       </span>
                       <button
+                  aria-label={language === "ar" ? "إشارة مرجعية" : "Bookmark"}
                   onClick={() => toggleBookmark(selectedAyah)}
                   className="rounded-lg p-1.5 transition-colors hover:bg-background">
                   
@@ -194,6 +196,7 @@ export default function MushafPageView({
                   }
                       </button>
                       <button
+                  aria-label={language === "ar" ? "تفسير" : "Tafsir"}
                   onClick={() => {
                     onAyahTafsir(selectedAyah);
                     setSelectedAyah(null);
@@ -213,6 +216,7 @@ export default function MushafPageView({
       {/* Navigation arrows for desktop */}
       {canScrollPrev &&
       <button
+        aria-label={language === "ar" ? "الصفحة السابقة" : "Previous page"}
         onClick={() => emblaApi?.scrollPrev()}
         className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
         
@@ -221,6 +225,7 @@ export default function MushafPageView({
       }
       {canScrollNext &&
       <button
+        aria-label={language === "ar" ? "الصفحة التالية" : "Next page"}
         onClick={() => emblaApi?.scrollNext()}
         className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
         

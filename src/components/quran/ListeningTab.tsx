@@ -478,6 +478,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
           )}
           {activeTimer && (
             <button
+              aria-label={language === "ar" ? "إلغاء المؤقت" : "Cancel timer"}
               onClick={cancelTimer}
               className={cn("ms-auto rounded-lg p-1 hover:bg-muted transition-colors text-muted-foreground", timerRunning && timerSecondsLeft > 0 && "ms-2")}
             >
