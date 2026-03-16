@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones } from "lucide-react";
@@ -581,9 +581,9 @@ export default function SurahReaderPage() {
                           {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
                         {translationEnabled && translationAyahs.length > 0 && (() => {
-                          const tAyah = translationAyahs.find((tAyah) => tAyah.numberInSurah === ayah.numberInSurah);
+                          const tAyah = translationMap.get(ayah.numberInSurah);
                           if (!tAyah) return null;
-                          const edition = TRANSLATION_EDITIONS.find((e) => e.id === translationEdition);
+                          const edition = currentTranslationEdition;
                           return (
                             <p
                               className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed"
@@ -627,11 +627,11 @@ export default function SurahReaderPage() {
                   <p
                 className="font-arabic text-foreground/90 leading-[2.2]"
                 style={{ fontSize: 18 }}>
-                    {tafsirAyahs.find((a) => a.numberInSurah === focusedAyah)?.text ||
+                    {tafsirMap.get(focusedAyah)?.text ||
                 t("no_tafsir")}
                   </p>
                   {language === "en" && translationAyahs.length > 0 && (() => {
-                    const tAyah = translationAyahs.find((tA) => tA.numberInSurah === focusedAyah);
+                    const tAyah = translationMap.get(focusedAyah);
                     if (!tAyah) return null;
                     return (
                       <p className="mt-3 border-t border-border/30 pt-3 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
@@ -714,7 +714,7 @@ export default function SurahReaderPage() {
                         <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
                       </p>
                       {language === "en" && translationAyahs.length > 0 && (() => {
-                        const tAyah = translationAyahs.find((tA) => tA.numberInSurah === tafsirItem.numberInSurah);
+                        const tAyah = translationMap.get(tafsirItem.numberInSurah);
                         if (!tAyah) return null;
                         return (
                           <p className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
