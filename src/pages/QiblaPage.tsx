@@ -300,68 +300,142 @@ export default function QiblaPage() {
                     className="absolute inset-0 w-full h-full object-cover"
                   />
 
+                  {/* Dark gradient overlay for contrast */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
+
+                  {!cameraReady && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+                      <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                      <p className="text-white/70 text-sm">{language === "ar" ? "جاري تشغيل الكاميرا..." : "Starting camera..."}</p>
+                    </div>
+                  )}
+
                   {cameraReady && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        animate={{ rotate: qiblaBearing - (correctedHeading || 0) }}
-                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
-                        className="relative"
-                      >
-                        <motion.div
-                          animate={{
-                            scale: isAligned ? [1, 1.2, 1] : 1,
-                          }}
-                          transition={{
-                            duration: 0.5,
-                            repeat: isAligned ? Infinity : 0,
-                          }}
-                          className={cn(
-                            "text-8xl drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]",
-                            isAligned && "drop-shadow-[0_0_30px_rgba(34,197,94,0.8)]"
-                          )}
-                        >
-                          🕋
-                        </motion.div>
-
-                        <motion.div className="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                          <div className={cn(
-                            "px-4 py-2 rounded-full font-bold text-sm shadow-lg backdrop-blur-sm",
-                            isAligned
-                              ? "bg-emerald-500/90 text-white"
-                              : "bg-black/60 text-white"
-                          )}>
-                            {isAligned
-                              ? (language === "ar" ? "✓ اتجاه القبلة" : "✓ Qibla Direction")
-                              : (language === "ar" ? "وجّه الكاميرا" : "Point Camera")}
-                          </div>
-                        </motion.div>
-                      </motion.div>
-                    </div>
-                  )}
-
-                  {isAligned && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute top-8 left-1/2 -translate-x-1/2"
-                    >
-                      <div className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg">
-                        <CheckCircle className="h-5 w-5" />
-                        <span className="text-sm font-bold">
-                          {language === "ar" ? "متجه نحو القبلة" : "Aligned with Qibla"}
-                        </span>
+                    <>
+                      {/* Depth rings */}
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        {[140, 100, 60].map((size, i) => (
+                          <div
+                            key={i}
+                            className="absolute rounded-full border border-white/10"
+                            style={{ width: size, height: size }}
+                          />
+                        ))}
                       </div>
-                    </motion.div>
-                  )}
 
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-center">
-                    <div className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-full">
-                      <p className="text-white text-xs font-medium">
-                        {language === "ar" ? `الاتجاه: ${Math.round(qiblaBearing)}°` : `Bearing: ${Math.round(qiblaBearing)}°`}
-                      </p>
-                    </div>
-                  </div>
+                      {/* Compass rose + direction indicator */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <motion.div
+                          animate={{ rotate: qiblaBearing - (correctedHeading || 0) }}
+                          transition={{ type: "spring", stiffness: 60, damping: 18 }}
+                          className="relative flex flex-col items-center"
+                          style={{ width: 120, height: 200 }}
+                        >
+                          {/* Arrow shaft */}
+                          <div className="flex flex-col items-center" style={{ height: 120 }}>
+                            {/* Arrowhead */}
+                            <div
+                              className={cn(
+                                "w-0 h-0 transition-all duration-300",
+                                isAligned
+                                  ? "drop-shadow-[0_0_12px_rgba(16,185,129,1)]"
+                                  : "drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]"
+                              )}
+                              style={{
+                                borderLeft: "12px solid transparent",
+                                borderRight: "12px solid transparent",
+                                borderBottom: `22px solid ${isAligned ? "#10b981" : "white"}`,
+                              }}
+                            />
+                            {/* Shaft */}
+                            <div
+                              className="w-1.5 flex-1 rounded-b-full"
+                              style={{ background: isAligned ? "linear-gradient(to bottom, #10b981, #059669)" : "linear-gradient(to bottom, white, rgba(255,255,255,0.3))" }}
+                            />
+                          </div>
+
+                          {/* Kaaba icon at base */}
+                          <motion.div
+                            animate={isAligned ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                            transition={{ duration: 0.8, repeat: isAligned ? Infinity : 0 }}
+                            className={cn(
+                              "text-4xl drop-shadow-[0_0_16px_rgba(0,0,0,0.9)] mt-2",
+                              isAligned && "drop-shadow-[0_0_20px_rgba(16,185,129,0.8)]"
+                            )}
+                          >
+                            🕋
+                          </motion.div>
+                        </motion.div>
+                      </div>
+
+                      {/* Aligned pulse ring */}
+                      <AnimatePresence>
+                        {isAligned && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                          >
+                            <motion.div
+                              animate={{ scale: [1, 1.5, 1.5], opacity: [0.6, 0, 0] }}
+                              transition={{ duration: 2, repeat: Infinity }}
+                              className="absolute w-32 h-32 rounded-full border-2 border-emerald-400"
+                            />
+                            <motion.div
+                              animate={{ scale: [1, 2, 2], opacity: [0.4, 0, 0] }}
+                              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                              className="absolute w-32 h-32 rounded-full border border-emerald-400"
+                            />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Top status badge */}
+                      <AnimatePresence>
+                        {isAligned && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute top-5 left-1/2 -translate-x-1/2"
+                          >
+                            <div className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg">
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="text-sm font-bold">
+                                {language === "ar" ? "متجه نحو القبلة" : "Aligned with Qibla"}
+                              </span>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Instruction text */}
+                      {!isAligned && (
+                        <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                          <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
+                            {language === "ar" ? "وجّه الهاتف نحو الأفق" : "Point phone toward horizon"}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Bottom info bar */}
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                        <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                          <p className="text-white text-xs font-medium tabular-nums">
+                            {language === "ar" ? `القبلة ${Math.round(qiblaBearing)}°` : `Qibla ${Math.round(qiblaBearing)}°`}
+                          </p>
+                        </div>
+                        {correctedHeading !== null && (
+                          <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                            <p className="text-white text-xs font-medium tabular-nums">
+                              {language === "ar" ? `البوصلة ${Math.round(correctedHeading)}°` : `Compass ${Math.round(correctedHeading)}°`}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

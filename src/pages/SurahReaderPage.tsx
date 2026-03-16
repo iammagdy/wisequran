@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
+import { SearchModal } from "@/components/quran/SearchModal";
 import ListeningTab from "@/components/quran/ListeningTab";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ export default function SurahReaderPage() {
   const targetAyah = searchParams.get("ayah") ? Number(searchParams.get("ayah")) : null;
   const isListeningMode = searchParams.get("mode") === "listening";
 
+  const [searchOpen, setSearchOpen] = useState(false);
   const [highlightedAyah, setHighlightedAyah] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState<number | null>(null);
   const [goToPageInput, setGoToPageInput] = useState("");
@@ -123,6 +125,17 @@ export default function SurahReaderPage() {
       increment(ayahs.length);
     }
   }, [loading, ayahs.length, markActive, increment]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && targetAyah) {
@@ -351,6 +364,15 @@ export default function SurahReaderPage() {
                   {currentReciterName}
                 </span>
               </div>
+            )}
+            {!isListeningMode && (
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-muted"
+                title={language === "ar" ? "بحث في السورة" : "Search surah"}
+              >
+                <Search className="h-4 w-4" />
+              </button>
             )}
             <button
               onClick={toggleFavorite}
@@ -734,5 +756,23 @@ export default function SurahReaderPage() {
           }
         </AnimatePresence>
       )}
+
+      {/* Global Quran Search Modal */}
+      <SearchModal
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        ayahs={ayahs}
+        surahNumber={surahNumber}
+        translationAyahs={translationAyahs}
+        language={language}
+        onScrollToAyah={(numberInSurah) => {
+          const el = document.getElementById(`ayah-${numberInSurah}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightedAyah(numberInSurah);
+            setTimeout(() => setHighlightedAyah(null), 2000);
+          }
+        }}
+      />
     </div>);
 }

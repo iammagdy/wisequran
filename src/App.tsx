@@ -24,6 +24,7 @@ import QiblaPage from "@/pages/QiblaPage";
 import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
 import SignInPage from "@/pages/SignInPage";
+import SleepModePage from "@/pages/SleepModePage";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -39,6 +40,7 @@ const AppContent = () => {
   return (
     <Routes>
       <Route path="/signin" element={<SignInPage />} />
+      <Route path="/sleep" element={<SleepModePage />} />
       <Route
         path="*"
         element={

@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.5.0";
+export const APP_VERSION = "2.6.0";
 
 export interface ChangelogEntry {
   version: string;
@@ -8,6 +8,32 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.6.0",
+    date: "2026-03-16",
+    changes: [
+      "ميزة جديدة: وضع النوم المتميز — استمع للقرآن قبل النوم مع مؤقت ذكي وتلاشٍ تدريجي للصوت",
+      "أصوات الطبيعة في وضع النوم: مطر، أمواج، وغابة تعمل بالتوازي مع القرآن",
+      "واجهة ليلية فريدة لوضع النوم مع تحريك القمر والنجوم وعداد دائري بصري",
+      "إضافة ٣ قراء جدد بأصوات هادئة: سعد الغامدي، ناصر القطامي، خالد القحطاني",
+      "تنظيف أصوات الأذان: الإبقاء على أفضل ٣ أصوات (المسجد الحرام، النبوي، مشاري العفاسي)",
+      "إصلاح معاينة الأذان: إضافة مؤشر تحميل وتحديد وقت انتهاء مع رسائل خطأ أوضح",
+      "بحث عالمي داخل السورة: ابحث في الآيات مع تمييز النتائج والتنقل بينها",
+      "إعادة تصميم واجهة القبلة ثلاثية الأبعاد بنمط AR احترافي مع سهم توجيه متحرك وحلقات عمق",
+      "حفظ إحصائيات جلسات وضع النوم لمتابعة عاداتك",
+    ],
+    changesEn: [
+      "New feature: Sleep Mode — listen to Quran before sleep with a smart timer and gradual fade-out",
+      "Nature sounds in Sleep Mode: rain, ocean waves, and forest play alongside the Quran",
+      "Unique night-themed Sleep Mode UI with animated moon, twinkling stars, and circular countdown",
+      "Added 3 new calm reciters: Saad Al-Ghamdi, Nasser Al-Qatami, Khalid Al-Qahtani",
+      "Adhan voices cleanup: kept best 3 voices (Makkah, Madinah, Mishary Al-Afasy)",
+      "Fixed adhan preview: added loading indicator, timeout handling, and clearer error messages",
+      "Global in-surah search: search ayahs with highlighted results and previous/next navigation",
+      "Redesigned 3D Qibla interface with professional AR-style overlay, animated directional arrow, and depth rings",
+      "Sleep Mode session stats saved to track your listening habits",
+    ],
+  },
   {
     version: "2.5.0",
     date: "2026-03-16",

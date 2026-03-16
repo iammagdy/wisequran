@@ -98,36 +98,73 @@ export default function SettingsPage() {
 
   // Adhan voice preview
   const [previewingAdhan, setPreviewingAdhan] = useState<string | null>(null);
+  const [adhanPreviewLoading, setAdhanPreviewLoading] = useState<string | null>(null);
   const adhanPreviewRef = useRef<HTMLAudioElement | null>(null);
+  const adhanPreviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stopAdhanPreview = useCallback(() => {
+    if (adhanPreviewTimeoutRef.current) {
+      clearTimeout(adhanPreviewTimeoutRef.current);
+      adhanPreviewTimeoutRef.current = null;
+    }
     if (adhanPreviewRef.current) {
       adhanPreviewRef.current.pause();
       adhanPreviewRef.current.src = "";
       adhanPreviewRef.current = null;
     }
     setPreviewingAdhan(null);
+    setAdhanPreviewLoading(null);
   }, []);
 
   const toggleAdhanPreview = useCallback((voiceId: string, src: string) => {
-    if (previewingAdhan === voiceId) {
+    if (previewingAdhan === voiceId || adhanPreviewLoading === voiceId) {
       stopAdhanPreview();
       return;
     }
     stopAdhanPreview();
-    const audio = new Audio(src);
+    setAdhanPreviewLoading(voiceId);
+
+    const audio = new Audio();
     audio.volume = Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100));
     adhanPreviewRef.current = audio;
-    setPreviewingAdhan(voiceId);
-    audio.play().catch(() => {
-      setPreviewingAdhan(null);
-      toast.error(language === "ar" ? "تعذّر تشغيل الأذان. تحقق من اتصالك بالإنترنت." : "Could not play adhan. Check your internet connection.");
-    });
+
+    adhanPreviewTimeoutRef.current = setTimeout(() => {
+      if (adhanPreviewRef.current === audio) {
+        audio.pause();
+        audio.src = "";
+        adhanPreviewRef.current = null;
+        setAdhanPreviewLoading(null);
+        setPreviewingAdhan(null);
+        toast.error(language === "ar" ? "انتهت مهلة تحميل الأذان. تحقق من اتصالك." : "Adhan loading timed out. Check your connection.");
+      }
+    }, 12000);
+
+    audio.addEventListener("canplay", () => {
+      if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
+      setAdhanPreviewLoading(null);
+      setPreviewingAdhan(voiceId);
+      audio.play().catch(() => {
+        setPreviewingAdhan(null);
+      });
+    }, { once: true });
+
     audio.addEventListener("ended", () => {
       adhanPreviewRef.current = null;
       setPreviewingAdhan(null);
-    });
-  }, [previewingAdhan, stopAdhanPreview, adhanSettings.adhanVolume]);
+    }, { once: true });
+
+    audio.addEventListener("error", () => {
+      if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
+      adhanPreviewRef.current = null;
+      setAdhanPreviewLoading(null);
+      setPreviewingAdhan(null);
+      toast.error(language === "ar" ? "تعذّر تحميل الأذان. قد يكون الخادم غير متاح مؤقتاً." : "Could not load adhan. The server may be temporarily unavailable.");
+    }, { once: true });
+
+    audio.src = src;
+    audio.preload = "auto";
+    audio.load();
+  }, [previewingAdhan, adhanPreviewLoading, stopAdhanPreview, adhanSettings.adhanVolume, language]);
 
   // Preview reciter audio
   const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
@@ -209,6 +246,14 @@ export default function SettingsPage() {
       if (previewAudioRef.current) {
         previewAudioRef.current.pause();
         previewAudioRef.current = null;
+      }
+      if (adhanPreviewRef.current) {
+        adhanPreviewRef.current.pause();
+        adhanPreviewRef.current = null;
+      }
+      if (adhanPreviewTimeoutRef.current) {
+        clearTimeout(adhanPreviewTimeoutRef.current);
+        adhanPreviewTimeoutRef.current = null;
       }
     };
   }, []);
@@ -911,14 +956,16 @@ export default function SettingsPage() {
                         <button
                           onClick={() => toggleAdhanPreview(voice.id, voice.file)}
                           className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors shrink-0 ${
-                            previewingAdhan === voice.id
+                            previewingAdhan === voice.id || adhanPreviewLoading === voice.id
                               ? "bg-primary/15 text-primary"
                               : "bg-muted text-muted-foreground hover:bg-muted/80"
                           }`}
                         >
-                          {previewingAdhan === voice.id
-                            ? <><Square className="h-3 w-3" /> {language === "ar" ? "إيقاف" : "Stop"}</>
-                            : <><Play className="h-3 w-3" /> {language === "ar" ? "معاينة" : "Preview"}</>
+                          {adhanPreviewLoading === voice.id
+                            ? <><Loader2 className="h-3 w-3 animate-spin" /> {language === "ar" ? "جاري التحميل..." : "Loading..."}</>
+                            : previewingAdhan === voice.id
+                              ? <><Square className="h-3 w-3" /> {language === "ar" ? "إيقاف" : "Stop"}</>
+                              : <><Play className="h-3 w-3" /> {language === "ar" ? "معاينة" : "Preview"}</>
                           }
                         </button>
                       </div>
