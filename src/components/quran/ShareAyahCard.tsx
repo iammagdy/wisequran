@@ -120,6 +120,7 @@ export function ShareAyahCard({ ayahText, surahName, ayahNumber, surahNumber }: 
 
   return (
     <button
+      aria-label="مشاركة الآية"
       onClick={handleShare}
       className="rounded-xl p-2 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
       title="مشاركة الآية"
