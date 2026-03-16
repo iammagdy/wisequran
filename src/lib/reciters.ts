@@ -49,27 +49,72 @@ export function getReciterById(id: string): Reciter {
   return RECITERS.find((r) => r.id === id) ?? RECITERS[0];
 }
 
-// Static CDN URLs — verified working paths (no trailing subfolder junk)
-const CUSTOM_CDN_RECITERS: Record<string, string> = {
-  ajamy: "https://server10.mp3quran.net/ajm",
-  mahermuaiqly: "https://server12.mp3quran.net/maher",
-  yasser: "https://server11.mp3quran.net/yasser",
-  ayyub: "https://server8.mp3quran.net/ayyub",
-  idrisabkar: "https://server6.mp3quran.net/abkr",
-  baleela: "https://download.quranicaudio.com/quran/bandar_baleela",
-  islamsobhi: "https://server14.mp3quran.net/islam/Rewayat-Hafs-A-n-Assem",
-  khalilaljalil: "https://server10.mp3quran.net/jleel",
-  abdulbasitmujawwad: "https://download.quranicaudio.com/quran/abdulbasit_abdulsamad_mujawwad",
-  // Egyptian reciters
-  rifaat: "https://download.quranicaudio.com/quran/muhammad_rifaat",
-  tablawi: "https://server7.mp3quran.net/tablawi",
-  bahtimi: "https://download.quranicaudio.com/quran/kamel_yusuf_al-bahtimi",
-  mustafaismail: "https://download.quranicaudio.com/quran/mustafa_ismail",
-  shahat: "https://server8.mp3quran.net/shahat",
-  // New reciters
-  saadghamdi: "https://server7.mp3quran.net/s_gmd",
-  nasserqatami: "https://server6.mp3quran.net/qtm",
-  khaledalqahtani: "https://server6.mp3quran.net/khq",
+// Static CDN URLs — primary sources for full-surah audio per reciter
+const CUSTOM_CDN_RECITERS: Record<string, string[]> = {
+  ajamy: [
+    "https://cdn.islamic.network/quran/audio-surah/128/ar.ahmedajamy/{n}.mp3",
+    "https://download.quranicaudio.com/quran/ahmed_al-ajamy/{p}.mp3",
+  ],
+  mahermuaiqly: [
+    "https://cdn.islamic.network/quran/audio-surah/128/ar.mahermuaiqly/{n}.mp3",
+    "https://download.quranicaudio.com/quran/maher_al_muaiqly/{p}.mp3",
+  ],
+  yasser: [
+    "https://download.quranicaudio.com/quran/yasser_ad-dossari/{p}.mp3",
+    "https://server11.mp3quran.net/yasser/{p}.mp3",
+  ],
+  ayyub: [
+    "https://download.quranicaudio.com/quran/muhammad_ayyoob/{p}.mp3",
+    "https://server8.mp3quran.net/ayyub/{p}.mp3",
+  ],
+  idrisabkar: [
+    "https://download.quranicaudio.com/quran/idrees_abkar/{p}.mp3",
+    "https://server6.mp3quran.net/abkr/{p}.mp3",
+  ],
+  baleela: [
+    "https://download.quranicaudio.com/quran/bandar_baleela/{p}.mp3",
+  ],
+  islamsobhi: [
+    "https://download.quranicaudio.com/quran/islam_sobhi/{p}.mp3",
+    "https://server14.mp3quran.net/islam/Rewayat-Hafs-A-n-Assem/{p}.mp3",
+  ],
+  khalilaljalil: [
+    "https://download.quranicaudio.com/quran/khalid_al-jaleel/{p}.mp3",
+    "https://server10.mp3quran.net/jleel/{p}.mp3",
+  ],
+  abdulbasitmujawwad: [
+    "https://download.quranicaudio.com/quran/abdulbasit_abdulsamad_mujawwad/{p}.mp3",
+    "https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasitmujawwad/{n}.mp3",
+  ],
+  rifaat: [
+    "https://download.quranicaudio.com/quran/muhammad_rifaat/{p}.mp3",
+  ],
+  tablawi: [
+    "https://download.quranicaudio.com/quran/muhammad_al-tablawi/{p}.mp3",
+    "https://server7.mp3quran.net/tablawi/{p}.mp3",
+  ],
+  bahtimi: [
+    "https://download.quranicaudio.com/quran/kamel_yusuf_al-bahtimi/{p}.mp3",
+  ],
+  mustafaismail: [
+    "https://download.quranicaudio.com/quran/mustafa_ismail/{p}.mp3",
+  ],
+  shahat: [
+    "https://download.quranicaudio.com/quran/ramadan_shahat/{p}.mp3",
+    "https://server8.mp3quran.net/shahat/{p}.mp3",
+  ],
+  saadghamdi: [
+    "https://download.quranicaudio.com/quran/saad_al-ghamdi/{p}.mp3",
+    "https://server7.mp3quran.net/s_gmd/{p}.mp3",
+  ],
+  nasserqatami: [
+    "https://download.quranicaudio.com/quran/nasser_al-qatami/{p}.mp3",
+    "https://server6.mp3quran.net/qtm/{p}.mp3",
+  ],
+  khaledalqahtani: [
+    "https://download.quranicaudio.com/quran/khalid_al-qahtani/{p}.mp3",
+    "https://server6.mp3quran.net/khq/{p}.mp3",
+  ],
 };
 
 // Cache for dynamically resolved mp3quran.net server URLs
@@ -106,28 +151,38 @@ export function getReciterAyahAudioUrl(reciterId: string, globalAyahNumber: numb
   return `https://cdn.islamic.network/quran/audio/128/${reciter.folder}/${globalAyahNumber}.mp3`;
 }
 
+function buildUrl(template: string, surahNumber: number): string {
+  const padded = surahNumber.toString().padStart(3, "0");
+  return template.replace("{n}", String(surahNumber)).replace("{p}", padded);
+}
+
 /**
- * Get full-surah audio URL for a reciter. Now async to support dynamic resolution.
+ * Get full-surah audio URL for a reciter. Returns first available CDN URL.
  */
 export async function getReciterAudioUrl(reciterId: string, surahNumber: number): Promise<string> {
-  const padded = surahNumber.toString().padStart(3, "0");
-
-  // 1. Check static custom CDN
-  const customBase = CUSTOM_CDN_RECITERS[reciterId];
-  if (customBase) {
-    return `${customBase}/${padded}.mp3`;
+  const customUrls = CUSTOM_CDN_RECITERS[reciterId];
+  if (customUrls && customUrls.length > 0) {
+    return buildUrl(customUrls[0], surahNumber);
   }
 
-  // 2. Check dynamic mp3quran API for reciters with mp3quranId
   const reciter = getReciterById(reciterId);
+
   if (reciter.mp3quranId) {
     const server = await resolveMp3QuranServer(reciter.mp3quranId);
     if (server) {
+      const padded = surahNumber.toString().padStart(3, "0");
       return `${server}/${padded}.mp3`;
     }
   }
 
-  // 3. Fallback to cdn.islamic.network surah audio
+  if (reciter.hasAyahAudio) {
+    const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
+    if (qaPath) {
+      const padded = surahNumber.toString().padStart(3, "0");
+      return `https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`;
+    }
+  }
+
   return `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
 }
 
@@ -152,20 +207,22 @@ export async function getReciterAudioUrls(reciterId: string, surahNumber: number
   const padded = surahNumber.toString().padStart(3, "0");
   const urls: string[] = [];
 
-  // 1. download.quranicaudio.com — only add if this reciter is the true owner of that folder
-  // (hasAyahAudio reciters each have a unique folder; hasAyahAudio:false reciters all share
-  //  "ar.alafasy" as a placeholder, so we must NOT look up the quranic audio map for them)
-  if (reciter.hasAyahAudio) {
-    const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
-    if (qaPath) {
-      urls.push(`https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`);
+  // 1. Custom multi-URL list (quranicaudio, mp3quran, cdn.islamic.network)
+  const customUrls = CUSTOM_CDN_RECITERS[reciterId];
+  if (customUrls) {
+    for (const tpl of customUrls) {
+      const url = buildUrl(tpl, surahNumber);
+      if (!urls.includes(url)) urls.push(url);
     }
   }
 
-  // 2. Custom CDN (mp3quran.net etc.) for reciters that have it
-  const customBase = CUSTOM_CDN_RECITERS[reciterId];
-  if (customBase) {
-    urls.push(`${customBase}/${padded}.mp3`);
+  // 2. download.quranicaudio.com for reciters with their own unique folder
+  if (reciter.hasAyahAudio) {
+    const qaPath = QURANIC_AUDIO_MAP[reciter.folder];
+    if (qaPath) {
+      const url = `https://download.quranicaudio.com/quran/${qaPath}/${padded}.mp3`;
+      if (!urls.includes(url)) urls.push(url);
+    }
   }
 
   // 3. Dynamic mp3quran.net resolution
@@ -179,7 +236,8 @@ export async function getReciterAudioUrls(reciterId: string, surahNumber: number
 
   // 4. cdn.islamic.network as last resort — only for reciters with their own unique folder
   if (reciter.hasAyahAudio) {
-    urls.push(`https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`);
+    const url = `https://cdn.islamic.network/quran/audio-surah/128/${reciter.folder}/${surahNumber}.mp3`;
+    if (!urls.includes(url)) urls.push(url);
   }
 
   return urls;

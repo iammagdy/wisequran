@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { getReciterAudioUrl } from "@/lib/reciters";
-import { NATURE_SOUNDS, type NatureSound } from "@/components/sleep/NatureSoundPicker";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeviceId } from "@/hooks/useDeviceId";
@@ -9,8 +8,6 @@ export interface SleepModePrefs {
   reciterId: string;
   surahNumber: number;
   timerMinutes: number;
-  natureSound: NatureSound;
-  natureVolume: number;
   quranVolume: number;
 }
 
@@ -18,8 +15,6 @@ const PREFS_KEYS = {
   reciter: "wise-sleep-mode-reciter",
   timer: "wise-sleep-mode-timer",
   surah: "wise-sleep-mode-surah",
-  natureSound: "wise-sleep-mode-nature-sound",
-  natureVolume: "wise-sleep-mode-nature-volume",
   quranVolume: "wise-sleep-mode-quran-volume",
 } as const;
 
@@ -28,8 +23,6 @@ function loadPrefs(): SleepModePrefs {
     reciterId: localStorage.getItem(PREFS_KEYS.reciter) ?? "alafasy",
     surahNumber: Number(localStorage.getItem(PREFS_KEYS.surah) ?? 36),
     timerMinutes: Number(localStorage.getItem(PREFS_KEYS.timer) ?? 30),
-    natureSound: (localStorage.getItem(PREFS_KEYS.natureSound) as NatureSound) ?? "none",
-    natureVolume: Number(localStorage.getItem(PREFS_KEYS.natureVolume) ?? 40),
     quranVolume: Number(localStorage.getItem(PREFS_KEYS.quranVolume) ?? 80),
   };
 }
@@ -38,8 +31,6 @@ function savePrefs(prefs: SleepModePrefs) {
   localStorage.setItem(PREFS_KEYS.reciter, prefs.reciterId);
   localStorage.setItem(PREFS_KEYS.surah, String(prefs.surahNumber));
   localStorage.setItem(PREFS_KEYS.timer, String(prefs.timerMinutes));
-  localStorage.setItem(PREFS_KEYS.natureSound, prefs.natureSound);
-  localStorage.setItem(PREFS_KEYS.natureVolume, String(prefs.natureVolume));
   localStorage.setItem(PREFS_KEYS.quranVolume, String(prefs.quranVolume));
 }
 
@@ -54,13 +45,15 @@ export function useSleepModePlayer() {
   const [isLoading, setIsLoading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(prefs.timerMinutes * 60);
   const [hasError, setHasError] = useState(false);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
 
   const quranAudioRef = useRef<HTMLAudioElement | null>(null);
-  const natureAudioRef = useRef<HTMLAudioElement | null>(null);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const isPlayingRef = useRef(false);
 
   const setPrefs = useCallback((updates: Partial<SleepModePrefs>) => {
     setPrefsState((prev) => {
@@ -89,10 +82,12 @@ export function useSleepModePlayer() {
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
     if (quranAudioRef.current) { quranAudioRef.current.pause(); quranAudioRef.current.src = ""; quranAudioRef.current = null; }
-    if (natureAudioRef.current) { natureAudioRef.current.pause(); natureAudioRef.current.src = ""; natureAudioRef.current = null; }
     releaseWakeLock();
+    isPlayingRef.current = false;
     setIsPlaying(false);
     setIsLoading(false);
+    setAudioCurrentTime(0);
+    setAudioDuration(0);
   }, [releaseWakeLock]);
 
   const saveSession = useCallback(async (completed: boolean) => {
@@ -103,51 +98,58 @@ export function useSleepModePlayer() {
       .eq("id", sessionIdRef.current);
   }, []);
 
-  const startSession = useCallback(async () => {
+  const startSession = useCallback(async (currentPrefs: SleepModePrefs) => {
     const { data } = await supabase
       .from("sleep_mode_sessions")
       .insert({
         user_id: user?.id ?? null,
         device_id: user ? null : deviceId,
-        reciter_id: prefs.reciterId,
-        surah_number: prefs.surahNumber,
-        timer_minutes: prefs.timerMinutes,
-        nature_sound: prefs.natureSound === "none" ? null : prefs.natureSound,
+        reciter_id: currentPrefs.reciterId,
+        surah_number: currentPrefs.surahNumber,
+        timer_minutes: currentPrefs.timerMinutes,
+        nature_sound: null,
         completed: false,
       })
       .select("id")
       .maybeSingle();
     if (data?.id) sessionIdRef.current = data.id;
-  }, [user, deviceId, prefs]);
+  }, [user, deviceId]);
 
-  const startFadeOut = useCallback((currentQuranVol: number, currentNatureVol: number) => {
+  const startFadeOut = useCallback((currentQuranVol: number) => {
     let qVol = currentQuranVol / 100;
-    let nVol = currentNatureVol / 100;
     const steps = FADE_OUT_START_SECS / 2;
     const qDecrement = qVol / steps;
-    const nDecrement = nVol / steps;
 
     fadeIntervalRef.current = setInterval(() => {
       qVol = Math.max(0, qVol - qDecrement);
-      nVol = Math.max(0, nVol - nDecrement);
       if (quranAudioRef.current) quranAudioRef.current.volume = qVol;
-      if (natureAudioRef.current) natureAudioRef.current.volume = nVol;
-      if (qVol <= 0 && nVol <= 0) {
+      if (qVol <= 0) {
         if (fadeIntervalRef.current) clearInterval(fadeIntervalRef.current);
       }
     }, 2000);
   }, []);
 
-  const play = useCallback(async () => {
+  const play = useCallback(async (overridePrefs?: SleepModePrefs) => {
     stopAll();
     setHasError(false);
     setIsLoading(true);
 
+    const currentPrefs = overridePrefs ?? (await new Promise<SleepModePrefs>((res) => {
+      setPrefsState((p) => { res(p); return p; });
+    }));
+
     try {
-      const url = await getReciterAudioUrl(prefs.reciterId, prefs.surahNumber);
+      const url = await getReciterAudioUrl(currentPrefs.reciterId, currentPrefs.surahNumber);
       const quranAudio = new Audio(url);
-      quranAudio.volume = prefs.quranVolume / 100;
+      quranAudio.volume = currentPrefs.quranVolume / 100;
       quranAudioRef.current = quranAudio;
+
+      quranAudio.addEventListener("timeupdate", () => {
+        setAudioCurrentTime(quranAudio.currentTime);
+      });
+      quranAudio.addEventListener("loadedmetadata", () => {
+        setAudioDuration(quranAudio.duration);
+      });
 
       await new Promise<void>((resolve, reject) => {
         quranAudio.addEventListener("canplay", () => resolve(), { once: true });
@@ -156,26 +158,16 @@ export function useSleepModePlayer() {
         quranAudio.load();
       });
 
-      if (prefs.natureSound !== "none") {
-        const soundOption = NATURE_SOUNDS.find((s) => s.id === prefs.natureSound);
-        if (soundOption?.url) {
-          const natureAudio = new Audio(soundOption.url);
-          natureAudio.volume = prefs.natureVolume / 100;
-          natureAudio.loop = true;
-          natureAudioRef.current = natureAudio;
-          natureAudio.play().catch(() => {});
-        }
-      }
-
-      const totalSecs = prefs.timerMinutes * 60;
+      const totalSecs = currentPrefs.timerMinutes * 60;
       setRemainingSeconds(totalSecs);
 
       await quranAudio.play();
+      isPlayingRef.current = true;
       setIsPlaying(true);
       setIsLoading(false);
 
       await acquireWakeLock();
-      await startSession();
+      await startSession(currentPrefs);
 
       let elapsed = 0;
       timerIntervalRef.current = setInterval(() => {
@@ -184,7 +176,7 @@ export function useSleepModePlayer() {
         setRemainingSeconds(remaining);
 
         if (remaining === FADE_OUT_START_SECS) {
-          startFadeOut(prefs.quranVolume, prefs.natureVolume);
+          startFadeOut(currentPrefs.quranVolume);
         }
 
         if (remaining <= 0) {
@@ -198,46 +190,53 @@ export function useSleepModePlayer() {
       setIsLoading(false);
       stopAll();
     }
-  }, [prefs, stopAll, acquireWakeLock, startSession, startFadeOut, saveSession]);
+  }, [stopAll, acquireWakeLock, startSession, startFadeOut, saveSession]);
 
   const pause = useCallback(() => {
     quranAudioRef.current?.pause();
-    natureAudioRef.current?.pause();
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
     releaseWakeLock();
+    isPlayingRef.current = false;
     setIsPlaying(false);
   }, [releaseWakeLock]);
 
   const resume = useCallback(async () => {
     if (!quranAudioRef.current) return;
     await quranAudioRef.current.play().catch(() => {});
-    if (natureAudioRef.current) natureAudioRef.current.play().catch(() => {});
     await acquireWakeLock();
+    isPlayingRef.current = true;
     setIsPlaying(true);
 
-    let elapsed = prefs.timerMinutes * 60 - remainingSeconds;
-    const totalSecs = prefs.timerMinutes * 60;
+    setPrefsState((currentPrefs) => {
+      let elapsed = currentPrefs.timerMinutes * 60 - remainingSeconds;
+      const totalSecs = currentPrefs.timerMinutes * 60;
 
-    timerIntervalRef.current = setInterval(() => {
-      elapsed += 1;
-      const remaining = totalSecs - elapsed;
-      setRemainingSeconds(remaining);
-      if (remaining === FADE_OUT_START_SECS) {
-        startFadeOut(prefs.quranVolume, prefs.natureVolume);
-      }
-      if (remaining <= 0) {
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-        saveSession(true);
-        stopAll();
-      }
-    }, 1000);
-  }, [acquireWakeLock, prefs, remainingSeconds, startFadeOut, saveSession, stopAll]);
+      timerIntervalRef.current = setInterval(() => {
+        elapsed += 1;
+        const remaining = totalSecs - elapsed;
+        setRemainingSeconds(remaining);
+        if (remaining === FADE_OUT_START_SECS) {
+          startFadeOut(currentPrefs.quranVolume);
+        }
+        if (remaining <= 0) {
+          if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+          saveSession(true);
+          stopAll();
+        }
+      }, 1000);
+
+      return currentPrefs;
+    });
+  }, [acquireWakeLock, remainingSeconds, startFadeOut, saveSession, stopAll]);
 
   const togglePlay = useCallback(async () => {
     if (isLoading) return;
     if (!isPlaying && !quranAudioRef.current) {
-      await play();
+      setPrefsState((currentPrefs) => {
+        play(currentPrefs);
+        return currentPrefs;
+      });
     } else if (isPlaying) {
       pause();
     } else {
@@ -256,10 +255,13 @@ export function useSleepModePlayer() {
   }, [prefs.quranVolume]);
 
   useEffect(() => {
-    if (natureAudioRef.current) {
-      natureAudioRef.current.volume = prefs.natureVolume / 100;
+    if (isPlayingRef.current && quranAudioRef.current) {
+      setPrefsState((currentPrefs) => {
+        play(currentPrefs);
+        return currentPrefs;
+      });
     }
-  }, [prefs.natureVolume]);
+  }, [prefs.reciterId, prefs.surahNumber]);
 
   useEffect(() => {
     return () => {
@@ -275,6 +277,8 @@ export function useSleepModePlayer() {
     isLoading,
     hasError,
     remainingSeconds,
+    audioCurrentTime,
+    audioDuration,
     togglePlay,
     stop: () => { saveSession(false); stopAll(); setRemainingSeconds(prefs.timerMinutes * 60); },
   };

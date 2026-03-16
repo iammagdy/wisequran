@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, Moon, Volume2, Clock, ChevronDown, ChevronUp, CircleAlert as AlertCircle } from "lucide-react";
+import { Play, Pause, X, Volume2, Clock, ChevronDown, ChevronUp, CircleAlert as AlertCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { MoonAnimation } from "@/components/sleep/MoonAnimation";
 import { StarField } from "@/components/sleep/StarField";
 import { CircularTimer } from "@/components/sleep/CircularTimer";
-import { NatureSoundPicker, type NatureSound } from "@/components/sleep/NatureSoundPicker";
 import { SurahSelectorForSleep } from "@/components/sleep/SurahSelectorForSleep";
 import { useSleepModePlayer } from "@/hooks/useSleepModePlayer";
 import { RECITERS } from "@/lib/reciters";
@@ -15,7 +14,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const TIMER_PRESETS = [10, 15, 20, 30, 45, 60];
 
-type SettingsPanel = "timer" | "reciter" | "surah" | "nature" | "volume" | null;
+type SettingsPanel = "timer" | "reciter" | "surah" | "volume" | null;
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
 
 export default function SleepModePage() {
   const navigate = useNavigate();
@@ -31,6 +36,8 @@ export default function SleepModePage() {
     isLoading,
     hasError,
     remainingSeconds,
+    audioCurrentTime,
+    audioDuration,
     togglePlay,
     stop,
   } = useSleepModePlayer();
@@ -54,6 +61,8 @@ export default function SleepModePage() {
   const sleepReciters = RECITERS.filter((r) => r.suitableForSleep);
   const selectedReciter = RECITERS.find((r) => r.id === prefs.reciterId);
 
+  const progressPct = audioDuration > 0 ? (audioCurrentTime / audioDuration) * 100 : 0;
+
   return (
     <div
       className="fixed inset-0 overflow-hidden flex flex-col"
@@ -65,7 +74,7 @@ export default function SleepModePage() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-safe-top pt-5 pb-3">
           <div className="flex items-center gap-2">
-            <Moon className="h-4 w-4 text-amber-300/70" />
+            <span className="text-amber-300/70 text-base font-bold leading-none">Zzz</span>
             <span className="text-sm font-medium text-amber-200/70">
               {language === "ar" ? "وضع النوم" : "Sleep Mode"}
             </span>
@@ -125,34 +134,51 @@ export default function SleepModePage() {
         </div>
 
         {/* Playback Controls */}
-        <div className="flex items-center justify-center gap-8 py-4">
-          <button
-            onClick={() => setPrefs({ surahNumber: Math.max(1, prefs.surahNumber - 1) })}
-            className="p-3 rounded-full bg-white/8 hover:bg-white/15 border border-white/10 transition-all text-white/60"
-          >
-            <ChevronDown className="h-5 w-5" />
-          </button>
+        <div className="flex flex-col items-center gap-3 py-4 px-6">
+          <div className="flex items-center gap-8">
+            <button
+              onClick={() => setPrefs({ surahNumber: Math.max(1, prefs.surahNumber - 1) })}
+              className="p-3 rounded-full bg-white/8 hover:bg-white/15 border border-white/10 transition-all text-white/60"
+            >
+              <ChevronDown className="h-5 w-5" />
+            </button>
 
-          <button
-            onClick={togglePlay}
-            disabled={isLoading}
-            className="w-16 h-16 rounded-full border-2 border-amber-400/50 bg-amber-400/15 hover:bg-amber-400/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <div className="w-5 h-5 rounded-full border-2 border-amber-300/60 border-t-transparent animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="h-6 w-6 text-amber-200" />
-            ) : (
-              <Play className="h-6 w-6 text-amber-200 translate-x-0.5" />
-            )}
-          </button>
+            <button
+              onClick={togglePlay}
+              disabled={isLoading}
+              className="w-16 h-16 rounded-full border-2 border-amber-400/50 bg-amber-400/15 hover:bg-amber-400/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <div className="w-5 h-5 rounded-full border-2 border-amber-300/60 border-t-transparent animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="h-6 w-6 text-amber-200" />
+              ) : (
+                <Play className="h-6 w-6 text-amber-200 translate-x-0.5" />
+              )}
+            </button>
 
-          <button
-            onClick={() => setPrefs({ surahNumber: Math.min(114, prefs.surahNumber + 1) })}
-            className="p-3 rounded-full bg-white/8 hover:bg-white/15 border border-white/10 transition-all text-white/60"
-          >
-            <ChevronUp className="h-5 w-5" />
-          </button>
+            <button
+              onClick={() => setPrefs({ surahNumber: Math.min(114, prefs.surahNumber + 1) })}
+              className="p-3 rounded-full bg-white/8 hover:bg-white/15 border border-white/10 transition-all text-white/60"
+            >
+              <ChevronUp className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Audio progress bar */}
+          <div className="w-full max-w-xs">
+            <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-amber-400/60"
+                animate={{ width: `${progressPct}%` }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+            <div className="flex justify-between mt-1 text-[0.6rem] text-white/30 tabular-nums">
+              <span>{formatTime(audioCurrentTime)}</span>
+              {audioDuration > 0 && <span>{formatTime(audioDuration)}</span>}
+            </div>
+          </div>
         </div>
 
         {/* Settings Panels */}
@@ -163,7 +189,6 @@ export default function SleepModePage() {
               { id: "timer" as SettingsPanel, icon: <Clock className="h-3.5 w-3.5" />, label: language === "ar" ? `${prefs.timerMinutes} د` : `${prefs.timerMinutes}m` },
               { id: "surah" as SettingsPanel, icon: null, label: selectedSurah ? (language === "ar" ? selectedSurah.name : selectedSurah.englishName) : "Surah" },
               { id: "reciter" as SettingsPanel, icon: null, label: selectedReciter ? (language === "ar" ? selectedReciter.name : selectedReciter.nameEn) : "Reciter" },
-              { id: "nature" as SettingsPanel, icon: null, label: language === "ar" ? "الطبيعة" : "Nature" },
               { id: "volume" as SettingsPanel, icon: <Volume2 className="h-3.5 w-3.5" />, label: language === "ar" ? "الصوت" : "Volume" },
             ].map(({ id, icon, label }) => (
               <button
@@ -246,58 +271,24 @@ export default function SleepModePage() {
                           >
                             <div className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${prefs.reciterId === r.id ? "bg-amber-400 border-amber-400" : "border-white/20"}`} />
                             <span>{language === "ar" ? r.name : r.nameEn}</span>
-                            {r.suitableForSleep && (
-                              <span className="ml-auto text-amber-400/50 text-xs">✦</span>
-                            )}
                           </button>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {activePanel === "nature" && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">
-                        {language === "ar" ? "صوت الطبيعة" : "Nature Sound"}
-                      </p>
-                      <NatureSoundPicker
-                        selected={prefs.natureSound}
-                        volume={prefs.natureVolume}
-                        language={language}
-                        onSelect={(s) => setPrefs({ natureSound: s as NatureSound })}
-                        onVolumeChange={(v) => setPrefs({ natureVolume: v })}
-                      />
-                    </div>
-                  )}
-
                   {activePanel === "volume" && (
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs text-white/50">{language === "ar" ? "صوت القرآن" : "Quran Volume"}</p>
-                          <span className="text-xs text-amber-300/60">{prefs.quranVolume}%</span>
-                        </div>
-                        <Slider
-                          value={[prefs.quranVolume]}
-                          onValueChange={([v]) => setPrefs({ quranVolume: v })}
-                          min={0} max={100} step={5}
-                          className="[&_[role=slider]]:bg-amber-300 [&_[role=slider]]:border-amber-400"
-                        />
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-white/50">{language === "ar" ? "صوت القرآن" : "Quran Volume"}</p>
+                        <span className="text-xs text-amber-300/60">{prefs.quranVolume}%</span>
                       </div>
-                      {prefs.natureSound !== "none" && (
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs text-white/50">{language === "ar" ? "صوت الطبيعة" : "Nature Volume"}</p>
-                            <span className="text-xs text-amber-300/60">{prefs.natureVolume}%</span>
-                          </div>
-                          <Slider
-                            value={[prefs.natureVolume]}
-                            onValueChange={([v]) => setPrefs({ natureVolume: v })}
-                            min={0} max={100} step={5}
-                            className="[&_[role=slider]]:bg-amber-300 [&_[role=slider]]:border-amber-400"
-                          />
-                        </div>
-                      )}
+                      <Slider
+                        value={[prefs.quranVolume]}
+                        onValueChange={([v]) => setPrefs({ quranVolume: v })}
+                        min={0} max={100} step={5}
+                        className="[&_[role=slider]]:bg-amber-300 [&_[role=slider]]:border-amber-400"
+                      />
                     </div>
                   )}
                 </div>
@@ -326,15 +317,15 @@ export default function SleepModePage() {
               style={{ background: "linear-gradient(145deg, #12182b, #1a2035)" }}
             >
               <div className="flex items-center gap-3">
-                <Moon className="h-6 w-6 text-amber-300" />
+                <span className="text-2xl font-bold text-amber-300 leading-none">Zzz</span>
                 <h2 className="text-lg font-semibold text-amber-100">
                   {language === "ar" ? "وضع النوم" : "Sleep Mode"}
                 </h2>
               </div>
               <p className="text-sm text-white/60 leading-relaxed">
                 {language === "ar"
-                  ? "استمع للقرآن الكريم قبل النوم مع موسيقى الطبيعة. يوقف التشغيل تلقائياً بعد المدة المحددة مع تلاشي تدريجي للصوت."
-                  : "Listen to the Quran before sleep with calming nature sounds. Playback automatically stops after the set duration with a gentle fade-out."}
+                  ? "استمع للقرآن الكريم قبل النوم. يوقف التشغيل تلقائياً بعد المدة المحددة مع تلاشي تدريجي للصوت."
+                  : "Listen to the Quran before sleep. Playback automatically stops after the set duration with a gentle fade-out."}
               </p>
               <div className="flex gap-3">
                 <button

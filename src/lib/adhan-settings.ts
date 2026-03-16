@@ -67,6 +67,20 @@ export const ADHAN_VOICES: AdhanVoice[] = [
     file: `${CDN}/AFASY.mp3`,
     fajrFile: `${CDN}/AFASY_FAJR.mp3`,
   },
+  {
+    id: "egypt",
+    nameAr: "الإذاعة المصرية",
+    nameEn: "Egyptian Radio",
+    file: "https://download.quranicaudio.com/adhan/adhan_egypt.mp3",
+    fajrFile: "https://download.quranicaudio.com/adhan/adhan_egypt_fajr.mp3",
+  },
+  {
+    id: "husary_adhan",
+    nameAr: "محمود خليل الحصري",
+    nameEn: "Mahmoud Khalil Al-Husary",
+    file: `${CDN}/HUSARY.mp3`,
+    fajrFile: `${CDN}/HUSARY.mp3`,
+  },
 ];
 
 export const TAKBIR_URL = `${CDN}/MAKKAH_QURAN.mp3`;

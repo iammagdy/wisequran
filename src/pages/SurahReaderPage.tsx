@@ -365,15 +365,13 @@ export default function SurahReaderPage() {
                 </span>
               </div>
             )}
-            {!isListeningMode && (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-muted"
-                title={language === "ar" ? "بحث في السورة" : "Search surah"}
-              >
-                <Search className="h-4 w-4" />
-              </button>
-            )}
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-muted"
+              title={language === "ar" ? "بحث في السورة" : "Search surah"}
+            >
+              <Search className="h-4 w-4" />
+            </button>
             <button
               onClick={toggleFavorite}
               className={cn("rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}>
@@ -733,13 +731,6 @@ export default function SurahReaderPage() {
         )}
       </div>
 
-      {/* Bottom player bar — listening mode only */}
-      {isListeningMode && (
-        <SurahBottomBar
-          surahNumber={surahNumber}
-          surahName={displaySurahName}
-          ayahs={ayahs} />
-      )}
 
       {/* Focus Mode Overlay — reading mode only */}
       {!isListeningMode && (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -13,6 +13,8 @@ import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type HomeView = "home" | "surahs" | "surahs_listening";
+
+
 
 interface ModeCard {
   key: string;
@@ -30,6 +32,7 @@ export default function QuranPage() {
   const [view, setView] = useState<HomeView>("home");
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
   const [loadingSurahs, setLoadingSurahs] = useState(false);
+  const [surahSearch, setSurahSearch] = useState("");
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
@@ -109,6 +112,7 @@ export default function QuranPage() {
     if (card.route) {
       navigate(card.route);
     } else if (card.view) {
+      setSurahSearch("");
       setView(card.view);
     }
   };
@@ -124,6 +128,17 @@ export default function QuranPage() {
   const surahListTitle =
     view === "surahs_listening" ? t("mode_listening") : t("mode_reading");
 
+  const filteredSurahs = surahSearch.trim()
+    ? surahs.filter((s) => {
+        const q = surahSearch.toLowerCase().trim();
+        return (
+          s.englishName.toLowerCase().includes(q) ||
+          s.name.includes(q) ||
+          String(s.number).includes(q)
+        );
+      })
+    : surahs;
+
   return (
     <div className="px-4 pt-6 pb-6" dir={isRTL ? "rtl" : "ltr"}>
 
@@ -135,7 +150,7 @@ export default function QuranPage() {
               initial={{ opacity: 0, x: 8 }}
               animate={{ opacity: 1, x: 0 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => setView("home")}
+              onClick={() => { setView("home"); setSurahSearch(""); }}
               className="rounded-xl p-2.5 bg-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft border border-border/40"
               dir={isRTL ? "rtl" : "ltr"}>
               {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
@@ -156,6 +171,13 @@ export default function QuranPage() {
           <div className="flex items-center gap-1.5">
             <motion.button
               whileTap={{ scale: 0.9 }}
+              onClick={() => navigate("/sleep")}
+              aria-label="Sleep Mode"
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              <span className="text-sm font-bold leading-none">Zzz</span>
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/stats")}
               aria-label={t("statistics")}
               className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
@@ -171,6 +193,39 @@ export default function QuranPage() {
           </div>
         )}
       </div>
+
+      {/* Search bar — visible only when surah list is shown */}
+      <AnimatePresence>
+        {(view === "surahs" || view === "surahs_listening") && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+            className="relative mb-3"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" style={isRTL ? { left: "auto", right: "0.75rem" } : {}} />
+            <input
+              type="text"
+              value={surahSearch}
+              onChange={(e) => setSurahSearch(e.target.value)}
+              placeholder={language === "ar" ? "ابحث عن سورة..." : "Search surah..."}
+              dir={isRTL ? "rtl" : "ltr"}
+              className="w-full rounded-xl bg-card border border-border/40 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all shadow-soft"
+              style={isRTL ? { paddingRight: "2.5rem", paddingLeft: surahSearch ? "2.5rem" : "1rem" } : { paddingLeft: "2.5rem", paddingRight: surahSearch ? "2.5rem" : "1rem" }}
+            />
+            {surahSearch && (
+              <button
+                onClick={() => setSurahSearch("")}
+                className="absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                style={isRTL ? { left: "0.75rem" } : { right: "0.75rem" }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence mode="wait">
 
@@ -310,7 +365,7 @@ export default function QuranPage() {
               ? Array.from({ length: 10 }).map((_, i) => (
                   <div key={i} className="h-[68px] rounded-xl shimmer" />
                 ))
-              : surahs.map((surah, i) => (
+              : filteredSurahs.map((surah, i) => (
                   <motion.button
                     key={surah.number}
                     initial={{ opacity: 0, y: 8 }}

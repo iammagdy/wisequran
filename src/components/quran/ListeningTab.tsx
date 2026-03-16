@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward, Moon } from "lucide-react";
+import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
@@ -26,7 +25,6 @@ interface Props {
 export default function ListeningTab({ surahNumber, surahName, ayahs, translationAyahs = [] }: Props) {
   const { t, language, isRTL } = useLanguage();
   const player = useAudioPlayer();
-  const navigate = useNavigate();
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   const [speed, setSpeed] = useState<number>(1);
@@ -538,36 +536,6 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
           </div>
         )}
       </div>
-
-      {/* Sleep Mode entry */}
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        onClick={() => navigate("/sleep", { state: { surahNumber, reciterId } })}
-        className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-dashed transition-all group"
-        style={{
-          background: 'linear-gradient(135deg, hsl(var(--card)) 0%, hsl(220 30% 12% / 0.4) 100%)',
-          borderColor: 'hsl(220 30% 40% / 0.35)',
-        }}
-      >
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border"
-          style={{ background: 'hsl(220 30% 15% / 0.6)', borderColor: 'hsl(220 30% 40% / 0.3)' }}
-        >
-          <Moon className="h-5 w-5 text-amber-300" />
-        </div>
-        <div className="flex-1 text-start">
-          <p className="text-sm font-semibold" style={{ color: 'hsl(220 20% 80%)' }}>
-            {language === "ar" ? "وضع النوم" : "Sleep Mode"}
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: 'hsl(220 15% 55%)' }}>
-            {language === "ar" ? "استمع للقرآن قبل النوم مع تلاشٍ تدريجي" : "Listen with a gentle fade-out timer"}
-          </p>
-        </div>
-        <ChevronDown
-          className="h-4 w-4 -rotate-90 transition-transform group-hover:translate-x-0.5"
-          style={{ color: 'hsl(220 15% 55%)' }}
-        />
-      </motion.button>
 
       {/* Ayah list for reference */}
       {ayahs.length > 0 && (
