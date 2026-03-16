@@ -43,6 +43,9 @@ import {
 "@/components/ui/alert-dialog";
 import FadeSection from "@/components/layout/FadeSection";
 
+// A tiny, silent base64 MP3 used to synchronously unlock the audio element on iOS
+const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
+
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const { t, language, setLanguage, isRTL } = useLanguage();
@@ -197,8 +200,9 @@ export default function SettingsPage() {
     // Create Audio IMMEDIATELY to preserve user gesture context
     const audio = new Audio();
     previewAudioRef.current = audio;
-    // Silent unlock for iOS/Safari
-    audio.play().catch(() => {});
+    // Synchronous silent unlock for iOS/Safari to establish user gesture
+    audio.src = SILENT_MP3;
+    audio.play().catch(() => { /* ignore */ });
 
     // Now fetch the URL asynchronously
     const url = await getReciterAudioUrl(r.id, 1);
