@@ -18,7 +18,8 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
   const [surahOpen, setSurahOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const meta = SURAH_META.find((s) => s.number === surahNumber)!;
+  // ⚡ Bolt: O(1) direct indexing
+  const meta = SURAH_META[surahNumber - 1];
   const totalAyahs = meta.numberOfAyahs;
 
   const filtered = SURAH_META.filter((s) => {

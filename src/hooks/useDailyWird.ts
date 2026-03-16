@@ -69,10 +69,11 @@ export function useDailyWird() {
             startAyah,
             endSurah,
             endAyah,
-            startSurahName: SURAH_META.find((ss) => ss.number === startSurah)?.name || "",
-            startSurahNameEn: SURAH_META.find((ss) => ss.number === startSurah)?.englishName || "",
-            endSurahName: SURAH_META.find((ss) => ss.number === endSurah)?.name || "",
-            endSurahNameEn: SURAH_META.find((ss) => ss.number === endSurah)?.englishName || "",
+            // ⚡ Bolt: O(1) direct indexing for performance
+            startSurahName: SURAH_META[startSurah - 1]?.name || "",
+            startSurahNameEn: SURAH_META[startSurah - 1]?.englishName || "",
+            endSurahName: SURAH_META[endSurah - 1]?.name || "",
+            endSurahNameEn: SURAH_META[endSurah - 1]?.englishName || "",
             isDone: state.completedDays.includes(today),
           };
         }

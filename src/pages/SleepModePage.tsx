@@ -57,7 +57,8 @@ export default function SleepModePage() {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
-  const selectedSurah = SURAH_META.find((s) => s.number === prefs.surahNumber);
+  // ⚡ Bolt: O(1) direct indexing
+  const selectedSurah = SURAH_META[prefs.surahNumber - 1];
   const sleepReciters = RECITERS.filter((r) => r.suitableForSleep);
   const selectedReciter = RECITERS.find((r) => r.id === prefs.reciterId);
 
