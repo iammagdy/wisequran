@@ -122,8 +122,10 @@ export default function RecitationTestPage() {
   const ayahRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const containerRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const spokenWordPointerRef = useRef(0);
   const lockedAyahCountRef = useRef(0);
+  const lastTranscriptRef = useRef("");
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
@@ -163,6 +165,8 @@ export default function RecitationTestPage() {
     speech.reset();
     spokenWordPointerRef.current = 0;
     lockedAyahCountRef.current = 0;
+    lastTranscriptRef.current = "";
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     setAyahStates(range.map(a => ({
       numberInSurah: a.numberInSurah,
       status: "pending",
@@ -233,6 +237,8 @@ export default function RecitationTestPage() {
       finalizeResults(states, fullTranscript);
       speech.stop();
     } else {
+      lastTranscriptRef.current = fullTranscript;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       setCurrentAyahIndex(nextIndex);
       lockedAyahCountRef.current = nextIndex;
     }
@@ -259,119 +265,119 @@ export default function RecitationTestPage() {
     });
   }, [currentAyahIndex, advanceToNextAyah, speech.transcript]);
 
+  const evaluateCurrentAyah = useCallback((fullTranscript: string) => {
+    if (!fullTranscript.trim()) return;
+
+    const allSpokenWords = tokenize(fullTranscript);
+
+    setAyahStates(prev => {
+      if (currentAyahIndex >= prev.length) return prev;
+
+      const currentAyah = ayahsData[currentAyahIndex];
+      if (!currentAyah) return prev;
+
+      const ayahWords = tokenize(currentAyah.text);
+      const ayahWordCount = ayahWords.length;
+      const pointer = spokenWordPointerRef.current;
+      const wordsAvailable = allSpokenWords.length - pointer;
+
+      if (wordsAvailable < 1) return prev;
+
+      const threshold = STRICTNESS_THRESHOLD[strictness];
+
+      const { perAyah: livePerAyah } = scoreRangeRecitation(
+        [currentAyah],
+        allSpokenWords.slice(pointer, pointer + ayahWordCount + Math.ceil(ayahWordCount * 0.5)).join(" "),
+        strictness
+      );
+
+      const liveResult = livePerAyah[0];
+      if (!liveResult) return prev;
+
+      const updated = [...prev];
+      const currentState = updated[currentAyahIndex];
+
+      if (liveResult.score >= threshold) {
+        updated[currentAyahIndex] = {
+          ...currentState,
+          status: "correct",
+          score: liveResult.score,
+          wordDiffs: liveResult.wordDiffs,
+        };
+
+        spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
+        setRetryMessage(null);
+
+        const nextIndex = currentAyahIndex + 1;
+        setTimeout(() => {
+          advanceToNextAyah(updated, nextIndex, fullTranscript);
+        }, 500);
+
+        return updated;
+      }
+
+      const attempt = currentState.attempt + 1;
+
+      if (attempt < MAX_ATTEMPTS) {
+        updated[currentAyahIndex] = {
+          ...currentState,
+          attempt,
+          score: liveResult.score,
+          wordDiffs: liveResult.wordDiffs,
+        };
+
+        setRetryMessage(
+          language === "ar"
+            ? `لم يتم التعرف على هذه الآية. حاول مرة أخرى (المحاولة ${attempt + 1}/${MAX_ATTEMPTS})`
+            : `Verse not recognized. Try again (attempt ${attempt + 1}/${MAX_ATTEMPTS})`
+        );
+
+        spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
+        return updated;
+      }
+
+      updated[currentAyahIndex] = {
+        ...currentState,
+        status: "incorrect",
+        score: liveResult.score,
+        wordDiffs: liveResult.wordDiffs,
+        attempt,
+      };
+
+      setRetryMessage(null);
+      spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
+
+      const nextIndex = currentAyahIndex + 1;
+      setTimeout(() => {
+        advanceToNextAyah(updated, nextIndex, fullTranscript);
+      }, 600);
+
+      return updated;
+    });
+  }, [currentAyahIndex, ayahsData, strictness, language, advanceToNextAyah]);
+
   useEffect(() => {
     if (phase !== "recording") return;
     if (!speech.transcript && !speech.interimTranscript) return;
 
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const fullTranscript = (speech.transcript + (speech.interimTranscript ? " " + speech.interimTranscript : "")).trim();
+    if (!fullTranscript) return;
 
-    debounceRef.current = setTimeout(() => {
-      const fullTranscript = speech.transcript + (speech.interimTranscript ? " " + speech.interimTranscript : "");
-      if (!fullTranscript.trim()) return;
+    const hasNewWords = fullTranscript !== lastTranscriptRef.current;
+    if (!hasNewWords) return;
+    lastTranscriptRef.current = fullTranscript;
 
-      const allSpokenWords = tokenize(fullTranscript);
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-      setAyahStates(prev => {
-        if (currentAyahIndex >= prev.length) return prev;
-
-        const currentAyah = ayahsData[currentAyahIndex];
-        if (!currentAyah) return prev;
-
-        const ayahWords = tokenize(currentAyah.text);
-        const ayahWordCount = ayahWords.length;
-        const pointer = spokenWordPointerRef.current;
-        const wordsAvailable = allSpokenWords.length - pointer;
-
-        if (wordsAvailable < 1) return prev;
-
-        const threshold = STRICTNESS_THRESHOLD[strictness];
-        const windowSize = ayahWordCount + Math.ceil(ayahWordCount * 0.5);
-        const slice = allSpokenWords.slice(pointer, pointer + windowSize).join(" ");
-
-        const { overallScore: _unused, perAyah: livePerAyah } = scoreRangeRecitation(
-          [currentAyah],
-          slice,
-          strictness
-        );
-
-        const liveResult = livePerAyah[0];
-        if (!liveResult) return prev;
-
-        const updated = [...prev];
-        const currentState = updated[currentAyahIndex];
-
-        if (liveResult.score >= threshold) {
-          updated[currentAyahIndex] = {
-            ...currentState,
-            status: "correct",
-            score: liveResult.score,
-            wordDiffs: liveResult.wordDiffs,
-          };
-
-          spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-          setRetryMessage(null);
-
-          const nextIndex = currentAyahIndex + 1;
-          setTimeout(() => {
-            advanceToNextAyah(updated, nextIndex, speech.transcript);
-          }, 600);
-
-          return updated;
-        }
-
-        if (wordsAvailable >= Math.ceil(ayahWordCount * 1.5)) {
-          const attempt = currentState.attempt + 1;
-
-          if (attempt < MAX_ATTEMPTS) {
-            updated[currentAyahIndex] = {
-              ...currentState,
-              attempt,
-              score: liveResult.score,
-              wordDiffs: liveResult.wordDiffs,
-            };
-
-            setRetryMessage(
-              language === "ar"
-                ? `لم يتم التعرف على هذه الآية. حاول مرة أخرى (المحاولة ${attempt + 1}/${MAX_ATTEMPTS})`
-                : `Verse not recognized. Try again (attempt ${attempt + 1}/${MAX_ATTEMPTS})`
-            );
-
-            spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-            return updated;
-          } else {
-            updated[currentAyahIndex] = {
-              ...currentState,
-              status: "incorrect",
-              score: liveResult.score,
-              wordDiffs: liveResult.wordDiffs,
-              attempt,
-            };
-
-            setRetryMessage(null);
-            spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-
-            const nextIndex = currentAyahIndex + 1;
-            setTimeout(() => {
-              advanceToNextAyah(updated, nextIndex, speech.transcript);
-            }, 800);
-
-            return updated;
-          }
-        }
-
-        updated[currentAyahIndex] = {
-          ...currentState,
-          score: liveResult.score,
-          wordDiffs: liveResult.wordDiffs,
-        };
-        return updated;
-      });
-    }, 300);
+    silenceTimerRef.current = setTimeout(() => {
+      const finalTranscript = (speech.transcript + (speech.interimTranscript ? " " + speech.interimTranscript : "")).trim();
+      evaluateCurrentAyah(finalTranscript);
+    }, 1500);
 
     return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
-  }, [speech.transcript, speech.interimTranscript, phase, currentAyahIndex, ayahsData, strictness, language, advanceToNextAyah]);
+  }, [speech.transcript, speech.interimTranscript, phase, evaluateCurrentAyah]);
 
   useEffect(() => {
     if (phase !== "recording") return;
@@ -397,12 +403,14 @@ export default function RecitationTestPage() {
 
   const handleTryAgain = () => {
     speech.reset();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     setResult(null);
     setAyahStates([]);
     setCurrentAyahIndex(0);
     setRetryMessage(null);
     spokenWordPointerRef.current = 0;
     lockedAyahCountRef.current = 0;
+    lastTranscriptRef.current = "";
     setPhase("setup");
   };
 
@@ -728,8 +736,7 @@ export default function RecitationTestPage() {
                           ref={el => { ayahRefs.current[index] = el; }}
                           initial={false}
                           animate={{
-                            filter: isDone ? "blur(0px)" : isCurrent ? "blur(0px)" : "blur(5px)",
-                            opacity: isDone ? 1 : isCurrent ? 1 : isPast ? 0.5 : 0.2,
+                            opacity: isDone ? 1 : isCurrent ? 1 : isPast ? 0.4 : 0.15,
                             scale: isDone ? 1 : isCurrent ? 1 : 0.98,
                           }}
                           transition={{ duration: 0.4, ease: "easeOut" }}
@@ -742,15 +749,23 @@ export default function RecitationTestPage() {
                             !isDone && !isCurrent && "bg-muted/20 border border-border/20"
                           )}
                         >
-                          <p
-                            className={cn(
-                              "font-arabic text-base leading-loose text-center",
-                              !isDone && !isCurrent && "pointer-events-none"
-                            )}
-                          >
-                            {a.text}
-                            <span className="text-muted-foreground text-sm ms-2">﴿{a.numberInSurah}﴾</span>
-                          </p>
+                          {isDone ? (
+                            <motion.p
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ duration: 0.4 }}
+                              className="font-arabic text-base leading-loose text-center"
+                            >
+                              {a.text}
+                              <span className="text-muted-foreground text-sm ms-2">﴿{a.numberInSurah}﴾</span>
+                            </motion.p>
+                          ) : (
+                            <p className="text-center font-semibold text-sm text-muted-foreground py-1">
+                              {language === "ar"
+                                ? `الآية رقم ${toArabicNumerals(a.numberInSurah)}`
+                                : `Verse ${a.numberInSurah}`}
+                            </p>
+                          )}
 
                           {isDone && (
                             <motion.div
@@ -785,7 +800,7 @@ export default function RecitationTestPage() {
                                 className="flex items-center justify-center"
                               >
                                 <span className="text-xs text-primary/70 font-medium">
-                                  {language === "ar" ? "اتلُ هذه الآية..." : "Recite this verse..."}
+                                  {language === "ar" ? "اتلُ هذه الآية من الذاكرة..." : "Recite this verse from memory..."}
                                 </span>
                               </motion.div>
                               {state && state.attempt > 0 && (

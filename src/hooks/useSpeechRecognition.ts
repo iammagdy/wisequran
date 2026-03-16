@@ -49,6 +49,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef("");
+  const interimRef = useRef("");
   const isManualStopRef = useRef(false);
   const restartCountRef = useRef(0);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,8 +91,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
       if (newFinalText) {
         finalTranscriptRef.current += newFinalText;
+        interimRef.current = "";
         setTranscript(finalTranscriptRef.current.trim());
       }
+      interimRef.current = interimText;
       setInterimTranscript(interimText);
     };
 
@@ -140,6 +143,11 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     };
 
     recognition.onend = () => {
+      if (interimRef.current) {
+        finalTranscriptRef.current += interimRef.current + " ";
+        setTranscript(finalTranscriptRef.current.trim());
+        interimRef.current = "";
+      }
       setInterimTranscript("");
 
       if (isManualStopRef.current || !isActiveRef.current) {
@@ -175,6 +183,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     isActiveRef.current = true;
     restartCountRef.current = 0;
     finalTranscriptRef.current = "";
+    interimRef.current = "";
 
     setTranscript("");
     setInterimTranscript("");
@@ -198,6 +207,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     recognitionRef.current?.abort();
     recognitionRef.current = null;
     finalTranscriptRef.current = "";
+    interimRef.current = "";
     restartCountRef.current = 0;
     setStatus("idle");
     setTranscript("");

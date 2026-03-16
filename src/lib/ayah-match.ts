@@ -2,13 +2,6 @@ const ARABIC_DIACRITICS = /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-
 const ARABIC_TATWEEL = /\u0640/g;
 const EXTRA_WHITESPACE = /\s+/g;
 const ZERO_WIDTH = /[\u200B-\u200D\uFEFF]/g;
-
-const ALEF_VARIANTS = /[\u0622\u0623\u0625\u0671\u0627]/g;
-const WAW_VARIANTS = /[\u0624\u0648]/g;
-const YA_VARIANTS = /[\u0626\u0649\u064A]/g;
-const TA_MARBUTA = /\u0629/g;
-const HA = /\u0647/g;
-const HAMZA_STANDALONE = /[\u0621]/g;
 const LAM_ALEF = /[\uFEFB\uFEFC\uFEF7\uFEF8\uFEF5\uFEF6]/g;
 
 export function normalizeArabic(text: string): string {
@@ -17,12 +10,6 @@ export function normalizeArabic(text: string): string {
     .replace(LAM_ALEF, "\u0644\u0627")
     .replace(ARABIC_DIACRITICS, "")
     .replace(ARABIC_TATWEEL, "")
-    .replace(ALEF_VARIANTS, "\u0627")
-    .replace(WAW_VARIANTS, "\u0648")
-    .replace(YA_VARIANTS, "\u064A")
-    .replace(TA_MARBUTA, "\u0647")
-    .replace(HA, "\u0647")
-    .replace(HAMZA_STANDALONE, "\u0627")
     .replace(EXTRA_WHITESPACE, " ")
     .trim();
 }
@@ -101,7 +88,9 @@ export function scoreAyahMatch(
       }
     }
 
-    if (bestIdx !== -1 && bestSim >= 0.5) {
+    const ACCEPT_THRESHOLD = 0.72;
+
+    if (bestIdx !== -1 && bestSim >= ACCEPT_THRESHOLD) {
       totalScore += bestSim;
       usedSpoken.add(bestIdx);
       wordDiffs.push({ expected: expToken, spoken: bestSpokenWord, matchScore: Math.round(bestSim * 100) });
@@ -125,9 +114,9 @@ export interface AyahScoreResult {
 export type StrictnessLevel = "lenient" | "normal" | "strict";
 
 const STRICTNESS_THRESHOLD: Record<StrictnessLevel, number> = {
-  lenient: 50,
-  normal: 65,
-  strict: 80,
+  lenient: 55,
+  normal: 72,
+  strict: 88,
 };
 
 export function scoreAyah(
