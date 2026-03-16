@@ -1931,34 +1931,82 @@ export default function SettingsPage() {
 
         {/* Changelog Sheet */}
         <Sheet open={showChangelog} onOpenChange={setShowChangelog}>
-          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-0 [&>button:last-child]:hidden">
+          <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl px-0 [&>button:last-child]:hidden">
             <SheetHeader className="px-6 pb-4">
               <SheetTitle className="text-center font-arabic text-lg">{t("changelog")}</SheetTitle>
             </SheetHeader>
-            <ScrollArea className="h-full px-6 pb-8">
-              <div className="space-y-6">
-                {changelog.map((entry) => {
+            <ScrollArea className="h-full px-5 pb-8">
+              <div className="space-y-8 pb-6">
+                {changelog.map((entry, entryIdx) => {
                   const cats = language === "en" ? entry.en : entry.ar;
-                  const allItems = [
-                    ...(cats.features ?? []),
-                    ...(cats.improvements ?? []),
-                    ...(cats.fixes ?? []),
-                  ];
+                  const isRTL = language === "ar";
+                  const categoryOrder = ["features", "improvements", "fixes"] as const;
+                  const categoryConfig = {
+                    features: {
+                      label: language === "ar" ? "جديد" : "New",
+                      colorClass: "text-amber-500",
+                      bgClass: "bg-amber-50 dark:bg-amber-950/30",
+                      borderClass: "border-amber-200/60 dark:border-amber-800/40",
+                      dotClass: "bg-amber-500",
+                    },
+                    improvements: {
+                      label: language === "ar" ? "تحسينات" : "Improved",
+                      colorClass: "text-blue-500",
+                      bgClass: "bg-blue-50 dark:bg-blue-950/30",
+                      borderClass: "border-blue-200/60 dark:border-blue-800/40",
+                      dotClass: "bg-blue-500",
+                    },
+                    fixes: {
+                      label: language === "ar" ? "إصلاحات" : "Fixed",
+                      colorClass: "text-emerald-500",
+                      bgClass: "bg-emerald-50 dark:bg-emerald-950/30",
+                      borderClass: "border-emerald-200/60 dark:border-emerald-800/40",
+                      dotClass: "bg-emerald-500",
+                    },
+                  };
                   return (
-                    <div key={entry.version} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
+                    <motion.div
+                      key={entry.version}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.04 * entryIdx, duration: 0.3 }}
+                      className="space-y-3"
+                    >
+                      <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                        <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">v{entry.version}</Badge>
                         <span className="text-xs text-muted-foreground">{entry.date}</span>
                       </div>
-                      <ul className="space-y-1.5 pr-4" dir={language === "ar" ? "rtl" : "ltr"}>
-                        {allItems.map((change, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                            {change}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      <div className="space-y-2">
+                        {categoryOrder.map((cat) => {
+                          const items = cats[cat];
+                          if (!items || items.length === 0) return null;
+                          const cfg = categoryConfig[cat];
+                          return (
+                            <div
+                              key={cat}
+                              className={`rounded-xl border p-3 ${cfg.bgClass} ${cfg.borderClass}`}
+                            >
+                              <div className={`flex items-center gap-2 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                                <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.colorClass}`}>
+                                  {cfg.label}
+                                </span>
+                              </div>
+                              <ul className="space-y-1.5" dir={isRTL ? "rtl" : "ltr"}>
+                                {items.map((item, i) => (
+                                  <li
+                                    key={i}
+                                    className={`flex items-start gap-2 text-sm text-foreground/85 leading-relaxed ${isRTL ? "flex-row-reverse text-right" : ""}`}
+                                  >
+                                    <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dotClass}`} />
+                                    {item}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
                   );
                 })}
               </div>
