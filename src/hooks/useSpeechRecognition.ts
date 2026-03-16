@@ -38,6 +38,9 @@ const ERROR_MAP: Record<string, string> = {
   "bad-grammar": "speech_error_generic",
 };
 
+const MAX_RESTARTS = 12;
+const RESTART_DELAY_MS = 250;
+
 export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [status, setStatus] = useState<SpeechRecognitionStatus>("idle");
   const [transcript, setTranscript] = useState("");
@@ -46,10 +49,21 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const finalTranscriptRef = useRef("");
+  const isManualStopRef = useRef(false);
+  const restartCountRef = useRef(0);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isActiveRef = useRef(false);
 
   const isSupported = hasWebSpeechAPI();
 
-  const start = useCallback(() => {
+  const clearRestartTimer = () => {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+  };
+
+  const createAndStartRecognition = useCallback(() => {
     if (!isSupported) return;
 
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -60,12 +74,6 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    finalTranscriptRef.current = "";
-    setTranscript("");
-    setInterimTranscript("");
-    setError(null);
-    setStatus("listening");
-
     recognition.onresult = (event) => {
       let newFinalText = "";
       let interimText = "";
@@ -74,6 +82,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         const result = event.results[i];
         if (result.isFinal) {
           newFinalText += result[0].transcript + " ";
+          restartCountRef.current = 0;
         } else {
           interimText += result[0].transcript;
         }
@@ -88,13 +97,39 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
     recognition.onerror = (event) => {
       if (event.error === "aborted") return;
-      if (event.error === "no-speech") return;
+
+      if (event.error === "no-speech") {
+        if (!isManualStopRef.current && isActiveRef.current && restartCountRef.current < MAX_RESTARTS) {
+          restartCountRef.current++;
+          clearRestartTimer();
+          restartTimerRef.current = setTimeout(() => {
+            if (!isManualStopRef.current && isActiveRef.current) {
+              createAndStartRecognition();
+            }
+          }, RESTART_DELAY_MS);
+        }
+        return;
+      }
 
       const mapped = ERROR_MAP[event.error] ?? event.error;
       setError(mapped);
 
       const isTransient = event.error === "network";
+
+      if (isTransient && !isManualStopRef.current && isActiveRef.current && restartCountRef.current < MAX_RESTARTS) {
+        restartCountRef.current++;
+        clearRestartTimer();
+        restartTimerRef.current = setTimeout(() => {
+          if (!isManualStopRef.current && isActiveRef.current) {
+            setError(null);
+            createAndStartRecognition();
+          }
+        }, 1000);
+        return;
+      }
+
       setStatus("error");
+      isActiveRef.current = false;
 
       if (isTransient) {
         setTimeout(() => {
@@ -106,21 +141,64 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
     recognition.onend = () => {
       setInterimTranscript("");
-      setStatus((prev) => (prev === "error" ? prev : "done"));
+
+      if (isManualStopRef.current || !isActiveRef.current) {
+        setStatus("done");
+        return;
+      }
+
+      if (restartCountRef.current >= MAX_RESTARTS) {
+        setStatus("done");
+        isActiveRef.current = false;
+        return;
+      }
+
+      restartCountRef.current++;
+      clearRestartTimer();
+      restartTimerRef.current = setTimeout(() => {
+        if (!isManualStopRef.current && isActiveRef.current) {
+          createAndStartRecognition();
+        } else {
+          setStatus("done");
+        }
+      }, RESTART_DELAY_MS);
     };
 
     recognitionRef.current = recognition;
     recognition.start();
   }, [isSupported]);
 
+  const start = useCallback(() => {
+    if (!isSupported) return;
+
+    isManualStopRef.current = false;
+    isActiveRef.current = true;
+    restartCountRef.current = 0;
+    finalTranscriptRef.current = "";
+
+    setTranscript("");
+    setInterimTranscript("");
+    setError(null);
+    setStatus("listening");
+
+    createAndStartRecognition();
+  }, [isSupported, createAndStartRecognition]);
+
   const stop = useCallback(() => {
+    isManualStopRef.current = true;
+    isActiveRef.current = false;
+    clearRestartTimer();
     recognitionRef.current?.stop();
   }, []);
 
   const reset = useCallback(() => {
+    isManualStopRef.current = true;
+    isActiveRef.current = false;
+    clearRestartTimer();
     recognitionRef.current?.abort();
     recognitionRef.current = null;
     finalTranscriptRef.current = "";
+    restartCountRef.current = 0;
     setStatus("idle");
     setTranscript("");
     setInterimTranscript("");
@@ -129,6 +207,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
   useEffect(() => {
     return () => {
+      isManualStopRef.current = true;
+      isActiveRef.current = false;
+      clearRestartTimer();
       recognitionRef.current?.abort();
     };
   }, []);

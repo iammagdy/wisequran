@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useDeviceId } from "./useDeviceId";
-import type { StrictnessLevel } from "@/lib/ayah-match";
+import type { StrictnessLevel, PerAyahScoreResult } from "@/lib/ayah-match";
 
 export interface RecitationRecord {
   id: string;
@@ -16,12 +16,6 @@ export interface RecitationRecord {
   tested_at: string;
 }
 
-export interface PerAyahResult {
-  numberInSurah: number;
-  score: number;
-  isCorrect: boolean;
-}
-
 export interface SaveRecitationParams {
   surahNumber: number;
   ayahFrom: number;
@@ -31,7 +25,7 @@ export interface SaveRecitationParams {
   correctAyahs: number;
   transcript: string;
   strictness?: StrictnessLevel;
-  perAyah?: PerAyahResult[];
+  perAyah?: PerAyahScoreResult[];
 }
 
 export function useRecitationHistory() {
@@ -58,7 +52,12 @@ export function useRecitationHistory() {
         surah_number: params.surahNumber,
         verses_range: versesRange,
         accuracy_score: params.score,
-        verse_results: params.perAyah ?? [],
+        verse_results: (params.perAyah ?? []).map(a => ({
+          numberInSurah: a.numberInSurah,
+          score: a.score,
+          isCorrect: a.isCorrect,
+          wordDiffs: a.wordDiffs ?? [],
+        })),
         strictness: params.strictness ?? "normal",
       }),
     ]);
