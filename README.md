@@ -86,6 +86,11 @@ npm run build
 
 Every push to `main` automatically builds and deploys to [quran.thewise.cloud](https://quran.thewise.cloud) via GitHub Actions.
 
+## API Credits
+
+- Quran data and audio from [Quran.com API](https://quran.com) and [Alquran Cloud](https://alquran.cloud)
+- Prayer times powered by [Aladhan API](https://aladhan.com)
+
 ## Acknowledgments
 
 Developed with AI pair programming assistance from **Claude** (Anthropic) and **Gemini** (Google) for architecture, UI/UX, and PWA offline capabilities.
