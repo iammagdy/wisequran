@@ -4,7 +4,7 @@ import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ADHAN_VOICES, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, type AdhanSettings } from "@/lib/adhan-settings";
+import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
@@ -1077,6 +1077,54 @@ export default function SettingsPage() {
                   <option value="dhikr">{language === "ar" ? "تسبيح" : "Dhikr"}</option>
                   <option value="quran">{language === "ar" ? "آية قرآنية" : "Quran verse"}</option>
                 </select>
+              </div>
+            )}
+
+            {/* Reminder Sound Picker */}
+            {(adhanSettings.preReminderMinutes > 0 || adhanSettings.postReminderMinutes > 0) && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {language === "ar" ? "صوت التذكير" : "Reminder Sound"}
+                </p>
+                <div className="space-y-1.5">
+                  {REMINDER_SOUNDS.map((sound) => (
+                    <div
+                      key={sound.id}
+                      className={`flex items-center justify-between rounded-xl px-3 py-2.5 border transition-colors ${
+                        (adhanSettings.reminderSoundId ?? "chime") === sound.id
+                          ? "bg-primary/8 border-primary/20"
+                          : "bg-muted/40 border-border/40"
+                      }`}
+                    >
+                      <button
+                        onClick={() => setAdhanSettings({ ...adhanSettings, reminderSoundId: sound.id })}
+                        className="flex items-center gap-2.5 flex-1 min-w-0"
+                      >
+                        <div className={`h-4 w-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
+                          (adhanSettings.reminderSoundId ?? "chime") === sound.id ? "border-primary bg-primary" : "border-muted-foreground/30"
+                        }`}>
+                          {(adhanSettings.reminderSoundId ?? "chime") === sound.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
+                        </div>
+                        <span className="text-sm font-medium truncate">
+                          {language === "ar" ? sound.nameAr : sound.nameEn}
+                        </span>
+                      </button>
+                      {sound.file && (
+                        <button
+                          onClick={() => {
+                            const audio = new Audio(sound.file);
+                            audio.volume = Math.max(0, Math.min(1, adhanSettings.reminderVolume / 100));
+                            audio.play().catch(() => {});
+                          }}
+                          className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted/80 transition-colors shrink-0"
+                        >
+                          <Play className="h-3 w-3" />
+                          {language === "ar" ? "معاينة" : "Preview"}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

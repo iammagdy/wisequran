@@ -6,6 +6,7 @@ import {
   ADHAN_STORAGE_KEY,
   DEFAULT_ADHAN_SETTINGS,
   CHIME_URL,
+  REMINDER_SOUNDS,
   type AdhanSettings,
 } from "@/lib/adhan-settings";
 
@@ -35,11 +36,15 @@ function todayKey() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-function playChime(vol: number) {
-  const audio = new Audio(CHIME_URL);
+function playReminderSound(soundId: string | undefined, vol: number) {
+  const id = soundId ?? "chime";
+  const sound = REMINDER_SOUNDS.find((s) => s.id === id);
+  const file = sound?.file ?? CHIME_URL;
+  if (!file) return;
+  const audio = new Audio(file);
   audio.volume = Math.max(0, Math.min(1, vol / 100));
   audio.play().catch((err) => {
-    console.error("[Adhan] Failed to play chime:", err);
+    console.error("[Adhan] Failed to play reminder sound:", err);
   });
 }
 
@@ -92,7 +97,7 @@ export function usePrayerReminders() {
               dir: "rtl",
               lang: "ar",
             });
-            playChime(settings.reminderVolume);
+            playReminderSound(settings.reminderSoundId, settings.reminderVolume);
           }
         }
 
@@ -109,7 +114,7 @@ export function usePrayerReminders() {
               dir: "rtl",
               lang: "ar",
             });
-            playChime(settings.reminderVolume);
+            playReminderSound(settings.reminderSoundId, settings.reminderVolume);
           }
         }
       }
