@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.7.0";
+export const APP_VERSION = "2.8.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,32 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.8.0",
+    date: "2026-03-16",
+    ar: {
+      improvements: [
+        "تحسين دقة التقييم في اختبار التلاوة — تقييم أكثر عدلاً وموثوقية",
+        "انتظار الصمت قبل التقييم — يُعطيك وقتاً لإنهاء الآية بشكل طبيعي",
+        "إخفاء نص الآية قبل التلاوة — تلقي من الذاكرة بدون مساعدة",
+      ],
+      fixes: [
+        "إصلاح فقدان الكلمات الأخيرة أثناء التلاوة",
+        "تحسين استقرار نظام التعرف على الصوت عند انتهاء الجلسة",
+      ],
+    },
+    en: {
+      improvements: [
+        "Better recitation scoring accuracy — fairer and more reliable evaluation",
+        "Wait for silence before scoring — gives you time to finish verses naturally",
+        "Verse text is hidden before recitation — truly recite from memory",
+      ],
+      fixes: [
+        "Fixed issue where the last words were sometimes lost during recitation",
+        "Improved speech recognition stability when a session ends",
+      ],
+    },
+  },
   {
     version: "2.7.0",
     date: "2026-03-16",
