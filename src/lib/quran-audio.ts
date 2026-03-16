@@ -6,7 +6,7 @@ const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
 /**
  * Validate that a buffer contains actual MP3/audio data by checking magic bytes.
  */
-function isValidAudioFile(buffer: ArrayBuffer): boolean {
+export function isValidAudioFile(buffer: ArrayBuffer): boolean {
   if (buffer.byteLength < 4) return false;
   const bytes = new Uint8Array(buffer);
   if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) return true;
