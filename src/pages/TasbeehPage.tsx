@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { RotateCcw, Target, Sparkles, ChevronDown } from "lucide-react";
+import { RotateCcw, Target, Sparkles, ChevronDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -103,6 +104,8 @@ function CounterDisplay({ count, target, isComplete }: {
 
 export default function TasbeehPage() {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
+  const isRTL = language === "ar";
   const [target, setTarget] = useLocalStorage("wise-tasbeeh-target", 33);
   const [count, setCount] = useLocalStorage("wise-tasbeeh-count", 0);
   const [dhikr, setDhikr] = useLocalStorage("wise-tasbeeh-dhikr", DHIKR_OPTIONS[0].value);
@@ -145,7 +148,16 @@ export default function TasbeehPage() {
 
       <div className="relative z-10 flex flex-col flex-1">
         {/* Header */}
-        <h1 className="text-2xl font-bold text-foreground mb-4 heading-decorated text-center">{t("tasbeeh_title")}</h1>
+        <div className="flex items-center gap-2 mb-4">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="rounded-xl p-2 hover:bg-muted/60 transition-colors"
+          >
+            {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+          </motion.button>
+          <h1 className="flex-1 text-2xl font-bold text-foreground heading-decorated text-center pr-9">{t("tasbeeh_title")}</h1>
+        </div>
 
         {/* Today total badge */}
         <div className="flex justify-center mb-3">

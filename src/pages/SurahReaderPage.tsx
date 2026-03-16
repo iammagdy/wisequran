@@ -248,7 +248,7 @@ export default function SurahReaderPage() {
           <div className="flex items-center gap-1.5">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate("/")}
+              onClick={() => navigate(-1)}
               className="rounded-xl p-2.5 hover:bg-muted transition-colors">
               <ArrowRight className="h-5 w-5" />
             </motion.button>

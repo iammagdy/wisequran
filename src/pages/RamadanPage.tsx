@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Check, BookOpen, CircleAlert as AlertCircle, RefreshCw } from "lucide-react";
+import { Check, BookOpen, CircleAlert as AlertCircle, RefreshCw, ArrowLeft, ArrowRight } from "lucide-react";
 import { useRamadan, getRamadanDay } from "@/hooks/useRamadan";
 import { DAILY_CHECKLIST, RAMADAN_ACTIVITIES } from "@/lib/ramadan-data";
 import { juzData } from "@/data/juz-hizb-data";
@@ -96,6 +96,15 @@ export default function RamadanPage() {
         </div>
 
         <div className="relative text-center space-y-2">
+          <div className="absolute top-0 left-0">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => navigate(-1)}
+              className="rounded-xl p-2 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            >
+              {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+            </motion.button>
+          </div>
           <h1 className="text-3xl font-bold text-foreground">{t("ramadan_title")}</h1>
           <p className="text-lg text-muted-foreground">
             {t("ramadan_day")} {language === "en" ? ramadanDay : toArabicNumerals(ramadanDay)} {t("ramadan_of")}
