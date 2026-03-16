@@ -1936,10 +1936,9 @@ export default function SettingsPage() {
               <SheetTitle className="text-center font-arabic text-lg">{t("changelog")}</SheetTitle>
             </SheetHeader>
             <ScrollArea className="h-full px-5 pb-8">
-              <div className="space-y-8 pb-6">
+              <div className="space-y-8 pb-6" dir={language === "ar" ? "rtl" : "ltr"}>
                 {changelog.map((entry, entryIdx) => {
                   const cats = language === "en" ? entry.en : entry.ar;
-                  const isRTL = language === "ar";
                   const categoryOrder = ["features", "improvements", "fixes"] as const;
                   const categoryConfig = {
                     features: {
@@ -1972,7 +1971,7 @@ export default function SettingsPage() {
                       transition={{ delay: 0.04 * entryIdx, duration: 0.3 }}
                       className="space-y-3"
                     >
-                      <div className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                      <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">v{entry.version}</Badge>
                         <span className="text-xs text-muted-foreground">{entry.date}</span>
                       </div>
@@ -1986,16 +1985,16 @@ export default function SettingsPage() {
                               key={cat}
                               className={`rounded-xl border p-3 ${cfg.bgClass} ${cfg.borderClass}`}
                             >
-                              <div className={`flex items-center gap-2 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                              <div className="flex items-center gap-2 mb-2">
                                 <span className={`text-xs font-semibold uppercase tracking-wider ${cfg.colorClass}`}>
                                   {cfg.label}
                                 </span>
                               </div>
-                              <ul className="space-y-1.5" dir={isRTL ? "rtl" : "ltr"}>
+                              <ul className="space-y-1.5">
                                 {items.map((item, i) => (
                                   <li
                                     key={i}
-                                    className={`flex items-start gap-2 text-sm text-foreground/85 leading-relaxed ${isRTL ? "flex-row-reverse text-right" : ""}`}
+                                    className="flex items-start gap-2 text-sm text-foreground/85 leading-relaxed"
                                   >
                                     <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${cfg.dotClass}`} />
                                     {item}

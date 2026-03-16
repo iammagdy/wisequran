@@ -64,22 +64,22 @@ function CategorySection({
       transition={{ delay: 0.08 * index, duration: 0.35, ease: "easeOut" }}
       className={`rounded-xl border p-3 ${config.bgClass} ${config.borderClass}`}
     >
-      <div className={`flex items-center gap-2 mb-2.5 ${isRTL ? "flex-row-reverse" : ""}`}>
-        <div className={`flex h-6 w-6 items-center justify-center rounded-full bg-white/70 dark:bg-white/10 shadow-sm`}>
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/70 dark:bg-white/10 shadow-sm">
           <Icon className={`h-3.5 w-3.5 ${config.colorClass}`} />
         </div>
         <span className={`text-xs font-semibold uppercase tracking-wider ${config.colorClass}`}>
           {label}
         </span>
       </div>
-      <ul className={`space-y-1.5`} dir={isRTL ? "rtl" : "ltr"}>
+      <ul className="space-y-1.5">
         {items.map((item, i) => (
           <motion.li
             key={i}
             initial={{ opacity: 0, x: isRTL ? 8 : -8 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.08 * index + 0.04 * i, duration: 0.3 }}
-            className={`flex items-start gap-2 text-sm text-foreground/85 leading-relaxed ${isRTL ? "flex-row-reverse text-right" : ""}`}
+            className="flex items-start gap-2 text-sm text-foreground/85 leading-relaxed"
           >
             <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${config.colorClass.replace("text-", "bg-")}`} />
             {item}
@@ -110,7 +110,7 @@ function VersionBlock({
       transition={{ delay: 0.05 * entryIndex, duration: 0.3 }}
       className="space-y-2.5"
     >
-      <div className={`flex items-center gap-2 ${language === "ar" ? "flex-row-reverse" : ""}`}>
+      <div className="flex items-center gap-2">
         <Badge variant="secondary" className="font-mono text-xs px-2 py-0.5">
           v{entry.version}
         </Badge>
@@ -168,12 +168,13 @@ export default function ChangelogModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 40 }}
             transition={{ type: "spring", damping: 22, stiffness: 260 }}
+            dir={isRTL ? "rtl" : "ltr"}
             className="bg-card rounded-3xl shadow-2xl border border-border/50 w-full max-w-sm overflow-hidden"
           >
             <div className="relative px-6 pt-6 pb-4">
               <button
                 onClick={onDismissTemporary}
-                className="absolute top-4 right-4 flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors"
+                className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors`}
                 aria-label="Close"
               >
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
