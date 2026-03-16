@@ -148,7 +148,7 @@ export default function QuranPage() {
               animate={{ opacity: 1, x: 0 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => { setView("home"); setSurahSearch(""); }}
-              className="rounded-xl p-2.5 bg-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft border border-border/40"
+              className="rounded-xl p-2.5 glass-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft"
               dir={isRTL ? "rtl" : "ltr"}>
               {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
             </motion.button>
@@ -170,21 +170,21 @@ export default function QuranPage() {
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/sleep")}
               aria-label="Sleep Mode"
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
               <BedDouble className="h-4 w-4" />
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/stats")}
               aria-label={t("statistics")}
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
               <BarChart3 className="h-5 w-5" />
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/hifz")}
               aria-label={t("memorization")}
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center bg-card text-muted-foreground hover:bg-muted border border-border/40">
+              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
               <GraduationCap className="h-5 w-5" />
             </motion.button>
           </div>
@@ -208,7 +208,7 @@ export default function QuranPage() {
               onChange={(e) => setSurahSearch(e.target.value)}
               placeholder={language === "ar" ? "ابحث عن سورة..." : "Search surah..."}
               dir={isRTL ? "rtl" : "ltr"}
-              className="w-full rounded-xl bg-card border border-border/40 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all shadow-soft"
+              className="w-full rounded-xl glass-card py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all shadow-soft"
               style={isRTL ? { paddingRight: "2.5rem", paddingLeft: surahSearch ? "2.5rem" : "1rem" } : { paddingLeft: "2.5rem", paddingRight: surahSearch ? "2.5rem" : "1rem" }}
             />
             {surahSearch && (
@@ -288,7 +288,7 @@ export default function QuranPage() {
                 whileTap={{ scale: 0.99 }}
                 onClick={() => navigate(`/surah/${lastRead.surah}`)}
                 className={cn(
-                  "flex w-full items-center rounded-2xl bg-card py-3.5 px-4 shadow-elevated border border-gold/25 hover-lift gap-3 mb-3 gradient-gold-card",
+                  "flex w-full items-center rounded-2xl glass-card py-3.5 px-4 shadow-elevated border-gold/25 hover-lift gap-3 mb-3 gradient-gold-card",
                   isRTL ? "text-right" : "text-left"
                 )}>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 border border-gold/20">
@@ -322,7 +322,7 @@ export default function QuranPage() {
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleModeCard(card)}
                   className={cn(
-                    "flex flex-col items-start gap-2.5 rounded-2xl bg-card px-4 py-4 shadow-elevated border transition-all relative overflow-hidden",
+                    "flex flex-col items-start gap-2.5 rounded-2xl glass-card px-4 py-4 shadow-elevated border transition-all relative overflow-hidden",
                     card.borderColor
                   )}>
 
@@ -369,7 +369,7 @@ export default function QuranPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.012, 0.35) }}
                     onClick={() => handleSurahSelect(surah.number)}
-                    className="flex w-full items-center gap-3.5 rounded-xl bg-card px-4 py-3 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group border border-border/30 hover:border-primary/20">
+                    className="flex w-full items-center gap-3.5 rounded-xl glass-card px-4 py-3 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group border-border/30 hover:border-primary/20">
 
                     <div className="number-badge h-10 w-10 text-[13px] shrink-0 rounded-xl">
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}

@@ -80,7 +80,7 @@ function DhikrCounter({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "rounded-2xl p-5 shadow-elevated transition-all border relative overflow-hidden",
-        done ? "bg-primary/8 border-primary/20" : "bg-card border-border/40"
+        done ? "glass-card bg-primary/8 border-primary/20" : "glass-card border-border/40"
       )}
     >
       {done && (
@@ -188,8 +188,8 @@ function CategoryCard({
       className={cn(
         "relative flex flex-col rounded-2xl p-3.5 shadow-soft border transition-all group w-full text-start",
         done
-          ? "bg-primary/8 border-primary/20"
-          : "bg-card border-border/40 hover:border-primary/20 hover:shadow-elevated"
+          ? "glass-card bg-primary/8 border-primary/20"
+          : "glass-card border-border/40 hover:border-primary/20 hover:shadow-elevated"
       )}
       dir={isRTL ? "rtl" : "ltr"}
     >
@@ -292,7 +292,7 @@ export default function AzkarPage() {
                   "rounded-xl p-2.5 transition-all shadow-soft border",
                   showFavorites
                     ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                    : "bg-card text-muted-foreground hover:bg-muted border-border/40"
+                    : "glass-card text-muted-foreground hover:bg-muted"
                 )}
               >
                 <Heart className={cn("h-5 w-5", showFavorites && "fill-rose-500")} />
@@ -308,7 +308,7 @@ export default function AzkarPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("azkar_search")}
                   className={cn(
-                    "w-full h-10 rounded-xl bg-card border border-border/40 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all shadow-soft",
+                    "w-full h-10 rounded-xl glass-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all shadow-soft",
                     isRTL ? "pr-9 pl-9 text-right" : "pl-9 pr-9"
                   )}
                   dir={isRTL ? "rtl" : "ltr"}
@@ -331,7 +331,7 @@ export default function AzkarPage() {
                   {t("favorites")}
                 </h2>
                 {favoriteDhikrItems.length === 0 ? (
-                  <div className="rounded-2xl bg-muted/30 border border-border/30 p-10 text-center">
+                  <div className="rounded-2xl glass-subtle p-10 text-center">
                     <Heart className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">{t("no_favorites_azkar")}</p>
                   </div>
@@ -374,7 +374,7 @@ export default function AzkarPage() {
                     </div>
                   ))
                 ) : (
-                  <div className="rounded-2xl bg-muted/30 border border-border/30 p-10 text-center">
+                  <div className="rounded-2xl glass-subtle p-10 text-center">
                     <Search className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">{t("azkar_no_results")}</p>
                   </div>
@@ -393,8 +393,8 @@ export default function AzkarPage() {
                       key={section.id}
                       className={cn(
                         "rounded-2xl border shadow-soft overflow-hidden transition-all",
-                        allSectionDone ? "bg-primary/5 border-primary/15" :
-                        isExpanded ? "bg-card border-primary/20" : "bg-card border-border/40"
+                        allSectionDone ? "glass-card bg-primary/5 border-primary/15" :
+                        isExpanded ? "glass-card border-primary/20" : "glass-card border-border/40"
                       )}
                     >
                       <motion.button
@@ -470,7 +470,7 @@ export default function AzkarPage() {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setSelectedCategory(null)}
-                className="rounded-xl p-2.5 hover:bg-muted transition-colors flex-shrink-0 bg-card border border-border/40 shadow-soft"
+                className="rounded-xl p-2.5 hover:bg-muted transition-colors flex-shrink-0 glass-card shadow-soft"
               >
                 <BackIcon className="h-5 w-5" />
               </motion.button>

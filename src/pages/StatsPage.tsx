@@ -32,7 +32,7 @@ export default function StatsPage() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate(-1)}
-          className="rounded-xl bg-card p-2.5 shadow-soft border border-border/40"
+          className="rounded-xl glass-card p-2.5 shadow-soft"
         >
           {isRTL ? <ArrowRight className="h-5 w-5 text-foreground" /> : <ArrowLeft className="h-5 w-5 text-foreground" />}
         </motion.button>
@@ -44,7 +44,7 @@ export default function StatsPage() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl bg-card p-5 shadow-soft border border-border/50 mb-5"
+        className="rounded-2xl glass-card p-5 shadow-soft border-border/50 mb-5"
       >
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-muted-foreground">{t("today_goal")}</span>
@@ -72,7 +72,7 @@ export default function StatsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="flex-1 rounded-2xl bg-primary/10 p-4 text-center"
+          className="flex-1 rounded-2xl glass-card bg-primary/10 p-4 text-center"
         >
           <p className="text-xl font-bold text-primary">{language === "en" ? weeklyTotal : toArabicNumerals(weeklyTotal)}</p>
           <p className="text-xs text-muted-foreground">{t("this_week")}</p>
@@ -81,7 +81,7 @@ export default function StatsPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex-1 rounded-2xl bg-accent/10 p-4 text-center"
+          className="flex-1 rounded-2xl glass-card bg-accent/10 p-4 text-center"
         >
           <p className="text-xl font-bold text-accent">{language === "en" ? monthlyTotal : toArabicNumerals(monthlyTotal)}</p>
           <p className="text-xs text-muted-foreground">{t("this_month")}</p>

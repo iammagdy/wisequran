@@ -161,7 +161,7 @@ export default function PrayerPage() {
           {cachedLocation?.city && (
             <button
               onClick={() => setCitySearchOpen(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
             >
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate max-w-[80px]">{cachedLocation.city}</span>
@@ -170,14 +170,14 @@ export default function PrayerPage() {
           {!cachedLocation?.city && (
             <button
               onClick={() => setCitySearchOpen(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
             >
               <Search className="h-3 w-3 shrink-0" />
             </button>
           )}
           <button
             onClick={() => setHistoryOpen(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground bg-card rounded-full px-2.5 py-1 border border-border/40 shadow-soft hover:border-primary/30 transition-colors"
+            className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
           >
             <History className="h-3 w-3" />
           </button>
@@ -203,7 +203,7 @@ export default function PrayerPage() {
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.05 }}
-          className="rounded-2xl bg-card border border-primary/15 shadow-elevated p-5 mb-3 relative overflow-hidden">
+          className="rounded-2xl glass-card border-primary/15 shadow-elevated p-5 mb-3 relative overflow-hidden">
 
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
 
@@ -250,7 +250,7 @@ export default function PrayerPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08 }}
-        className="rounded-2xl bg-card border border-border/40 shadow-soft px-4 py-3 mb-3">
+        className="rounded-2xl glass-card border-border/40 shadow-soft px-4 py-3 mb-3">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-medium">
             {language === "ar"
@@ -271,7 +271,7 @@ export default function PrayerPage() {
         whileTap={{ scale: 0.97 }}
         onClick={() => navigate("/qibla")}
         className={cn(
-          "w-full rounded-2xl bg-card border border-gold/25 shadow-soft flex items-center gap-3 px-4 py-3 mb-4 gradient-gold-card hover-lift",
+          "w-full rounded-2xl glass-card border-gold/25 shadow-soft flex items-center gap-3 px-4 py-3 mb-4 gradient-gold-card hover-lift",
           isRTL ? "text-right" : "text-left"
         )}>
         <div className="rounded-xl bg-gold/15 border border-gold/20 p-2.5 shrink-0">
@@ -304,10 +304,10 @@ export default function PrayerPage() {
               className={cn(
                 "flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 transition-all border relative overflow-hidden",
                 done
-                  ? "bg-primary/8 border-primary/20 shadow-soft"
+                  ? "glass-card bg-primary/8 border-primary/20 shadow-soft"
                   : isNext
-                  ? "bg-card border-primary/30 shadow-elevated ring-1 ring-primary/20"
-                  : "bg-card border-border/40 shadow-soft"
+                  ? "glass-card border-primary/30 shadow-elevated ring-1 ring-primary/20"
+                  : "glass-card border-border/40 shadow-soft"
               )}>
               {isNext && !done && (
                 <motion.div

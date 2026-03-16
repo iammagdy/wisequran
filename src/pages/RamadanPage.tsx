@@ -149,8 +149,8 @@ export default function RamadanPage() {
                       className={cn("w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 pb-[5px] pt-[5px]", isRTL ? "text-right" : "text-left",
 
                       done ?
-                      "bg-primary/10 border-primary/30" :
-                      "bg-card border-border hover:border-amber-300/50"
+                      "glass-card bg-primary/10 border-primary/30" :
+                      "glass-card border-border hover:border-amber-300/50"
                       )}>
 
                       <div
@@ -247,7 +247,7 @@ export default function RamadanPage() {
                     "bg-primary text-primary-foreground border-primary/50" :
                     isCurrent ?
                     "bg-amber-100 dark:bg-amber-900/40 border-amber-400/50 text-amber-700 dark:text-amber-300" :
-                    "bg-card border-border text-muted-foreground hover:border-amber-300/50"
+                    "glass-card border-border text-muted-foreground hover:border-amber-300/50"
                   )}>
 
                   {done ? <Check className="h-4 w-4" /> : (language === "en" ? juz : toArabicNumerals(juz))}

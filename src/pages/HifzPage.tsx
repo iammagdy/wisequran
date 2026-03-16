@@ -135,7 +135,7 @@ export default function HifzPage() {
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="rounded-xl p-2.5 bg-card border border-border/40 shadow-soft hover:bg-muted transition-colors">
+        <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate(-1)} className="rounded-xl p-2.5 glass-card shadow-soft hover:bg-muted transition-colors">
           {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
         </motion.button>
         <div>
@@ -145,7 +145,7 @@ export default function HifzPage() {
       </div>
 
       {/* Progress Summary */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl bg-card p-5 shadow-elevated border border-border/50">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl glass-card p-5 shadow-elevated">
         <div className="grid grid-cols-3 gap-2 mb-4 text-center" dir={isRTL ? "rtl" : "ltr"}>
           <div>
             <p className="text-xl font-bold text-primary">{language === "ar" ? toArabicNumerals(stats.memorized) : stats.memorized}</p>
@@ -171,7 +171,7 @@ export default function HifzPage() {
 
       {/* Streak + Goal Row */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.03 }} className="mb-5 grid grid-cols-2 gap-3" dir={isRTL ? "rtl" : "ltr"}>
-        <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3">
+        <div className="rounded-2xl glass-card shadow-soft p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
             <Flame className="h-5 w-5 text-accent" />
           </div>
@@ -185,7 +185,7 @@ export default function HifzPage() {
 
         <button
           onClick={() => setShowGoalEditor((p) => !p)}
-          className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-start"
+          className="rounded-2xl glass-card shadow-soft p-4 flex items-center gap-3 hover:bg-muted/30 transition-colors text-start"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Target className="h-5 w-5 text-primary" />
@@ -209,7 +209,7 @@ export default function HifzPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-5 rounded-2xl bg-card border border-border/50 shadow-soft p-4 overflow-hidden"
+            className="mb-5 rounded-2xl glass-card shadow-soft p-4 overflow-hidden"
             dir={isRTL ? "rtl" : "ltr"}
           >
             <div className="flex items-center justify-between mb-2 text-xs">
@@ -233,7 +233,7 @@ export default function HifzPage() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-5 rounded-2xl bg-card border border-border/50 shadow-soft p-4 overflow-hidden"
+            className="mb-5 rounded-2xl glass-card shadow-soft p-4 overflow-hidden"
             dir={isRTL ? "rtl" : "ltr"}
           >
             <p className="text-sm font-semibold mb-3">{t("set_goal")}</p>
@@ -333,7 +333,7 @@ export default function HifzPage() {
                     exit={{ opacity: 0, x: -50, scale: 0.9 }}
                     transition={{ duration: 0.3 }}
                     className={cn(
-                      "rounded-2xl bg-card p-4 border shadow-soft",
+                      "rounded-2xl glass-card p-4 border shadow-soft",
                       isPending ? "border-primary/50 ring-1 ring-primary/20" :
                       item.overdueDays > 2 ? "border-destructive/30" : "border-border/50"
                     )}
@@ -433,15 +433,15 @@ export default function HifzPage() {
         {/* Review Stats */}
         {review.stats.totalInReview > 0 && (
           <div className="mt-3 flex gap-3 text-center">
-            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+            <div className="flex-1 rounded-xl glass-subtle p-3">
               <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.totalInReview) : review.stats.totalInReview}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("in_review")}</p>
             </div>
-            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+            <div className="flex-1 rounded-xl glass-subtle p-3">
               <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.dueToday) : review.stats.dueToday}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("due_today")}</p>
             </div>
-            <div className="flex-1 rounded-xl bg-muted/50 p-3">
+            <div className="flex-1 rounded-xl glass-subtle p-3">
               <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(review.stats.totalReviewsDone) : review.stats.totalReviewsDone}</p>
               <p className="text-[0.625rem] text-muted-foreground">{t("total_reviews")}</p>
             </div>
@@ -450,7 +450,7 @@ export default function HifzPage() {
       </motion.div>
 
       {/* Filter Tabs */}
-      <div className="mb-5 flex gap-1.5 p-1 rounded-2xl bg-muted/50" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="mb-5 flex gap-1.5 p-1 rounded-2xl glass-subtle" dir={isRTL ? "rtl" : "ltr"}>
         {([
           { key: "all" as FilterMode, label: t("filter_all") },
           { key: "memorized" as FilterMode, label: t("memorized") },
@@ -573,7 +573,7 @@ export default function HifzPage() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="rounded-2xl bg-card border border-primary/20 shadow-soft p-4" dir={isRTL ? "rtl" : "ltr"}>
+                    <div className="rounded-2xl glass-card border-primary/20 shadow-soft p-4" dir={isRTL ? "rtl" : "ltr"}>
                       <p className="text-xs font-semibold text-muted-foreground mb-3">
                         {language === "ar" ? expandedInRow.name : expandedInRow.englishName}
                       </p>
@@ -647,7 +647,7 @@ export default function HifzPage() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="rounded-2xl bg-muted/30 p-8 text-center mt-4">
+        <div className="rounded-2xl glass-subtle p-8 text-center mt-4">
           <BookOpen className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
           <p className="text-sm text-muted-foreground">{t("no_surahs_in_filter")}</p>
         </div>

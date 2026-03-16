@@ -161,7 +161,7 @@ export default function TasbeehPage() {
 
         {/* Today total badge */}
         <div className="flex justify-center mb-3">
-          <div className="flex items-center gap-2 bg-card border border-border/40 rounded-full px-4 py-1.5 shadow-soft">
+          <div className="flex items-center gap-2 glass-card rounded-full px-4 py-1.5 shadow-soft">
             <span className="text-xs text-muted-foreground">{t("today_total")}:</span>
             <span className="font-bold text-primary text-sm">
               {language === "ar" ? toArabicNumerals(todayTotal) : todayTotal}
@@ -174,7 +174,7 @@ export default function TasbeehPage() {
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => { setShowDhikrPicker(!showDhikrPicker); setShowTargetPicker(false); }}
-            className="flex items-center gap-2 bg-card border border-border/40 rounded-2xl px-5 py-2.5 shadow-soft min-w-[200px] justify-between"
+            className="flex items-center gap-2 glass-card rounded-2xl px-5 py-2.5 shadow-soft min-w-[200px] justify-between"
           >
             <span className="font-bold text-base font-arabic text-foreground">
               {language === "ar" ? currentDhikr.labelAr : currentDhikr.labelEn}
@@ -192,7 +192,7 @@ export default function TasbeehPage() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ duration: 0.18 }}
-              className="mx-auto w-full max-w-[280px] mb-4 bg-card border border-border/40 rounded-2xl shadow-elevated overflow-hidden"
+              className="mx-auto w-full max-w-[280px] mb-4 glass-card rounded-2xl shadow-elevated overflow-hidden"
             >
               {DHIKR_OPTIONS.map((d, i) => (
                 <motion.button
@@ -264,7 +264,7 @@ export default function TasbeehPage() {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={handleReset}
-            className="flex items-center gap-2 bg-card border border-border/40 rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted shadow-soft transition-all"
+            className="flex items-center gap-2 glass-card rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted shadow-soft transition-all"
           >
             <RotateCcw className="h-4 w-4" />
             {t("reset")}
@@ -276,7 +276,7 @@ export default function TasbeehPage() {
             className={`flex items-center gap-2 border rounded-xl px-4 py-2.5 text-sm font-semibold transition-all shadow-soft ${
               showTargetPicker
                 ? "bg-primary/10 border-primary/30 text-primary"
-                : "bg-card border-border/40 text-muted-foreground hover:bg-muted"
+                : "glass-card text-muted-foreground hover:bg-muted"
             }`}
           >
             <Target className="h-4 w-4" />
