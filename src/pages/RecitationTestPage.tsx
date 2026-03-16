@@ -7,7 +7,7 @@ import { SURAH_META } from "@/data/surah-meta";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useRecitationHistory } from "@/hooks/useRecitationHistory";
-import { scoreRangeRecitation, scoreAyah, type StrictnessLevel } from "@/lib/ayah-match";
+import { scoreRangeRecitation, type StrictnessLevel } from "@/lib/ayah-match";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahRangeSelector from "@/components/recitation/SurahRangeSelector";
 import MicButton from "@/components/recitation/MicButton";
@@ -63,6 +63,28 @@ function EnglishComingSoonBanner() {
   );
 }
 
+function IOSUnsupportedBanner({ language }: { language: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 flex gap-3 mb-4"
+    >
+      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+          {language === "ar" ? "التعرف على الصوت غير متاح على iOS Safari" : "Speech Recognition Not Available on iOS Safari"}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          {language === "ar"
+            ? "متصفح Safari على iPhone لا يدعم ميزة التعرف على الصوت. يُرجى استخدام جهاز Android أو حاسوب."
+            : "Safari on iPhone does not support the Speech Recognition API. Please use an Android device or desktop browser."}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
 const STRICTNESS_OPTIONS: StrictnessLevel[] = ["lenient", "normal", "strict"];
 
 export default function RecitationTestPage() {
@@ -91,6 +113,7 @@ export default function RecitationTestPage() {
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // ⚡ Bolt: O(1) direct indexing
   const meta = SURAH_META[surahNumber - 1];
@@ -128,6 +151,15 @@ export default function RecitationTestPage() {
     setPhase("recording");
   };
 
+  const handleMicStart = useCallback(() => {
+    if (!silentAudioRef.current) {
+      const audio = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==");
+      silentAudioRef.current = audio;
+    }
+    silentAudioRef.current.play().catch(() => {});
+    speech.start();
+  }, [speech]);
+
   const handleStopAndEvaluate = useCallback(async () => {
     speech.stop();
   }, [speech]);
@@ -139,10 +171,10 @@ export default function RecitationTestPage() {
     const fullTranscript = speech.transcript + " " + speech.interimTranscript;
     if (!fullTranscript.trim()) return;
 
+    const { perAyah: livePerAyah } = scoreRangeRecitation(ayahsData, fullTranscript, strictness);
     const newScores: Record<number, { score: number; isCorrect: boolean }> = {};
-    ayahsData.forEach(ayah => {
-      const result = scoreAyah(ayah.text, fullTranscript, strictness);
-      newScores[ayah.numberInSurah] = result;
+    livePerAyah.forEach(p => {
+      newScores[p.numberInSurah] = { score: p.score, isCorrect: p.isCorrect };
     });
     setLiveAyahScores(newScores);
 
@@ -257,8 +289,11 @@ export default function RecitationTestPage() {
       {/* English coming soon banner */}
       {language === "en" && <EnglishComingSoonBanner />}
 
-      {/* Not supported banner */}
-      {!speech.isSupported && (
+      {/* iOS not supported banner */}
+      {speech.isIOSMode && <IOSUnsupportedBanner language={language} />}
+
+      {/* Not supported banner (non-iOS) */}
+      {!speech.isSupported && !speech.isIOSMode && (
         <div className="mb-4">
           <UnsupportedBanner
             message={t("speech_not_supported")}
@@ -594,7 +629,7 @@ export default function RecitationTestPage() {
             <div className="flex flex-col items-center">
               <MicButton
                 status={speech.status}
-                onStart={speech.start}
+                onStart={handleMicStart}
                 onStop={handleStopAndEvaluate}
                 interimTranscript={speech.interimTranscript}
               />
@@ -617,9 +652,19 @@ export default function RecitationTestPage() {
             {speech.error && speech.status === "error" && (
               <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-4 py-3 text-center">
                 <p className="text-xs text-destructive font-semibold">
-                  {speech.error === "no_speech_detected"
+                  {speech.error === "mic_permission_denied"
+                    ? (language === "ar" ? "لم يتم منح إذن الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح." : "Microphone permission denied. Please allow access in browser settings.")
+                    : speech.error === "mic_not_found"
+                    ? (language === "ar" ? "لم يتم العثور على ميكروفون. تحقق من اتصال الجهاز." : "No microphone found. Check your device connection.")
+                    : speech.error === "speech_network_error"
+                    ? (language === "ar" ? "خطأ في الشبكة. تحقق من اتصالك بالإنترنت." : "Network error. Check your internet connection.")
+                    : speech.error === "speech_service_unavailable"
+                    ? (language === "ar" ? "خدمة التعرف على الصوت غير متاحة حالياً." : "Speech recognition service is currently unavailable.")
+                    : speech.error === "speech_language_unsupported"
+                    ? (language === "ar" ? "اللغة العربية غير مدعومة في هذا المتصفح." : "Arabic is not supported by this browser's speech recognition.")
+                    : speech.error === "no_speech_detected"
                     ? t("no_speech_detected")
-                    : speech.error}
+                    : (language === "ar" ? "حدث خطأ في التعرف على الصوت. حاول مرة أخرى." : "Speech recognition error. Please try again.")}
                 </p>
               </div>
             )}

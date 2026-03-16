@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { detectBrowser } from "@/lib/browser-detect";
 
 export type SpeechRecognitionStatus = "idle" | "listening" | "processing" | "done" | "error";
 
@@ -21,9 +22,21 @@ declare global {
   }
 }
 
+const isIOS = detectBrowser() === "ios-safari";
+
 function hasWebSpeechAPI(): boolean {
+  if (isIOS) return false;
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
+
+const ERROR_MAP: Record<string, string> = {
+  "not-allowed": "mic_permission_denied",
+  "audio-capture": "mic_not_found",
+  "network": "speech_network_error",
+  "service-not-allowed": "speech_service_unavailable",
+  "language-not-supported": "speech_language_unsupported",
+  "bad-grammar": "speech_error_generic",
+};
 
 export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [status, setStatus] = useState<SpeechRecognitionStatus>("idle");
@@ -32,6 +45,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [error, setError] = useState<string | null>(null);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const finalTranscriptRef = useRef("");
 
   const isSupported = hasWebSpeechAPI();
 
@@ -46,37 +60,53 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
+    finalTranscriptRef.current = "";
     setTranscript("");
     setInterimTranscript("");
     setError(null);
     setStatus("listening");
 
     recognition.onresult = (event) => {
-      let finalText = "";
+      let newFinalText = "";
       let interimText = "";
 
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
         if (result.isFinal) {
-          finalText += result[0].transcript + " ";
+          newFinalText += result[0].transcript + " ";
         } else {
           interimText += result[0].transcript;
         }
       }
 
-      if (finalText) setTranscript(finalText.trim());
+      if (newFinalText) {
+        finalTranscriptRef.current += newFinalText;
+        setTranscript(finalTranscriptRef.current.trim());
+      }
       setInterimTranscript(interimText);
     };
 
     recognition.onerror = (event) => {
-      if (event.error === "aborted" || event.error === "no-speech") return;
-      setError(event.error);
+      if (event.error === "aborted") return;
+      if (event.error === "no-speech") return;
+
+      const mapped = ERROR_MAP[event.error] ?? event.error;
+      setError(mapped);
+
+      const isTransient = event.error === "network";
       setStatus("error");
+
+      if (isTransient) {
+        setTimeout(() => {
+          setStatus("idle");
+          setError(null);
+        }, 3000);
+      }
     };
 
     recognition.onend = () => {
       setInterimTranscript("");
-      setStatus("done");
+      setStatus((prev) => (prev === "error" ? prev : "done"));
     };
 
     recognitionRef.current = recognition;
@@ -90,6 +120,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const reset = useCallback(() => {
     recognitionRef.current?.abort();
     recognitionRef.current = null;
+    finalTranscriptRef.current = "";
     setStatus("idle");
     setTranscript("");
     setInterimTranscript("");
@@ -104,7 +135,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
   return {
     isSupported,
-    isIOSMode: false,
+    isIOSMode: isIOS,
     status,
     transcript,
     interimTranscript,
