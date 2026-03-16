@@ -8,8 +8,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
-import ChangelogModal from "@/components/ChangelogModal";
-import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type HomeView = "home" | "surahs" | "surahs_listening";
@@ -39,7 +37,6 @@ export default function QuranPage() {
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
-  const { showChangelog, newEntries, dismissChangelog } = usePostUpdateChangelog();
   const { t, language, isRTL } = useLanguage();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
@@ -405,11 +402,6 @@ export default function QuranPage() {
 
       <div className="h-4" />
 
-      <ChangelogModal
-        open={showChangelog}
-        newEntries={newEntries}
-        onDismiss={dismissChangelog}
-      />
     </div>
   );
 }

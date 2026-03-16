@@ -27,10 +27,14 @@ export function usePostUpdateChangelog() {
     }
   }, []);
 
-  const dismissChangelog = () => {
+  const dismissTemporary = () => {
+    setShowChangelog(false);
+  };
+
+  const dismissPermanent = () => {
     localStorage.setItem(LAST_SEEN_VERSION_KEY, APP_VERSION);
     setShowChangelog(false);
   };
 
-  return { showChangelog, newEntries, dismissChangelog };
+  return { showChangelog, newEntries, dismissTemporary, dismissPermanent };
 }

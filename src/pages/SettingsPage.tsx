@@ -1937,22 +1937,30 @@ export default function SettingsPage() {
             </SheetHeader>
             <ScrollArea className="h-full px-6 pb-8">
               <div className="space-y-6">
-                {changelog.map((entry) =>
-                <div key={entry.version} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
-                      <span className="text-xs text-muted-foreground">{entry.date}</span>
+                {changelog.map((entry) => {
+                  const cats = language === "en" ? entry.en : entry.ar;
+                  const allItems = [
+                    ...(cats.features ?? []),
+                    ...(cats.improvements ?? []),
+                    ...(cats.fixes ?? []),
+                  ];
+                  return (
+                    <div key={entry.version} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="font-mono text-xs">v{entry.version}</Badge>
+                        <span className="text-xs text-muted-foreground">{entry.date}</span>
+                      </div>
+                      <ul className="space-y-1.5 pr-4" dir={language === "ar" ? "rtl" : "ltr"}>
+                        {allItems.map((change, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                            {change}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    <ul className="space-y-1.5 pr-4" dir={language === "ar" ? "rtl" : "ltr"}>
-                      {(language === "en" ? entry.changesEn : entry.changes).map((change, i) =>
-                    <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                          {change}
-                        </li>
-                    )}
-                    </ul>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </ScrollArea>
           </SheetContent>

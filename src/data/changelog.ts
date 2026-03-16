@@ -1,185 +1,251 @@
 export const APP_VERSION = "2.6.0";
 
+export interface ChangelogCategory {
+  features?: string[];
+  improvements?: string[];
+  fixes?: string[];
+}
+
 export interface ChangelogEntry {
   version: string;
   date: string;
-  changes: string[];
-  changesEn: string[];
+  ar: ChangelogCategory;
+  en: ChangelogCategory;
 }
 
 export const changelog: ChangelogEntry[] = [
   {
     version: "2.6.0",
     date: "2026-03-16",
-    changes: [
-      "ميزة جديدة: وضع النوم المتميز — استمع للقرآن قبل النوم مع مؤقت ذكي وتلاشٍ تدريجي للصوت",
-      "أصوات الطبيعة في وضع النوم: مطر، أمواج، وغابة تعمل بالتوازي مع القرآن",
-      "واجهة ليلية فريدة لوضع النوم مع تحريك القمر والنجوم وعداد دائري بصري",
-      "إضافة ٣ قراء جدد بأصوات هادئة: سعد الغامدي، ناصر القطامي، خالد القحطاني",
-      "تنظيف أصوات الأذان: الإبقاء على أفضل ٣ أصوات (المسجد الحرام، النبوي، مشاري العفاسي)",
-      "إصلاح معاينة الأذان: إضافة مؤشر تحميل وتحديد وقت انتهاء مع رسائل خطأ أوضح",
-      "بحث عالمي داخل السورة: ابحث في الآيات مع تمييز النتائج والتنقل بينها",
-      "إعادة تصميم واجهة القبلة ثلاثية الأبعاد بنمط AR احترافي مع سهم توجيه متحرك وحلقات عمق",
-      "حفظ إحصائيات جلسات وضع النوم لمتابعة عاداتك",
-    ],
-    changesEn: [
-      "New feature: Sleep Mode — listen to Quran before sleep with a smart timer and gradual fade-out",
-      "Nature sounds in Sleep Mode: rain, ocean waves, and forest play alongside the Quran",
-      "Unique night-themed Sleep Mode UI with animated moon, twinkling stars, and circular countdown",
-      "Added 3 new calm reciters: Saad Al-Ghamdi, Nasser Al-Qatami, Khalid Al-Qahtani",
-      "Adhan voices cleanup: kept best 3 voices (Makkah, Madinah, Mishary Al-Afasy)",
-      "Fixed adhan preview: added loading indicator, timeout handling, and clearer error messages",
-      "Global in-surah search: search ayahs with highlighted results and previous/next navigation",
-      "Redesigned 3D Qibla interface with professional AR-style overlay, animated directional arrow, and depth rings",
-      "Sleep Mode session stats saved to track your listening habits",
-    ],
+    ar: {
+      features: [
+        "وضع النوم — استمع للقرآن قبل النوم مع مؤقت ذكي وتلاشٍ تدريجي للصوت",
+        "أصوات الطبيعة: مطر وأمواج وغابة تُعزف بجانب القرآن أثناء النوم",
+        "واجهة ليلية ساحرة مع قمر متحرك ونجوم تتلألأ وعداد دائري",
+        "٣ قراء جدد بأصوات هادئة: سعد الغامدي، ناصر القطامي، خالد القحطاني",
+        "بحث في آيات السورة مع تمييز النتائج والتنقل بينها",
+        "واجهة قبلة ثلاثية الأبعاد بنمط AR مع سهم توجيه متحرك",
+      ],
+      improvements: [
+        "حفظ إحصائيات جلسات وضع النوم لمتابعة عاداتك",
+      ],
+      fixes: [
+        "تنظيف قائمة الأذان: الإبقاء على أفضل ٣ أصوات فقط",
+        "معاينة الأذان: مؤشر تحميل واضح وتحديد وقت انتهاء مع رسائل خطأ أوضح",
+      ],
+    },
+    en: {
+      features: [
+        "Sleep Mode — listen to Quran before bed with a smart timer and gradual fade-out",
+        "Nature sounds: rain, ocean waves, and forest play alongside the Quran while you sleep",
+        "Beautiful night-themed UI with an animated moon, twinkling stars, and circular countdown",
+        "3 new calm reciters: Saad Al-Ghamdi, Nasser Al-Qatami, Khalid Al-Qahtani",
+        "Search inside any surah with highlighted results and previous/next navigation",
+        "Redesigned 3D Qibla with professional AR-style overlay and animated directional arrow",
+      ],
+      improvements: [
+        "Sleep Mode session stats are now saved so you can track your listening habits",
+      ],
+      fixes: [
+        "Adhan list cleaned up — only the top 3 voices kept (Makkah, Madinah, Afasy)",
+        "Adhan preview now shows a loading indicator, timeout handling, and clearer errors",
+      ],
+    },
   },
   {
     version: "2.5.0",
     date: "2026-03-16",
-    changes: [
-      "إصلاح مشكلة تداخل شعارات التثبيت والحفظ في أسفل الشاشة",
-      "إصلاح نظام التسجيل والدخول للعمل بدون تأكيد البريد الإلكتروني",
-      "تحسين رسائل الأخطاء في نظام المصادقة مع إضافة سجلات تفصيلية للمطورين",
-      "إضافة التحقق من إنشاء الجلسة بعد التسجيل لضمان تسجيل الدخول التلقائي",
-      "تحسين استقرار وموثوقية عملية إنشاء الحسابات الجديدة",
-      "تحسين معالجة الأخطاء غير المتوقعة في نظام المصادقة",
-    ],
-    changesEn: [
-      "Fixed UI overlap between install banner and save progress banner at the bottom of the screen",
-      "Fixed sign up and sign in system to work without email confirmation requirement",
-      "Improved authentication error messages with detailed developer logging",
-      "Added session validation after signup to ensure automatic login works correctly",
-      "Improved stability and reliability of new account creation process",
-      "Enhanced error handling for unexpected errors in authentication system",
-    ],
+    ar: {
+      fixes: [
+        "إصلاح تداخل شعارات التثبيت والحفظ في أسفل الشاشة",
+        "إصلاح نظام التسجيل والدخول للعمل بدون تأكيد البريد الإلكتروني",
+      ],
+      improvements: [
+        "رسائل أخطاء أوضح في نظام المصادقة مع سجلات تفصيلية للمطورين",
+        "التحقق من الجلسة بعد التسجيل لضمان الدخول التلقائي",
+        "استقرار وموثوقية أفضل عند إنشاء حسابات جديدة",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed UI overlap between the install banner and save progress banner",
+        "Fixed sign-up and sign-in to work without email confirmation",
+      ],
+      improvements: [
+        "Clearer authentication error messages with detailed developer logs",
+        "Session validation after signup ensures automatic login always works",
+        "More reliable and stable account creation process",
+      ],
+    },
   },
   {
     version: "2.4.0",
     date: "2026-03-15",
-    changes: [
-      "إصلاح حلقة لا نهائية في نظام الإنجازات كانت تُبطئ التطبيق",
-      "إصلاح حلقة لا نهائية في تذكير القراءة اليومي كانت تستنزف بطارية الجهاز",
-      "تحسين استقرار التطبيق بشكل عام عند استخدام الإنجازات والتذكيرات",
-    ],
-    changesEn: [
-      "Fixed an infinite loop in the Achievements system that was slowing down the app",
-      "Fixed an infinite loop in the daily reading reminder that was draining device battery",
-      "Improved overall app stability when using Achievements and Reminders",
-    ],
+    ar: {
+      fixes: [
+        "إصلاح حلقة لا نهائية في نظام الإنجازات كانت تُبطئ التطبيق",
+        "إصلاح حلقة لا نهائية في تذكير القراءة اليومي كانت تستنزف البطارية",
+      ],
+      improvements: [
+        "استقرار أفضل للتطبيق عند استخدام الإنجازات والتذكيرات معاً",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed an infinite loop in the Achievements system that was slowing the app down",
+        "Fixed an infinite loop in the daily reading reminder that was draining battery",
+      ],
+      improvements: [
+        "Much better overall stability when using Achievements and Reminders",
+      ],
+    },
   },
   {
     version: "2.3.0",
     date: "2026-03-14",
-    changes: [
-      "إضافة تبويب «ترجمة» مستقل في صفحة قراءة السورة",
-      "دعم أكثر من ١٢ ترجمة لمعاني القرآن (Sahih International، يوسف علي، بكثال، وأخرى)",
-      "تحسين تسمية قسم الترجمة في الإعدادات بعنوان ثنائي اللغة (Translation)",
-      "تحسين مناطق اللمس في جميع الأزرار لتصل إلى ٤٤ بكسل كحد أدنى",
-      "إصلاح عرض ثابت في صفحة التسبيح يتسبب في تجاوز الحد على الشاشات الصغيرة",
-      "إصلاح تعارض المسافات البادئة في صفحة التسبيح",
-      "إصلاح اقتطاع النص في بطاقة متابعة القراءة وشريط تشغيل السورة",
-      "تحسين شبكة الإحصائيات في صفحة الحفظ لتناسب الشاشات الضيقة (٣٢٠ بكسل)",
-    ],
-    changesEn: [
-      "Added a separate Translation tab in the Surah reader",
-      "Support for 12+ Quran translations (Sahih International, Yusuf Ali, Pickthall, and more)",
-      "Improved Translation section label in Settings to be bilingual",
-      "Fixed touch targets across all buttons to meet the 44px minimum size",
-      "Fixed a hardcoded width in Tasbeeh that overflowed on small screens",
-      "Fixed padding conflicts in the Tasbeeh counter page",
-      "Fixed text truncation in the Continue Reading card and Surah bottom bar",
-      "Improved Hifz stats grid to fit narrow screens (320px)",
-    ],
+    ar: {
+      features: [
+        "تبويب «ترجمة» مستقل في صفحة قراءة السورة",
+        "دعم أكثر من ١٢ ترجمة: Sahih International، يوسف علي، بكثال، وأخرى",
+      ],
+      fixes: [
+        "إصلاح تجاوز الحد في صفحة التسبيح على الشاشات الصغيرة",
+        "إصلاح اقتطاع النص في بطاقة متابعة القراءة وشريط تشغيل السورة",
+        "إصلاح شبكة إحصائيات الحفظ لتناسب الشاشات الضيقة (٣٢٠ بكسل)",
+      ],
+      improvements: [
+        "مناطق اللمس في جميع الأزرار محسّنة لتصل إلى ٤٤ بكسل كحد أدنى",
+      ],
+    },
+    en: {
+      features: [
+        "Dedicated Translation tab in the Surah reader",
+        "Support for 12+ translations: Sahih International, Yusuf Ali, Pickthall, and more",
+      ],
+      fixes: [
+        "Fixed Tasbeeh page overflowing on small screens",
+        "Fixed text truncation in the Continue Reading card and Surah bottom bar",
+        "Fixed Hifz stats grid for narrow screens (320px)",
+      ],
+      improvements: [
+        "All tap targets improved to meet the 44px minimum across the app",
+      ],
+    },
   },
   {
     version: "2.2.0",
     date: "2026-03-12",
-    changes: [
-      "إصلاح ظهور زر الإغلاق (X) مكرراً في شاشة التشغيل والإنجازات وسجل التحديثات",
-      "تحسين مظهر شاشة التشغيل الكاملة بحركة انتقال سلسة من الأسفل",
-      "تكبير زر إغلاق رسالة التثبيت ليكون واضحاً وسهل الضغط",
-      "إضافة زر إغلاق دائم في وضع التركيز حتى لا يختفي عن المستخدم",
-    ],
-    changesEn: [
-      "Fixed duplicate close (X) button appearing in the Now Playing screen, Achievements, and Changelog",
-      "Improved the Now Playing full-screen appearance with a smooth slide-up transition",
-      "Made the install banner close button larger and easier to tap",
-      "Added a persistent close button in Focus Mode so it never disappears",
-    ],
+    ar: {
+      fixes: [
+        "إصلاح ظهور زر الإغلاق مكرراً في شاشة التشغيل والإنجازات وسجل التحديثات",
+        "إضافة زر إغلاق دائم في وضع التركيز حتى لا يختفي عن المستخدم",
+      ],
+      improvements: [
+        "شاشة التشغيل الكاملة تظهر الآن بحركة انتقال سلسة من الأسفل",
+        "زر إغلاق رسالة التثبيت أكبر وأسهل للضغط",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed a duplicate close button appearing in Now Playing, Achievements, and Changelog",
+        "Added a persistent close button in Focus Mode so it never hides from the user",
+      ],
+      improvements: [
+        "The Now Playing full screen now slides up with a smooth, natural animation",
+        "Install banner close button is larger and much easier to tap",
+      ],
+    },
   },
   {
     version: "2.1.0",
     date: "2026-03-12",
-    changes: [
-      "طلب صلاحية الموقع فقط عند استخدام أداة القبلة",
-      "إظهار رسالة واضحة عند التحقق من التحديثات",
-      "تكبير الأيقونات والخطوط في شريط التنقل السفلي",
-      "تحسينات عامة في سهولة الاستخدام",
-    ],
-    changesEn: [
-      "Location permission is now only requested when using the Qibla tool",
-      "Added a clear message when checking for updates",
-      "Larger icons and labels in the bottom navigation bar",
-      "General usability improvements",
-    ],
+    ar: {
+      improvements: [
+        "طلب إذن الموقع فقط عند استخدام أداة القبلة، لا عند فتح التطبيق",
+        "رسالة واضحة عند التحقق من التحديثات",
+        "أيقونات وخطوط أكبر في شريط التنقل السفلي",
+      ],
+    },
+    en: {
+      improvements: [
+        "Location permission is only requested when you open the Qibla tool",
+        "Clear message shown when checking for updates",
+        "Larger, more readable icons and labels in the bottom navigation bar",
+      ],
+    },
   },
   {
     version: "2.0.0",
     date: "2026-03-12",
-    changes: [
-      "شاشة تشغيل جديدة مع عرض اسم السورة والقارئ وأزرار التحكم",
-      "عرض الآيات أثناء التلاوة مع تمييز الآية الحالية",
-      "تحسين تحميل التلاوات والتأكد من نجاح الحفظ قبل إظهار رسالة النجاح",
-      "زر للتحقق من التلاوات المحمّلة وإصلاح الملفات غير المكتملة",
-      "تحسين تثبيت التطبيق على أجهزة أندرويد",
-      "إصلاحات عامة في الأداء والمظهر",
-    ],
-    changesEn: [
-      "New Now Playing screen showing surah name, reciter, and playback controls",
-      "Verse-by-verse display during recitation with current verse highlighted",
-      "Improved audio download reliability with success confirmation before showing a notification",
-      "Added a button to verify downloaded recitations and repair incomplete files",
-      "Improved app installation on Android devices",
-      "General performance and visual fixes",
-    ],
+    ar: {
+      features: [
+        "شاشة تشغيل كاملة مع اسم السورة والقارئ وأزرار تحكم",
+        "عرض الآيات أثناء التلاوة مع تمييز الآية الحالية",
+      ],
+      improvements: [
+        "تحميل التلاوات أكثر موثوقية مع تأكيد قبل إظهار رسالة النجاح",
+        "زر للتحقق من التلاوات المحمّلة وإصلاح الملفات غير المكتملة",
+        "تحسين تثبيت التطبيق على أجهزة أندرويد",
+      ],
+    },
+    en: {
+      features: [
+        "New Now Playing screen with surah name, reciter info, and playback controls",
+        "Verse-by-verse display during recitation with the current verse highlighted",
+      ],
+      improvements: [
+        "Audio downloads are more reliable — success is confirmed before notifying you",
+        "New button to verify downloaded recitations and repair incomplete files",
+        "Better app installation experience on Android devices",
+      ],
+    },
   },
   {
     version: "1.5.0",
     date: "2026-03-10",
-    changes: [
-      "نظام تحديث تلقائي ذكي للتطبيق",
-      "زر مشاركة التطبيق مع الأصدقاء",
-      "بطاقة المطوّر بتصميم رمضاني",
-      "عرض رقم الإصدار وسجل التحديثات",
-      "التحقق اليدوي من التحديثات",
-    ],
-    changesEn: [
-      "Smart automatic app update system",
-      "Share the app with friends button",
-      "Developer card with Ramadan-themed design",
-      "Version number display and changelog viewer",
-      "Manual update check button",
-    ],
+    ar: {
+      features: [
+        "نظام تحديث تلقائي ذكي للتطبيق",
+        "زر مشاركة التطبيق مع الأصدقاء",
+        "عرض رقم الإصدار وسجل التحديثات",
+      ],
+      improvements: [
+        "التحقق اليدوي من التحديثات في أي وقت",
+        "بطاقة المطوّر بتصميم رمضاني",
+      ],
+    },
+    en: {
+      features: [
+        "Smart automatic app update system",
+        "Share the app with friends directly from Settings",
+        "Version number display and full changelog viewer",
+      ],
+      improvements: [
+        "Manual update check available anytime in Settings",
+        "Developer card with a Ramadan-inspired design",
+      ],
+    },
   },
   {
     version: "1.0.0",
     date: "2026-03-01",
-    changes: [
-      "الإصدار الأول من التطبيق",
-      "قراءة القرآن الكريم مع البحث والعلامات",
-      "الأذكار والأدعية مع عدّاد التكرار",
-      "مواقيت الصلاة واتجاه القبلة",
-      "الوضع الليلي والتحكم بحجم الخط",
-      "تحميل القرآن والتلاوات للاستخدام بدون إنترنت",
-    ],
-    changesEn: [
-      "First release of the app",
-      "Quran reading with search and bookmarks",
-      "Azkar and Duas with repetition counter",
-      "Prayer times and Qibla direction",
-      "Dark mode and font size controls",
-      "Offline Quran text and audio downloads",
-    ],
+    ar: {
+      features: [
+        "الإصدار الأول — القرآن الكريم مع البحث والعلامات المرجعية",
+        "الأذكار والأدعية مع عدّاد التكرار",
+        "مواقيت الصلاة واتجاه القبلة",
+        "الوضع الليلي والتحكم بحجم الخط",
+        "تحميل القرآن والتلاوات للاستخدام بدون إنترنت",
+      ],
+    },
+    en: {
+      features: [
+        "First release — Quran reading with search and bookmarks",
+        "Azkar and Duas with repetition counter",
+        "Prayer times and Qibla direction",
+        "Dark mode and font size controls",
+        "Offline Quran text and audio downloads",
+      ],
+    },
   },
 ];

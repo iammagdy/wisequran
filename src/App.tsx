@@ -9,8 +9,10 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import InstallBanner from "@/components/InstallBanner";
 import SaveProgressBanner from "@/components/SaveProgressBanner";
+import ChangelogModal from "@/components/ChangelogModal";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 import QuranPage from "@/pages/QuranPage";
 import SurahReaderPage from "@/pages/SurahReaderPage";
 import AzkarPage from "@/pages/AzkarPage";
@@ -37,36 +39,45 @@ const AppContent = () => {
   useAzkarNotifications();
   useAdhan();
   usePrayerReminders();
+  const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (
-    <Routes>
-      <Route path="/signin" element={<SignInPage />} />
-      <Route path="/sleep" element={<SleepModePage />} />
-      <Route
-        path="*"
-        element={
-          <>
-            <AppShell>
-              <Routes>
-                <Route path="/" element={<QuranPage />} />
-                <Route path="/surah/:id" element={<SurahReaderPage />} />
-                <Route path="/azkar" element={<AzkarPage />} />
-                <Route path="/prayer" element={<PrayerPage />} />
-                <Route path="/tasbeeh" element={<TasbeehPage />} />
-                <Route path="/stats" element={<StatsPage />} />
-                <Route path="/hifz" element={<HifzPage />} />
-                <Route path="/hifz/test" element={<RecitationTestPage />} />
-                <Route path="/qibla" element={<QiblaPage />} />
-                <Route path="/ramadan" element={<RamadanPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppShell>
-            <InstallBanner />
-            <SaveProgressBanner />
-          </>
-        }
+    <>
+      <Routes>
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/sleep" element={<SleepModePage />} />
+        <Route
+          path="*"
+          element={
+            <>
+              <AppShell>
+                <Routes>
+                  <Route path="/" element={<QuranPage />} />
+                  <Route path="/surah/:id" element={<SurahReaderPage />} />
+                  <Route path="/azkar" element={<AzkarPage />} />
+                  <Route path="/prayer" element={<PrayerPage />} />
+                  <Route path="/tasbeeh" element={<TasbeehPage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route path="/hifz" element={<HifzPage />} />
+                  <Route path="/hifz/test" element={<RecitationTestPage />} />
+                  <Route path="/qibla" element={<QiblaPage />} />
+                  <Route path="/ramadan" element={<RamadanPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppShell>
+              <InstallBanner />
+              <SaveProgressBanner />
+            </>
+          }
+        />
+      </Routes>
+      <ChangelogModal
+        open={showChangelog}
+        newEntries={newEntries}
+        onDismissTemporary={dismissTemporary}
+        onDismissPermanent={dismissPermanent}
       />
-    </Routes>
+    </>
   );
 };
 
