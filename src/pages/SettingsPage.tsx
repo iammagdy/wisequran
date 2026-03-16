@@ -330,12 +330,33 @@ export default function SettingsPage() {
   const handleDownloadAllAudio = async () => {
     setAudioDownloading(true);
     const total = 114;
+    const toDownload = [];
+
     for (let i = 1; i <= total; i++) {
       if (!downloadedAudio.includes(i)) {
-        try {await downloadSurahAudio(reciterId, i);} catch {/* continue */}
+        toDownload.push(i);
       }
-      setAudioDownloadProgress(Math.round(i / total * 100));
     }
+
+    let completed = total - toDownload.length;
+    setAudioDownloadProgress(Math.round((completed / total) * 100));
+
+    const CONCURRENCY = 5;
+    for (let i = 0; i < toDownload.length; i += CONCURRENCY) {
+      const chunk = toDownload.slice(i, i + CONCURRENCY);
+      await Promise.all(
+        chunk.map(async (surahNum) => {
+          try {
+            await downloadSurahAudio(reciterId, surahNum);
+          } catch {
+            /* continue */
+          }
+          completed++;
+          setAudioDownloadProgress(Math.round((completed / total) * 100));
+        })
+      );
+    }
+
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
     setAudioDownloading(false);
