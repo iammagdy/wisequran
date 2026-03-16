@@ -277,6 +277,7 @@ export async function verifyAllAudio(reciterId: string): Promise<{
   
   const valid: number[] = [];
   const broken: number[] = [];
+  const deletePromises: Promise<void>[] = [];
   
   for (const entry of reciterAudio) {
     if (entry.data && entry.data.byteLength > 0) {
@@ -284,8 +285,12 @@ export async function verifyAllAudio(reciterId: string): Promise<{
     } else {
       broken.push(entry.surahNumber);
       // Clean up broken entry
-      await db.delete("audio", entry.id);
+      deletePromises.push(db.delete("audio", entry.id));
     }
+  }
+
+  if (deletePromises.length > 0) {
+    await Promise.all(deletePromises);
   }
   
   return { valid, broken };
@@ -303,14 +308,19 @@ export async function verifyAllSurahs(): Promise<{
   
   const valid: number[] = [];
   const broken: number[] = [];
+  const deletePromises: Promise<void>[] = [];
   
   for (const entry of all) {
     if (entry.ayahs && entry.ayahs.length > 0) {
       valid.push(entry.number);
     } else {
       broken.push(entry.number);
-      await db.delete("surahs", entry.number);
+      deletePromises.push(db.delete("surahs", entry.number));
     }
+  }
+
+  if (deletePromises.length > 0) {
+    await Promise.all(deletePromises);
   }
   
   return { valid, broken };
