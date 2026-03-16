@@ -34,16 +34,21 @@ Wise Quran is a fast, beautiful, and distraction-free app for reading the Quran,
 | | |
 |---|---|
 | 📖 **Full Quran** | All 114 surahs with clean Uthmanic typography |
-| 🎧 **Audio Recitations** | Multiple reciters with ayah-by-ayah tracking and fullscreen player |
+| 🔍 **Search within Surahs** | Quickly search inside any surah with highlighted results and easy navigation |
+| 🌍 **Translations** | Dedicated tab supporting over 12 languages including Sahih International, Yusuf Ali, and Pickthall |
+| 🎧 **Audio Recitations** | Multiple reciters with ayah-by-ayah tracking and a new fullscreen player |
+| 😴 **Sleep Mode & Nature Sounds** | Listen before bed with a smart timer, gradual fade-out, and background sounds like rain and ocean waves |
 | 🌙 **Azkar & Duas** | Morning/evening remembrances with tap counters |
 | 🕌 **Prayer Tracker** | Daily prayer logging with streaks and statistics |
 | 📿 **Digital Tasbeeh** | Tap counter with haptic feedback |
-| 🧭 **Qibla Compass** | Live direction based on your location |
+| 🧭 **Qibla Compass** | 3D Qibla with a professional AR-style overlay and animated directional arrow |
 | 🌙 **Ramadan Tracker** | Ramadan schedule and prayer times |
-| 📊 **Stats & Achievements** | Reading progress and milestones |
+| 📈 **Hifz Tracking** | Comprehensive stats and grids for tracking your memorization progress |
+| 📊 **Stats, Achievements & Reminders** | Reading progress, milestones, and daily reading reminders |
+| ☁️ **Cloud Sync & Accounts** | Save your progress and seamlessly resume across different devices |
 | 📴 **Offline Mode** | Download surahs and audio for true offline use |
 | 📱 **Installable PWA** | Add to home screen on Android and iOS |
-| 🌓 **Dark Mode** | Automatic and manual theme switching |
+| 🌓 **Dark Mode** | Automatic and manual theme switching, including a beautiful night-themed UI with animated stars and moon |
 | 🔗 **Ayah Sharing** | Generate beautiful share cards |
 
 ## Screenshots
@@ -73,13 +78,13 @@ git clone https://github.com/iammagdy/wisequran.git
 cd wisequran
 
 # Install
-npm install
+pnpm install
 
 # Dev server (runs at http://localhost:8080)
-npm run dev
+pnpm run dev
 
 # Production build
-npm run build
+pnpm run build
 ```
 
 ## Deployment
