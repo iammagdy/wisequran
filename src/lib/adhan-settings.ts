@@ -43,47 +43,45 @@ export interface AdhanVoice {
   fajrFile: string;
 }
 
-const CDN = "https://cdn.islamic.network/prayer-times/audio";
-
 export const ADHAN_VOICES: AdhanVoice[] = [
   {
     id: "makkah",
     nameAr: "المسجد الحرام",
     nameEn: "Makkah Grand Mosque",
-    file: `${CDN}/MAKKAH_QURAN.mp3`,
-    fajrFile: `${CDN}/MAKKAH_FAJR.mp3`,
+    file: "/audio/adhan/makkah.mp3",
+    fajrFile: "/audio/adhan/makkah_fajr.mp3",
   },
   {
     id: "madinah",
     nameAr: "المسجد النبوي",
     nameEn: "Madinah Grand Mosque",
-    file: `${CDN}/MADINAH.mp3`,
-    fajrFile: `${CDN}/MADINAH.mp3`,
+    file: "/audio/adhan/madinah.mp3",
+    fajrFile: "/audio/adhan/madinah.mp3",
   },
   {
     id: "mishary",
     nameAr: "مشاري راشد العفاسي",
     nameEn: "Mishary Rashid Al-Afasy",
-    file: `${CDN}/AFASY.mp3`,
-    fajrFile: `${CDN}/AFASY_FAJR.mp3`,
+    file: "/audio/adhan/afasy.mp3",
+    fajrFile: "/audio/adhan/afasy_fajr.mp3",
   },
   {
     id: "egypt",
     nameAr: "الإذاعة المصرية",
     nameEn: "Egyptian Radio",
-    file: "https://download.quranicaudio.com/adhan/adhan_egypt.mp3",
-    fajrFile: "https://download.quranicaudio.com/adhan/adhan_egypt_fajr.mp3",
+    file: "/audio/adhan/egypt.mp3",
+    fajrFile: "/audio/adhan/egypt.mp3",
   },
   {
     id: "husary_adhan",
     nameAr: "محمود خليل الحصري",
     nameEn: "Mahmoud Khalil Al-Husary",
-    file: `${CDN}/HUSARY.mp3`,
-    fajrFile: `${CDN}/HUSARY.mp3`,
+    file: "/audio/adhan/husary.mp3",
+    fajrFile: "/audio/adhan/husary.mp3",
   },
 ];
 
-export const TAKBIR_URL = `${CDN}/MAKKAH_QURAN.mp3`;
+export const TAKBIR_URL = "/audio/adhan/makkah.mp3";
 export const CHIME_URL = "https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3";
 
 export const ADHAN_STORAGE_KEY = "wise-adhan-settings";

@@ -9,6 +9,9 @@ import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { SURAH_META } from "@/data/surah-meta";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getReciterAyahAudioUrl } from "@/lib/reciters";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { DEFAULT_RECITER } from "@/lib/reciters";
 
 interface CachedAyah {
   surah: number;
@@ -30,6 +33,7 @@ export function DailyAyah() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   useEffect(() => {
     const load = async () => {
@@ -166,7 +170,7 @@ export function DailyAyah() {
               onClick={(e) => {
                 e.stopPropagation();
                 const audio = new Audio(
-                  `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${getGlobalAyahNumber(data.surah, data.ayah)}.mp3`
+                  getReciterAyahAudioUrl(reciterId, getGlobalAyahNumber(data.surah, data.ayah))
                 );
                 audio.play().catch(() => {
                   toast({ title: t("could_not_play_audio") });

@@ -126,6 +126,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const fallbackIndexRef = useRef(0);
   const activeSurahForRetryRef = useRef<number | null>(null);
   const activeReciterForRetryRef = useRef<string>("");
+  const sourceSetRef = useRef(false);
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
@@ -151,6 +152,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       onAyahEndedRef.current?.();
     });
     audio.addEventListener("error", () => {
+      if (!sourceSetRef.current) return;
+
       const nextIndex = fallbackIndexRef.current;
       const fallbacks = fallbackUrlsRef.current;
 
@@ -197,6 +200,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     activeReciterForRetryRef.current = currentReciterId;
 
     // Create Audio element IMMEDIATELY to preserve user gesture context
+    sourceSetRef.current = false;
     const audio = new Audio();
     audioRef.current = audio;
     setupAudioListeners(audio);
@@ -272,6 +276,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     fallbackUrlsRef.current = orderedUrls.slice(1);
     fallbackIndexRef.current = 0;
 
+    sourceSetRef.current = true;
     audio.src = orderedUrls[0];
     audio.load();
 
