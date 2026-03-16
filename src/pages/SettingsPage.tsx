@@ -2035,16 +2035,15 @@ export default function SettingsPage() {
                   backgroundSize: '200% 100%',
                   animation: 'shimmer 3s linear infinite'
                 }} />
-              
 
-              {/* Floating Ramadan emojis */}
+              {/* Floating neutral geometric decorations */}
               {[
-              { emoji: '🏮', top: '6px', right: '12px', size: 'text-xl', delay: 0 },
-              { emoji: '🌙', top: '8px', left: '14px', size: 'text-2xl', delay: 0.5 },
-              { emoji: '⭐', bottom: '8px', right: '16px', size: 'text-sm', delay: 1.2 },
-              { emoji: '✨', bottom: '12px', left: '18px', size: 'text-base', delay: 0.8 },
-              { emoji: '🕌', top: '50%', right: '8px', size: 'text-sm', delay: 1.5 },
-              { emoji: '🏮', bottom: '6px', left: '50%', size: 'text-lg', delay: 0.3 }].
+              { symbol: '✦', top: '8px', right: '14px', size: 'text-lg', delay: 0 },
+              { symbol: '✧', top: '10px', left: '16px', size: 'text-xl', delay: 0.5 },
+              { symbol: '◆', bottom: '10px', right: '18px', size: 'text-xs', delay: 1.2 },
+              { symbol: '✦', bottom: '14px', left: '20px', size: 'text-sm', delay: 0.8 },
+              { symbol: '✧', top: '50%', right: '10px', size: 'text-xs', delay: 1.5 },
+              { symbol: '◇', bottom: '8px', left: '48%', size: 'text-sm', delay: 0.3 }].
               map((item, i) =>
               <motion.span
                 key={i}
@@ -2054,46 +2053,66 @@ export default function SettingsPage() {
                   bottom: item.bottom,
                   left: item.left,
                   right: item.right,
-                  opacity: 0.35
+                  opacity: 0.25,
+                  color: 'hsl(var(--gold))'
                 }}
-                animate={{ y: [0, -8, 0] }}
+                animate={{ y: [0, -6, 0], opacity: [0.25, 0.45, 0.25] }}
                 transition={{
-                  duration: 3,
+                  duration: 3.5,
                   repeat: Infinity,
                   ease: 'easeInOut',
                   delay: item.delay
                 }}>
-                
-                  {item.emoji}
+                  {item.symbol}
                 </motion.span>
               )}
 
-              {/* Developer badge */}
-              <motion.span
-                className="inline-block mb-2 px-3 py-0.5 font-bold rounded-full text-sm bg-accent"
+              {/* Open Source badge */}
+              <motion.a
+                href="https://github.com/iammagdy/WiseQuran"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mb-3 px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
-                  color: 'hsl(var(--gold-foreground))'
+                  borderColor: 'hsl(var(--primary) / 0.4)',
+                  color: 'hsl(var(--primary))',
+                  background: 'hsl(var(--primary) / 0.06)'
                 }}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', delay: 0.4 }}>
-                
-                {language === "en" ? "Developer ✦" : "المطوّر ✦"}
-              </motion.span>
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'spring', delay: 0.3 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}>
+                <Github size={11} />
+                {language === "en" ? "Open Source" : "مصدر مفتوح"}
+              </motion.a>
+
+              {/* Developer badge */}
+              <div>
+                <motion.span
+                  className="inline-block mb-2 px-3 py-0.5 font-bold rounded-full text-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
+                    color: 'hsl(var(--gold-foreground))'
+                  }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', delay: 0.4 }}>
+                  {language === "en" ? "Developer ✦" : "المطوّر ✦"}
+                </motion.span>
+              </div>
 
               <p
                 className="font-bold text-foreground mb-1 text-2xl"
                 style={{ textShadow: '0 0 12px hsl(var(--gold) / 0.3)' }}>
-
                 {language === "en" ? "Magdy Saber" : "مجدي صابر"}
               </p>
 
               <p className="text-xs text-muted-foreground mb-4">
-                {language === "en" ? "Made with ❤️ in Ramadan 🌙" : "صنع بـ ❤️ في رمضان 🌙"}
+                {language === "en" ? "Made with ❤️" : "صنع بـ ❤️"}
               </p>
 
-              <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center justify-center gap-3 mb-4">
                 {[
                 { href: 'mailto:contact@magdysaber.com', icon: <Mail size={18} />, title: 'Email' },
                 { href: 'https://github.com/iammagdy', icon: <Github size={18} />, title: 'GitHub' },
@@ -2105,7 +2124,7 @@ export default function SettingsPage() {
                   target={link.href.startsWith('mailto') ? undefined : '_blank'}
                   rel={link.href.startsWith('mailto') ? undefined : 'noopener noreferrer'}
                   title={link.title}
-                  className="flex items-center justify-center w-10 h-10 rounded-full text-gold-foreground transition-colors"
+                  className="flex items-center justify-center w-10 h-10 rounded-full transition-colors"
                   style={{
                     background: 'linear-gradient(135deg, hsl(var(--gold) / 0.2), hsl(var(--primary) / 0.15))',
                     color: 'hsl(var(--primary))'
@@ -2115,11 +2134,28 @@ export default function SettingsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 + i * 0.1 }}>
-                  
                     {link.icon}
                   </motion.a>
                 )}
               </div>
+
+              {/* Get in Touch CTA */}
+              <motion.a
+                href="mailto:contact@magdysaber.com"
+                className="inline-flex items-center justify-center gap-2 w-full max-w-[220px] px-5 py-2.5 rounded-full font-semibold text-sm transition-all"
+                style={{
+                  background: 'linear-gradient(135deg, hsl(var(--gold)), hsl(42 90% 60%))',
+                  color: 'hsl(var(--gold-foreground))',
+                  boxShadow: '0 2px 14px hsl(var(--gold) / 0.35)'
+                }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, type: 'spring', stiffness: 200, damping: 18 }}
+                whileHover={{ scale: 1.04, boxShadow: '0 4px 20px hsl(var(--gold) / 0.5)' }}
+                whileTap={{ scale: 0.97 }}>
+                <Mail size={15} />
+                {language === "en" ? "Get in Touch" : "تواصل معي"}
+              </motion.a>
             </div>
           </motion.div>
         </section>
