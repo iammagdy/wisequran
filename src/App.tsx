@@ -8,7 +8,6 @@ import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import InstallBanner from "@/components/InstallBanner";
-import SaveProgressBanner from "@/components/SaveProgressBanner";
 import ChangelogModal from "@/components/ChangelogModal";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -66,7 +65,6 @@ const AppContent = () => {
                 </Routes>
               </AppShell>
               <InstallBanner />
-              <SaveProgressBanner />
             </>
           }
         />

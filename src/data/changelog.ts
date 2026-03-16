@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.6.0";
+export const APP_VERSION = "2.7.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,24 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.7.0",
+    date: "2026-03-16",
+    ar: {
+      improvements: [
+        "إزالة بانر تسجيل الدخول المزعج — يمكنك تسجيل الدخول من الإعدادات في أي وقت",
+        "إصلاح تسجيل الدخول على النطاقات المخصصة — يعمل الآن بشكل صحيح خارج Bolt Preview",
+        "تحسين إعدادات PWA لضمان تثبيت أفضل وتحديثات أكثر موثوقية",
+      ],
+    },
+    en: {
+      improvements: [
+        "Removed the sign-in banner — you can now sign in from Settings whenever you want",
+        "Fixed authentication on custom domains — no longer limited to Bolt Preview",
+        "Improved PWA configuration for better installation and more reliable updates",
+      ],
+    },
+  },
   {
     version: "2.6.0",
     date: "2026-03-16",

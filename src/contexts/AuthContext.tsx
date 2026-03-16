@@ -35,61 +35,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
-      console.log('[Auth] Starting sign up process...');
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: undefined,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       });
 
       if (error) {
-        console.error('[Auth] Sign up error:', error.message, error);
         return { error: error.message };
       }
 
       if (!data.session) {
-        console.warn('[Auth] Sign up succeeded but no session created - email confirmation may be enabled');
         return {
           error: 'Account created. Please check your email to verify your account before signing in.'
         };
       }
 
-      console.log('[Auth] Sign up successful - user auto-logged in');
       return { error: null };
 
-    } catch (err) {
-      console.error('[Auth] Unexpected error during sign up:', err);
+    } catch {
       return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
     try {
-      console.log('[Auth] Starting sign in process...');
-
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       });
 
       if (error) {
-        console.error('[Auth] Sign in error:', error.message, error);
         return { error: error.message };
       }
 
       if (!data.session) {
-        console.error('[Auth] Sign in succeeded but no session created');
         return { error: 'Login failed. Please try again.' };
       }
 
-      console.log('[Auth] Sign in successful');
       return { error: null };
 
-    } catch (err) {
-      console.error('[Auth] Unexpected error during sign in:', err);
+    } catch {
       return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
