@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.8.0";
+export const APP_VERSION = "2.8.1";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,34 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.8.1",
+    date: "2026-03-17",
+    ar: {
+      fixes: [
+        "إصلاح تسجيل الدخول والتسجيل على النطاقات المخصصة — يعمل بشكل موثوق على أي نطاق",
+        "إضافة معالجة قوية لروابط التحقق من البريد الإلكتروني من النطاقات المخصصة",
+        "تحسين رسائل الأخطاء لتوضيح السبب الفعلي للفشل",
+      ],
+      improvements: [
+        "التحقق من الجلسة بعد تسجيل الدخول لضمان استقرار أفضل",
+        "سجلات تفصيلية للمطورين في وضع التطوير لتتبع مشاكل المصادقة",
+        "معالجة أفضل للأخطاء المتعلقة بالشبكة والرموز",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed sign-in and sign-up on custom domains — now works reliably on any domain",
+        "Added robust handling for email verification links from custom domains",
+        "Better error messages that clarify the actual reason for authentication failures",
+      ],
+      improvements: [
+        "Session validation after login ensures more stable authentication",
+        "Detailed developer logs in development mode to track auth issues",
+        "Improved handling of network errors and token-related issues",
+      ],
+    },
+  },
   {
     version: "2.8.0",
     date: "2026-03-16",
