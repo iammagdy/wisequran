@@ -93,7 +93,10 @@ export function getAuthErrorMessage(error: string | null, isRTL: boolean): strin
   if (msg.includes('already registered') || msg.includes('already exists')) {
     return isRTL ? 'هذا البريد الإلكتروني مسجل بالفعل' : 'This email is already registered';
   }
-  if (msg.includes('invalid') || msg.includes('email')) {
+  if (msg.includes('contact your email') || msg.includes('could not contact') || msg.includes('email service')) {
+    return isRTL ? 'خدمة البريد الإلكتروني غير متاحة حاليًا' : 'Email service is temporarily unavailable';
+  }
+  if (msg.includes('invalid') || msg.includes('email address')) {
     return isRTL ? 'البريد الإلكتروني غير صحيح' : 'Invalid email address';
   }
   if (msg.includes('password')) {

@@ -26,6 +26,7 @@ import RamadanPage from "@/pages/RamadanPage";
 import NotFound from "@/pages/NotFound";
 import SignInPage from "@/pages/SignInPage";
 import SleepModePage from "@/pages/SleepModePage";
+import AuthCallbackPage from "@/pages/AuthCallbackPage";
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -43,6 +44,7 @@ const AppContent = () => {
     <>
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/sleep" element={<SleepModePage />} />
         <Route
           path="*"

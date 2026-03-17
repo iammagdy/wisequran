@@ -78,12 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const getRedirectUrl = () => {
         const origin = window.location.origin;
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        const port = window.location.port;
-        const baseUrl = port ? `${protocol}//${hostname}:${port}/` : `${protocol}//${hostname}/`;
-        logAuthDebug('Computed redirect URL', { origin, baseUrl, port });
-        return baseUrl;
+        const callbackUrl = `${origin}/auth/callback`;
+        logAuthDebug('Computed redirect URL', { origin, callbackUrl });
+        return callbackUrl;
       };
 
       const redirectUrl = getRedirectUrl();
@@ -103,6 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           status: error.status,
           code: error.code,
         });
+
+        if (error.message.includes('contact your email') || error.message.includes('could not contact')) {
+          return { error: 'Email service is temporarily unavailable. Please try again later.' };
+        }
+
         return { error: error.message };
       }
 

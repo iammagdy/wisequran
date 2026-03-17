@@ -69,11 +69,13 @@ export default function SignInPage() {
           displayError = isRTL ? "هذا البريد الإلكتروني مسجل بالفعل" : "This email is already registered";
         } else if (msg.includes("password")) {
           displayError = isRTL ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters";
-        } else if (msg.includes("invalid") || msg.includes("email")) {
+        } else if (msg.includes("invalid") || msg.includes("email address")) {
           displayError = isRTL ? "البريد الإلكتروني غير صحيح" : "Please enter a valid email address";
         } else if (msg.includes("network") || msg.includes("failed to fetch")) {
           displayError = isRTL ? "خطأ في الاتصال. تحقق من اتصالك بالإنترنت" : "Network error. Check your internet connection";
-        } else if (msg.includes("check your email")) {
+        } else if (msg.includes("contact your email") || msg.includes("could not contact") || msg.includes("email service")) {
+          displayError = isRTL ? "خدمة البريد الإلكتروني غير متاحة حاليًا. حاول مرة أخرى لاحقًا" : "Email service is temporarily unavailable. Please try again later";
+        } else if (msg.includes("check your email") || msg.includes("verify your account")) {
           displayError = isRTL ? "تم إرسال بريد التأكيد. تحقق من بريدك الإلكتروني" : "Check your email to verify your account";
         } else {
           displayError = isRTL ? "حدث خطأ، يرجى المحاولة مجددًا" : "An error occurred, please try again";
