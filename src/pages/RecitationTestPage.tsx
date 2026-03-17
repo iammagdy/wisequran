@@ -915,7 +915,7 @@ export default function RecitationTestPage() {
               {isEvaluating
                 ? (language === "ar" ? "جاري التقييم..." : "Evaluating...")
                 : isListening
-                ? (language === "ar" ? "استمع • صمت ٢ ثانية = انتهاء الآية" : "Listening • 2s silence = verse done")
+                ? (language === "ar" ? "استمع • صمت ٣٫٢ ثانية = انتهاء الآية" : "Listening • 3.2s silence = verse done")
                 : (language === "ar" ? "اضغط المايك لبدء التلاوة من الذاكرة" : "Tap mic to start reciting from memory")}
             </p>
           </motion.div>

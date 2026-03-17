@@ -204,6 +204,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
           ) : currentAyah ? (
             <AnimatePresence mode="wait">
               <motion.div
+                data-testid="listening-now-playing-card"
                 key={currentAyah.numberInSurah}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -277,6 +278,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                 player.seekToAyah(ayahs[currentIndex - 1].numberInSurah);
               }
             }}
+            data-testid="listening-previous-ayah-button"
             disabled={!hasPrevAyah || !isThisSurah}
             className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
             style={{ background: 'hsl(var(--muted))' }}
@@ -288,6 +290,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
             whileTap={{ scale: 0.92 }}
             onClick={handlePlayPause}
             disabled={loading}
+            data-testid="listening-play-pause-button"
             className="flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50 shadow-md"
             style={{ background: 'hsl(var(--primary))' }}
           >
@@ -307,6 +310,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                 player.seekToAyah(ayahs[currentIndex + 1].numberInSurah);
               }
             }}
+            data-testid="listening-next-ayah-button"
             disabled={!hasNextAyah || !isThisSurah}
             className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
             style={{ background: 'hsl(var(--muted))' }}
@@ -323,6 +327,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
       >
         <button
           onClick={() => setShowReciterPicker((p) => !p)}
+          data-testid="listening-reciter-picker-toggle"
           className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
         >
           <div className="flex items-center gap-2">
@@ -355,6 +360,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                       setShowReciterPicker(false);
                       if (isThisSurah) player.stop();
                     }}
+                    data-testid={`listening-reciter-option-${r.id}`}
                     className={cn(
                       "w-full text-start px-4 py-3 text-sm transition-colors flex items-center justify-between",
                       idx < RECITERS.length - 1 && "border-b border-border/20",
@@ -400,6 +406,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
               key={s}
               whileTap={{ scale: 0.92 }}
               onClick={() => setSpeed(s)}
+              data-testid={`listening-speed-option-${String(s).replace('.', '-')}`}
               className="flex-1 rounded-xl py-2.5 text-xs font-bold transition-all"
               style={speed === s ? {
                 background: 'hsl(var(--primary))',
@@ -439,6 +446,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                 setCurrentRepeat(0);
                 currentRepeatRef.current = 0;
               }}
+              data-testid={`listening-repeat-option-${r}`}
               className="flex-1 rounded-xl py-2.5 text-xs font-bold transition-all"
               style={repeatCount === r ? {
                 background: 'hsl(var(--primary))',
@@ -480,6 +488,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
             <button
               aria-label={language === "ar" ? "إلغاء المؤقت" : "Cancel timer"}
               onClick={cancelTimer}
+              data-testid="listening-timer-cancel-button"
               className={cn("ms-auto rounded-lg p-1 hover:bg-muted transition-colors text-muted-foreground", timerRunning && timerSecondsLeft > 0 && "ms-2")}
             >
               <X className="h-3.5 w-3.5" />
@@ -500,6 +509,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                 key={String(preset)}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => isActive ? cancelTimer() : startTimer(preset)}
+                data-testid={`listening-timer-option-${String(preset)}`}
                 className="rounded-xl px-3 py-2 text-xs font-bold transition-all"
                 style={isActive ? {
                   background: 'hsl(var(--primary))',
@@ -561,6 +571,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                   onClick={() => {
                     if (isThisSurah) player.seekToAyah(ayah.numberInSurah);
                   }}
+                  data-testid={`listening-ayah-row-${ayah.numberInSurah}`}
                   className={cn(
                     "w-full text-start px-4 py-3 transition-colors",
                     isCurrent ? "border-s-2" : "hover:bg-muted/30"
