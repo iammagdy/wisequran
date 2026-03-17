@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.8.1";
+export const APP_VERSION = "2.8.2";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,28 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.8.2",
+    date: "2026-03-17",
+    ar: {
+      improvements: [
+        "تحسين الاستجابة على مستويات التكبير المختلفة — النص والأيقونات والأزرار تتكيف تلقائياً",
+        "شريط التنقل السفلي يتناسب مع جميع أحجام الشاشات والتكبير — لا تختفي الأيقونات",
+        "شريط التشغيل العالمي (audio bar) محسّن لسهولة الاستخدام على شاشات صغيرة وكبيرة",
+        "مناطق اللمس ديناميكية تضمن بقاءها فوق ٤٤ بكسل حتى عند تكبير الواجهة",
+        "السماح بالتكبير حتى ٥ مرات — يمكنك تكبير أي جزء من التطبيق حسب احتياجك",
+      ],
+    },
+    en: {
+      improvements: [
+        "Improved responsiveness across different zoom levels — text, icons, and buttons scale automatically",
+        "Bottom navigation adapts to all screen sizes and zoom levels — icons never disappear",
+        "Global audio bar optimized for both small and large screens with proper spacing",
+        "Dynamic touch targets ensure they stay above 44px even when UI is enlarged",
+        "User zoom now supported up to 5x — you can magnify any part of the app as needed",
+      ],
+    },
+  },
   {
     version: "2.8.1",
     date: "2026-03-17",
