@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.8.3";
+export const APP_VERSION = "2.9.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,42 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.9.0",
+    date: "2026-03-17",
+    ar: {
+      features: [
+        "إعادة تصميم شاملة لاختبار التلاوة: الآيات مخفية وتظهر تدريجياً عند التسميع من الذاكرة",
+        "نظام الاستماع الذكي: التقييم التلقائي وبدء الآية التالية بدون تدخل يدوي (تسميع متواصل)",
+      ],
+      improvements: [
+        "تنسيق أرقام الآيات والإحصائيات لتظهر بالأرقام العربية (١٢٣) عند استخدام الواجهة العربية",
+        "تحسين رؤية الآيات القادمة بإطارات رمادية مميزة في الوضع الليلي",
+        "إضافة زر الرجوع المفقود في صفحات الأذكار والصلوات لتحسين التنقل",
+      ],
+      fixes: [
+        "شريط تحكم ثابت للميكروفون أعلى شريط التنقل لضمان رؤية كاملة لجميع الآيات",
+        "إصلاح تداخل شريط الميكروفون مع الآية الأخيرة في صفحة الاختبار",
+        "إخفاء شريط الصوت العالمي تلقائياً عند دخول صفحة اختبار التلاوة",
+      ],
+    },
+    en: {
+      features: [
+        "Major Recitation Test redesign: verses are hidden and reveal smoothly as you recite from memory",
+        "Hands-free mode: auto-evaluation on silence and automatic advance to the next verse",
+      ],
+      improvements: [
+        "Localized Arabic numerals throughout the app (Settings, Install Modal, and testing pages)",
+        "Improved visibility of upcoming verses with clear gray frames in Dark Mode",
+        "Fixed missing back buttons on Azkar and Prayer pages for smoother navigation",
+      ],
+      fixes: [
+        "Stationary Mic Bar boundary positioned above navigation for a clean, non-overlapping layout",
+        "Fixed mic bar overlapping the last verse on the recitation test page",
+        "Automatically hide the global audio bar when entering the recitation test",
+      ],
+    },
+  },
   {
     version: "2.8.3",
     date: "2026-03-17",

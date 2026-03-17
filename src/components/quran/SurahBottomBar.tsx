@@ -4,7 +4,7 @@ import { Play, Pause, Download, Loader as Loader2, WifiOff, Check, X, Timer, Rep
 import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
-import { cn, toArabicNumerals } from "@/lib/utils";
+import { cn, toArabicNumerals, formatTime } from "@/lib/utils";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -17,12 +17,6 @@ interface Props {
   ayahs?: Ayah[];
 }
 
-function formatTime(s: number, lang: string) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  const base = `${m}:${sec.toString().padStart(2, "0")}`;
-  return lang === "ar" ? toArabicNumerals(base) : base;
-}
 
 const TIMER_PRESETS = [5, 10, 15, 20];
 

@@ -5,7 +5,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { Progress } from "@/components/ui/progress";
 import { cn, getDayName, getHijriDateLocalized, getGregorianDateLocalized, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass, MapPin, ChevronLeft, Flame, History, Search } from "lucide-react";
+import { Compass, MapPin, ChevronLeft, Flame, History, Search, ArrowLeft, ArrowRight } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import PrayerHistorySheet from "@/components/prayer/PrayerHistorySheet";
 import CitySearchModal from "@/components/prayer/CitySearchModal";
@@ -155,8 +155,15 @@ export default function PrayerPage() {
   return (
     <div className="px-4 pt-5 pb-5" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold heading-decorated shrink-0">{t("prayers_title")}</h1>
+      <div className="mb-4 flex items-center gap-2">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => navigate("/")}
+          className="rounded-xl p-2 hover:bg-muted transition-colors flex-shrink-0"
+        >
+          {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+        </motion.button>
+        <h1 className="text-2xl font-bold heading-decorated flex-1 min-w-0">{t("prayers_title")}</h1>
         <div className="flex items-center gap-2">
           {cachedLocation?.city && (
             <button

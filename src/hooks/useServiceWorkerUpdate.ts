@@ -8,8 +8,11 @@ export function useServiceWorkerUpdate() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    const checkForUpdate = async () => {
-      if (!navigator.onLine) return;
+    let isChecking = false;
+
+    const performCheck = async () => {
+      if (!navigator.onLine || isChecking) return;
+      isChecking = true;
 
       try {
         const reg = await navigator.serviceWorker.getRegistration();
@@ -17,7 +20,6 @@ export function useServiceWorkerUpdate() {
 
         setRegistration(reg);
 
-        // If there's already a waiting worker, update is available
         if (reg.waiting) {
           setUpdateAvailable(true);
           return;
@@ -38,10 +40,28 @@ export function useServiceWorkerUpdate() {
         });
       } catch {
         // Offline or failed — silently ignore
+      } finally {
+        isChecking = false;
       }
     };
 
-    checkForUpdate();
+    // Initial check
+    performCheck();
+
+    // Check on visibility change (app returning from background)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        performCheck();
+      }
+    };
+
+    window.addEventListener("online", performCheck);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("online", performCheck);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   const applyUpdate = useCallback(() => {

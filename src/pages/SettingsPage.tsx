@@ -42,6 +42,7 @@ import {
   AlertDialogTrigger } from
 "@/components/ui/alert-dialog";
 import FadeSection from "@/components/layout/FadeSection";
+import InstallModal from "@/components/quran/InstallModal";
 
 // A tiny, silent base64 MP3 used to synchronously unlock the audio element on iOS
 const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
@@ -98,6 +99,8 @@ export default function SettingsPage() {
     } catch {/* ignore */}
     setLoadingStats(false);
   }, []);
+
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   // Adhan voice preview
   const [previewingAdhan, setPreviewingAdhan] = useState<string | null>(null);
@@ -454,8 +457,18 @@ export default function SettingsPage() {
       </div>
       <p className="mb-6 text-sm text-muted-foreground">{t("settings_subtitle")}</p>
 
-      <div className="space-y-6">
-        {/* ─── Account ─── */}
+      <div className="space-y-10 pb-10">
+        {/* ─── HUB: PERSONALIZATION ─── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 shrink-0">
+              {isRTL ? "التخصيص والحساب" : "User & Personalization"}
+            </h2>
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+          </div>
+
+          {/* ─── Account ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <User className="h-3.5 w-3.5" />
@@ -509,13 +522,71 @@ export default function SettingsPage() {
           </FadeSection>
         </section>
 
-        {/* ─── Language ─── */}
+        {/* ─── Install PWA ─── */}
+        {!isInstalled && (
+          <FadeSection>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowInstallModal(true)}
+              className="relative group cursor-pointer overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background/40 to-background/60 p-4 shadow-sm transition-all"
+            >
+              {/* Premium Gradient Glow */}
+              <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition-opacity group-hover:opacity-60" />
+              <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gold/10 blur-3xl transition-opacity group-hover:opacity-40" />
+
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20">
+                  <Smartphone className="h-6 w-6" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-gradient">
+                      {language === "ar" ? "ثبّت التطبيق الآن" : "Install the App Now"}
+                    </h3>
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  </div>
+                  <p className="text-xs text-muted-foreground/80 truncate">
+                    {language === "ar" 
+                      ? "اضغط لمشاهدة طريقة التثبيت السريعة" 
+                      : "Tap to see the quick installation guide"}
+                  </p>
+                </div>
+
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 border border-white/10 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 transition-all shadow-sm">
+                  {isRTL ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
+                </div>
+              </div>
+
+              {/* Shimmer Light Sweep */}
+              <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-[-20deg] -translate-x-full group-hover:translate-x-[150%] transition-transform duration-1000 ease-out pointer-events-none" />
+            </motion.div>
+          </FadeSection>
+        )}
+
+        <InstallModal 
+          open={showInstallModal} 
+          onOpenChange={setShowInstallModal} 
+        />
+
+        {isInstalled && (
+          <FadeSection>
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-primary/5 py-2 text-xs text-primary/80 border border-primary/10">
+              <CheckCircle className="h-3.5 w-3.5" />
+              <span>{t("install_app_already")}</span>
+            </div>
+          </FadeSection>
+        )}
+
+        {/* ─── Language & Content ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Globe className="h-3.5 w-3.5" />
-            {t("language")}
+            {t("language")} & {t("translation_section")}
           </div>
           <FadeSection className="rounded-xl bg-card shadow-sm overflow-hidden">
+            {/* App Language Toggle */}
             <div className="flex gap-2 p-3">
               <button
                 onClick={() => setLanguage("ar")}
@@ -534,21 +605,10 @@ export default function SettingsPage() {
                 {t("language_english")}
               </button>
             </div>
-          </FadeSection>
-        </section>
 
-        {/* ─── Translation ─── */}
-        <section>
-          <div className="section-title flex items-center gap-1.5">
-            <Globe className="h-3.5 w-3.5" />
-            {t("translation_section")}
-          </div>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.01 }}
-            className="rounded-xl bg-card shadow-sm overflow-hidden">
+            <Separator className="opacity-50" />
 
+            {/* Translation Settings */}
             <div className="flex items-center justify-between px-4 py-3.5">
               <div>
                 <span className="text-sm font-medium block">{t("show_translation")}</span>
@@ -589,10 +649,21 @@ export default function SettingsPage() {
                 </CollapsibleContent>
               </Collapsible>
             )}
-          </motion.div>
+          </FadeSection>
         </section>
+        </div>
 
-        {/* ─── Appearance & Reading ─── */}
+        {/* ─── HUB: READING EXPERIENCE ─── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 shrink-0">
+              {isRTL ? "تجربة القراءة" : "Reading Experience"}
+            </h2>
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+          </div>
+
+          {/* ─── Appearance & Reading ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Palette className="h-3.5 w-3.5" />
@@ -768,8 +839,19 @@ export default function SettingsPage() {
             </Collapsible>
           </motion.div>
         </section>
+        </div>
 
-        {/* ─── Prayer Notifications ─── */}
+        {/* ─── HUB: PRAYER & SPIRITUALITY ─── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 shrink-0">
+              {isRTL ? "الصلاة والروحانيات" : "Prayer & Reminders"}
+            </h2>
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+          </div>
+
+          {/* ─── Prayer Notifications ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Bell className="h-3.5 w-3.5" />
@@ -912,6 +994,27 @@ export default function SettingsPage() {
             <Music className="h-3.5 w-3.5" />
             {language === "ar" ? "الأذان والتذكيرات" : "Adhan & Reminders"}
           </div>
+
+          {isIOS && (
+            <FadeSection>
+              <div className="rounded-xl bg-blue-50 dark:bg-blue-950/30 p-3.5 border border-blue-200/60 dark:border-blue-800/40">
+                <div className="flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">
+                      {language === "ar" ? "ملاحظة لمستخدمي iOS" : "Note for iOS Users"}
+                    </p>
+                    <p className="text-xs text-blue-700/80 dark:text-blue-400/80 mt-1">
+                      {language === "ar"
+                        ? "يتم التحكم في إخراج الصوت (مكبرات الصوت أو سماعات الرأس) من خلال مركز التحكم في جهازك، وليس من داخل التطبيق."
+                        : "Audio output (speakers vs. headphones) is controlled via your device's Control Center, not from within the app."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </FadeSection>
+          )}
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1379,8 +1482,19 @@ export default function SettingsPage() {
             
           </motion.div>
         </section>
+        </div>
 
-        {/* ─── Downloads ─── */}
+        {/* ─── HUB: STORAGE & SYSTEM ─── */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 px-1">
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 shrink-0">
+              {isRTL ? "النظام والبيانات" : "Storage & System"}
+            </h2>
+            <div className="h-1 flex-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+          </div>
+
+          {/* ─── Downloads ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
             <Download className="h-3.5 w-3.5" />
@@ -1596,85 +1710,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ─── Install PWA ─── */}
-        {!isInstalled &&
-        <section>
-            <div className="section-title flex items-center gap-1.5">
-              <Smartphone className="h-3.5 w-3.5" />
-              {t("install_app")}
-            </div>
-            <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-xl bg-card p-5 shadow-sm">
-
-              {isIOS ?
-            <div className="space-y-3 text-center">
-                  <p className="text-sm text-foreground">{t("install_app_ios_intro")}</p>
-                  <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">1.</span>
-                      <span>{installInstructions.step1}</span>
-                      <Share className="h-4 w-4" />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">2.</span>
-                      <span>{installInstructions.step2}</span>
-                    </div>
-                  </div>
-                </div> :
-            deferredPrompt ?
-            <div className="text-center space-y-3">
-                  <p className="text-sm text-muted-foreground">{t("install_subtitle")}</p>
-                  <button
-                onClick={handleInstall}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-
-                    <Download className="h-4 w-4" />
-                    {t("install_app")}
-                  </button>
-                </div> :
-
-            <div className="space-y-3 text-center">
-                  <p className="text-sm text-foreground">{t("install_app_intro")}</p>
-                  <div className="flex flex-col items-center gap-2 rounded-lg bg-muted/50 p-4">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">1.</span>
-                      <span>{installInstructions.step1}</span>
-                      {browserType === "chromium" && <MoreVertical className="h-4 w-4" />}
-                      {browserType === "firefox" && <Menu className="h-4 w-4" />}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <span className="font-medium">2.</span>
-                      <span>{installInstructions.step2}</span>
-                    </div>
-                  </div>
-                </div>
-            }
-            </motion.div>
-          </section>
-        }
-
-        {isInstalled &&
-        <section>
-            <div className="section-title flex items-center gap-1.5">
-              <Smartphone className="h-3.5 w-3.5" />
-              {t("install_app")}
-            </div>
-            <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-xl bg-card p-5 shadow-sm">
-
-              <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                <CheckCircle className="h-4 w-4" />
-                <span>{t("install_app_already")}</span>
-              </div>
-            </motion.div>
-          </section>
-        }
 
         {/* ─── Storage Management ─── */}
         <section>
@@ -2184,6 +2219,7 @@ export default function SettingsPage() {
             </div>
           </motion.div>
         </section>
+        </div>
       </div>
     </div>);
 

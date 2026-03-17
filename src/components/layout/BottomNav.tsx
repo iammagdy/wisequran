@@ -104,9 +104,9 @@ export default function BottomNav() {
   }, [showRamadan]);
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 safe-bottom">
-      <div className="nav-floating glass-subtle border-t border-border/40">
-        <div className="mx-auto flex max-w-4xl w-full items-center justify-around px-1 sm:px-2" style={{ height: 'var(--nav-height)' }}>
+    <nav className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
+      <div className="glass-card rounded-[2rem] px-2 py-2 overflow-hidden border border-white/10 shadow-2xl">
+        <div className="flex items-center justify-around" style={{ height: 'calc(var(--nav-height) * 0.85)' }}>
           {tabs.map(({ path, key }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             const IconComponent = iconMap[path as keyof typeof iconMap];
@@ -114,33 +114,36 @@ export default function BottomNav() {
               <NavLink
                 key={path}
                 to={path}
-                className="relative flex flex-col items-center gap-0.5 sm:gap-1 px-1.5 sm:px-3 py-1 sm:py-2 rounded-2xl transition-all duration-200 nav-item-sizing flex-1 max-w-20 sm:max-w-24"
+                className={cn(
+                  "relative flex flex-col items-center justify-center gap-0.5 rounded-2xl transition-all duration-300 px-2 py-1.5 flex-1 min-w-0 max-w-[80px]",
+                  isActive ? "text-primary" : "text-muted-foreground/60"
+                )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-xl bg-primary/10"
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    className="absolute inset-x-1 inset-y-1 rounded-[1.25rem] bg-primary/8 shadow-sm border border-primary/5"
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
 
                 <motion.div
                   animate={{
-                    scale: isActive ? 1.08 : 1,
+                    scale: isActive ? 1.1 : 1,
                     y: isActive ? -1 : 0,
                   }}
-                  whileTap={{ scale: 0.78 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
                   className="relative z-10"
                 >
                   {IconComponent && (
                     <div
                       className={cn(
-                        "transition-all duration-200",
-                        isActive ? "text-primary" : "text-muted-foreground"
+                        "transition-all duration-300",
+                        isActive ? "text-primary" : "text-muted-foreground/60"
                       )}
                       style={{
-                        filter: isActive ? "drop-shadow(0 0 6px hsl(var(--primary) / 0.45))" : "none"
+                        filter: isActive ? "drop-shadow(0 0 8px hsl(var(--primary) / 0.4))" : "none"
                       }}
                     >
                       <IconComponent active={isActive} />
@@ -149,10 +152,13 @@ export default function BottomNav() {
                 </motion.div>
 
                 <motion.span
-                  animate={{ opacity: isActive ? 1 : 0.65 }}
+                  animate={{ 
+                    opacity: isActive ? 1 : 0.6,
+                    scale: isActive ? 1 : 0.95
+                  }}
                   className={cn(
-                    "relative z-10 text-[10px] sm:text-[11px] font-semibold transition-all duration-200 leading-tight no-overflow",
-                    isActive ? "text-primary" : "text-muted-foreground"
+                    "relative z-10 text-[9px] sm:text-[10px] font-bold tracking-tight no-overflow uppercase mt-0.5",
+                    isActive ? "text-primary" : "text-muted-foreground/50"
                   )}
                 >
                   {t(key)}

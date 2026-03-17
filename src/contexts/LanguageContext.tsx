@@ -43,6 +43,7 @@ interface Translations {
   // QuranPage
   quran_title: string;
   continue_reading: string;
+  continue_listening: string;
   search_placeholder: string;
   daily_goal: string;
   surah_list: string;
@@ -59,6 +60,20 @@ interface Translations {
   no_favorites: string;
   no_history: string;
   goal_complete: string;
+  your_progress: string;
+  view_details: string;
+  day_streak: string;
+  completed: string;
+  next_prayer: string;
+  night_greeting: string;
+  morning_greeting: string;
+  afternoon_greeting: string;
+  evening_greeting: string;
+  prayer_fajr: string;
+  prayer_dhuhr: string;
+  prayer_asr: string;
+  prayer_maghrib: string;
+  prayer_isha: string;
 
   // SurahReaderPage tabs (aliased for both naming patterns)
   tab_text: string;
@@ -123,7 +138,6 @@ interface Translations {
   asr: string;
   maghrib: string;
   isha: string;
-  next_prayer: string;
   location_required: string;
   qibla: string;
   prayer_guide: string;
@@ -570,8 +584,9 @@ const ar: Translations = {
   km: "كم",
   meters: "متر",
 
-  quran_title: "القرآن الكريم",
+  quran_title: "القران الكريم",
   continue_reading: "متابعة القراءة",
+  continue_listening: "متابعة الاستماع",
   search_placeholder: "بحث بالاسم، الرقم، أو نص الآية...",
   daily_goal: "هدف اليوم",
   surah_list: "السور",
@@ -588,6 +603,20 @@ const ar: Translations = {
   no_favorites: "لا توجد سور مفضلة",
   no_history: "لا يوجد سجل قراءة",
   goal_complete: "ما شاء الله! أكملت هدفك اليوم",
+  your_progress: "تقدمك اليوم",
+  view_details: "عرض التفاصيل",
+  day_streak: "يوم متواصل",
+  completed: "مكتمل",
+  next_prayer: "الصلاة القادمة",
+  night_greeting: "ليلة مباركة",
+  morning_greeting: "صباح الخير",
+  afternoon_greeting: "مساء الخير",
+  evening_greeting: "مساء الخير",
+  prayer_fajr: "الفجر",
+  prayer_dhuhr: "الظهر",
+  prayer_asr: "العصر",
+  prayer_maghrib: "المغرب",
+  prayer_isha: "العشاء",
 
   tab_text: "النص",
   text_tab: "النص",
@@ -647,7 +676,6 @@ const ar: Translations = {
   asr: "العصر",
   maghrib: "المغرب",
   isha: "العشاء",
-  next_prayer: "الصلاة القادمة",
   location_required: "يتطلب تحديد الموقع",
   qibla: "القبلة",
   prayer_guide: "دليل الصلاة",
@@ -1067,8 +1095,9 @@ const en: Translations = {
   km: "km",
   meters: "m",
 
-  quran_title: "The Wise Quran",
+  quran_title: "Wise Quran",
   continue_reading: "Continue Reading",
+  continue_listening: "Continue Listening",
   search_placeholder: "Search by name, number, or verse text...",
   daily_goal: "Daily Goal",
   surah_list: "Surahs",
@@ -1084,7 +1113,21 @@ const en: Translations = {
   no_bookmarks: "No bookmarks yet",
   no_favorites: "No favorite surahs",
   no_history: "No reading history",
-  goal_complete: "MashaAllah! You completed your daily goal",
+  goal_complete: "Masha'Allah! Goal reached for today",
+  your_progress: "Your Progress",
+  view_details: "View Details",
+  day_streak: "Day Streak",
+  completed: "Completed",
+  next_prayer: "Next Prayer",
+  night_greeting: "Blessed Night",
+  morning_greeting: "Good Morning",
+  afternoon_greeting: "Good Afternoon",
+  evening_greeting: "Good Evening",
+  prayer_fajr: "Fajr",
+  prayer_dhuhr: "Dhuhr",
+  prayer_asr: "Asr",
+  prayer_maghrib: "Maghrib",
+  prayer_isha: "Isha",
 
   tab_text: "Text",
   text_tab: "Text",
@@ -1144,7 +1187,6 @@ const en: Translations = {
   asr: "Asr",
   maghrib: "Maghrib",
   isha: "Isha",
-  next_prayer: "Next Prayer",
   location_required: "Location Required",
   qibla: "Qibla",
   prayer_guide: "Prayer Guide",

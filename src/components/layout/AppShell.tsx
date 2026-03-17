@@ -16,13 +16,14 @@ export default function AppShell({ children }: Props) {
   const location = useLocation();
   const { surahNumber } = useAudioPlayer();
   const onSurahPage = location.pathname.startsWith("/surah/");
-  const showGlobalBar = surahNumber !== null && !onSurahPage;
+  const isRecitationTest = location.pathname === "/hifz/test";
+  const showGlobalBar = surahNumber !== null && !onSurahPage && !isRecitationTest;
 
   useTheme();
 
   return (
-    <div className="min-h-screen bg-background gradient-spiritual pattern-islamic" style={{ backgroundBlendMode: "normal" }}>
-      <main className={showGlobalBar ? "pb-nav-with-bar" : "pb-nav"} style={{ overflow: "hidden" }}>
+    <div className="min-h-screen bg-background gradient-spiritual pattern-islamic bg-blend-normal">
+      <main className={showGlobalBar ? "pb-nav-with-bar" : "pb-nav"}>
         <div className="max-w-lg mx-auto w-full">
           <AnimatePresence mode="wait" initial={false}>
             <PageTransition key={location.key}>

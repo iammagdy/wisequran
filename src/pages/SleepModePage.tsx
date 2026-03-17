@@ -11,16 +11,12 @@ import { useSleepModePlayer } from "@/hooks/useSleepModePlayer";
 import { RECITERS } from "@/lib/reciters";
 import { SURAH_META } from "@/data/surah-meta";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { formatTime, toArabicNumerals } from "@/lib/utils";
 
 const TIMER_PRESETS = [10, 15, 20, 30, 45, 60];
 
 type SettingsPanel = "timer" | "reciter" | "surah" | "volume" | null;
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
 
 export default function SleepModePage() {
   const navigate = useNavigate();
@@ -176,8 +172,8 @@ export default function SleepModePage() {
               />
             </div>
             <div className="flex justify-between mt-1 text-[0.6rem] text-white/30 tabular-nums">
-              <span>{formatTime(audioCurrentTime)}</span>
-              {audioDuration > 0 && <span>{formatTime(audioDuration)}</span>}
+              <span>{formatTime(audioCurrentTime, language)}</span>
+              {audioDuration > 0 && <span>{formatTime(audioDuration, language)}</span>}
             </div>
           </div>
         </div>
@@ -187,7 +183,7 @@ export default function SleepModePage() {
           {/* Quick settings row */}
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {[
-              { id: "timer" as SettingsPanel, icon: <Clock className="h-3.5 w-3.5" />, label: language === "ar" ? `${prefs.timerMinutes} د` : `${prefs.timerMinutes}m` },
+              { id: "timer" as SettingsPanel, icon: <Clock className="h-3.5 w-3.5" />, label: language === "ar" ? `${toArabicNumerals(prefs.timerMinutes)} د` : `${prefs.timerMinutes}m` },
               { id: "surah" as SettingsPanel, icon: null, label: selectedSurah ? (language === "ar" ? selectedSurah.name : selectedSurah.englishName) : "Surah" },
               { id: "reciter" as SettingsPanel, icon: null, label: selectedReciter ? (language === "ar" ? selectedReciter.name : selectedReciter.nameEn) : "Reciter" },
               { id: "volume" as SettingsPanel, icon: <Volume2 className="h-3.5 w-3.5" />, label: language === "ar" ? "الصوت" : "Volume" },
@@ -234,7 +230,7 @@ export default function SleepModePage() {
                                 : "bg-white/5 border-white/10 text-white/50 hover:bg-white/10"
                             }`}
                           >
-                            {language === "ar" ? `${mins} دقيقة` : `${mins} min`}
+                            {language === "ar" ? `${toArabicNumerals(mins)} دقيقة` : `${mins} min`}
                           </button>
                         ))}
                       </div>
@@ -282,7 +278,7 @@ export default function SleepModePage() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs text-white/50">{language === "ar" ? "صوت القرآن" : "Quran Volume"}</p>
-                        <span className="text-xs text-amber-300/60">{prefs.quranVolume}%</span>
+                        <span className="text-xs text-amber-300/60">{language === "ar" ? toArabicNumerals(prefs.quranVolume) : prefs.quranVolume}%</span>
                       </div>
                       <Slider
                         value={[prefs.quranVolume]}

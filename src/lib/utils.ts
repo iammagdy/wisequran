@@ -25,7 +25,31 @@ export function stripBismillah(text: string, surahNumber: number, ayahNumber: nu
 
 /** Convert Western digits 0-9 to Arabic-Indic ٠-٩ */
 export function toArabicNumerals(str: string | number): string {
+  if (str === null || str === undefined) return "";
   return String(str).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
+}
+
+/** 
+ * Centralized time formatter (mm:ss or hh:mm:ss) 
+ * Automatically localizes digits if lang is 'ar'
+ */
+export function formatTime(seconds: number, language: string = "en"): string {
+  if (isNaN(seconds) || seconds < 0) return language === "ar" ? "٠٠:٠٠" : "00:00";
+  
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+  
+  let result = "";
+  if (h > 0) {
+    result = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  } else {
+    result = `${pad(m)}:${pad(s)}`;
+  }
+
+  return language === "ar" ? toArabicNumerals(result) : result;
 }
 
 /** JS getDay(): 0=Sunday … 6=Saturday → full Arabic name */

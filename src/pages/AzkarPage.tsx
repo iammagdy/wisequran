@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { azkarData, azkarSections, type AzkarCategory, type Dhikr } from "@/data/azkar-data";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -218,6 +219,7 @@ function CategoryCard({
 }
 
 export default function AzkarPage() {
+  const navigate = useNavigate();
   const { t, language, isRTL } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<AzkarCategory | null>(null);
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
@@ -280,8 +282,15 @@ export default function AzkarPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <div>
+            <div className="flex items-center gap-3 mb-4">
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => navigate("/")}
+                className="rounded-xl p-2.5 hover:bg-muted transition-colors flex-shrink-0 glass-card shadow-soft"
+              >
+                {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+              </motion.button>
+              <div className="flex-1 min-w-0">
                 <h1 className="mb-0.5 text-2xl font-bold heading-decorated">{t("azkar_title")}</h1>
                 <p className="text-xs text-muted-foreground">{t("azkar_subtitle")}</p>
               </div>

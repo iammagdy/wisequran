@@ -51,7 +51,7 @@ export default function SurahReaderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
-  const [, setLastRead] = useLocalStorage<{surah: number;ayah: number;} | null>("wise-last-read", null);
+  const [, setLastRead] = useLocalStorage<{surah: number; ayah: number; mode: "reading" | "listening"} | null>("wise-last-read", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{surah: number;ayah: number;}[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
@@ -86,6 +86,10 @@ export default function SurahReaderPage() {
     ? (language === "ar" ? surahInfo.name : surahInfo.englishName)
     : `${t("surah")} ${surahNumber}`;
 
+  const tafsirMap = useMemo(() => new Map(tafsirAyahs.map(a => [a.numberInSurah, a])), [tafsirAyahs]);
+  const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
+  const currentTranslationEdition = TRANSLATION_EDITIONS.find(e => e.id === translationEdition);
+
   const toggleFavorite = () => {
     if (isFavorite) {
       setFavorites(favorites.filter((n) => n !== surahNumber));
@@ -108,7 +112,11 @@ export default function SurahReaderPage() {
       setAyahs(ayahData);
       const info = surahList.find((s) => s.number === surahNumber) || null;
       setSurahInfo(info);
-      setLastRead({ surah: surahNumber, ayah: 1 });
+      setLastRead({
+        surah: surahNumber,
+        ayah: 1,
+        mode: isListeningMode ? "listening" : "reading"
+      });
       if (info) addToHistory(surahNumber, info.name);
       setLoading(false);
     }).
@@ -116,7 +124,7 @@ export default function SurahReaderPage() {
       setError(t("error_loading"));
       setLoading(false);
     });
-  }, [surahNumber, addToHistory, setLastRead]);
+  }, [surahNumber, addToHistory, setLastRead, isListeningMode]);
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && !hasTracked.current) {

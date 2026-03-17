@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, Flame, ChartBar as BarChart3, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3 } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { calculatePrayerTimes } from "@/lib/prayer-times";
+import { useLocation } from "@/hooks/useLocation";
 
 type HomeView = "home" | "surahs" | "surahs_listening";
 
@@ -31,15 +32,49 @@ export default function QuranPage() {
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
   const [loadingSurahs, setLoadingSurahs] = useState(false);
   const [surahSearch, setSurahSearch] = useState("");
-  const [lastRead] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-read", null);
+  const [lastRead] = useLocalStorage<{ surah: number; ayah: number; mode: "reading" | "listening" } | null>("wise-last-read", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
   const { t, language, isRTL } = useLanguage();
+  const { location } = useLocation();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
+
+  // Dynamic greeting logic
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return language === "ar" ? "صباح الخير" : "Good Morning";
+    return language === "ar" ? "مساء الخير" : "Good Evening";
+  };
+
+  // Prayer time logic (Next Prayer)
+  const [nextPrayer, setNextPrayer] = useState<{name: string, time: string} | null>(null);
+  useEffect(() => {
+    const options = location ? { latitude: location.latitude, longitude: location.longitude } : {};
+    const times = calculatePrayerTimes(new Date(), options);
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    const prayerOrder = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+    let next = null;
+    
+    for (const p of prayerOrder) {
+      const [h, m] = times[p as keyof typeof times].split(":").map(Number);
+      const pMinutes = h * 60 + m;
+      if (pMinutes > nowMinutes) {
+        next = { name: t(p as any), time: times[p as keyof typeof times] };
+        break;
+      }
+    }
+    
+    if (!next) {
+      next = { name: t("fajr"), time: times.fajr }; // Next day's Fajr
+    }
+    setNextPrayer(next);
+  }, [location, t]);
 
   useEffect(() => {
     if ((view === "surahs" || view === "surahs_listening") && surahs.length === 0) {
@@ -139,55 +174,41 @@ export default function QuranPage() {
   return (
     <div className="px-4 pt-6 pb-6" dir={isRTL ? "rtl" : "ltr"}>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          {view !== "home" && (
-            <motion.button
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => { setView("home"); setSurahSearch(""); }}
-              className="rounded-xl p-2.5 glass-card text-muted-foreground hover:bg-muted min-h-[40px] min-w-[40px] flex items-center justify-center shadow-soft"
-              dir={isRTL ? "rtl" : "ltr"}>
-              {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
-            </motion.button>
-          )}
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold heading-decorated">
-              {view !== "home" ? surahListTitle : t("quran_title")}
+      {/* Dynamic Header & Greeting */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-0.5">
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">
+              {getGreeting()}
             </h1>
-            {(view === "surahs" || view === "surahs_listening") && surahs.length > 0 && (
-              <span className="text-xs font-semibold text-muted-foreground bg-muted rounded-full px-2 py-0.5">
-                {language === "ar" ? toArabicNumerals(surahs.length) : surahs.length}
-              </span>
-            )}
           </div>
-        </div>
-        {view === "home" && (
           <div className="flex items-center gap-1.5">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/sleep")}
-              aria-label="Sleep Mode"
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
-              <BedDouble className="h-4 w-4" />
+              className="rounded-xl p-2.5 glass-card text-muted-foreground shadow-soft hover:bg-muted/50 transition-colors">
+              <BedDouble className="h-5 w-5" />
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => navigate("/stats")}
-              aria-label={t("statistics")}
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
-              <BarChart3 className="h-5 w-5" />
-            </motion.button>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate("/hifz")}
-              aria-label={t("memorization")}
-              className="rounded-xl p-2.5 shadow-soft min-h-[40px] min-w-[40px] flex items-center justify-center glass-card text-muted-foreground hover:bg-muted">
-              <GraduationCap className="h-5 w-5" />
+              onClick={() => navigate("/settings")}
+              className="rounded-xl p-2.5 glass-card text-muted-foreground shadow-soft hover:bg-muted/50 transition-colors">
+              <Star className="h-5 w-5" />
             </motion.button>
           </div>
+        </div>
+
+        {/* Next Prayer Quick Info */}
+        {nextPrayer && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 text-[11px] text-muted-foreground bg-primary/5 py-1.5 px-3 rounded-full border border-primary/10 w-fit">
+            <Clock className="h-3 w-3 text-primary" />
+            <span>{t("next_prayer")}: <span className="font-bold text-foreground">{nextPrayer.name}</span></span>
+            <span className="opacity-50">•</span>
+            <span className="font-bold text-primary">{language === "ar" ? toArabicNumerals(nextPrayer.time) : nextPrayer.time}</span>
+          </motion.div>
         )}
       </div>
 
@@ -235,111 +256,81 @@ export default function QuranPage() {
             exit={{ opacity: 0, x: isRTL ? 20 : -20 }}
             transition={{ duration: 0.22 }}>
 
-            {/* Daily Goal + Streak Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl gradient-hero border border-primary/12 shadow-elevated p-4 mb-3 relative overflow-hidden"
-              dir={isRTL ? "rtl" : "ltr"}>
 
-              <div className="absolute inset-0 pattern-islamic opacity-70 pointer-events-none" />
-
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-sm text-foreground/70 font-medium">
-                    {t("today")}{" "}
-                    <span className="text-foreground font-bold">
-                      {language === "en" ? todayCount : toArabicNumerals(todayCount)}
-                    </span>
-                    {" / "}
-                    {language === "en" ? goal : toArabicNumerals(goal)}{" "}
-                    {t("ayah")}
-                  </span>
-                  {streak > 0 && (
-                    <motion.div
-                      initial={{ scale: 0.8 }}
-                      animate={{ scale: 1 }}
-                      className="flex items-center gap-1.5 rounded-full bg-accent/20 border border-accent/30 px-2.5 py-1">
-                      <Flame className="h-3.5 w-3.5 text-accent streak-glow" />
-                      <span className="text-xs font-bold text-accent">
-                        {language === "en" ? streak : toArabicNumerals(streak)}
-                      </span>
-                      <span className="text-[10px] text-accent/80 font-medium">{t("days")}</span>
-                    </motion.div>
-                  )}
-                </div>
-                <Progress value={progress} variant="gradient" size="sm" />
-                {progress >= 100 && (
-                  <motion.p
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-xs text-primary font-semibold mt-2 text-center">
-                    ✨ {t("goal_complete")}
-                  </motion.p>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Continue Reading */}
+            {/* Continue Reading/Listening - Jewel Card */}
             {lastRead && (
               <motion.button
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileTap={{ scale: 0.99 }}
-                onClick={() => navigate(`/surah/${lastRead.surah}`)}
+                onClick={() => navigate(`/surah/${lastRead.surah}${lastRead.mode === "listening" ? "?mode=listening" : ""}`)}
                 className={cn(
-                  "flex w-full items-center rounded-2xl glass-card py-3.5 px-4 shadow-elevated border-gold/25 hover-lift gap-3 mb-3 gradient-gold-card",
+                  "flex w-full items-center rounded-[2rem] glass-card py-5 px-6 shadow-2xl border border-white/10 hover-lift gap-4 mb-4 relative overflow-hidden group",
                   isRTL ? "text-right" : "text-left"
                 )}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 border border-gold/20">
-                  <BookOpen className="h-5 w-5 text-gold" />
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-inner">
+                  {lastRead.mode === "listening" ? (
+                    <Headphones className="h-6 w-6 text-primary" />
+                  ) : (
+                    <BookOpen className="h-6 w-6 text-primary" />
+                  )}
                 </div>
+                
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wide">{t("continue_reading")}</p>
-                  <p className="text-sm font-bold truncate text-foreground">
-                    {t("surah")} {getSurahName(lastRead.surah)}{" "}
-                    <span className="text-muted-foreground font-normal">·</span>{" "}
+                  <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest mb-1">
+                    {lastRead.mode === "listening" ? t("continue_listening") : t("continue_reading")}
+                  </p>
+                  <h3 className="text-base font-serif font-bold text-foreground truncate">
+                    {t("surah")} {getSurahName(lastRead.surah)}
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground/80 mt-0.5">
                     {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
                   </p>
                 </div>
-                <div className="shrink-0 w-7 h-7 rounded-full bg-gold/15 flex items-center justify-center">
+
+                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   {isRTL
-                    ? <ArrowLeft className="h-3.5 w-3.5 text-gold" />
-                    : <ChevronRight className="h-3.5 w-3.5 text-gold" />
+                    ? <ArrowRight className="h-4 w-4 text-primary" />
+                    : <ChevronRight className="h-4 w-4 text-primary" />
                   }
                 </div>
               </motion.button>
             )}
 
-            {/* Mode Selection Cards — 2×2 Grid */}
-            <div className="grid grid-cols-2 gap-2.5 mt-1" dir={isRTL ? "rtl" : "ltr"}>
+            {/* Mode Selection Cards — Premium Grid */}
+            <div className="grid grid-cols-2 gap-4 mt-2" dir={isRTL ? "rtl" : "ltr"}>
               {modeCards.map((card, i) => (
                 <motion.button
                   key={card.key}
                   initial={{ opacity: 0, y: 20, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.06 + i * 0.07, duration: 0.3, ease: "easeOut" }}
+                  transition={{ delay: 0.06 + i * 0.1, duration: 0.5, ease: "easeOut" }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleModeCard(card)}
                   className={cn(
-                    "flex flex-col items-start gap-2.5 rounded-2xl glass-card px-4 py-4 shadow-elevated border transition-all relative overflow-hidden",
-                    card.borderColor
+                    "flex flex-col items-center justify-center text-center gap-4 rounded-[2rem] glass-card px-4 py-8 shadow-2xl border border-white/10 hover:border-primary/30 transition-all relative overflow-hidden group"
                   )}>
 
-                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-100 pointer-events-none", card.bgGradient)} />
+                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity", card.bgGradient)} />
 
-                  <div className={cn("relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-soft border border-border/20", card.accentColor)}
-                    style={{ background: `hsl(var(--card) / 0.7)` }}>
+                  <div className={cn("relative z-10 flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-inner border border-white/10 bg-white/5", card.accentColor)}>
+                    <div className="absolute inset-0 bg-current opacity-5 rounded-[1.5rem]" />
                     {card.icon}
                   </div>
 
-                  <div className={cn("relative z-10 text-start")}>
-                    <p className={cn("text-sm font-bold leading-tight mb-0.5", card.accentColor)}>
+                  <div className="relative z-10">
+                    <h3 className="text-lg font-serif font-bold text-foreground mb-1">
                       {t(card.titleKey)}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground leading-snug">
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold leading-tight">
                       {t(card.subtitleKey)}
                     </p>
+                  </div>
+                  
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity">
+                    <ChevronRight className="h-4 w-4 text-primary" />
                   </div>
                 </motion.button>
               ))}
@@ -369,29 +360,36 @@ export default function QuranPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.012, 0.35) }}
                     onClick={() => handleSurahSelect(surah.number)}
-                    className="flex w-full items-center gap-3.5 rounded-xl glass-card px-4 py-3 shadow-soft hover:shadow-elevated transition-all active:scale-[0.99] group border-border/30 hover:border-primary/20">
+                    className="flex w-full items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-sm hover:shadow-xl transition-all active:scale-[0.99] group border border-white/5 hover:border-primary/20 relative overflow-hidden">
+                    
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                    <div className="number-badge h-10 w-10 text-[13px] shrink-0 rounded-xl">
+                    <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all shadow-inner font-serif font-bold text-foreground/80 group-hover:text-primary">
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                     </div>
 
-                    <div className={cn("flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
-                      <p className="font-arabic text-base font-bold group-hover:text-primary transition-colors leading-tight">
-                        {language === "ar" ? surah.name : surah.englishName}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <div className={cn("relative z-10 flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors leading-tight">
+                          {language === "ar" ? surah.name : surah.englishName}
+                        </p>
+                        <div className="flex items-center gap-1 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity">
+                          {favorites.includes(surah.number) && (
+                            <Star className="h-3 w-3 fill-primary text-primary" />
+                          )}
+                          {bookmarkedSurahs.includes(surah.number) && (
+                            <Bookmark className="h-3 w-3 text-primary fill-primary/20" />
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest leading-none">
                         {language === "en" ? surah.numberOfAyahs : toArabicNumerals(surah.numberOfAyahs)}{" "}
-                        {t("ayahs")} · {getRevelationType(surah.revelationType)}
+                        {t("ayahs")} · <span className="opacity-70">{getRevelationType(surah.revelationType)}</span>
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      {favorites.includes(surah.number) && (
-                        <Star className="h-3.5 w-3.5 fill-gold text-gold" />
-                      )}
-                      {bookmarkedSurahs.includes(surah.number) && (
-                        <Bookmark className="h-3.5 w-3.5 text-primary fill-primary/20" />
-                      )}
+                    <div className="relative z-10 shrink-0 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
+                      <ChevronRight className="h-5 w-5 text-primary/40" />
                     </div>
                   </motion.button>
                 ))}

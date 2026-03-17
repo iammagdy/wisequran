@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Timer } from "lucide-react";
 import { type Ayah } from "@/lib/quran-api";
-import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
+import { cn, toArabicNumerals, stripBismillah, formatTime } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FocusModeProps {
@@ -15,12 +15,6 @@ interface FocusModeProps {
   onClose: () => void;
 }
 
-function formatTime(seconds: number, lang: string): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  const base = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return lang === "ar" ? toArabicNumerals(base) : base;
-}
 
 export default function FocusMode({
   ayahs,

@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import InstallBanner from "@/components/InstallBanner";
 import ChangelogModal from "@/components/ChangelogModal";
+import UpdateNotification from "@/components/UpdateNotification";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
@@ -67,6 +68,7 @@ const AppContent = () => {
                 </Routes>
               </AppShell>
               <InstallBanner />
+              <UpdateNotification />
             </>
           }
         />

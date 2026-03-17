@@ -29,7 +29,7 @@ interface AudioPlayerState {
 
 interface AudioPlayerContextType extends AudioPlayerState {
   reciterId: string;
-  play: (surahNumber: number, surahName: string, ayahs?: Ayah[]) => Promise<void>;
+  play: (surahNumber: number, surahName: string, ayahs?: Ayah[]) => void;
   togglePlayPause: () => Promise<void>;
   seek: (time: number) => void;
   seekToAyah: (ayahNumber: number) => void;
@@ -182,127 +182,117 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const play = useCallback(async (surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
+  const play = useCallback((surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
     stoppedRef.current = false;
-    ayahsRef.current = ayahs || [];
-    timestampsRef.current = [];
-
     const currentReciterId = reciterIdRef.current;
 
-    // Resume if same surah
     if (audioRef.current && surahNumberRef.current === surahNumber) {
-      audioRef.current.play();
+      audioRef.current.play().catch(() => {});
       return;
     }
 
     audioRef.current?.pause();
-    audioRef.current = null;
     cleanupBlobUrl();
 
     surahNumberRef.current = surahNumber;
-    activeSurahForRetryRef.current = surahNumber;
-    activeReciterForRetryRef.current = currentReciterId;
+    ayahsRef.current = ayahs || [];
+    timestampsRef.current = [];
 
-    // Use existing Audio element if it exists to preserve user gesture context on iOS
-    sourceSetRef.current = false;
     let audio = audioRef.current;
     if (!audio) {
       audio = new Audio();
       audioRef.current = audio;
       setupAudioListeners(audio);
-      // Synchronous silent unlock for iOS/Safari to establish user gesture
-      audio.src = SILENT_MP3;
-      audio.play().catch(() => { /* ignore if silent unlock fails */ });
     }
+    
+    // This needs to be synchronous with the user gesture
+    audio.src = SILENT_MP3;
+    const playPromise = audio.play();
 
     setState((s) => ({
-      ...s,
+      ...INITIAL_STATE,
       surahNumber,
       surahName,
       loading: true,
-      offline: false,
-      currentTime: 0,
-      duration: 0,
       playingReciterId: currentReciterId,
-      currentAyahNumber: null,
-      currentAyahInSurah: null,
-      isAyahMode: false,
-      currentAyahIndex: 0,
-      totalAyahs: 0,
     }));
 
-    let primaryUrl: string | null = null;
-
-    // Try QF API first (has timestamps for ayah highlighting)
-    try {
-      const qfData = await fetchChapterRecitation(currentReciterId, surahNumber);
-      if (qfData) {
-        timestampsRef.current = qfData.timestamps;
-        primaryUrl = qfData.audioUrl;
-        setState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
+    const loadAndPlay = async () => {
+      try {
+        // Await the silent play promise. If this fails, we can't play audio.
+        await playPromise;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'NotAllowedError') {
+          setState((s) => ({ ...s, loading: false }));
+          toast.error("يحتاج المتصفح إلى التفاعل لتشغيل الصوت. يرجى الضغط على زر التشغيل مرة أخرى.");
+        }
+        return;
       }
-    } catch {
-      // QF API failed, fall back to normal sources
-    }
+      
+      // If another play request has started, abort this one
+      if (surahNumberRef.current !== surahNumber || stoppedRef.current) return;
 
-    // Check cached audio
-    if (!primaryUrl) {
-      const cached = await resolveAudioSource(currentReciterId, surahNumber);
-      if (cached?.cached) {
-        primaryUrl = cached.url;
-        blobUrlRef.current = cached.url;
+      activeSurahForRetryRef.current = surahNumber;
+      activeReciterForRetryRef.current = currentReciterId;
+      sourceSetRef.current = false;
+
+      let primaryUrl: string | null = null;
+      try {
+        const qfData = await fetchChapterRecitation(currentReciterId, surahNumber);
+        if (qfData) {
+          timestampsRef.current = qfData.timestamps;
+          primaryUrl = qfData.audioUrl;
+          setState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
+        }
+      } catch {/* fallback */}
+
+      if (!primaryUrl) {
+        const cached = await resolveAudioSource(currentReciterId, surahNumber);
+        if (cached?.cached) {
+          primaryUrl = cached.url;
+          blobUrlRef.current = cached.url;
+        }
       }
-    }
 
-    if (stoppedRef.current || audioRef.current !== audio) {
-      return;
-    }
+      if (stoppedRef.current) return;
 
-    // Build ordered fallback URL list from all available sources
-    const allUrls = await getReciterAudioUrls(currentReciterId, surahNumber);
-
-    if (!primaryUrl && !navigator.onLine) {
-      setState((s) => ({ ...s, offline: true, loading: false }));
-      audioRef.current = null;
-      return;
-    }
-
-    // Deduplicate: primary first, then the rest
-    const orderedUrls: string[] = [];
-    if (primaryUrl) orderedUrls.push(primaryUrl);
-    for (const u of allUrls) {
-      if (!orderedUrls.includes(u)) orderedUrls.push(u);
-    }
-
-    if (orderedUrls.length === 0) {
-      setState((s) => ({ ...s, offline: true, loading: false }));
-      audioRef.current = null;
-      return;
-    }
-
-    // Set fallbacks (everything after index 0) for the error handler
-    fallbackUrlsRef.current = orderedUrls.slice(1);
-    fallbackIndexRef.current = 0;
-
-    sourceSetRef.current = true;
-    audio.src = orderedUrls[0];
-    audio.load();
-
-    try {
-      await audio.play();
-      if (!blobUrlRef.current) {
-        cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
+      const allUrls = await getReciterAudioUrls(currentReciterId, surahNumber);
+      if (!primaryUrl && !navigator.onLine) {
+        setState((s) => ({ ...s, offline: true, loading: false }));
+        return;
       }
-    } catch (error) {
-      // The error event listener will handle retrying the next URL automatically
-      // However, if it's a NotAllowedError (iOS Safari auto-play policy), it might not fire the error listener
-      if (error instanceof DOMException && error.name === 'NotAllowedError') {
-        setState((s) => ({ ...s, loading: false }));
-        toast.error(
-          "يحتاج المتصفح إلى التفاعل لتشغيل الصوت. يرجى الضغط على زر التشغيل مرة أخرى."
-        );
+
+      const orderedUrls: string[] = [];
+      if (primaryUrl) orderedUrls.push(primaryUrl);
+      allUrls.forEach(u => !orderedUrls.includes(u) && orderedUrls.push(u));
+
+      if (orderedUrls.length === 0) {
+        setState((s) => ({ ...s, offline: true, loading: false }));
+        return;
       }
-    }
+
+      fallbackUrlsRef.current = orderedUrls.slice(1);
+      fallbackIndexRef.current = 0;
+      sourceSetRef.current = true;
+
+      if (audioRef.current) {
+        audioRef.current.src = orderedUrls[0];
+        audioRef.current.load();
+        try {
+          await audioRef.current.play();
+          if (!blobUrlRef.current) {
+            cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
+          }
+        } catch (error) {
+           // The 'error' event listener will handle retries.
+           // This catch is for cases where even the first play fails unexpectedly after the silent unlock.
+           setState((s) => ({ ...s, loading: false }));
+        }
+      }
+    };
+
+    loadAndPlay();
+
   }, [cleanupBlobUrl, setupAudioListeners]);
 
   const togglePlayPause = useCallback(async () => {
@@ -352,21 +342,21 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const playNextSurah = useCallback(async () => {
+  const playNextSurah = useCallback(() => {
     const current = surahNumberRef.current;
     if (!current || current >= 114) return;
     const next = SURAH_META[current]; // index is surahNumber (1-based), so index = current gives next surah
     if (next) {
-      await play(next.number, next.name);
+      play(next.number, next.name);
     }
   }, [play]);
 
-  const playPreviousSurah = useCallback(async () => {
+  const playPreviousSurah = useCallback(() => {
     const current = surahNumberRef.current;
     if (!current || current <= 1) return;
     const prev = SURAH_META[current - 2]; // index current-2 gives previous surah
     if (prev) {
-      await play(prev.number, prev.name);
+      play(prev.number, prev.name);
     }
   }, [play]);
 

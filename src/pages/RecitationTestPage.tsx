@@ -1,71 +1,53 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle, History, ChevronDown, ChevronUp, TrendingUp, Sparkles, Check, X, SkipForward } from "lucide-react";
+import {
+  ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle,
+  History, ChevronDown, ChevronUp, TrendingUp,
+  Check, X, SkipForward, Mic, Square,
+} from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useRecitationHistory } from "@/hooks/useRecitationHistory";
-import { scoreRangeRecitation, tokenize, type StrictnessLevel, type PerAyahScoreResult, type WordDiff } from "@/lib/ayah-match";
+import { scoreCurrentAyah, tokenize, type StrictnessLevel, type PerAyahScoreResult } from "@/lib/ayah-match";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahRangeSelector from "@/components/recitation/SurahRangeSelector";
-import MicButton from "@/components/recitation/MicButton";
 import RecitationScoreCard from "@/components/recitation/RecitationScoreCard";
 
 type PagePhase = "setup" | "recording" | "result";
+type AyahVerdict = "pending" | "correct" | "incorrect" | "skipped";
+
+interface AyahState {
+  numberInSurah: number;
+  status: AyahVerdict;
+  score: number;
+  wordDiffs: ReturnType<typeof scoreCurrentAyah>["wordDiffs"];
+}
 
 interface ScoreResult {
   overallScore: number;
   correctAyahs: number;
   totalAyahs: number;
   perAyah: PerAyahScoreResult[];
-  transcript: string;
 }
 
-interface AyahState {
-  numberInSurah: number;
-  status: "pending" | "correct" | "incorrect" | "skipped";
-  score: number;
-  attempt: number;
-  wordDiffs: WordDiff[];
-}
+const STRICTNESS_OPTIONS: StrictnessLevel[] = ["lenient", "normal", "strict"];
 
-function UnsupportedBanner({ message, desc }: { message: string; desc: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 flex gap-3"
-    >
-      <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-semibold text-destructive">{message}</p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{desc}</p>
-      </div>
-    </motion.div>
-  );
-}
+const PASS_THRESHOLD: Record<StrictnessLevel, number> = {
+  lenient: 55,
+  normal: 70,
+  strict: 85,
+};
 
-function EnglishComingSoonBanner() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 flex gap-3 mb-4"
-    >
-      <Sparkles className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Arabic Only — English Coming Soon</p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          Speech recognition scoring is currently optimized for Arabic recitation only. English support is on its way.
-        </p>
-      </div>
-    </motion.div>
-  );
-}
+// minimum fraction of ayah words spoken before we attempt evaluation
+const MIN_WORD_COVERAGE = 0.6;
 
-function IOSUnsupportedBanner({ language }: { language: string }) {
+// silence after which we force evaluation even if score is low
+const SILENCE_TIMEOUT_MS = 2200;
+
+function IOSBanner({ language }: { language: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -73,29 +55,54 @@ function IOSUnsupportedBanner({ language }: { language: string }) {
       className="rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 flex gap-3 mb-4"
     >
       <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+      <p className="text-sm text-amber-700 dark:text-amber-400">
+        {language === "ar"
+          ? "التعرف على الصوت غير متاح على iOS Safari — استخدم Chrome على Android."
+          : "Speech Recognition is not available on iOS Safari — please use Chrome on Android."}
+      </p>
+    </motion.div>
+  );
+}
+
+function UnsupportedBanner({ message, desc }: { message: string; desc: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 flex gap-3 mb-4"
+    >
+      <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
       <div>
-        <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-          {language === "ar" ? "التعرف على الصوت غير متاح على iOS Safari" : "Speech Recognition Not Available on iOS Safari"}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          {language === "ar"
-            ? "متصفح Safari على iPhone لا يدعم ميزة التعرف على الصوت. يُرجى استخدام جهاز Android أو حاسوب."
-            : "Safari on iPhone does not support the Speech Recognition API. Please use an Android device or desktop browser."}
-        </p>
+        <p className="text-sm font-semibold text-destructive">{message}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
       </div>
     </motion.div>
   );
 }
 
-const STRICTNESS_OPTIONS: StrictnessLevel[] = ["lenient", "normal", "strict"];
-const MAX_ATTEMPTS = 2;
+// ── Word diff row shown after reveal ─────────────────────────────────
+function WordDiffRow({ wordDiffs }: { wordDiffs: AyahState["wordDiffs"] }) {
+  if (!wordDiffs || wordDiffs.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1 justify-center mt-2 px-1" dir="rtl">
+      {wordDiffs.map((wd, i) => (
+        <span
+          key={i}
+          className={cn(
+            "font-arabic text-sm px-1.5 rounded-md",
+            wd.matchScore >= 70
+              ? "text-emerald-500 dark:text-emerald-400"
+              : "text-destructive line-through"
+          )}
+        >
+          {wd.expected}
+        </span>
+      ))}
+    </div>
+  );
+}
 
-const STRICTNESS_THRESHOLD: Record<StrictnessLevel, number> = {
-  lenient: 50,
-  normal: 65,
-  strict: 80,
-};
-
+// ── Main ───────────────────────────────────────────────────────────────
 export default function RecitationTestPage() {
   const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
@@ -109,47 +116,54 @@ export default function RecitationTestPage() {
   const [ayahTo, setAyahTo] = useState(7);
   const [strictness, setStrictness] = useState<StrictnessLevel>("normal");
   const [phase, setPhase] = useState<PagePhase>("setup");
+
   const [ayahsData, setAyahsData] = useState<Ayah[]>([]);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
+  const [ayahStates, setAyahStates] = useState<AyahState[]>([]);
+  const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const [result, setResult] = useState<ScoreResult | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
 
-  const [ayahStates, setAyahStates] = useState<AyahState[]>([]);
-  const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
-  const [retryMessage, setRetryMessage] = useState<string | null>(null);
-
-  const ayahRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Refs
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const spokenWordPointerRef = useRef(0);
-  const lockedAyahCountRef = useRef(0);
   const lastTranscriptRef = useRef("");
+  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const currentAyahRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const verseListRef = useRef<HTMLDivElement | null>(null);
+
+  // Stable refs to avoid stale closures in effects
+  const ayahsDataRef = useRef<Ayah[]>([]);
+  const strictnessRef = useRef<StrictnessLevel>("normal");
+  const currentAyahIndexRef = useRef(0);
+  const ayahStatesRef = useRef<AyahState[]>([]);
+
+  ayahsDataRef.current = ayahsData;
+  strictnessRef.current = strictness;
+  currentAyahIndexRef.current = currentAyahIndex;
+  ayahStatesRef.current = ayahStates;
 
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
-  const silentAudioRef = useRef<HTMLAudioElement | null>(null);
-
   const meta = SURAH_META[surahNumber - 1];
 
   useEffect(() => {
     setAyahFrom(1);
     setAyahTo(Math.min(10, meta.numberOfAyahs));
-  }, [surahNumber]);
+  }, [surahNumber, meta.numberOfAyahs]);
 
   const handleRangeChange = useCallback((from: number, to: number) => {
     setAyahFrom(from);
     setAyahTo(to);
   }, []);
 
-  const loadAyahs = async () => {
+  // ── Load ayahs ─────────────────────────────────────────────────────
+  const loadAyahs = useCallback(async (): Promise<Ayah[]> => {
     setLoadingAyahs(true);
     try {
       const all = await fetchSurahAyahs(surahNumber);
-      const range = all.filter(
-        (a) => a.numberInSurah >= ayahFrom && a.numberInSurah <= ayahTo
-      );
+      const range = all.filter(a => a.numberInSurah >= ayahFrom && a.numberInSurah <= ayahTo);
       setAyahsData(range);
       return range;
     } catch {
@@ -158,41 +172,10 @@ export default function RecitationTestPage() {
     } finally {
       setLoadingAyahs(false);
     }
-  };
+  }, [surahNumber, ayahFrom, ayahTo]);
 
-  const handleStartTest = async () => {
-    const range = await loadAyahs();
-    speech.reset();
-    spokenWordPointerRef.current = 0;
-    lockedAyahCountRef.current = 0;
-    lastTranscriptRef.current = "";
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    setAyahStates(range.map(a => ({
-      numberInSurah: a.numberInSurah,
-      status: "pending",
-      score: 0,
-      attempt: 0,
-      wordDiffs: [],
-    })));
-    setCurrentAyahIndex(0);
-    setRetryMessage(null);
-    setPhase("recording");
-  };
-
-  const handleMicStart = useCallback(() => {
-    if (!silentAudioRef.current) {
-      const audio = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==");
-      silentAudioRef.current = audio;
-    }
-    silentAudioRef.current.play().catch(() => {});
-    speech.start();
-  }, [speech]);
-
-  const handleStopAndEvaluate = useCallback(() => {
-    speech.stop();
-  }, [speech]);
-
-  const finalizeResults = useCallback((states: AyahState[], fullTranscript: string) => {
+  // ── Finalize ───────────────────────────────────────────────────────
+  const finalizeResults = useCallback((states: AyahState[]) => {
     const perAyah: PerAyahScoreResult[] = states.map(s => ({
       numberInSurah: s.numberInSurah,
       score: s.score,
@@ -204,278 +187,270 @@ export default function RecitationTestPage() {
       ? Math.round(perAyah.reduce((sum, a) => sum + a.score, 0) / perAyah.length)
       : 0;
 
-    const scoreResult: ScoreResult = {
-      overallScore,
-      correctAyahs,
-      totalAyahs: states.length,
-      perAyah,
-      transcript: fullTranscript,
-    };
-
-    setResult(scoreResult);
+    setResult({ overallScore, correctAyahs, totalAyahs: states.length, perAyah });
     setPhase("result");
+    speech.reset();
 
     recitationHistory.saveResult({
-      surahNumber,
-      ayahFrom,
-      ayahTo,
-      score: overallScore,
-      totalAyahs: states.length,
-      correctAyahs,
-      transcript: fullTranscript,
-      strictness,
-      perAyah,
+      surahNumber, ayahFrom, ayahTo,
+      score: overallScore, totalAyahs: states.length, correctAyahs,
+      transcript: "", strictness, perAyah,
     });
-  }, [surahNumber, ayahFrom, ayahTo, strictness, recitationHistory]);
+  }, [surahNumber, ayahFrom, ayahTo, strictness, recitationHistory, speech]);
 
-  const advanceToNextAyah = useCallback((
-    states: AyahState[],
-    nextIndex: number,
-    fullTranscript: string
-  ) => {
-    if (nextIndex >= states.length) {
-      finalizeResults(states, fullTranscript);
-      speech.stop();
-    } else {
-      lastTranscriptRef.current = fullTranscript;
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      setCurrentAyahIndex(nextIndex);
-      lockedAyahCountRef.current = nextIndex;
+  // ── Advance to next ayah (or finalize) ────────────────────────────
+  const advanceToNext = useCallback((states: AyahState[], nextIdx: number) => {
+    if (nextIdx >= states.length) {
+      finalizeResults(states);
+      return;
     }
-  }, [finalizeResults, speech]);
-
-  const handleSkipCurrentAyah = useCallback(() => {
-    setAyahStates(prev => {
-      const updated = [...prev];
-      const current = updated[currentAyahIndex];
-      if (!current) return prev;
-      updated[currentAyahIndex] = {
-        ...current,
-        status: "skipped",
-        score: 0,
-      };
-      return updated;
-    });
-    setRetryMessage(null);
-
-    const nextIndex = currentAyahIndex + 1;
-    setAyahStates(prev => {
-      advanceToNextAyah(prev, nextIndex, speech.transcript);
-      return prev;
-    });
-  }, [currentAyahIndex, advanceToNextAyah, speech.transcript]);
-
-  const evaluateCurrentAyah = useCallback((fullTranscript: string) => {
-    if (!fullTranscript.trim()) return;
-
-    const allSpokenWords = tokenize(fullTranscript);
-
-    setAyahStates(prev => {
-      if (currentAyahIndex >= prev.length) return prev;
-
-      const currentAyah = ayahsData[currentAyahIndex];
-      if (!currentAyah) return prev;
-
-      const ayahWords = tokenize(currentAyah.text);
-      const ayahWordCount = ayahWords.length;
-      const pointer = spokenWordPointerRef.current;
-      const wordsAvailable = allSpokenWords.length - pointer;
-
-      if (wordsAvailable < 1) return prev;
-
-      const threshold = STRICTNESS_THRESHOLD[strictness];
-
-      const { perAyah: livePerAyah } = scoreRangeRecitation(
-        [currentAyah],
-        allSpokenWords.slice(pointer, pointer + ayahWordCount + Math.ceil(ayahWordCount * 0.5)).join(" "),
-        strictness
-      );
-
-      const liveResult = livePerAyah[0];
-      if (!liveResult) return prev;
-
-      const updated = [...prev];
-      const currentState = updated[currentAyahIndex];
-
-      if (liveResult.score >= threshold) {
-        updated[currentAyahIndex] = {
-          ...currentState,
-          status: "correct",
-          score: liveResult.score,
-          wordDiffs: liveResult.wordDiffs,
-        };
-
-        spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-        setRetryMessage(null);
-
-        const nextIndex = currentAyahIndex + 1;
-        setTimeout(() => {
-          advanceToNextAyah(updated, nextIndex, fullTranscript);
-        }, 500);
-
-        return updated;
+    setCurrentAyahIndex(nextIdx);
+    currentAyahIndexRef.current = nextIdx;
+    lastTranscriptRef.current = "";
+    // Scroll the new current card into view
+    setTimeout(() => {
+      const el = currentAyahRefs.current[nextIdx];
+      if (el && verseListRef.current) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
+    }, 100);
+  }, [finalizeResults]);
 
-      const attempt = currentState.attempt + 1;
+  // ── Core evaluation (called on silence or word-count trigger) ──────
+  const runEvaluation = useCallback((transcript: string, forceAdvance: boolean) => {
+    const idx = currentAyahIndexRef.current;
+    const currentAyah = ayahsDataRef.current[idx];
+    const states = ayahStatesRef.current;
+    if (!currentAyah || states[idx]?.status !== "pending") return;
 
-      if (attempt < MAX_ATTEMPTS) {
-        updated[currentAyahIndex] = {
-          ...currentState,
-          attempt,
-          score: liveResult.score,
-          wordDiffs: liveResult.wordDiffs,
-        };
+    const spokenWords = tokenize(transcript);
+    const ayahWordCount = tokenize(currentAyah.text).length;
+    const coverage = spokenWords.length / Math.max(ayahWordCount, 1);
 
-        setRetryMessage(
-          language === "ar"
-            ? `لم يتم التعرف على هذه الآية. حاول مرة أخرى (المحاولة ${attempt + 1}/${MAX_ATTEMPTS})`
-            : `Verse not recognized. Try again (attempt ${attempt + 1}/${MAX_ATTEMPTS})`
-        );
+    // Don't evaluate yet if we haven't heard enough words
+    if (!forceAdvance && coverage < MIN_WORD_COVERAGE) return;
 
-        spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-        return updated;
-      }
+    const { score, isCorrect, wordDiffs } = scoreCurrentAyah(
+      currentAyah.text, spokenWords, 0, strictnessRef.current
+    );
+    const pass = score >= PASS_THRESHOLD[strictnessRef.current] || isCorrect;
 
-      updated[currentAyahIndex] = {
-        ...currentState,
-        status: "incorrect",
-        score: liveResult.score,
-        wordDiffs: liveResult.wordDiffs,
-        attempt,
+    if (pass || forceAdvance) {
+      setIsEvaluating(true);
+      const updated = [...states];
+      updated[idx] = {
+        ...updated[idx],
+        status: pass ? "correct" : "incorrect",
+        score,
+        wordDiffs,
       };
+      setAyahStates(updated);
+      ayahStatesRef.current = updated;
 
-      setRetryMessage(null);
-      spokenWordPointerRef.current = pointer + Math.min(wordsAvailable, ayahWordCount);
-
-      const nextIndex = currentAyahIndex + 1;
       setTimeout(() => {
-        advanceToNextAyah(updated, nextIndex, fullTranscript);
-      }, 600);
+        setIsEvaluating(false);
+        advanceToNext(updated, idx + 1);
+        // Reset after advance
+        lastTranscriptRef.current = "";
+        speech.reset();
+        // If there are more verses, restart mic after short pause
+        if (idx + 1 < updated.length) {
+          setTimeout(() => {
+            if (!silentAudioRef.current) {
+              silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
+            }
+            silentAudioRef.current.play().catch(() => {});
+            speech.start();
+          }, 400);
+        }
+      }, 800);
+    }
+    // If score is low but not forcing: do nothing, keep listening
+  }, [advanceToNext, speech]);
 
-      return updated;
-    });
-  }, [currentAyahIndex, ayahsData, strictness, language, advanceToNextAyah]);
-
+  // ── Watch transcript for real-time pass detection + silence timer ──
   useEffect(() => {
     if (phase !== "recording") return;
-    if (!speech.transcript && !speech.interimTranscript) return;
+    if (isEvaluating) return;
 
-    const fullTranscript = (speech.transcript + (speech.interimTranscript ? " " + speech.interimTranscript : "")).trim();
-    if (!fullTranscript) return;
+    const full = (speech.transcript + " " + (speech.interimTranscript || "")).trim();
+    if (!full || full === lastTranscriptRef.current) return;
+    lastTranscriptRef.current = full;
 
-    const hasNewWords = fullTranscript !== lastTranscriptRef.current;
-    if (!hasNewWords) return;
-    lastTranscriptRef.current = fullTranscript;
+    // Try immediate pass evaluation
+    runEvaluation(full, false);
 
+    // Reset silence timer
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
     silenceTimerRef.current = setTimeout(() => {
-      const finalTranscript = (speech.transcript + (speech.interimTranscript ? " " + speech.interimTranscript : "")).trim();
-      evaluateCurrentAyah(finalTranscript);
-    }, 1500);
+      const finalT = (speech.transcript + " " + (speech.interimTranscript || "")).trim();
+      if (!finalT) return;
+      // Force advance on silence
+      runEvaluation(finalT, true);
+    }, SILENCE_TIMEOUT_MS);
 
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    };
-  }, [speech.transcript, speech.interimTranscript, phase, evaluateCurrentAyah]);
+    return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [speech.transcript, speech.interimTranscript, phase, isEvaluating]);
 
+  // ── When speech ends naturally ─────────────────────────────────────
   useEffect(() => {
     if (phase !== "recording") return;
     if (speech.status !== "done") return;
-
-    const fullTranscript = speech.transcript.trim();
-    if (!fullTranscript && ayahStates.every(s => s.status === "pending")) return;
-
-    const finalized = ayahStates.map(s => {
-      if (s.status !== "pending") return s;
-      return { ...s, status: "incorrect" as const };
-    });
-    finalizeResults(finalized, fullTranscript);
+    if (isEvaluating) return;
+    const transcript = speech.transcript.trim();
+    if (transcript) runEvaluation(transcript, true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speech.status]);
 
-  useEffect(() => {
-    if (currentAyahIndex < 0 || !ayahRefs.current[currentAyahIndex]) return;
-    const el = ayahRefs.current[currentAyahIndex];
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }, [currentAyahIndex]);
+  // ── Start test ─────────────────────────────────────────────────────
+  const handleStartTest = useCallback(async () => {
+    const range = await loadAyahs();
+    if (range.length === 0) return;
+    speech.reset();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    lastTranscriptRef.current = "";
+    const states: AyahState[] = range.map(a => ({
+      numberInSurah: a.numberInSurah,
+      status: "pending",
+      score: 0,
+      wordDiffs: [],
+    }));
+    setAyahStates(states);
+    ayahStatesRef.current = states;
+    setCurrentAyahIndex(0);
+    currentAyahIndexRef.current = 0;
+    setIsEvaluating(false);
+    setResult(null);
+    setPhase("recording");
+  }, [loadAyahs, speech]);
 
-  const handleTryAgain = () => {
+  // ── Mic start (called once at the top of recording) ───────────────
+  const handleMicStart = useCallback(() => {
+    if (!silentAudioRef.current) {
+      silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
+    }
+    silentAudioRef.current.play().catch(() => {});
+    lastTranscriptRef.current = "";
+    speech.start();
+  }, [speech]);
+
+  // ── Manually stop (cancel) ─────────────────────────────────────────
+  const handleMicStop = useCallback(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    speech.stop();
+  }, [speech]);
+
+  // ── Auto-start mic when phase transitions to recording ────────────
+  useEffect(() => {
+    if (phase === "recording" && !isEvaluating) {
+      // Small delay so the UI renders first
+      const t = setTimeout(handleMicStart, 500);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  // ── Skip ───────────────────────────────────────────────────────────
+  const handleSkipAyah = useCallback(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    speech.reset();
+    lastTranscriptRef.current = "";
+
+    const idx = currentAyahIndexRef.current;
+    const states = ayahStatesRef.current;
+    const updated = [...states];
+    updated[idx] = { ...updated[idx], status: "skipped", score: 0, wordDiffs: [] };
+    setAyahStates(updated);
+    ayahStatesRef.current = updated;
+
+    setTimeout(() => {
+      advanceToNext(updated, idx + 1);
+      if (idx + 1 < updated.length) {
+        setTimeout(() => {
+          lastTranscriptRef.current = "";
+          if (!silentAudioRef.current) {
+            silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
+          }
+          silentAudioRef.current.play().catch(() => {});
+          speech.start();
+        }, 350);
+      }
+    }, 200);
+  }, [advanceToNext, speech]);
+
+  // ── Reset ──────────────────────────────────────────────────────────
+  const handleTryAgain = useCallback(() => {
     speech.reset();
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     setResult(null);
     setAyahStates([]);
+    ayahStatesRef.current = [];
     setCurrentAyahIndex(0);
-    setRetryMessage(null);
-    spokenWordPointerRef.current = 0;
-    lockedAyahCountRef.current = 0;
+    currentAyahIndexRef.current = 0;
+    setIsEvaluating(false);
     lastTranscriptRef.current = "";
     setPhase("setup");
-  };
+  }, [speech]);
 
   useEffect(() => {
-    if (showHistory) {
-      recitationHistory.fetchHistory(surahNumber);
-    }
-  }, [showHistory, surahNumber]);
-
-  useEffect(() => {
-    if (showProgress) {
-      recitationHistory.fetchHistory(surahNumber);
-    }
-  }, [showProgress, surahNumber]);
-
-  const rangeLabel = language === "ar"
-    ? `${meta.name} · ${toArabicNumerals(ayahFrom)}–${toArabicNumerals(ayahTo)}`
-    : `${meta.englishName} · ${ayahFrom}–${ayahTo}`;
+    if (showHistory || showProgress) recitationHistory.fetchHistory(surahNumber);
+  }, [showHistory, showProgress, surahNumber, recitationHistory]);
 
   const progressData = recitationHistory.history
-    .filter((r) => r.surah_number === surahNumber)
-    .slice(0, 10)
-    .reverse();
+    .filter(r => r.surah_number === surahNumber).slice(0, 10).reverse();
+  const maxScore = progressData.length > 0 ? Math.max(...progressData.map(r => r.score)) : 100;
 
-  const maxScore = progressData.length > 0 ? Math.max(...progressData.map((r) => r.score)) : 100;
+  const doneCount = ayahStates.filter(s => s.status !== "pending").length;
+  const totalCount = ayahStates.length;
+  const isListening = speech.status === "listening";
 
-  const correctCount = ayahStates.filter(s => s.status === "correct").length;
-  const incorrectCount = ayahStates.filter(s => s.status === "incorrect" || s.status === "skipped").length;
+  // ── Scroll current ayah into view on index change ─────────────────
+  useEffect(() => {
+    const el = currentAyahRefs.current[currentAyahIndex];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [currentAyahIndex]);
 
   return (
-    <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="mb-5 flex items-center gap-3">
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => {
-            speech.reset();
-            navigate(-1);
-          }}
-          className="rounded-xl p-2.5 bg-card border border-border/40 shadow-soft hover:bg-muted transition-colors"
-        >
-          {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
-        </motion.button>
-        <div>
-          <h1 className="text-2xl font-bold heading-decorated">{t("recitation_test")}</h1>
-          <p className="text-sm text-muted-foreground">{t("recitation_subtitle")}</p>
+    /**
+     * LAYOUT: full viewport height, flex column, no outer scroll.
+     * - Header: fixed at top
+     * - Content area: flex-1 overflow-y-auto (verse list scrolls here)
+     * - Mic bar: fixed above bottom nav (bottom-[--nav-height])
+     */
+    <div className="h-[100dvh] flex flex-col overflow-hidden pb-[calc(var(--nav-height)+env(safe-area-inset-bottom,0px))]" dir={isRTL ? "rtl" : "ltr"}>
+
+      {/* ── Header (always visible, never scrolls away) ─────────────── */}
+      <div className="flex-shrink-0 px-4 pt-5 pb-3">
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => { speech.reset(); navigate(-1); }}
+            className="rounded-xl p-2.5 bg-card border border-border/40 shadow-soft hover:bg-muted transition-colors flex-shrink-0"
+          >
+            {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
+          </motion.button>
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold heading-decorated">{t("recitation_test")}</h1>
+            <p className="text-xs text-muted-foreground">{t("recitation_subtitle")}</p>
+          </div>
         </div>
       </div>
 
-      {language === "en" && <EnglishComingSoonBanner />}
-      {speech.isIOSMode && <IOSUnsupportedBanner language={language} />}
-      {!speech.isSupported && !speech.isIOSMode && (
-        <div className="mb-4">
-          <UnsupportedBanner
-            message={t("speech_not_supported")}
-            desc={t("speech_not_supported_desc")}
-          />
-        </div>
-      )}
+      {/* ── Scrollable body ─────────────────────────────────────────── */}
+      {/* Bottom padding = mic bar (~5rem) + nav bar (--nav-height via pb-nav) */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
 
-      <div className={cn("relative", language === "en" && "pointer-events-none select-none")}>
-        {language === "en" && (
-          <div className="absolute inset-0 z-10 rounded-2xl bg-background/40 backdrop-blur-[1px]" />
+        {speech.isIOSMode && <IOSBanner language={language} />}
+        {!speech.isSupported && !speech.isIOSMode && (
+          <UnsupportedBanner message={t("speech_not_supported")} desc={t("speech_not_supported_desc")} />
         )}
 
         <AnimatePresence mode="wait">
+
+          {/* ──── SETUP ─────────────────────────────────────────────── */}
           {phase === "setup" && (
             <motion.div
               key="setup"
@@ -495,19 +470,16 @@ export default function RecitationTestPage() {
               <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4">
                 <p className="text-sm font-semibold mb-3">{t("strictness")}</p>
                 <div className="flex gap-2">
-                  {STRICTNESS_OPTIONS.map((level) => (
+                  {STRICTNESS_OPTIONS.map(level => (
                     <motion.button
-                      key={level}
-                      whileTap={{ scale: 0.95 }}
+                      key={level} whileTap={{ scale: 0.95 }}
                       onClick={() => setStrictness(level)}
                       className={cn(
                         "flex-1 rounded-xl py-2.5 text-xs font-bold transition-all",
                         strictness === level
-                          ? level === "lenient"
-                            ? "bg-primary text-primary-foreground shadow-soft"
-                            : level === "normal"
-                            ? "bg-accent text-accent-foreground shadow-soft"
-                            : "bg-destructive text-destructive-foreground shadow-soft"
+                          ? level === "lenient" ? "bg-primary text-primary-foreground shadow-soft"
+                          : level === "normal" ? "bg-accent text-accent-foreground shadow-soft"
+                          : "bg-destructive text-destructive-foreground shadow-soft"
                           : "bg-muted text-muted-foreground hover:bg-muted/70"
                       )}
                     >
@@ -519,18 +491,18 @@ export default function RecitationTestPage() {
                   {strictness === "lenient"
                     ? language === "ar" ? "يقبل أخطاء بسيطة في النطق" : "Accepts minor pronunciation errors"
                     : strictness === "normal"
-                    ? language === "ar" ? "دقة متوازنة للتقييم" : "Balanced accuracy for evaluation"
-                    : language === "ar" ? "يتطلب دقة عالية في التلاوة" : "Requires high recitation accuracy"}
+                    ? language === "ar" ? "دقة متوازنة للتقييم" : "Balanced accuracy"
+                    : language === "ar" ? "يتطلب دقة عالية" : "Requires high accuracy"}
                 </p>
               </div>
 
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleStartTest}
-                disabled={!speech.isSupported || loadingAyahs}
+                disabled={!speech.isSupported || loadingAyahs || speech.isIOSMode}
                 className={cn(
                   "w-full rounded-2xl py-4 text-sm font-bold transition-all min-h-[52px]",
-                  speech.isSupported
+                  speech.isSupported && !speech.isIOSMode
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-elevated"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
@@ -538,9 +510,10 @@ export default function RecitationTestPage() {
                 {loadingAyahs ? t("loading") : t("start_test")}
               </motion.button>
 
+              {/* Progress */}
               <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
                 <button
-                  onClick={() => setShowProgress((p) => !p)}
+                  onClick={() => setShowProgress(p => !p)}
                   className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -549,7 +522,6 @@ export default function RecitationTestPage() {
                   </div>
                   {showProgress ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </button>
-
                 {showProgress && (
                   <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} className="overflow-hidden">
                     <div className="border-t border-border/40 p-4">
@@ -559,33 +531,28 @@ export default function RecitationTestPage() {
                         <div className="text-center text-sm text-muted-foreground py-4">{t("no_progress_data")}</div>
                       ) : (
                         <div>
-                          <p className="text-xs text-muted-foreground mb-3 font-semibold">{t("accuracy_over_time")} · {language === "ar" ? meta.name : meta.englishName}</p>
+                          <p className="text-xs text-muted-foreground mb-3 font-semibold">
+                            {t("accuracy_over_time")} · {language === "ar" ? meta.name : meta.englishName}
+                          </p>
                           <div className="flex items-end gap-1.5 h-20">
                             {progressData.map((rec, i) => {
-                              const heightPct = maxScore > 0 ? (rec.score / maxScore) * 100 : 0;
-                              const barColor =
-                                rec.score >= 85 ? "bg-primary" :
-                                rec.score >= 60 ? "bg-accent" :
-                                "bg-destructive";
+                              const h = maxScore > 0 ? (rec.score / maxScore) * 100 : 0;
+                              const col = rec.score >= 85 ? "bg-primary" : rec.score >= 60 ? "bg-accent" : "bg-destructive";
                               return (
                                 <div key={rec.id} className="flex-1 flex flex-col items-center gap-1">
                                   <span className="text-[0.55rem] font-bold tabular-nums text-muted-foreground">
                                     {language === "ar" ? toArabicNumerals(rec.score) : rec.score}
                                   </span>
                                   <motion.div
-                                    className={cn("w-full rounded-t-md", barColor)}
+                                    className={cn("w-full rounded-t-md", col)}
                                     initial={{ height: 0 }}
-                                    animate={{ height: `${heightPct}%` }}
+                                    animate={{ height: `${h}%` }}
                                     transition={{ duration: 0.4, delay: i * 0.05 }}
                                     style={{ minHeight: 4 }}
                                   />
                                 </div>
                               );
                             })}
-                          </div>
-                          <div className="flex justify-between mt-1 text-[0.6rem] text-muted-foreground/60">
-                            <span>{language === "ar" ? "الأقدم" : "Oldest"}</span>
-                            <span>{language === "ar" ? "الأحدث" : "Latest"}</span>
                           </div>
                         </div>
                       )}
@@ -596,7 +563,7 @@ export default function RecitationTestPage() {
 
               <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
                 <button
-                  onClick={() => setShowHistory((p) => !p)}
+                  onClick={() => setShowHistory(p => !p)}
                   className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-muted/30 transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -605,7 +572,6 @@ export default function RecitationTestPage() {
                   </div>
                   {showHistory ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </button>
-
                 {showHistory && (
                   <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} className="overflow-hidden">
                     <div className="border-t border-border/40">
@@ -616,10 +582,12 @@ export default function RecitationTestPage() {
                           {language === "ar" ? "لا يوجد سجل بعد" : "No history yet"}
                         </div>
                       ) : (
-                        <div className="divide-y divide-border/40 max-h-72 overflow-y-auto">
-                          {recitationHistory.history.map((rec) => {
+                        <div className="divide-y divide-border/40 max-h-64 overflow-y-auto">
+                          {recitationHistory.history.map(rec => {
                             const recMeta = SURAH_META[rec.surah_number - 1];
-                            const date = new Date(rec.tested_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" });
+                            const date = new Date(rec.tested_at).toLocaleDateString(
+                              language === "ar" ? "ar-SA" : "en-US", { month: "short", day: "numeric" }
+                            );
                             return (
                               <div key={rec.id} className="flex items-center gap-3 px-4 py-3">
                                 <div className="flex-1 min-w-0">
@@ -633,12 +601,10 @@ export default function RecitationTestPage() {
                                   </p>
                                   <p className="text-xs text-muted-foreground">{date}</p>
                                 </div>
-                                <span
-                                  className={cn(
-                                    "text-sm font-bold tabular-nums",
-                                    rec.score >= 85 ? "text-primary" : rec.score >= 60 ? "text-accent" : "text-destructive"
-                                  )}
-                                >
+                                <span className={cn(
+                                  "text-sm font-bold tabular-nums",
+                                  rec.score >= 85 ? "text-primary" : rec.score >= 60 ? "text-accent" : "text-destructive"
+                                )}>
                                   {language === "ar" ? toArabicNumerals(rec.score) : rec.score}%
                                 </span>
                               </div>
@@ -653,241 +619,204 @@ export default function RecitationTestPage() {
             </motion.div>
           )}
 
+          {/* ──── RECORDING ─────────────────────────────────────────── */}
           {phase === "recording" && (
             <motion.div
               key="recording"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="space-y-5"
+              className="space-y-3"
             >
-              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">{t("recitation_test")}</p>
-                <p className="font-arabic font-bold text-lg">{rangeLabel}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {language === "ar"
-                    ? `${toArabicNumerals(ayahTo - ayahFrom + 1)} ${t("ayahs")}`
-                    : `${ayahTo - ayahFrom + 1} ${t("verses")}`}
-                </p>
+              {/* Progress header */}
+              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs text-muted-foreground font-medium">
+                    {language === "ar"
+                      ? `${toArabicNumerals(doneCount)} / ${toArabicNumerals(totalCount)} آيات`
+                      : `${doneCount} / ${totalCount} verses`}
+                  </p>
+                  <p className="text-xs font-bold text-primary font-arabic">
+                    {language === "ar" ? meta.name : meta.englishName}
+                  </p>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full bg-primary"
+                    animate={{ width: `${totalCount > 0 ? (doneCount / totalCount) * 100 : 0}%` }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </div>
               </div>
 
-              {speech.status === "listening" && ayahStates.some(s => s.status !== "pending") && (
-                <motion.div
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-card border border-border/50 shadow-soft p-4"
-                >
-                  <div className="flex items-center justify-center gap-8">
-                    <div className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-emerald-600" />
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {language === "ar" ? "صحيح" : "Correct"}
-                      </span>
-                      <span className="text-lg font-bold tabular-nums text-emerald-600">
-                        {language === "ar" ? toArabicNumerals(correctCount) : correctCount}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <X className="h-4 w-4 text-destructive" />
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {language === "ar" ? "خطأ" : "Wrong"}
-                      </span>
-                      <span className="text-lg font-bold tabular-nums text-destructive">
-                        {language === "ar" ? toArabicNumerals(incorrectCount) : incorrectCount}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
+              {/* Verse cards */}
+              <div ref={verseListRef} className="space-y-3" dir="rtl">
+                {ayahsData.map((a, index) => {
+                  const state = ayahStates[index];
+                  const isCurrent = index === currentAyahIndex && state?.status === "pending";
+                  const isDone = state?.status === "correct" || state?.status === "incorrect" || state?.status === "skipped";
+                  const isFuture = index > currentAyahIndex && !isDone;
+                  const isCorrect = state?.status === "correct";
+                  const isSkipped = state?.status === "skipped";
 
-              <AnimatePresence>
-                {retryMessage && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.97 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
-                    className="rounded-xl bg-amber-500/10 border border-amber-500/30 px-4 py-3 flex items-center gap-3"
-                  >
-                    <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 flex-1">
-                      {retryMessage}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  return (
+                    <motion.div
+                      key={a.numberInSurah}
+                      ref={el => { currentAyahRefs.current[index] = el; }}
+                      animate={{
+                        opacity: isFuture ? 0.35 : 1,
+                        scale: isFuture ? 0.98 : 1,
+                      }}
+                      transition={{ duration: 0.4 }}
+                      className={cn(
+                        "rounded-2xl border-2 p-4 relative overflow-hidden transition-colors",
+                        isDone && isCorrect && "bg-emerald-500/10 border-emerald-500/40",
+                        isDone && !isCorrect && !isSkipped && "bg-destructive/10 border-destructive/40",
+                        isDone && isSkipped && "bg-card border-border/30",
+                        isCurrent && "bg-card border-primary/50 shadow-elevated",
+                        // Future cards: solid card background so they're visible in dark mode
+                        isFuture && "bg-card/60 border-muted-foreground/30",
+                      )}
+                    >
+                      {/* Future: blur overlay */}
+                      {isFuture && (
+                        <div className="absolute inset-0 backdrop-blur-[3px] rounded-2xl z-10" />
+                      )}
 
-              {ayahsData.length > 0 && (
-                <div
-                  ref={containerRef}
-                  className="rounded-2xl bg-card border border-border/50 shadow-soft p-4 max-h-96 overflow-y-auto"
-                >
-                  <div className="space-y-3" dir="rtl">
-                    {ayahsData.map((a, index) => {
-                      const state = ayahStates[index];
-                      const isCurrent = index === currentAyahIndex && speech.status === "listening";
-                      const isDone = state?.status === "correct" || state?.status === "incorrect" || state?.status === "skipped";
-                      const isCorrect = state?.status === "correct";
-                      const isSkipped = state?.status === "skipped";
-                      const isPast = index < currentAyahIndex && !isDone;
+                      {/* Current: soft blur overlay over text only */}
+                      {isCurrent && (
+                        <div className="absolute inset-0 rounded-2xl z-10 pointer-events-none" />
+                      )}
 
-                      return (
-                        <motion.div
-                          key={a.numberInSurah}
-                          ref={el => { ayahRefs.current[index] = el; }}
-                          initial={false}
-                          animate={{
-                            opacity: isDone ? 1 : isCurrent ? 1 : isPast ? 0.4 : 0.15,
-                            scale: isDone ? 1 : isCurrent ? 1 : 0.98,
-                          }}
-                          transition={{ duration: 0.4, ease: "easeOut" }}
-                          className={cn(
-                            "rounded-xl p-3 transition-colors select-none",
-                            isDone && isCorrect && "bg-emerald-500/15 border-2 border-emerald-500/70",
-                            isDone && !isCorrect && !isSkipped && "bg-destructive/15 border-2 border-destructive/70",
-                            isDone && isSkipped && "bg-muted/30 border-2 border-border/50",
-                            isCurrent && !isDone && "bg-primary/10 border-2 border-primary/40",
-                            !isDone && !isCurrent && "bg-muted/20 border border-border/20"
-                          )}
-                        >
-                          {isDone ? (
-                            <motion.p
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.4 }}
-                              className="font-arabic text-base leading-loose text-center"
-                            >
+                      <div className="relative z-20">
+                        {/* ── DONE: reveal verse + score + word diff ── */}
+                        {isDone && (
+                          <motion.div
+                            initial={{ opacity: 0, filter: "blur(6px)" }}
+                            animate={{ opacity: 1, filter: "blur(0px)" }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <p className="font-arabic text-xl leading-loose text-foreground text-center">
                               {a.text}
-                              <span className="text-muted-foreground text-sm ms-2">﴿{a.numberInSurah}﴾</span>
-                            </motion.p>
-                          ) : (
-                            <p className="text-center font-semibold text-sm text-muted-foreground py-1">
-                              {language === "ar"
-                                ? `الآية رقم ${toArabicNumerals(a.numberInSurah)}`
-                                : `Verse ${a.numberInSurah}`}
+                              <span className="text-muted-foreground text-sm ms-2 font-normal">
+                                ﴿{language === "ar" ? toArabicNumerals(a.numberInSurah) : a.numberInSurah}﴾
+                              </span>
                             </p>
-                          )}
-
-                          {isDone && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: 0.2 }}
-                              className="flex items-center justify-center gap-2 mt-2"
-                            >
-                              {isCorrect ? (
-                                <Check className="h-3 w-3 text-emerald-600" />
-                              ) : isSkipped ? (
-                                <SkipForward className="h-3 w-3 text-muted-foreground" />
-                              ) : (
-                                <X className="h-3 w-3 text-destructive" />
-                              )}
+                            <div className="flex items-center justify-center gap-2 mt-2">
+                              {isCorrect
+                                ? <Check className="h-4 w-4 text-emerald-500" />
+                                : isSkipped
+                                ? <SkipForward className="h-4 w-4 text-muted-foreground" />
+                                : <X className="h-4 w-4 text-destructive" />}
                               <span className={cn(
-                                "text-xs font-medium",
-                                isCorrect ? "text-emerald-600" : isSkipped ? "text-muted-foreground" : "text-destructive"
+                                "text-sm font-bold tabular-nums",
+                                isCorrect ? "text-emerald-500" : isSkipped ? "text-muted-foreground" : "text-destructive"
                               )}>
                                 {isSkipped
-                                  ? (language === "ar" ? "تم التخطي" : "Skipped")
+                                  ? (language === "ar" ? "تخطي" : "Skipped")
                                   : `${language === "ar" ? toArabicNumerals(state.score) : state.score}%`}
                               </span>
-                            </motion.div>
-                          )}
-
-                          {isCurrent && !isDone && (
-                            <div className="mt-2 space-y-2">
-                              <motion.div
-                                animate={{ opacity: [0.5, 1, 0.5] }}
-                                transition={{ duration: 1.8, repeat: Infinity }}
-                                className="flex items-center justify-center"
-                              >
-                                <span className="text-xs text-primary/70 font-medium">
-                                  {language === "ar" ? "اتلُ هذه الآية من الذاكرة..." : "Recite this verse from memory..."}
-                                </span>
-                              </motion.div>
-                              {state && state.attempt > 0 && (
-                                <p className="text-[0.65rem] text-amber-600 dark:text-amber-400 text-center font-semibold">
-                                  {language === "ar"
-                                    ? `المحاولة ${toArabicNumerals(state.attempt + 1)}/${toArabicNumerals(MAX_ATTEMPTS)}`
-                                    : `Attempt ${state.attempt + 1}/${MAX_ATTEMPTS}`}
-                                </p>
-                              )}
-                              <div className="flex justify-center">
-                                <motion.button
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={handleSkipCurrentAyah}
-                                  className="flex items-center gap-1.5 rounded-lg bg-muted/70 hover:bg-muted px-3 py-1.5 text-xs text-muted-foreground font-medium transition-colors"
-                                >
-                                  <SkipForward className="h-3 w-3" />
-                                  {language === "ar" ? "تخطي" : "Skip"}
-                                </motion.button>
-                              </div>
                             </div>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                  {speech.status === "idle" && ayahStates.every(s => s.status === "pending") && (
-                    <p className="text-xs text-muted-foreground text-center mt-3">
-                      {language === "ar" ? "اضغط الميكروفون وابدأ التلاوة من الذاكرة" : "Tap the mic and recite from memory"}
-                    </p>
-                  )}
-                </div>
-              )}
+                            {!isSkipped && <WordDiffRow wordDiffs={state.wordDiffs} />}
+                          </motion.div>
+                        )}
 
-              <div className="flex flex-col items-center">
-                <MicButton
-                  status={speech.status}
-                  onStart={handleMicStart}
-                  onStop={handleStopAndEvaluate}
-                  transcript={speech.transcript}
-                  interimTranscript={speech.interimTranscript}
-                />
+                        {/* ── CURRENT: blurred text + verse number visible + listening UI ── */}
+                        {isCurrent && (
+                          <div className="space-y-3 text-center">
+                            {/* Verse number — always visible */}
+                            <p className="text-xs font-bold text-primary tracking-wide">
+                              {language === "ar"
+                                ? `الآية ${toArabicNumerals(a.numberInSurah)}`
+                                : `Verse ${a.numberInSurah}`}
+                            </p>
+
+                            {/* Blurred verse text — user must recite from memory */}
+                            <p
+                              className="font-arabic text-xl leading-loose text-center select-none"
+                              style={{ filter: "blur(7px)", userSelect: "none", opacity: 0.6 }}
+                              aria-hidden="true"
+                            >
+                              {a.text}
+                            </p>
+
+                            <p className="text-xs text-muted-foreground font-medium">
+                              {language === "ar" ? "اتلُ الآية من الذاكرة" : "Recite this verse from memory"}
+                            </p>
+
+                            {/* Listening waveform */}
+                            {isListening && !isEvaluating && (
+                              <div className="flex items-center justify-center gap-1">
+                                {[0, 1, 2, 3, 4].map(i => (
+                                  <motion.div
+                                    key={i}
+                                    className="w-1 rounded-full bg-primary"
+                                    animate={{ height: ["6px", "18px", "6px"] }}
+                                    transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.12 }}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Live transcript */}
+                            {isListening && (speech.transcript || speech.interimTranscript) && (
+                              <p className="text-xs text-muted-foreground font-arabic text-center leading-relaxed px-2 line-clamp-2">
+                                <span className="text-foreground/80">{speech.transcript}</span>
+                                {speech.interimTranscript && (
+                                  <span className="text-muted-foreground/60"> {speech.interimTranscript}</span>
+                                )}
+                              </p>
+                            )}
+
+                            {/* Evaluating spinner */}
+                            {isEvaluating && (
+                              <div className="flex items-center justify-center gap-2 text-primary">
+                                <div className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                <p className="text-xs font-medium">
+                                  {language === "ar" ? "جاري التقييم..." : "Evaluating..."}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* ── FUTURE: just show verse number, text fully hidden ── */}
+                        {isFuture && (
+                          <div className="text-center space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground">
+                              {language === "ar"
+                                ? `الآية ${toArabicNumerals(a.numberInSurah)}`
+                                : `Verse ${a.numberInSurah}`}
+                            </p>
+                            <p
+                              className="font-arabic text-xl leading-loose select-none"
+                              style={{ filter: "blur(8px)", opacity: 0.4 }}
+                              aria-hidden="true"
+                            >
+                              {a.text}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
 
-              {speech.status === "idle" && ayahStates.every(s => s.status === "pending") && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-xl bg-muted/40 border border-border/30 px-4 py-3 text-center"
-                >
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {language === "ar"
-                      ? "اضغط على الميكروفون واقرأ الآيات بصوت واضح ومتوسط"
-                      : "Tap the mic and recite clearly at a steady pace"}
-                  </p>
-                </motion.div>
-              )}
-
+              {/* Mic error */}
               {speech.error && speech.status === "error" && (
                 <div className="rounded-xl bg-destructive/5 border border-destructive/20 px-4 py-3 text-center">
                   <p className="text-xs text-destructive font-semibold">
                     {speech.error === "mic_permission_denied"
-                      ? (language === "ar" ? "لم يتم منح إذن الميكروفون. يرجى السماح بالوصول من إعدادات المتصفح." : "Microphone permission denied. Please allow access in browser settings.")
-                      : speech.error === "mic_not_found"
-                      ? (language === "ar" ? "لم يتم العثور على ميكروفون. تحقق من اتصال الجهاز." : "No microphone found. Check your device connection.")
-                      : speech.error === "speech_network_error"
-                      ? (language === "ar" ? "خطأ في الشبكة. تحقق من اتصالك بالإنترنت." : "Network error. Check your internet connection.")
-                      : speech.error === "speech_service_unavailable"
-                      ? (language === "ar" ? "خدمة التعرف على الصوت غير متاحة حالياً." : "Speech recognition service is currently unavailable.")
-                      : speech.error === "speech_language_unsupported"
-                      ? (language === "ar" ? "اللغة العربية غير مدعومة في هذا المتصفح." : "Arabic is not supported by this browser's speech recognition.")
-                      : speech.error === "no_speech_detected"
-                      ? t("no_speech_detected")
-                      : (language === "ar" ? "حدث خطأ في التعرف على الصوت. حاول مرة أخرى." : "Speech recognition error. Please try again.")}
+                      ? (language === "ar" ? "لم يتم منح إذن الميكروفون." : "Microphone permission denied.")
+                      : (language === "ar" ? "حدث خطأ. حاول مرة أخرى." : "An error occurred. Try again.")}
                   </p>
                 </div>
               )}
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={handleTryAgain}
-                className="w-full rounded-2xl bg-muted py-3.5 text-sm font-semibold hover:bg-muted/70 transition-colors"
-              >
-                {t("cancel")}
-              </motion.button>
             </motion.div>
           )}
 
+          {/* ──── RESULT ────────────────────────────────────────────── */}
           {phase === "result" && result && (
             <motion.div
               key="result"
@@ -909,8 +838,76 @@ export default function RecitationTestPage() {
               />
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
+
+      {/* ── Fixed mic bar: sits above the nav bar ──────────────────────
+          Uses bottom-above-nav (defined in index.css as calc(var(--nav-height) + env(safe-area-inset-bottom)))
+          so it never overlaps the BottomNav. */}
+      <AnimatePresence>
+        {phase === "recording" && (
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            className="flex-shrink-0 z-40 bg-card border-t border-border/50 px-4 py-2.5 shadow-[0_-12px_24px_-12px_rgba(0,0,0,0.1)]"
+          >
+            <div className="flex items-center gap-3 max-w-sm mx-auto">
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSkipAyah}
+                disabled={isEvaluating}
+                className="flex items-center gap-1.5 rounded-2xl border border-border/50 bg-muted/60 px-4 py-2.5 text-xs text-muted-foreground font-semibold hover:bg-muted transition-colors disabled:opacity-40 flex-1 justify-center"
+              >
+                <SkipForward className="h-3.5 w-3.5" />
+                {language === "ar" ? "تخطي" : "Skip"}
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.88 }}
+                onClick={isListening ? handleMicStop : handleMicStart}
+                disabled={isEvaluating}
+                className={cn(
+                  "relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 shadow-elevated transition-all disabled:opacity-40",
+                  isListening
+                    ? "bg-destructive/10 border-destructive text-destructive"
+                    : "bg-primary/10 border-primary text-primary"
+                )}
+              >
+                {isListening && (
+                  <motion.span
+                    className="absolute inset-0 rounded-full border-2 border-destructive/50"
+                    animate={{ scale: [1, 1.45, 1], opacity: [0.5, 0, 0.5] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                  />
+                )}
+                {isEvaluating
+                  ? <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                  : isListening
+                  ? <Square className="h-5 w-5 fill-destructive" />
+                  : <Mic className="h-6 w-6" />}
+              </motion.button>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={handleTryAgain}
+                className="rounded-2xl border border-border/50 bg-muted/60 px-4 py-2.5 text-xs text-muted-foreground font-semibold hover:bg-muted transition-colors flex-1 text-center"
+              >
+                {t("cancel")}
+              </motion.button>
+            </div>
+
+            <p className="text-center text-[0.6rem] text-muted-foreground mt-1">
+              {isEvaluating
+                ? (language === "ar" ? "جاري التقييم..." : "Evaluating...")
+                : isListening
+                ? (language === "ar" ? "استمع • صمت ٢ ثانية = انتهاء الآية" : "Listening • 2s silence = verse done")
+                : (language === "ar" ? "اضغط المايك لبدء التلاوة من الذاكرة" : "Tap mic to start reciting from memory")}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
