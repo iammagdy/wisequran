@@ -41,20 +41,45 @@ export default function SignInPage() {
     if (tab === "signin") {
       const { error } = await signIn(email, password);
       if (error) {
-        setError(isRTL ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password");
+        const msg = error.toLowerCase();
+        let displayError: string;
+
+        if (msg.includes("invalid") || msg.includes("credentials")) {
+          displayError = isRTL ? "البريد الإلكتروني أو كلمة المرور غير صحيحة" : "Invalid email or password";
+        } else if (msg.includes("not found") || msg.includes("user not found")) {
+          displayError = isRTL ? "لم يتم العثور على هذا الحساب" : "Account not found. Please sign up first.";
+        } else if (msg.includes("email not confirmed")) {
+          displayError = isRTL ? "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول" : "Please verify your email first";
+        } else if (msg.includes("network") || msg.includes("failed to fetch")) {
+          displayError = isRTL ? "خطأ في الاتصال. تحقق من اتصالك بالإنترنت" : "Network error. Check your internet connection";
+        } else {
+          displayError = error;
+        }
+
+        setError(displayError);
         setSubmitting(false);
       }
     } else {
       const { error } = await signUp(email, password);
       if (error) {
         const msg = error.toLowerCase();
+        let displayError: string;
+
         if (msg.includes("already registered") || msg.includes("already exists")) {
-          setError(isRTL ? "هذا البريد الإلكتروني مسجل بالفعل" : "This email is already registered");
+          displayError = isRTL ? "هذا البريد الإلكتروني مسجل بالفعل" : "This email is already registered";
         } else if (msg.includes("password")) {
-          setError(isRTL ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters");
+          displayError = isRTL ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters";
+        } else if (msg.includes("invalid") || msg.includes("email")) {
+          displayError = isRTL ? "البريد الإلكتروني غير صحيح" : "Please enter a valid email address";
+        } else if (msg.includes("network") || msg.includes("failed to fetch")) {
+          displayError = isRTL ? "خطأ في الاتصال. تحقق من اتصالك بالإنترنت" : "Network error. Check your internet connection";
+        } else if (msg.includes("check your email")) {
+          displayError = isRTL ? "تم إرسال بريد التأكيد. تحقق من بريدك الإلكتروني" : "Check your email to verify your account";
         } else {
-          setError(isRTL ? "حدث خطأ، يرجى المحاولة مجددًا" : "An error occurred, please try again");
+          displayError = isRTL ? "حدث خطأ، يرجى المحاولة مجددًا" : "An error occurred, please try again";
         }
+
+        setError(displayError);
         setSubmitting(false);
       } else {
         setSuccess(true);
