@@ -159,7 +159,7 @@ export default function PrayerPage() {
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate("/")}
-          className="rounded-xl p-2 hover:bg-muted transition-colors flex-shrink-0"
+          className="rounded-xl p-2 hover:bg-muted transition-colors flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
         >
           {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
         </motion.button>
@@ -168,7 +168,7 @@ export default function PrayerPage() {
           {cachedLocation?.city && (
             <button
               onClick={() => setCitySearchOpen(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-3 py-2.5 shadow-soft hover:border-primary/30 transition-colors min-h-[44px]"
             >
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate max-w-[80px]">{cachedLocation.city}</span>
@@ -177,14 +177,14 @@ export default function PrayerPage() {
           {!cachedLocation?.city && (
             <button
               onClick={() => setCitySearchOpen(true)}
-              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-3 py-2.5 shadow-soft hover:border-primary/30 transition-colors min-h-[44px] min-w-[44px]"
             >
               <Search className="h-3 w-3 shrink-0" />
             </button>
           )}
           <button
             onClick={() => setHistoryOpen(true)}
-            className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-2.5 py-1 shadow-soft hover:border-primary/30 transition-colors"
+            className="flex items-center gap-1 text-xs text-muted-foreground glass-card rounded-full px-3 py-2.5 shadow-soft hover:border-primary/30 transition-colors min-h-[44px] min-w-[44px]"
           >
             <History className="h-3 w-3" />
           </button>

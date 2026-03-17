@@ -257,7 +257,7 @@ export default function SurahReaderPage() {
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(-1)}
-              className="rounded-xl p-2.5 hover:bg-muted transition-colors">
+              className="rounded-xl p-2.5 hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
               <ArrowRight className="h-5 w-5" />
             </motion.button>
             {/* Page indicator in header — only in reading mode */}
@@ -268,7 +268,7 @@ export default function SurahReaderPage() {
               return (
                 <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
-                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors">
+                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors min-h-[44px] flex items-center">
                     {language === "ar" ? `صفحة ${toArabicNumerals(currentPage)}` : `${t("page")} ${currentPage}`}
                     {minPage && maxPage && minPage !== maxPage &&
                       <span className="text-primary/60 mr-1">
@@ -324,7 +324,7 @@ export default function SurahReaderPage() {
                         autoFocus />
                     <button
                         type="submit"
-                        className="shrink-0 rounded-md bg-primary px-3 h-8 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+                        className="shrink-0 rounded-md bg-primary px-3 h-11 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
                       {t("go")}
                     </button>
                   </form>
@@ -491,7 +491,7 @@ export default function SurahReaderPage() {
               <button
                 onClick={() => setReaderMode("ayah")}
                 className={cn(
-                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
+                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all min-h-[44px] flex items-center justify-center",
                   readerMode === "ayah" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -500,7 +500,7 @@ export default function SurahReaderPage() {
               <button
                 onClick={() => setReaderMode("mushaf")}
                 className={cn(
-                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all",
+                  "flex-1 rounded-xl py-2 text-xs font-semibold transition-all min-h-[44px] flex items-center justify-center",
                   readerMode === "mushaf" ? "bg-card text-foreground shadow-soft" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -560,7 +560,7 @@ export default function SurahReaderPage() {
                             <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => toggleBookmark(ayah.numberInSurah)}
-                          className="rounded-xl p-2 transition-colors hover:bg-muted">
+                          className="rounded-xl p-2 transition-colors hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center">
                               {isBookmarked(ayah.numberInSurah) ?
                           <BookmarkCheck className="h-4 w-4 text-gold" /> :
                           <Bookmark className="h-4 w-4 text-muted-foreground opacity-30 transition-opacity group-hover:opacity-100" />
@@ -569,7 +569,7 @@ export default function SurahReaderPage() {
                             <motion.button
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleAyahTafsir(ayah.numberInSurah)}
-                          className="rounded-xl p-2 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100"
+                          className="rounded-xl p-2 transition-colors hover:bg-muted text-muted-foreground opacity-30 group-hover:opacity-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
                           title={t("tafsir_tab")}>
                               <BookOpen className="h-4 w-4" />
                             </motion.button>

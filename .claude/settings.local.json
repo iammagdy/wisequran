@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/tmp/summary.txt:*)",
+      "Read(//tmp/**)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

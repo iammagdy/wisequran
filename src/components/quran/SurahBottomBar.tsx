@@ -194,7 +194,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               whileTap={{ scale: 0.9 }}
               onClick={() => setLoopEnabled(!loopEnabled)}
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all",
                 loopEnabled
                   ? "text-primary-foreground shadow-sm"
                   : "text-muted-foreground bg-muted hover:bg-muted/70"
@@ -209,7 +209,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowTimer(!showTimer)}
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all",
+                "flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-all",
                 showTimer || timerActive
                   ? "text-primary bg-primary/15"
                   : "text-muted-foreground bg-muted hover:bg-muted/70"

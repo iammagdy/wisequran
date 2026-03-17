@@ -278,7 +278,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
               }
             }}
             disabled={!hasPrevAyah || !isThisSurah}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
             style={{ background: 'hsl(var(--muted))' }}
           >
             <SkipBack className="h-4 w-4" />
@@ -308,7 +308,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
               }
             }}
             disabled={!hasNextAyah || !isThisSurah}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-all disabled:opacity-30"
             style={{ background: 'hsl(var(--muted))' }}
           >
             <SkipForward className="h-4 w-4" />

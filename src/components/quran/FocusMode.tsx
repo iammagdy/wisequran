@@ -77,7 +77,7 @@ export default function FocusMode({
       {/* Always-visible close hint — stays visible even when controls auto-hide */}
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity"
+        className="absolute top-4 left-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label={t("close_focus")}
       >
         <X className="h-4 w-4 text-foreground" />
@@ -96,7 +96,7 @@ export default function FocusMode({
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="rounded-full bg-muted/80 backdrop-blur-sm p-2.5 shadow-soft border border-border/30"
+              className="rounded-full bg-muted/80 backdrop-blur-sm p-2.5 shadow-soft border border-border/30 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <X className="h-5 w-5 text-foreground" />
             </motion.button>
@@ -150,7 +150,7 @@ export default function FocusMode({
                 {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
                 <button
                   onClick={() => onSeekToAyah(ayah.numberInSurah)}
-                  className="inline-flex items-baseline text-primary/50 hover:text-primary transition-colors"
+                  className="inline-flex items-center justify-center text-primary/50 hover:text-primary transition-colors min-h-[44px] min-w-[44px] rounded-md"
                   style={{ fontSize: (fontSize + 2) * 0.6 }}
                 >
                   ﴿{toArabicNumerals(ayah.numberInSurah)}﴾

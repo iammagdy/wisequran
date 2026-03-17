@@ -152,7 +152,7 @@ export default function TasbeehPage() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(-1)}
-            className="rounded-xl p-2 hover:bg-muted/60 transition-colors"
+            className="rounded-xl p-2 hover:bg-muted/60 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
           </motion.button>
@@ -298,7 +298,7 @@ export default function TasbeehPage() {
                   key={opt}
                   whileTap={{ scale: 0.92 }}
                   onClick={() => { setTarget(opt); setCount(0); setShowTargetPicker(false); }}
-                  className={`px-4 py-1.5 rounded-xl text-sm font-bold transition-all border ${
+                  className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all border min-h-[44px] flex items-center justify-center ${
                     target === opt
                       ? "bg-primary text-primary-foreground border-primary shadow-glow"
                       : "bg-card border-border/40 text-foreground hover:bg-muted"

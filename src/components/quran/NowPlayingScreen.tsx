@@ -31,7 +31,7 @@ function CopyAyahButton({ text }: { text: string }) {
     <motion.button
       whileTap={{ scale: 0.88 }}
       onClick={handleCopy}
-      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all"
+      className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground/60 hover:text-primary hover:bg-primary/10 transition-all"
     >
       <AnimatePresence mode="wait">
         {copied ? (
@@ -145,7 +145,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
           >
             <button
               onClick={() => onOpenChange(false)}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 shadow-inner"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-95 shadow-inner"
               aria-label={t("close")}
             >
               <X className="h-5 w-5 text-foreground/80" strokeWidth={2} />
@@ -272,7 +272,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
                 {/* Controls row */}
                 <div className="flex items-center justify-between gap-4">
                   {/* Speed toggle */}
-                  <div className="flex h-10 items-center bg-white/5 rounded-2xl p-1 border border-white/5 shrink-0">
+                  <div className="flex h-11 items-center bg-white/5 rounded-2xl p-1 border border-white/5 shrink-0">
                     {SPEED_OPTIONS.map((s) => (
                       <motion.button
                         key={s}
