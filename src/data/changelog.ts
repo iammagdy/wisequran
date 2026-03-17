@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.9.0";
+export const APP_VERSION = "3.0.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,40 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.0.0",
+    date: "2026-03-17",
+    ar: {
+      features: [
+        "إصلاح شامل لأحجام العناصر التفاعلية: جميع الأزرار تحقق معايير الوصول WCAG بحد أدنى 44x44px",
+        "تحسين تجربة الاستخدام للمستخدمين ذوي الإعاقات الحركية من خلال زيادة أحجام الأهداف اللمسية",
+      ],
+      improvements: [
+        "تم زيادة حجم أزرار التحكم في مشغل الصوت (إيقاف، نسخ، اختيار السرعة)",
+        "تحسين أحجام أزرار التنقل والتحكم عبر جميع الصفحات",
+        "توسيع المناطق القابلة للنقر للعناصر الصغيرة مع الحفاظ على حجم الرموز البصري",
+      ],
+      fixes: [
+        "إصلاح أزرار صغيرة لا تلبي معايير الوصول في 23+ عنصر تفاعلي",
+        "توحيد أحجام الأزرار عبر جميع المكونات لتجربة متسقة",
+      ],
+    },
+    en: {
+      features: [
+        "Comprehensive accessibility overhaul: all interactive elements now meet WCAG 44x44px minimum touch target size",
+        "Improved usability for users with motor impairments through larger, easier-to-tap touch targets",
+      ],
+      improvements: [
+        "Increased audio player control sizes (stop button, copy button, speed selector)",
+        "Enhanced touch targets for navigation and control buttons across all pages",
+        "Expanded clickable areas for small elements while preserving icon visual size",
+      ],
+      fixes: [
+        "Fixed 23+ undersized interactive elements failing WCAG AAA accessibility requirements",
+        "Unified button sizing across components for consistent user experience",
+      ],
+    },
+  },
   {
     version: "2.9.0",
     date: "2026-03-17",
