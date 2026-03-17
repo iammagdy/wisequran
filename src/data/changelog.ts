@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.0.0";
+export const APP_VERSION = "3.1.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,34 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.1.0",
+    date: "2026-03-17",
+    ar: {
+      fixes: [
+        "إصلاح فشل تشغيل الصوت على أجهزة iPhone — يعمل الآن بسلاسة على Safari",
+        "إصلاح واجهة بوصلة القبلة التي كانت تتحرك بالكامل مع الجيروسكوب — الواجهة ثابتة والإبرة فقط تتحرك",
+        "إصلاح فشل تسجيل الدخول على النطاق المخصص مع رسالة خطأ أوضح",
+      ],
+      improvements: [
+        "التحديث التلقائي الفوري عند اكتشاف إصدار جديد بدون تدخل يدوي",
+        "تحسين أداء التطبيق: تحميل الصفحات عند الطلب لتقليل وقت التحميل الأولي",
+        "تحسين استجابة بوصلة القبلة باستخدام انتقالات CSS خفيفة بدلاً من الرسوم المتحركة الثقيلة",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed audio playback failure on iPhone — now works smoothly on Safari",
+        "Fixed Qibla compass UI gyroscoping with device — UI stays stable, only needle rotates",
+        "Fixed authentication failure on custom domain with clearer error messaging",
+      ],
+      improvements: [
+        "Automatic instant updates — app updates immediately when a new version is detected",
+        "Performance boost: lazy-loaded pages reduce initial load time significantly",
+        "Smoother compass animations using lightweight CSS transitions instead of spring physics",
+      ],
+    },
+  },
   {
     version: "3.0.0",
     date: "2026-03-17",

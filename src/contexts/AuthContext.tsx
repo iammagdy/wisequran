@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { handleAuthCallback, validateAndPersistSession } from "@/lib/auth-callback";
 
 interface AuthContextValue {
@@ -75,6 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string): Promise<{ error: string | null }> => {
+    if (!isSupabaseConfigured) {
+      return { error: 'Authentication service is not configured for this domain.' };
+    }
     try {
       const getRedirectUrl = () => {
         const origin = window.location.origin;
@@ -128,11 +131,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         message: err instanceof Error ? err.message : String(err),
         type: err instanceof Error ? err.constructor.name : typeof err,
       });
+      if (err instanceof TypeError) {
+        return { error: 'Network error. Please check your internet connection.' };
+      }
       return { error: 'An unexpected error occurred. Please try again.' };
     }
   };
 
   const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
+    if (!isSupabaseConfigured) {
+      return { error: 'Authentication service is not configured for this domain.' };
+    }
     try {
       logAuthDebug('Starting signin', { email });
 
@@ -184,6 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         message: err instanceof Error ? err.message : String(err),
         type: err instanceof Error ? err.constructor.name : typeof err,
       });
+      if (err instanceof TypeError) {
+        return { error: 'Network error. Please check your internet connection.' };
+      }
       return { error: 'An unexpected error occurred. Please try again.' };
     }
   };

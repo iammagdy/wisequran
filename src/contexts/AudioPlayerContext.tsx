@@ -201,6 +201,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     let audio = audioRef.current;
     if (!audio) {
       audio = new Audio();
+      audio.setAttribute('playsinline', '');
+      audio.setAttribute('webkit-playsinline', '');
       audioRef.current = audio;
       setupAudioListeners(audio);
     }
@@ -277,15 +279,23 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       if (audioRef.current) {
         audioRef.current.src = orderedUrls[0];
-        audioRef.current.load();
         try {
           await audioRef.current.play();
           if (!blobUrlRef.current) {
             cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
           }
         } catch (error) {
-           // The 'error' event listener will handle retries.
-           // This catch is for cases where even the first play fails unexpectedly after the silent unlock.
+           // iOS sometimes needs a short delay after src change before play succeeds
+           if (audioRef.current) {
+             await new Promise(r => setTimeout(r, 300));
+             try {
+               await audioRef.current.play();
+               if (!blobUrlRef.current) {
+                 cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
+               }
+               return;
+             } catch { /* fall through */ }
+           }
            setState((s) => ({ ...s, loading: false }));
         }
       }

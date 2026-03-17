@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,21 +13,22 @@ import UpdateNotification from "@/components/UpdateNotification";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
-import QuranPage from "@/pages/QuranPage";
-import SurahReaderPage from "@/pages/SurahReaderPage";
-import AzkarPage from "@/pages/AzkarPage";
-import PrayerPage from "@/pages/PrayerPage";
-import SettingsPage from "@/pages/SettingsPage";
-import TasbeehPage from "@/pages/TasbeehPage";
-import StatsPage from "@/pages/StatsPage";
-import HifzPage from "@/pages/HifzPage";
-import RecitationTestPage from "@/pages/RecitationTestPage";
-import QiblaPage from "@/pages/QiblaPage";
-import RamadanPage from "@/pages/RamadanPage";
-import NotFound from "@/pages/NotFound";
-import SignInPage from "@/pages/SignInPage";
-import SleepModePage from "@/pages/SleepModePage";
-import AuthCallbackPage from "@/pages/AuthCallbackPage";
+
+const QuranPage = lazy(() => import("@/pages/QuranPage"));
+const SurahReaderPage = lazy(() => import("@/pages/SurahReaderPage"));
+const AzkarPage = lazy(() => import("@/pages/AzkarPage"));
+const PrayerPage = lazy(() => import("@/pages/PrayerPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const TasbeehPage = lazy(() => import("@/pages/TasbeehPage"));
+const StatsPage = lazy(() => import("@/pages/StatsPage"));
+const HifzPage = lazy(() => import("@/pages/HifzPage"));
+const RecitationTestPage = lazy(() => import("@/pages/RecitationTestPage"));
+const QiblaPage = lazy(() => import("@/pages/QiblaPage"));
+const RamadanPage = lazy(() => import("@/pages/RamadanPage"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const SignInPage = lazy(() => import("@/pages/SignInPage"));
+const SleepModePage = lazy(() => import("@/pages/SleepModePage"));
+const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -43,6 +44,7 @@ const AppContent = () => {
   const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (
     <>
+      <Suspense fallback={null}>
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -73,6 +75,7 @@ const AppContent = () => {
           }
         />
       </Routes>
+      </Suspense>
       <ChangelogModal
         open={showChangelog}
         newEntries={newEntries}

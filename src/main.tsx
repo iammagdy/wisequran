@@ -8,6 +8,7 @@ registerSW({
   immediate: true,
   onNeedRefresh() {
     console.log("New version available");
+    window.dispatchEvent(new CustomEvent('sw-update-available'));
   },
   onOfflineReady() {
     console.log("App ready to work offline");
