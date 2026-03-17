@@ -53,6 +53,8 @@ export default function QiblaPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastVibration = useRef(0);
   const smoothedHeading = useRef<number | null>(null);
+  const rafId = useRef<number>(0);
+  const pendingHeading = useRef<number | null>(null);
 
   const qiblaBearing = location ? calculateQibla(location.latitude, location.longitude) : null;
   const distanceToKaaba = location ? calculateDistance(location.latitude, location.longitude, KAABA_LAT, KAABA_LNG) : null;
@@ -102,7 +104,16 @@ export default function QiblaPage() {
           if (diff < -180) diff += 360;
           smoothedHeading.current = (smoothedHeading.current + diff * 0.2 + 360) % 360;
         }
-        setHeading(smoothedHeading.current);
+        pendingHeading.current = smoothedHeading.current;
+
+        if (!rafId.current) {
+          rafId.current = requestAnimationFrame(() => {
+            if (pendingHeading.current !== null) {
+              setHeading(pendingHeading.current);
+            }
+            rafId.current = 0;
+          });
+        }
 
         if (accuracy != null && accuracy >= 0) {
           if (accuracy < 15) setCompassAccuracy("high");
@@ -128,7 +139,10 @@ export default function QiblaPage() {
       window.addEventListener("deviceorientation", handleOrientation, true);
     }
 
-    return () => window.removeEventListener("deviceorientation", handleOrientation, true);
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+      if (rafId.current) cancelAnimationFrame(rafId.current);
+    };
   }, [isLocked]);
 
   // Check alignment and provide haptic feedback
@@ -205,7 +219,7 @@ export default function QiblaPage() {
   const error = locationError || compassError;
 
   return (
-    <div className="px-4 pt-6 pb-24 flex flex-col items-center min-h-screen" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="px-4 pt-6 pb-24 flex flex-col items-center fixed inset-0 overflow-y-auto touch-manipulation overscroll-none" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="mb-6 flex items-center gap-3 self-start w-full">
         <motion.button
@@ -498,10 +512,12 @@ export default function QiblaPage() {
 
             {/* Cardinal directions */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <motion.div
-                animate={{ rotate: activeHeading !== null ? -activeHeading : 0 }}
-                transition={{ type: "spring", stiffness: 120, damping: 25 }}
+              <div
                 className="relative w-64 h-64"
+                style={{
+                  transform: `rotate(${activeHeading !== null ? -activeHeading : 0}deg)`,
+                  transition: 'transform 0.15s ease-out',
+                }}
               >
                 {/* N/S/E/W labels */}
                 <span className="absolute top-2 left-1/2 -translate-x-1/2 text-sm font-bold text-red-500">N</span>
@@ -522,15 +538,17 @@ export default function QiblaPage() {
                     )} />
                   </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
 
             {/* Qibla needle */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <motion.div
-                animate={{ rotate: needleRotation }}
-                transition={{ type: "spring", stiffness: 120, damping: 25 }}
+              <div
                 className="relative w-full h-full"
+                style={{
+                  transform: `rotate(${needleRotation}deg)`,
+                  transition: 'transform 0.15s ease-out',
+                }}
               >
                 {/* Needle pointing up */}
                 <div className="absolute left-1/2 top-8 -translate-x-1/2 flex flex-col items-center">
@@ -554,7 +572,7 @@ export default function QiblaPage() {
                     <span className="text-primary-foreground text-sm">🕋</span>
                   </motion.div>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Center dot */}

@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 export function useServiceWorkerUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
@@ -25,6 +26,10 @@ export function useServiceWorkerUpdate() {
           return;
         }
 
+        // Clean up previous listener before adding new one
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+
         // Force check for new SW
         await reg.update();
 
@@ -37,7 +42,7 @@ export function useServiceWorkerUpdate() {
               setUpdateAvailable(true);
             }
           });
-        });
+        }, { signal: abortRef.current.signal });
       } catch {
         // Offline or failed — silently ignore
       } finally {
@@ -55,16 +60,29 @@ export function useServiceWorkerUpdate() {
       }
     };
 
+    // Listen for SW update event from registerSW in main.tsx
+    const onSWUpdate = () => setUpdateAvailable(true);
+    window.addEventListener("sw-update-available", onSWUpdate);
+
     window.addEventListener("online", performCheck);
     document.addEventListener("visibilitychange", onVisibilityChange);
+
+    // Periodic check every 30 minutes
+    const intervalId = setInterval(() => {
+      if (document.visibilityState === "visible") performCheck();
+    }, 30 * 60 * 1000);
 
     return () => {
       window.removeEventListener("online", performCheck);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("sw-update-available", onSWUpdate);
+      clearInterval(intervalId);
+      abortRef.current?.abort();
     };
   }, []);
 
   const applyUpdate = useCallback(() => {
+    if (isUpdating) return;
     setIsUpdating(true);
 
     const doReload = () => window.location.reload();
@@ -94,7 +112,14 @@ export function useServiceWorkerUpdate() {
       // No waiting SW — just reload to pick up any cached updates
       setTimeout(doReload, 300);
     }
-  }, [registration]);
+  }, [registration, isUpdating]);
+
+  // Auto-apply updates immediately when detected
+  useEffect(() => {
+    if (updateAvailable && !isUpdating) {
+      applyUpdate();
+    }
+  }, [updateAvailable, isUpdating, applyUpdate]);
 
   const checkForUpdate = useCallback(async (): Promise<boolean> => {
     if (!("serviceWorker" in navigator) || !navigator.onLine) return false;
@@ -105,17 +130,13 @@ export function useServiceWorkerUpdate() {
 
       setRegistration(reg);
 
-      const cacheBuster = `?v=${Date.now()}`;
-      const response = await fetch(`/manifest.json${cacheBuster}`, {
+      // Cache-bust manifest to ensure fresh check
+      await fetch(`/manifest.json?v=${Date.now()}`, {
         cache: 'no-cache',
         headers: { 'Cache-Control': 'no-cache' }
       });
 
-      if (!response.ok) {
-        await reg.update();
-      } else {
-        await reg.update();
-      }
+      await reg.update();
 
       if (reg.waiting) {
         setUpdateAvailable(true);
