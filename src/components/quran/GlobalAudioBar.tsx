@@ -62,11 +62,11 @@ export default function GlobalAudioBar() {
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 80, opacity: 0 }}
       transition={{ type: "spring", stiffness: 380, damping: 32 }}
-      className="fixed inset-x-0 z-[51] px-3 pb-3 pointer-events-none"
-      style={{ bottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 0.5rem)' }}
+      className="fixed inset-x-0 z-[51] px-2 sm:px-3 pb-2 sm:pb-3 pointer-events-none"
+      style={{ bottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + clamp(0.25rem, 2vw, 0.5rem))' }}
     >
       <div
-        className="rounded-2xl pointer-events-auto overflow-hidden"
+        className="rounded-2xl pointer-events-auto overflow-hidden max-w-4xl mx-auto"
         style={{
           background: 'hsl(var(--card))',
           boxShadow: '0 -4px 32px -4px hsl(var(--primary) / 0.18), 0 8px 32px -8px hsl(0 0% 0% / 0.25)',
@@ -74,7 +74,7 @@ export default function GlobalAudioBar() {
         }}
       >
         {/* Interactive progress bar */}
-        <div className="relative h-1 w-full bg-muted/60 group cursor-pointer"
+        <div className="relative h-1 sm:h-1.5 w-full bg-muted/60 group cursor-pointer"
           onClick={(e) => {
             if (duration > 0) {
               const rect = e.currentTarget.getBoundingClientRect();
@@ -103,19 +103,19 @@ export default function GlobalAudioBar() {
         </div>
 
         <div
-          className="px-4 py-3 cursor-pointer active:scale-[0.99] transition-transform"
+          className="px-2 sm:px-4 py-2 sm:py-3 cursor-pointer active:scale-[0.99] transition-transform"
           onClick={() => setShowNowPlaying(true)}
           dir={language === "ar" ? "rtl" : "ltr"}
         >
           {/* Row 1: waveform + info + close */}
-          <div className="flex items-center gap-3 mb-2.5">
+          <div className="flex items-center gap-2 sm:gap-3 mb-1.5 sm:mb-2.5">
             <div className="shrink-0 pointer-events-none">
               <WaveformBars playing={playing} />
             </div>
 
             <div className="flex-1 min-w-0 pointer-events-none">
-              <p className="font-arabic text-sm font-bold text-foreground truncate leading-tight">{surahName}</p>
-              <p className="text-[0.625rem] text-muted-foreground truncate mt-0.5">
+              <p className="font-arabic text-xs sm:text-sm font-bold text-foreground truncate leading-tight">{surahName}</p>
+              <p className="text-[0.55rem] sm:text-[0.625rem] text-muted-foreground truncate mt-0.5 no-overflow">
                 {reciterName}
                 {currentAyahInSurah !== null && totalAyahs > 0 && (
                   <span className="ms-1.5">
@@ -127,44 +127,44 @@ export default function GlobalAudioBar() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[0.6rem] text-muted-foreground/70 tabular-nums pointer-events-none">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <span className="text-[0.55rem] sm:text-[0.6rem] text-muted-foreground/70 tabular-nums pointer-events-none whitespace-nowrap">
                 {formatTime(currentTime)}
               </span>
               <motion.button
                 whileTap={{ scale: 0.88 }}
                 onClick={(e) => { e.stopPropagation(); stop(); }}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors z-10"
+                className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors z-10"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               </motion.button>
             </div>
           </div>
 
           {/* Row 2: controls */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-1 sm:gap-2">
             <motion.button
               whileTap={{ scale: 0.88 }}
               onClick={(e) => { e.stopPropagation(); playPreviousSurah(); }}
               disabled={!hasPrev}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30 z-10"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30 z-10"
             >
-              <SkipBack className="h-4 w-4" />
+              <SkipBack className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </motion.button>
 
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
               disabled={loading}
-              className="flex h-11 w-11 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50 z-10 shadow-md"
+              className="flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-full text-primary-foreground disabled:opacity-50 z-10 shadow-md"
               style={{ background: 'hsl(var(--primary))' }}
             >
               {loading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
               ) : playing ? (
-                <Pause className="h-5 w-5" />
+                <Pause className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
-                <Play className="h-5 w-5 translate-x-[1px]" />
+                <Play className="h-4 w-4 sm:h-5 sm:w-5 translate-x-[1px]" />
               )}
             </motion.button>
 
@@ -172,9 +172,9 @@ export default function GlobalAudioBar() {
               whileTap={{ scale: 0.88 }}
               onClick={(e) => { e.stopPropagation(); playNextSurah(); }}
               disabled={!hasNext}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30 z-10"
+              className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted/60 transition-colors disabled:opacity-30 z-10"
             >
-              <SkipForward className="h-4 w-4" />
+              <SkipForward className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </motion.button>
           </div>
         </div>
