@@ -24,8 +24,36 @@ declare global {
 
 const isIOS = detectBrowser() === "ios-safari";
 
+function normalizeChunk(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function mergeTranscriptWithOverlap(base: string, incoming: string): string {
+  const normalizedBase = normalizeChunk(base);
+  const normalizedIncoming = normalizeChunk(incoming);
+
+  if (!normalizedIncoming) return normalizedBase;
+  if (!normalizedBase) return normalizedIncoming;
+  if (normalizedBase.includes(normalizedIncoming)) return normalizedBase;
+
+  const baseWords = normalizedBase.split(" ");
+  const incomingWords = normalizedIncoming.split(" ");
+  const maxOverlap = Math.min(baseWords.length, incomingWords.length, 12);
+
+  for (let overlap = maxOverlap; overlap > 0; overlap--) {
+    const baseTail = baseWords.slice(-overlap).join(" ");
+    const incomingHead = incomingWords.slice(0, overlap).join(" ");
+
+    if (baseTail === incomingHead) {
+      return [...baseWords, ...incomingWords.slice(overlap)].join(" ").trim();
+    }
+  }
+
+  return `${normalizedBase} ${normalizedIncoming}`.trim();
+}
+
 function hasWebSpeechAPI(): boolean {
-  if (isIOS) return false;
+  if (typeof window === "undefined") return false;
   return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
@@ -64,8 +92,31 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     }
   };
 
+  const destroyRecognition = useCallback((mode: "stop" | "abort" = "abort") => {
+    const recognition = recognitionRef.current;
+    if (!recognition) return;
+
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+
+    try {
+      if (mode === "stop") {
+        recognition.stop();
+      } else {
+        recognition.abort();
+      }
+    } catch {
+      // Ignore cleanup race conditions from Web Speech API.
+    }
+
+    recognitionRef.current = null;
+  }, []);
+
   const createAndStartRecognition = useCallback(() => {
     if (!isSupported) return;
+
+    destroyRecognition();
 
     const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognitionAPI();
@@ -90,7 +141,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       }
 
       if (newFinalText) {
-        finalTranscriptRef.current += newFinalText;
+        finalTranscriptRef.current = mergeTranscriptWithOverlap(finalTranscriptRef.current, newFinalText);
         interimRef.current = "";
         setTranscript(finalTranscriptRef.current.trim());
       }
@@ -143,11 +194,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     };
 
     recognition.onend = () => {
-      if (interimRef.current) {
-        finalTranscriptRef.current += interimRef.current + " ";
-        setTranscript(finalTranscriptRef.current.trim());
-        interimRef.current = "";
-      }
+      interimRef.current = "";
       setInterimTranscript("");
 
       if (isManualStopRef.current || !isActiveRef.current) {
@@ -179,6 +226,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const start = useCallback(() => {
     if (!isSupported) return;
 
+    destroyRecognition();
     isManualStopRef.current = false;
     isActiveRef.current = true;
     restartCountRef.current = 0;
@@ -197,15 +245,14 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     isManualStopRef.current = true;
     isActiveRef.current = false;
     clearRestartTimer();
-    recognitionRef.current?.stop();
-  }, []);
+    destroyRecognition("stop");
+  }, [destroyRecognition]);
 
   const reset = useCallback(() => {
     isManualStopRef.current = true;
     isActiveRef.current = false;
     clearRestartTimer();
-    recognitionRef.current?.abort();
-    recognitionRef.current = null;
+    destroyRecognition();
     finalTranscriptRef.current = "";
     interimRef.current = "";
     restartCountRef.current = 0;
@@ -220,9 +267,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       isManualStopRef.current = true;
       isActiveRef.current = false;
       clearRestartTimer();
-      recognitionRef.current?.abort();
+      destroyRecognition();
     };
-  }, []);
+  }, [destroyRecognition]);
 
   return {
     isSupported,

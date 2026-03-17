@@ -42,23 +42,32 @@ const PASS_THRESHOLD: Record<StrictnessLevel, number> = {
 };
 
 // minimum fraction of ayah words spoken before we attempt evaluation
-const MIN_WORD_COVERAGE = 0.6;
+const MIN_WORD_COVERAGE = 0.72;
 
 // silence after which we force evaluation even if score is low
-const SILENCE_TIMEOUT_MS = 2200;
+const SILENCE_TIMEOUT_MS = 3200;
 
-function IOSBanner({ language }: { language: string }) {
+function IOSBanner({ language, supported }: { language: string; supported: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-amber-500/30 bg-amber-500/8 p-4 flex gap-3 mb-4"
+      className={cn(
+        "rounded-2xl p-4 flex gap-3 mb-4",
+        supported
+          ? "border border-amber-500/30 bg-amber-500/8"
+          : "border border-destructive/30 bg-destructive/5"
+      )}
     >
-      <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-      <p className="text-sm text-amber-700 dark:text-amber-400">
-        {language === "ar"
-          ? "التعرف على الصوت غير متاح على iOS Safari — استخدم Chrome على Android."
-          : "Speech Recognition is not available on iOS Safari — please use Chrome on Android."}
+      <AlertTriangle className={cn("h-5 w-5 flex-shrink-0 mt-0.5", supported ? "text-amber-500" : "text-destructive")} />
+      <p className={cn("text-sm", supported ? "text-amber-700 dark:text-amber-400" : "text-destructive")}>
+        {supported
+          ? language === "ar"
+            ? "التعرف على الصوت في iPhone/iPad مدعوم الآن، لكنه قد يحتاج إعادة تشغيل الميكروفون إذا انقطع الالتقاط."
+            : "Speech recognition on iPhone/iPad is enabled now, but you may need to restart the mic if capture pauses."
+          : language === "ar"
+            ? "التعرف على الصوت غير مدعوم في هذا المتصفح على iPhone/iPad."
+            : "Speech recognition is not supported in this browser on iPhone/iPad."}
       </p>
     </motion.div>
   );
@@ -443,7 +452,7 @@ export default function RecitationTestPage() {
       {/* Bottom padding = mic bar (~5rem) + nav bar (--nav-height via pb-nav) */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
 
-        {speech.isIOSMode && <IOSBanner language={language} />}
+        {speech.isIOSMode && <IOSBanner language={language} supported={speech.isSupported} />}
         {!speech.isSupported && !speech.isIOSMode && (
           <UnsupportedBanner message={t("speech_not_supported")} desc={t("speech_not_supported_desc")} />
         )}
@@ -499,10 +508,11 @@ export default function RecitationTestPage() {
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 onClick={handleStartTest}
-                disabled={!speech.isSupported || loadingAyahs || speech.isIOSMode}
+                data-testid="recitation-start-test-button"
+                disabled={!speech.isSupported || loadingAyahs}
                 className={cn(
                   "w-full rounded-2xl py-4 text-sm font-bold transition-all min-h-[52px]",
-                  speech.isSupported && !speech.isIOSMode
+                  speech.isSupported
                     ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-elevated"
                     : "bg-muted text-muted-foreground cursor-not-allowed"
                 )}
@@ -857,6 +867,7 @@ export default function RecitationTestPage() {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSkipAyah}
+                data-testid="recitation-skip-ayah-button"
                 disabled={isEvaluating}
                 className="flex items-center gap-1.5 rounded-2xl border border-border/50 bg-muted/60 px-4 py-2.5 text-xs text-muted-foreground font-semibold hover:bg-muted transition-colors disabled:opacity-40 flex-1 justify-center"
               >
@@ -867,6 +878,7 @@ export default function RecitationTestPage() {
               <motion.button
                 whileTap={{ scale: 0.88 }}
                 onClick={isListening ? handleMicStop : handleMicStart}
+                data-testid="recitation-mic-toggle-button"
                 disabled={isEvaluating}
                 className={cn(
                   "relative flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 shadow-elevated transition-all disabled:opacity-40",
@@ -892,6 +904,7 @@ export default function RecitationTestPage() {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={handleTryAgain}
+                data-testid="recitation-cancel-button"
                 className="rounded-2xl border border-border/50 bg-muted/60 px-4 py-2.5 text-xs text-muted-foreground font-semibold hover:bg-muted transition-colors flex-1 text-center"
               >
                 {t("cancel")}

@@ -203,6 +203,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       audio = new Audio();
       audio.setAttribute('playsinline', '');
       audio.setAttribute('webkit-playsinline', '');
+      audio.preload = "auto";
       audioRef.current = audio;
       setupAudioListeners(audio);
     }
@@ -279,6 +280,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       if (audioRef.current) {
         audioRef.current.src = orderedUrls[0];
+        audioRef.current.load();
         try {
           await audioRef.current.play();
           if (!blobUrlRef.current) {
@@ -288,6 +290,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
            // iOS sometimes needs a short delay after src change before play succeeds
            if (audioRef.current) {
              await new Promise(r => setTimeout(r, 300));
+             audioRef.current.load();
              try {
                await audioRef.current.play();
                if (!blobUrlRef.current) {

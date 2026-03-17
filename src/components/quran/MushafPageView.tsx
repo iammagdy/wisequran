@@ -49,7 +49,11 @@ export default function MushafPageView({
 
   const [emblaRef, emblaApi] = useEmblaCarousel({
     direction: "rtl",
-    startIndex: 0
+    startIndex: 0,
+    align: "center",
+    containScroll: "trimSnaps",
+    skipSnaps: false,
+    dragFree: false
   });
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -109,7 +113,7 @@ export default function MushafPageView({
   }, [emblaApi, playingAyah, pages]);
 
   return (
-    <div className="relative" dir="rtl">
+    <div className="relative overflow-x-hidden" dir="rtl">
       {/* Page counter */}
       <div className="mb-3 text-center text-xs text-muted-foreground">
         {pages.length > 0 &&
@@ -120,14 +124,14 @@ export default function MushafPageView({
       </div>
 
       {/* Carousel */}
-      <div ref={emblaRef} className="overflow-hidden rounded-2xl">
+      <div ref={emblaRef} className="overflow-hidden rounded-2xl touch-pan-y">
         <div className="flex">
           {pages.map(([pageNum, pageAyahs]) =>
           <div
             key={pageNum}
-            className="min-w-0 shrink-0 grow-0 basis-full">
+            className="min-w-0 shrink-0 grow-0 basis-full px-0.5">
             
-              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm mx-1 min-h-[60vh] flex flex-col pt-[10px] pb-[10px]">
+              <div className="rounded-2xl border border-border bg-card p-5 shadow-sm min-h-[60vh] flex flex-col pt-[10px] pb-[10px]" data-testid={`mushaf-page-${pageNum}`}>
                 {pageNum > 0 &&
               <div className="mb-4 flex items-center justify-center gap-3">
                     <div className="h-px flex-1 bg-border" />

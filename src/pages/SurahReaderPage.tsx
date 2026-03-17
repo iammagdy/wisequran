@@ -249,15 +249,16 @@ export default function SurahReaderPage() {
   const currentReciterName = (() => { const r = getReciterById(audioPlayer.reciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })();
 
   return (
-    <div className={cn("min-h-screen", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
+    <div className={cn("min-h-screen overflow-x-hidden", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
       {/* Header */}
       <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3 pb-[5px] pt-[12px]">
-          <div className="flex items-center gap-1.5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 py-3 pb-[5px] pt-[12px]">
+          <div className="flex min-w-0 items-center gap-1.5 justify-self-start">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(-1)}
-              className="rounded-xl p-2.5 hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+              data-testid="surah-reader-back-button"
+              className="rounded-xl p-2.5 hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0">
               <ArrowRight className="h-5 w-5" />
             </motion.button>
             {/* Page indicator in header — only in reading mode */}
@@ -268,10 +269,13 @@ export default function SurahReaderPage() {
               return (
                 <Popover open={goToPageOpen} onOpenChange={setGoToPageOpen}>
                 <PopoverTrigger asChild>
-                  <button className="rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors min-h-[44px] flex items-center">
+                  <button
+                    data-testid="surah-reader-page-indicator-button"
+                    className="min-w-[8.5rem] max-w-[11rem] rounded-md bg-primary/10 px-2 py-1 text-[0.6875rem] font-bold text-primary hover:bg-primary/20 transition-colors min-h-[44px] flex items-center justify-center text-center whitespace-nowrap shrink-0"
+                  >
                     {language === "ar" ? `صفحة ${toArabicNumerals(currentPage)}` : `${t("page")} ${currentPage}`}
                     {minPage && maxPage && minPage !== maxPage &&
-                      <span className="text-primary/60 mr-1">
+                      <span className="text-primary/60 mr-1 tabular-nums">
                         {language === "ar" ? `(${toArabicNumerals(minPage)}–${toArabicNumerals(maxPage)})` : `(${minPage}–${maxPage})`}
                       </span>
                       }
@@ -332,22 +336,23 @@ export default function SurahReaderPage() {
               </Popover>);
             })()}
           </div>
-          <div className="text-center flex-1">
-            <h1 className="font-arabic text-xl font-bold">
+          <div className="min-w-0 px-1 text-center">
+            <h1 className="font-arabic text-xl font-bold truncate" data-testid="surah-reader-surah-title">
               {surahInfo ? (language === "ar" ? surahInfo.name : surahInfo.englishName) : `${t("surah")} ${surahNumber}`}
             </h1>
-            <p className="text-[0.6875rem] text-muted-foreground">
+            <p className="text-[0.6875rem] text-muted-foreground truncate" data-testid="surah-reader-surah-meta">
               {surahInfo &&
               <span>{language === "ar" ? toArabicNumerals(surahInfo.numberOfAyahs) : surahInfo.numberOfAyahs} {t("ayah")} · {surahInfo.revelationType === "Meccan" ? t("revelation_meccan") : t("revelation_medinan")}</span>
               }
             </p>
           </div>
-          <div className="flex items-center gap-0.5">
+          <div className="flex min-w-0 items-center gap-0.5 justify-self-end">
             {/* Focus mode — reading only */}
             {!isListeningMode && (
               <button
                 onClick={() => setFocusModeActive(true)}
-                className="rounded-lg p-2.5 transition-colors text-muted-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"
+                data-testid="surah-reader-focus-mode-button"
+                className="rounded-lg p-2.5 transition-colors text-muted-foreground hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
                 title="وضع التركيز">
                 <Maximize2 className="h-4 w-4" />
               </button>
@@ -356,8 +361,9 @@ export default function SurahReaderPage() {
             {!isListeningMode && (
               <button
                 onClick={() => setReaderMode(readerMode === "ayah" ? "mushaf" : "ayah")}
+                data-testid="surah-reader-toggle-mushaf-button"
                 className={cn(
-                  "rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center",
+                  "rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0",
                   readerMode === "mushaf" ? "text-primary" : "text-muted-foreground hover:bg-muted"
                 )}
                 title={readerMode === "ayah" ? "عرض المصحف" : "عرض الآيات"}>
@@ -366,7 +372,7 @@ export default function SurahReaderPage() {
             )}
             {/* Listening mode indicator pill */}
             {isListeningMode && (
-              <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 border border-amber-500/20">
+              <div className="hidden items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 border border-amber-500/20 sm:flex max-w-[8.5rem] shrink" data-testid="surah-reader-reciter-pill">
                 <Headphones className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400" />
                 <span className="text-[0.6875rem] font-semibold text-amber-700 dark:text-amber-400 truncate max-w-[80px]">
                   {currentReciterName}
@@ -375,14 +381,16 @@ export default function SurahReaderPage() {
             )}
             <button
               onClick={() => setSearchOpen(true)}
-              className="rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-muted"
+              data-testid="surah-reader-search-button"
+              className="rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:bg-muted shrink-0"
               title={language === "ar" ? "بحث في السورة" : "Search surah"}
             >
               <Search className="h-4 w-4" />
             </button>
             <button
               onClick={toggleFavorite}
-              className={cn("rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}>
+              data-testid="surah-reader-favorite-button"
+              className={cn("rounded-lg p-2.5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0", isFavorite ? "text-primary" : "text-muted-foreground hover:bg-muted")}>
               <Star className={cn("h-4 w-4", isFavorite && "fill-primary")} />
             </button>
           </div>
