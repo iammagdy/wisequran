@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -51,8 +51,12 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   const playing = isThisSurah && player.playing;
   const loading = isThisSurah && player.loading;
 
+  // Bolt Optimization: Build O(1) lookup maps to prevent O(N) array traversals during render loops
+  const ayahMap = useMemo(() => new Map(ayahs.map(a => [a.numberInSurah, a])), [ayahs]);
+  const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
+
   const currentAyahInSurah = isThisSurah ? player.currentAyahInSurah : null;
-  const currentAyah = ayahs.find((a) => a.numberInSurah === currentAyahInSurah);
+  const currentAyah = currentAyahInSurah ? ayahMap.get(currentAyahInSurah) : undefined;
 
   // Keep currentAyahInSurah in ref for stale closure use in onAyahEnded
   currentAyahInSurahRef.current = currentAyahInSurah;
@@ -228,7 +232,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                   {stripBismillah(currentAyah.text, surahNumber, currentAyah.numberInSurah)}
                 </p>
                 {translationAyahs.length > 0 && (() => {
-                  const tAyah = translationAyahs.find((ta) => ta.numberInSurah === currentAyah.numberInSurah);
+                  const tAyah = translationMap.get(currentAyah.numberInSurah);
                   return tAyah ? (
                     <p className="text-sm text-muted-foreground mt-3 leading-relaxed mx-auto max-w-sm text-center" dir="ltr">
                       {tAyah.text}
@@ -560,7 +564,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
           <div className="max-h-72 overflow-y-auto divide-y divide-border/30">
             {ayahs.map((ayah) => {
               const isCurrent = currentAyah?.numberInSurah === ayah.numberInSurah;
-              const tAyah = translationAyahs.find((ta) => ta.numberInSurah === ayah.numberInSurah);
+              const tAyah = translationMap.get(ayah.numberInSurah);
               return (
                 <motion.button
                   key={ayah.numberInSurah}

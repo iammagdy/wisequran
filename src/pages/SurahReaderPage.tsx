@@ -88,6 +88,9 @@ export default function SurahReaderPage() {
 
   const tafsirMap = useMemo(() => new Map(tafsirAyahs.map(a => [a.numberInSurah, a])), [tafsirAyahs]);
   const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
+
+  // Bolt Optimization: Safe O(1) Map lookups for frequently accessed state data
+  const ayahMap = useMemo(() => new Map(ayahs.map(a => [a.numberInSurah, a])), [ayahs]);
   const currentTranslationEdition = TRANSLATION_EDITIONS.find(e => e.id === translationEdition);
 
   const toggleFavorite = () => {
@@ -110,6 +113,7 @@ export default function SurahReaderPage() {
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()]).
     then(([ayahData, surahList]) => {
       setAyahs(ayahData);
+      // Bolt Optimization Note: Using .find() is faster for a one-off lookup than allocating a whole Map
       const info = surahList.find((s) => s.number === surahNumber) || null;
       setSurahInfo(info);
       setLastRead({
@@ -175,7 +179,7 @@ export default function SurahReaderPage() {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const ayahNum = Number(entry.target.getAttribute("data-ayah"));
-            const ayah = ayahs.find((a) => a.numberInSurah === ayahNum);
+            const ayah = ayahMap.get(ayahNum);
             if (ayah?.page) setCurrentPage(ayah.page);
             break;
           }
@@ -188,7 +192,7 @@ export default function SurahReaderPage() {
     if (ayahs[0]?.page) setCurrentPage(ayahs[0].page);
 
     return () => observer.disconnect();
-  }, [loading, ayahs]);
+  }, [loading, ayahs, ayahMap]);
 
   const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
     if (el) ayahRefs.current.set(num, el);else
@@ -307,6 +311,8 @@ export default function SurahReaderPage() {
                           setMushafTargetPage(null);
                           setTimeout(() => setMushafTargetPage(pageNum), 0);
                         } else {
+                          // Note: page lookup is not optimal for mapping by ayah numberInSurah, so .find is acceptable here.
+                          // Could optimize further by creating a `pageMap` grouping ayahs by page if this is a bottleneck.
                           const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
                           if (targetAyahOnPage) {
                             const el = document.getElementById(`ayah-${targetAyahOnPage.numberInSurah}`);
