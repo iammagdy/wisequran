@@ -138,25 +138,32 @@ export function useSleepModePlayer() {
       setPrefsState((p) => { res(p); return p; });
     }));
 
+    // Synchronous audio creation & unlock for iOS
+    let quranAudio = quranAudioRef.current;
+    if (!quranAudio) {
+      quranAudio = new Audio();
+      quranAudioRef.current = quranAudio;
+      // Silent unlock
+      quranAudio.src = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
+      quranAudio.play().catch(() => {});
+    }
+
     try {
       const url = await getReciterAudioUrl(currentPrefs.reciterId, currentPrefs.surahNumber);
-      const quranAudio = new Audio(url);
+      
+      // Clean up old listeners
+      quranAudio.onloadedmetadata = null;
+      quranAudio.ontimeupdate = null;
+      quranAudio.onplaying = null;
+      quranAudio.onwaiting = null;
+
+      quranAudio.src = url;
       quranAudio.volume = currentPrefs.quranVolume / 100;
-      quranAudioRef.current = quranAudio;
 
-      quranAudio.addEventListener("timeupdate", () => {
-        setAudioCurrentTime(quranAudio.currentTime);
-      });
-      quranAudio.addEventListener("loadedmetadata", () => {
-        setAudioDuration(quranAudio.duration);
-      });
-
-      await new Promise<void>((resolve, reject) => {
-        quranAudio.addEventListener("canplay", () => resolve(), { once: true });
-        quranAudio.addEventListener("error", () => reject(new Error("Audio load failed")), { once: true });
-        setTimeout(() => reject(new Error("Timeout")), 15000);
-        quranAudio.load();
-      });
+      quranAudio.ontimeupdate = () => setAudioCurrentTime(quranAudio.currentTime);
+      quranAudio.onloadedmetadata = () => setAudioDuration(quranAudio.duration);
+      quranAudio.onplaying = () => setIsLoading(false);
+      quranAudio.onwaiting = () => setIsLoading(true);
 
       const totalSecs = currentPrefs.timerMinutes * 60;
       setRemainingSeconds(totalSecs);
@@ -164,7 +171,6 @@ export function useSleepModePlayer() {
       await quranAudio.play();
       isPlayingRef.current = true;
       setIsPlaying(true);
-      setIsLoading(false);
 
       await acquireWakeLock();
       await startSession(currentPrefs);

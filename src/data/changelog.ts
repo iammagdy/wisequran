@@ -1,4 +1,4 @@
-export const APP_VERSION = "2.8.2";
+export const APP_VERSION = "2.8.3";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,24 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "2.8.3",
+    date: "2026-03-17",
+    ar: {
+      fixes: [
+        "إصلاح تعليق تحميل الصوت (Infinite Loading) على متصفح Safari لجهاز iPhone",
+        "تحسين إعادة استخدام مشغل الصوت ومعالجة الأخطاء لتجربة أكثر سلاسة على iOS",
+        "إصلاح مشكلة فقدان مكتبة Supabase عند بناء التطبيق لضمان استقرار التشغيل",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed infinite loading/deadlock of audio playback on iOS Safari",
+        "Improved audio element reuse and error handling for a smoother experience on iPhone",
+        "Fixed missing @supabase/supabase-js dependency during the build process",
+      ],
+    },
+  },
   {
     version: "2.8.2",
     date: "2026-03-17",

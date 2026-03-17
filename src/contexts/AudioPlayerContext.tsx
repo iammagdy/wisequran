@@ -203,14 +203,17 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     activeSurahForRetryRef.current = surahNumber;
     activeReciterForRetryRef.current = currentReciterId;
 
-    // Create Audio element IMMEDIATELY to preserve user gesture context
+    // Use existing Audio element if it exists to preserve user gesture context on iOS
     sourceSetRef.current = false;
-    const audio = new Audio();
-    audioRef.current = audio;
-    setupAudioListeners(audio);
-    // Synchronous silent unlock for iOS/Safari to establish user gesture
-    audio.src = SILENT_MP3;
-    audio.play().catch(() => { /* ignore if silent unlock fails */ });
+    let audio = audioRef.current;
+    if (!audio) {
+      audio = new Audio();
+      audioRef.current = audio;
+      setupAudioListeners(audio);
+      // Synchronous silent unlock for iOS/Safari to establish user gesture
+      audio.src = SILENT_MP3;
+      audio.play().catch(() => { /* ignore if silent unlock fails */ });
+    }
 
     setState((s) => ({
       ...s,
@@ -290,8 +293,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       if (!blobUrlRef.current) {
         cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
       }
-    } catch {
+    } catch (error) {
       // The error event listener will handle retrying the next URL automatically
+      // However, if it's a NotAllowedError (iOS Safari auto-play policy), it might not fire the error listener
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        setState((s) => ({ ...s, loading: false }));
+        toast.error(
+          "يحتاج المتصفح إلى التفاعل لتشغيل الصوت. يرجى الضغط على زر التشغيل مرة أخرى."
+        );
+      }
     }
   }, [cleanupBlobUrl, setupAudioListeners]);
 
