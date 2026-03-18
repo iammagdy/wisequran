@@ -27,6 +27,8 @@ import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } fro
 import { APP_VERSION, changelog } from "@/data/changelog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
+import { mobileAudioManager, SILENT_MP3 } from "@/lib/mobile-audio";
+import { showAppNotification } from "@/lib/notifications";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -43,9 +45,6 @@ import {
 "@/components/ui/alert-dialog";
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
-
-// A tiny, silent base64 MP3 used to synchronously unlock the audio element on iOS
-const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
@@ -116,8 +115,7 @@ export default function SettingsPage() {
       adhanPreviewTimeoutRef.current = null;
     }
     if (adhanPreviewRef.current) {
-      adhanPreviewRef.current.pause();
-      adhanPreviewRef.current.src = "";
+      mobileAudioManager.stop("preview", true);
       adhanPreviewRef.current = null;
     }
     setPreviewingAdhan(null);
@@ -132,14 +130,14 @@ export default function SettingsPage() {
     stopAdhanPreview();
     setAdhanPreviewLoading(voiceId);
 
-    const audio = new Audio();
+    const audio = mobileAudioManager.getAudio("preview");
     audio.volume = Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100));
     adhanPreviewRef.current = audio;
+    mobileAudioManager.prime("preview").catch(() => {});
 
     adhanPreviewTimeoutRef.current = setTimeout(() => {
       if (adhanPreviewRef.current === audio) {
-        audio.pause();
-        audio.src = "";
+        mobileAudioManager.stop("preview", true);
         adhanPreviewRef.current = null;
         setAdhanPreviewLoading(null);
         setPreviewingAdhan(null);
@@ -147,27 +145,27 @@ export default function SettingsPage() {
       }
     }, 12000);
 
-    audio.addEventListener("canplay", () => {
+    audio.oncanplay = () => {
       if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
       setAdhanPreviewLoading(null);
       setPreviewingAdhan(voiceId);
-      audio.play().catch(() => {
+      mobileAudioManager.play("preview").catch(() => {
         setPreviewingAdhan(null);
       });
-    }, { once: true });
+    };
 
-    audio.addEventListener("ended", () => {
+    audio.onended = () => {
       adhanPreviewRef.current = null;
       setPreviewingAdhan(null);
-    }, { once: true });
+    };
 
-    audio.addEventListener("error", () => {
+    audio.onerror = () => {
       if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
       adhanPreviewRef.current = null;
       setAdhanPreviewLoading(null);
       setPreviewingAdhan(null);
       toast.error(language === "ar" ? "تعذّر تحميل الأذان. قد يكون الخادم غير متاح مؤقتاً." : "Could not load adhan. The server may be temporarily unavailable.");
-    }, { once: true });
+    };
 
     audio.src = src;
     audio.preload = "auto";
@@ -181,8 +179,7 @@ export default function SettingsPage() {
 
   const stopPreview = useCallback(() => {
     if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      previewAudioRef.current.src = "";
+      mobileAudioManager.stop("preview", true);
       previewAudioRef.current = null;
     }
     setPreviewingReciter(null);
@@ -201,11 +198,9 @@ export default function SettingsPage() {
     setPreviewLoading(r.id);
 
     // Create Audio IMMEDIATELY to preserve user gesture context
-    const audio = new Audio();
+    const audio = mobileAudioManager.getAudio("preview");
     previewAudioRef.current = audio;
-    // Synchronous silent unlock for iOS/Safari to establish user gesture
-    audio.src = SILENT_MP3;
-    audio.play().catch(() => { /* ignore */ });
+    mobileAudioManager.prime("preview").catch(() => { /* ignore */ });
 
     // Now fetch the URL asynchronously
     const url = await getReciterAudioUrl(r.id, 1);
@@ -222,25 +217,25 @@ export default function SettingsPage() {
       }
     }, 10000);
 
-    audio.addEventListener("canplay", () => {
+    audio.oncanplay = () => {
       clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(r.id);
-      audio.play().catch(() => {
+      mobileAudioManager.play("preview").catch(() => {
         setPreviewingReciter(null);
       });
-    }, { once: true });
+    };
 
-    audio.addEventListener("ended", () => {
+    audio.onended = () => {
       setPreviewingReciter(null);
-    }, { once: true });
+    };
 
-    audio.addEventListener("error", () => {
+    audio.onerror = () => {
       clearTimeout(timeoutId);
       setPreviewLoading(null);
       setPreviewingReciter(null);
       toast.error(t("settings_toast_preview_error"));
-    }, { once: true });
+    };
 
     // Set src after listeners are attached
     audio.src = url;
@@ -1259,25 +1254,28 @@ export default function SettingsPage() {
                           onClick={() => {
                             if (previewingReminder === sound.id) {
                               if (reminderPreviewRef.current) {
-                                reminderPreviewRef.current.pause();
+                                mobileAudioManager.stop("preview", true);
                                 reminderPreviewRef.current = null;
                               }
                               setPreviewingReminder(null);
                               return;
                             }
                             if (reminderPreviewRef.current) {
-                              reminderPreviewRef.current.pause();
+                              mobileAudioManager.stop("preview", true);
                               reminderPreviewRef.current = null;
                             }
-                            const audio = new Audio(sound.file);
+                            const audio = mobileAudioManager.getAudio("preview");
                             audio.volume = Math.max(0, Math.min(1, adhanSettings.reminderVolume / 100));
                             reminderPreviewRef.current = audio;
                             setPreviewingReminder(sound.id);
-                            audio.addEventListener("ended", () => {
+                            audio.onended = () => {
                               setPreviewingReminder(null);
                               reminderPreviewRef.current = null;
-                            }, { once: true });
-                            audio.play().catch(() => { setPreviewingReminder(null); });
+                            };
+                            audio.src = sound.file;
+                            audio.load();
+                            mobileAudioManager.prime("preview").catch(() => {});
+                            mobileAudioManager.play("preview").catch(() => { setPreviewingReminder(null); });
                           }}
                           className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all shrink-0 ${
                             previewingReminder === sound.id
@@ -1372,9 +1370,11 @@ export default function SettingsPage() {
                   const src = adhanSettings.takbirOnlyMode
                     ? TAKBIR_URL
                     : voice.file;
-                  const audio = new Audio(src);
-                  audio.volume = Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100));
-                  audio.play().catch(() => {
+                  mobileAudioManager.prime("alarm").catch(() => {});
+                  mobileAudioManager.play("alarm", src, {
+                    volume: Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100)),
+                    resetTime: true,
+                  }).catch(() => {
                     toast.error(language === "ar" ? "تعذّر تشغيل الأذان. تحقق من اتصالك بالإنترنت." : "Could not play adhan. Check your internet connection.");
                   });
                 }}
@@ -1389,9 +1389,9 @@ export default function SettingsPage() {
                     toast.error(language === "ar" ? "يرجى منح إذن الإشعارات أولاً" : "Please grant notification permission first");
                     return;
                   }
-                  new Notification(language === "ar" ? "حان وقت الصلاة 🕌" : "Prayer Time 🕌", {
+                  showAppNotification(language === "ar" ? "حان وقت الصلاة 🕌" : "Prayer Time 🕌", {
                     body: language === "ar" ? "هذا اختبار للإشعارات" : "This is a test notification",
-                    icon: "/icons/icon-192.png",
+                    tag: "wise-settings-test-notification",
                   });
                 }}
                 className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"

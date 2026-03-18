@@ -6,10 +6,7 @@ import { fetchChapterRecitation, findCurrentAyahByTime, type AyahTimestamp } fro
 import { SURAH_META } from "@/data/surah-meta";
 import { toast } from "sonner";
 import type { Ayah } from "@/lib/quran-api";
-
-// A tiny, silent base64 MP3 used to synchronously unlock the audio element on iOS
-// during the initial user gesture, before asynchronous fetching occurs.
-const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
+import { mobileAudioManager } from "@/lib/mobile-audio";
 
 interface AudioPlayerState {
   surahNumber: number | null;
@@ -96,7 +93,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     return () => {
-      audioRef.current?.pause();
+      mobileAudioManager.stop("quran", true);
       audioRef.current = null;
       cleanupBlobUrl();
     };
@@ -112,7 +109,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       album: "القرآن الكريم",
     });
 
-    const handlePlay = () => { audioRef.current?.play(); };
+    const handlePlay = () => { mobileAudioManager.play("quran").catch(() => {}); };
     const handlePause = () => { audioRef.current?.pause(); };
 
     navigator.mediaSession.setActionHandler("play", handlePlay);
@@ -164,9 +161,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       if (nextIndex < fallbacks.length && audioRef.current === audio) {
         const nextUrl = fallbacks[nextIndex];
         fallbackIndexRef.current = nextIndex + 1;
-        audio.src = nextUrl;
-        audio.load();
-        audio.play().catch(() => {});
+        mobileAudioManager.play("quran", nextUrl, { forceLoad: true }).catch(() => {});
         return;
       }
 
@@ -200,17 +195,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     let audio = audioRef.current;
     if (!audio) {
-      audio = new Audio();
-      audio.setAttribute('playsinline', '');
-      audio.setAttribute('webkit-playsinline', '');
-      audio.preload = "auto";
+      audio = mobileAudioManager.getAudio("quran");
       audioRef.current = audio;
       setupAudioListeners(audio);
     }
-    
-    // This needs to be synchronous with the user gesture
-    audio.src = SILENT_MP3;
-    const playPromise = audio.play();
+
+    const primePromise = mobileAudioManager.prime("quran");
 
     setState((s) => ({
       ...INITIAL_STATE,
@@ -222,8 +212,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     const loadAndPlay = async () => {
       try {
-        // Await the silent play promise. If this fails, we can't play audio.
-        await playPromise;
+        await primePromise;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'NotAllowedError') {
           setState((s) => ({ ...s, loading: false }));
@@ -279,27 +268,13 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       sourceSetRef.current = true;
 
       if (audioRef.current) {
-        audioRef.current.src = orderedUrls[0];
-        audioRef.current.load();
         try {
-          await audioRef.current.play();
+          await mobileAudioManager.play("quran", orderedUrls[0], { forceLoad: true });
           if (!blobUrlRef.current) {
             cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
           }
         } catch (error) {
-           // iOS sometimes needs a short delay after src change before play succeeds
-           if (audioRef.current) {
-             await new Promise(r => setTimeout(r, 300));
-             audioRef.current.load();
-             try {
-               await audioRef.current.play();
-               if (!blobUrlRef.current) {
-                 cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
-               }
-               return;
-             } catch { /* fall through */ }
-           }
-           setState((s) => ({ ...s, loading: false }));
+          setState((s) => ({ ...s, loading: false }));
         }
       }
     };
@@ -314,7 +289,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     if (!audioRef.current.paused) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      await mobileAudioManager.play("quran");
     }
   }, []);
 
@@ -328,7 +303,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const stop = useCallback(() => {
     stoppedRef.current = true;
     surahNumberRef.current = null;
-    audioRef.current?.pause();
+    mobileAudioManager.stop("quran", true);
     audioRef.current = null;
     cleanupBlobUrl();
     timestampsRef.current = [];

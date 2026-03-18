@@ -2,6 +2,39 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.2.0] - 2026-03-18
+
+### 🔊 Mobile Audio Reliability Release
+
+This release focuses on rebuilding the app's mobile audio behavior across Quran listening, Adhan, reminders, and notification delivery.
+
+### ✨ New Features
+
+- **Unified Mobile Audio Layer**
+  - Quran listening, Adhan, reminder sounds, and Settings previews now use a shared playback pipeline
+  - Added a global audio bootstrap on the first user interaction to improve Android/iPhone readiness
+
+### 🔧 Improvements
+
+- **Prayer & Reminder Reliability**
+  - Prayer notifications now prefer service worker delivery when available
+  - Added catch-up checks when the app returns to the foreground after being backgrounded
+  - Reminder and Adhan events are tracked per day to reduce duplicate firing after reloads
+
+- **PWA Audio Caching**
+  - Added local `/audio/adhan/*.mp3` files to PWA asset caching
+  - Expanded Workbox precache support to include MP3 assets
+
+### 🐛 Bug Fixes
+
+- Fixed Quran listening playback regression on mobile browsers
+- Fixed fragmented Adhan/reminder playback paths causing failures on Android and iPhone
+- Fixed Settings audio previews and quick test buttons to use the new shared playback layer
+
+### 📝 Notes
+
+- Background audio behavior in PWAs still depends on platform restrictions, especially on iPhone, but the app now applies the most reliable foreground/background-safe strategy available within the current web app architecture.
+
 ## [3.0.0] - 2026-03-17
 
 ### 🎯 Major Release: Accessibility & Usability Overhaul

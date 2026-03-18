@@ -4,6 +4,7 @@ import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { showAppNotification } from "@/lib/notifications";
 
 export default function IftarCountdown() {
   const { location } = useLocation();
@@ -33,11 +34,11 @@ export default function IftarCountdown() {
           notifiedRef.current = true;
           if ("Notification" in window && Notification.permission === "granted") {
             const isAr = language === "ar";
-            new Notification(t("iftar_time"), {
+            showAppNotification(t("iftar_time"), {
               body: t("iftar_dua_text"),
-              icon: "/icons/icon-192.png",
               dir: isAr ? "rtl" : "ltr",
               lang: isAr ? "ar" : "en",
+              tag: "wise-iftar-time-notification",
             });
           }
         }

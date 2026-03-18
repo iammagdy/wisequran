@@ -33,10 +33,12 @@ import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
 import { usePrayerReminders } from "@/hooks/usePrayerReminders";
+import { useGlobalAudioBootstrap } from "@/hooks/useGlobalAudioBootstrap";
 
 const queryClient = new QueryClient();
 
 const AppContent = () => {
+  useGlobalAudioBootstrap();
   usePrayerNotifications();
   useAzkarNotifications();
   useAdhan();

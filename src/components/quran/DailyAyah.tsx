@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getReciterAyahAudioUrl } from "@/lib/reciters";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { DEFAULT_RECITER } from "@/lib/reciters";
+import { mobileAudioManager } from "@/lib/mobile-audio";
 
 interface CachedAyah {
   surah: number;
@@ -170,10 +171,12 @@ export function DailyAyah() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                const audio = new Audio(
-                  getReciterAyahAudioUrl(reciterId, getGlobalAyahNumber(data.surah, data.ayah))
-                );
-                audio.play().catch(() => {
+                mobileAudioManager.prime("preview").catch(() => {});
+                mobileAudioManager.play(
+                  "preview",
+                  getReciterAyahAudioUrl(reciterId, getGlobalAyahNumber(data.surah, data.ayah)),
+                  { resetTime: true }
+                ).catch(() => {
                   toast({ title: t("could_not_play_audio") });
                 });
               }}

@@ -15,13 +15,22 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "prompt",
       injectRegister: "auto",
-      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
+      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg", "audio/adhan/*.mp3"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,mp3}"],
         navigateFallbackDenylist: [/^\/~oauth/, /^\/auth/, /^\/api\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/.*\/audio\/adhan\/.*\.mp3$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "local-adhan-audio-cache",
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
             handler: "CacheFirst",

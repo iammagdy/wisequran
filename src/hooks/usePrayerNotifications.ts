@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { calculatePrayerTimes, type PrayerTimes, formatArabicTime } from "@/lib/prayer-times";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useLocation } from "@/hooks/useLocation";
+import { showAppNotification } from "@/lib/notifications";
 
 const PRAYER_NAMES: Record<string, string> = {
   fajr: "الفجر",
@@ -50,11 +51,11 @@ export function usePrayerNotifications() {
         const diff = currentMinutes - prayerMinutes;
         if (diff >= 0 && diff < 2 && !notifiedRef.current.has(id)) {
           notifiedRef.current.add(id);
-          new Notification(`حان وقت صلاة ${PRAYER_NAMES[id]} 🕌`, {
+          showAppNotification(`حان وقت صلاة ${PRAYER_NAMES[id]} 🕌`, {
             body: formatArabicTime(prayerTime),
-            icon: "/icons/icon-192.png",
             dir: "rtl",
             lang: "ar",
+            tag: `wise-prayer-notification-${today}-${id}`,
           });
         }
       }

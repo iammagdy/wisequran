@@ -9,20 +9,39 @@ import {
   TAKBIR_URL,
   type AdhanSettings,
 } from "@/lib/adhan-settings";
+import { mobileAudioManager } from "@/lib/mobile-audio";
+import { showAppNotification } from "@/lib/notifications";
 
 const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
+const PLAYED_STORAGE_KEY = "wise-adhan-played-events";
+const MISSED_PRAYER_GRACE_MINUTES = 15;
 
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
+function loadPlayedEvents(day: string) {
+  try {
+    const raw = localStorage.getItem(PLAYED_STORAGE_KEY);
+    if (!raw) return new Set<string>();
+    const parsed = JSON.parse(raw) as { day?: string; keys?: string[] };
+    if (parsed.day !== day) return new Set<string>();
+    return new Set(parsed.keys ?? []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function savePlayedEvents(day: string, keys: Set<string>) {
+  localStorage.setItem(PLAYED_STORAGE_KEY, JSON.stringify({ day, keys: Array.from(keys) }));
+}
+
 let activeAudio: HTMLAudioElement | null = null;
 
 export function stopAdhan() {
   if (activeAudio) {
-    activeAudio.pause();
-    activeAudio.currentTime = 0;
+    mobileAudioManager.stop("alarm");
     activeAudio = null;
   }
 }
@@ -30,10 +49,10 @@ export function stopAdhan() {
 export function useAdhan() {
   const [settings] = useLocalStorage<AdhanSettings>(ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS);
   const { location } = useLocation();
-  const playedRef = useRef<Set<string>>(new Set());
+  const playedRef = useRef<Set<string>>(loadPlayedEvents(todayKey()));
   const lastDayRef = useRef(todayKey());
 
-  const playAdhan = useCallback((prayerId: string, vol: number) => {
+  const playAdhan = useCallback(async (prayerId: string, vol: number, isCatchUp = false) => {
     stopAdhan();
     const voice = ADHAN_VOICES.find((v) => v.id === settings.voiceId) ?? ADHAN_VOICES[0];
     let src: string;
@@ -44,27 +63,47 @@ export function useAdhan() {
     } else {
       src = voice.file;
     }
-    const audio = new Audio(src);
-    audio.volume = Math.max(0, Math.min(1, vol / 100));
-    activeAudio = audio;
-    audio.play().catch((err) => {
+
+    try {
+      const audio = await mobileAudioManager.play("alarm", src, {
+        volume: Math.max(0, Math.min(1, vol / 100)),
+        resetTime: true,
+      });
+      activeAudio = audio;
+    } catch (err) {
       console.error("[Adhan] Failed to play audio:", src, err);
       activeAudio = null;
-    });
-    audio.addEventListener("ended", () => {
-      activeAudio = null;
-    });
+    }
+
+    const shouldNotify = document.visibilityState !== "visible" || isCatchUp;
+    if (shouldNotify) {
+      await showAppNotification(`حان وقت صلاة ${prayerId === "fajr" ? "الفجر" : prayerId === "dhuhr" ? "الظهر" : prayerId === "asr" ? "العصر" : prayerId === "maghrib" ? "المغرب" : "العشاء"} 🕌`, {
+        body: isCatchUp ? "تم تشغيل الأذان فور عودة التطبيق للواجهة" : "الأذان يعمل الآن",
+        dir: "rtl",
+        lang: "ar",
+        tag: `wise-adhan-${todayKey()}-${prayerId}`,
+      });
+    }
   }, [settings.voiceId, settings.takbirOnlyMode, settings.fajrSpecialAdhan]);
 
   useEffect(() => {
     if (!settings.adhanEnabled) return;
 
-    const check = () => {
-      const today = todayKey();
+    const syncDay = (today: string) => {
       if (today !== lastDayRef.current) {
-        playedRef.current.clear();
         lastDayRef.current = today;
+        playedRef.current = loadPlayedEvents(today);
       }
+    };
+
+    const markPlayed = (today: string, key: string) => {
+      playedRef.current.add(key);
+      savePlayedEvents(today, playedRef.current);
+    };
+
+    const check = (allowCatchUp: boolean) => {
+      const today = todayKey();
+      syncDay(today);
 
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -82,15 +121,32 @@ export function useAdhan() {
         const [ph, pm] = prayerTime.split(":").map(Number);
         const prayerMinutes = ph * 60 + pm;
         const diff = currentMinutes - prayerMinutes;
-        if (diff >= 0 && diff < 2 && !playedRef.current.has(key) && adhanAllowed) {
-          playedRef.current.add(key);
-          playAdhan(id, settings.adhanVolume);
+        const shouldPlayNow = diff >= 0 && diff < 2;
+        const shouldRecoverMissed = allowCatchUp && diff >= 2 && diff <= MISSED_PRAYER_GRACE_MINUTES;
+
+        if (!playedRef.current.has(key) && adhanAllowed && (shouldPlayNow || shouldRecoverMissed)) {
+          markPlayed(today, key);
+          playAdhan(id, settings.adhanVolume, shouldRecoverMissed);
         }
       }
     };
 
-    check();
-    const interval = setInterval(check, 30_000);
-    return () => clearInterval(interval);
+    check(true);
+    const interval = setInterval(() => check(false), 15_000);
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        check(true);
+      }
+    };
+
+    window.addEventListener("focus", onVisibilityChange);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", onVisibilityChange);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [settings, location, playAdhan]);
 }

@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.1.0";
+export const APP_VERSION = "3.2.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,40 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.2.0",
+    date: "2026-03-18",
+    ar: {
+      features: [
+        "إطلاق طبقة صوت موحدة للموبايل تربط استماع القرآن والأذان والتنبيهات ومعاينات الإعدادات في مسار تشغيل واحد",
+      ],
+      improvements: [
+        "تحسين تهيئة الصوت على Android وiPhone عبر تفعيل global audio bootstrap من أول تفاعل داخل التطبيق",
+        "تحسين تنبيهات الصلاة والأذكار وورد القراءة لتعمل عبر service worker عند توفره مع fallback تلقائي داخل الصفحة",
+        "إدخال ملفات الأذان المحلية ضمن كاش الـPWA لتحسين الاعتمادية والتحميل على الأجهزة المحمولة",
+      ],
+      fixes: [
+        "إصلاح regression في تشغيل استماع القرآن على الموبايل عبر إعادة بناء مسار التشغيل على مشغل مركزي موحد",
+        "إصلاح تشغيل الأذان والتذكيرات من مسارات متعددة غير متناسقة كانت تسبب فشلًا على Android وiPhone",
+        "إضافة تعويض ذكي عند عودة التطبيق للواجهة لتقليل ضياع الأذان أو التذكير إذا تم تعليق التطبيق مؤقتًا بالخلفية",
+      ],
+    },
+    en: {
+      features: [
+        "Introduced a unified mobile audio layer connecting Quran listening, Adhan, reminders, and Settings previews through one playback pipeline",
+      ],
+      improvements: [
+        "Improved Android and iPhone audio readiness with a global audio bootstrap on the user's first interaction",
+        "Prayer, azkar, and reading reminders now prefer service-worker notifications when available with page fallback",
+        "Local Adhan audio files are now included in PWA caching for better reliability on mobile devices",
+      ],
+      fixes: [
+        "Fixed the mobile Quran listening regression by rebuilding playback on top of a centralized audio manager",
+        "Fixed fragmented Adhan/reminder playback paths that were causing failures on Android and iPhone",
+        "Added catch-up handling when the app returns to the foreground so recent missed prayer events can still surface",
+      ],
+    },
+  },
   {
     version: "3.1.0",
     date: "2026-03-17",
