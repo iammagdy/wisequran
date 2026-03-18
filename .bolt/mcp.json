@@ -2,9 +2,6 @@
   "mcpServers": {
     "github": {
       "enabled": true
-    },
-    "linear": {
-      "enabled": true
     }
   }
 }
