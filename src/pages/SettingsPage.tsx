@@ -27,7 +27,7 @@ import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } fro
 import { APP_VERSION, changelog } from "@/data/changelog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
-import { mobileAudioManager, SILENT_MP3 } from "@/lib/mobile-audio";
+import { mobileAudioManager } from "@/lib/mobile-audio";
 import { showAppNotification } from "@/lib/notifications";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1365,6 +1365,7 @@ export default function SettingsPage() {
             {/* Test buttons */}
             <div className="flex gap-2 flex-wrap">
               <button
+                data-testid="settings-test-adhan-button"
                 onClick={() => {
                   const voice = ADHAN_VOICES.find((v) => v.id === adhanSettings.voiceId) ?? ADHAN_VOICES[0];
                   const src = adhanSettings.takbirOnlyMode
@@ -1384,6 +1385,7 @@ export default function SettingsPage() {
                 {language === "ar" ? "اختبر الأذان الآن" : "Test Adhan Now"}
               </button>
               <button
+                data-testid="settings-test-notification-button"
                 onClick={() => {
                   if (!("Notification" in window) || Notification.permission !== "granted") {
                     toast.error(language === "ar" ? "يرجى منح إذن الإشعارات أولاً" : "Please grant notification permission first");

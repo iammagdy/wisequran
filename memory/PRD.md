@@ -1,41 +1,44 @@
 # PRD
 
 ## Original Problem Statement
-المستخدم لديه تطبيق قرآن كريم PWA، وكان يعدّل عليه ثم ظهرت مشاكل:
-1) الـ layout داخل صفحة قراءة القرآن غير ثابت ويعمل shift يمين/شمال.
-2) quran listening tab لا يعمل على Android ولا iOS مع أنه كان يعمل سابقًا.
-3) قائمة/صفحة التسميع تكرر الكلام بعد أول جملة وليست دقيقة، والمطلوب أن تسمع الآية مرة واحدة وتطابقها بدون تكرار.
+المستخدم لديه تطبيق قرآن كريم PWA وكان يريد إصلاح مشاكل الصوت والتشغيل على الموبايل:
+1) استماع القرآن لم يعد يعمل على Android وiPhone.
+2) الأذان/التذكيرات الصوتية لم تعد تعمل بشكل موثوق.
+3) مطلوب تنفيذ خطة إصلاح شاملة ثم تحديث التطبيق إلى الإصدار 3.2.0 مع تحديث سجل التغييرات.
 
 ## Architecture Decisions
-- الحفاظ على نفس stack الحالي: React + TypeScript + Vite + Tailwind + hooks محلية للتخزين.
-- علاج مشكلة ثبات الواجهة من داخل صفحة القراءة نفسها بدل تغيير shell كامل التطبيق.
-- إصلاح تشغيل الصوت من الجذر داخل AudioPlayerContext لأن العطل ظهر بعد تغييرات على src/play في المتصفحات المحمولة.
-- تحسين Web Speech flow داخل useSpeechRecognition بدل إعادة بناء صفحة التسميع بالكامل.
-- معالجة تحذير React من المصدر الحقيقي عبر جعل local-storage sync غير متزامن لتفادي setState أثناء render.
+- بناء طبقة صوت موحدة `mobileAudioManager` بدل تعدد مسارات `new Audio()` المبعثرة عبر المشروع.
+- إضافة bootstrap عام للصوت من أول تفاعل داخل التطبيق لرفع جاهزية التشغيل على Android/iPhone.
+- توصيل استماع القرآن، الأذان، التذكيرات، بعض معاينات الإعدادات، وآية اليوم بطبقة الصوت الموحدة.
+- تفضيل `serviceWorker.showNotification()` عند توفره عبر helper موحد للتنبيهات مع fallback داخل الصفحة.
+- تحسين PWA caching لملفات `/audio/adhan/*.mp3` عبر VitePWA/Workbox.
+- تطبيق catch-up logic عند عودة التطبيق للواجهة لتقليل ضياع أحداث الصلاة/التذكير بعد الخلفية.
 
 ## What Has Been Implemented
-- تثبيت هيدر صفحة القراءة عبر grid ثابت، وتقليل احتمالات تغير المحاذاة مع تغير أرقام الصفحات والأزرار.
-- تحسين MushafPageView لتقليل الانزياح الأفقي أثناء التنقل بين صفحات المصحف.
-- إصلاح مسار تشغيل الاستماع عبر إعادة audio.load() قبل play وبعد retry على تغيير src، مع preload للصوت.
-- تحسين useSpeechRecognition لتقليل تكرار النص عبر overlap merge، وإزالة ضم interim transcript بشكل يسبب duplication، وعدم تعطيل iOS إذا كانت Web Speech API متاحة فعلاً.
-- رفع مهلة الصمت إلى 3.2s ورفع حد التغطية لتحسين دقة تقييم الآية وتقليل التقييم المبكر.
-- إزالة تحذير React runtime المرتبط بـ AchievementUnlockNotification عبر جعل local-storage sync event غير متزامن.
-- إضافة data-testid للعناصر الحرجة التي تم تعديلها في صفحة القراءة، صفحة التسميع، وتبويب الاستماع.
-- تحديث نص واجهة التسميع ليطابق مهلة الصمت الفعلية.
+- إنشاء `/app/src/lib/mobile-audio.ts` كمشغل صوت مركزي للقنوات: quran / alarm / preview / ambient.
+- إنشاء `/app/src/hooks/useGlobalAudioBootstrap.ts` وربطه في `App.tsx` لتهيئة الصوت بعد أول تفاعل.
+- ربط `AudioPlayerContext.tsx` بالمشغل المركزي بدل تهيئة صوت منفصلة لكل تشغيل.
+- تحديث `useAdhan.ts` و`usePrayerReminders.ts` لاستخدام المشغل المركزي + تخزين أحداث اليوم + catch-up عند الرجوع من الخلفية.
+- تحديث `usePrayerNotifications.ts`, `useAzkarNotifications.ts`, `useReadingReminder.ts`, `IftarCountdown.tsx` لاستخدام helper التنبيهات الموحد.
+- تحديث `SettingsPage.tsx` لمعاينات الأذان/التذكير وزر اختبار الأذان/الإشعار، مع إضافة data-testid للأزرار الحرجة.
+- تحديث `DailyAyah.tsx` لاستخدام مسار الصوت الموحد.
+- تحديث `vite.config.ts` لإدخال mp3 المحلية في precache/runtime cache.
+- تحديث النسخة إلى `3.2.0` في `package.json` و`src/data/changelog.ts` و`CHANGELOG.md`.
+- البناء النهائي ناجح عبر `yarn build`، مع نجاح فحص واجهات الاستماع والإعدادات في اختبارات الواجهة.
 
 ## Prioritized Backlog
 ### P0
-- اختبار فعلي على iPhone/iPad وAndroid Chrome لتأكيد إصلاح listening tab على أجهزة حقيقية.
-- اختبار فعلي بالمايكروفون على /hifz/test للتأكد أن التكرار بعد أول جملة انتهى في الأجهزة الحقيقية.
+- اختبار فعلي على أجهزة Android Chrome / Samsung Internet / iPhone Safari / iPhone PWA المثبتة للتأكد من السلوك الحقيقي للصوت في foreground والخلفية.
+- إضافة شاشة تشخيص صوت داخل الإعدادات تعرض آخر سبب فشل `play()` وحالة audio unlock.
 
 ### P1
-- تقسيم SurahReaderPage إلى مكونات أصغر لتقليل التعقيد الجانبي وتحسين الصيانة.
-- تحسين fallback الخاص بالخطوط العربية لتقليل أي layout shift مرتبط بتحميل الخطوط على الشبكات البطيئة.
+- فصل `SettingsPage.tsx` إلى أقسام/مكونات أصغر لتقليل مخاطر الارتداد في ميزات الصوت والإشعارات.
+- نقل Sleep Mode لاحقًا إلى نفس طبقة الصوت الموحدة لزيادة الاتساق.
 
 ### P2
-- إضافة اختبارات UI آلية أوسع لمسارات القراءة/الاستماع/التسميع.
-- تحسين chunk splitting لتقليل تحذيرات حجم الحزم في build.
+- تحسين code splitting للحزم الكبيرة وتقليل تحذيرات حجم الـ chunks.
+- توسيع اختبارات الواجهة الآلية للصوت والإشعارات.
 
 ## Next Tasks
-- تنفيذ device QA حقيقي على Android وiOS.
-- إذا ظهر أي تكرار متبقٍ في التسميع، تسجيل transcript خام من أول آية ومراجعته لضبط thresholds أو restart flow بشكل أدق.
+- تنفيذ QA فعلي على أجهزة حقيقية.
+- إذا ظهر اختلاف على جهاز معين، ربط telemetry خفيف في واجهة الإعدادات لتجميع readyState / visibilityState / NotAllowedError بشكل واضح.
