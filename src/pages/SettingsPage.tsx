@@ -4,7 +4,7 @@ import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, type AdhanSettings } from "@/lib/adhan-settings";
+import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, IOS_SAFE_AZAN_URLS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,9 @@ import InstallModal from "@/components/quran/InstallModal";
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const { t, language, setLanguage, isRTL } = useLanguage();
+  const browserType = detectBrowser();
+  const isIOS = browserType === "ios-safari";
+  const installInstructions = getInstallInstructions(browserType, language);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [showChangelog, setShowChangelog] = useState(false);
@@ -106,8 +109,53 @@ export default function SettingsPage() {
   const [adhanPreviewLoading, setAdhanPreviewLoading] = useState<string | null>(null);
   const adhanPreviewRef = useRef<HTMLAudioElement | null>(null);
   const adhanPreviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const azanFallbackRef = useRef<HTMLAudioElement | null>(null);
+  const lastAzanTouchRef = useRef(0);
   const [previewingReminder, setPreviewingReminder] = useState<string | null>(null);
   const reminderPreviewRef = useRef<HTMLAudioElement | null>(null);
+
+  const playAzanImmediately = useCallback((sources: string[], volumePercent: number, onSuccess?: () => void, onError?: () => void, onEnd?: () => void) => {
+    const candidates = buildAzanSourceList(sources, isIOS);
+    const fallbackAudio = azanFallbackRef.current;
+
+    if (!fallbackAudio) {
+      mobileAudioManager.playWithFallback("alarm", candidates, {
+        volume: Math.max(0, Math.min(1, volumePercent / 100)),
+        resetTime: true,
+      }).then(() => onSuccess?.()).catch(() => onError?.());
+      return;
+    }
+
+    let index = 0;
+    const trySource = () => {
+      const nextSource = candidates[index];
+      if (!nextSource) {
+        onError?.();
+        return;
+      }
+
+      fallbackAudio.pause();
+      fallbackAudio.src = nextSource;
+      fallbackAudio.preload = "auto";
+      fallbackAudio.volume = Math.max(0, Math.min(1, volumePercent / 100));
+      fallbackAudio.onended = () => onEnd?.();
+      fallbackAudio.onerror = () => {
+        index += 1;
+        trySource();
+      };
+      fallbackAudio.load();
+
+      const playAttempt = fallbackAudio.play();
+      playAttempt.then(() => {
+        onSuccess?.();
+      }).catch(() => {
+        index += 1;
+        trySource();
+      });
+    };
+
+    trySource();
+  }, [isIOS]);
 
   const stopAdhanPreview = useCallback(() => {
     if (adhanPreviewTimeoutRef.current) {
@@ -115,7 +163,9 @@ export default function SettingsPage() {
       adhanPreviewTimeoutRef.current = null;
     }
     if (adhanPreviewRef.current) {
-      mobileAudioManager.stop("preview", true);
+      adhanPreviewRef.current.pause();
+      adhanPreviewRef.current.removeAttribute("src");
+      adhanPreviewRef.current.load();
       adhanPreviewRef.current = null;
     }
     setPreviewingAdhan(null);
@@ -129,15 +179,13 @@ export default function SettingsPage() {
     }
     stopAdhanPreview();
     setAdhanPreviewLoading(voiceId);
-
-    const audio = mobileAudioManager.getAudio("preview");
-    audio.volume = Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100));
-    adhanPreviewRef.current = audio;
-    mobileAudioManager.prime("preview").catch(() => {});
+    adhanPreviewRef.current = azanFallbackRef.current;
 
     adhanPreviewTimeoutRef.current = setTimeout(() => {
-      if (adhanPreviewRef.current === audio) {
-        mobileAudioManager.stop("preview", true);
+      if (adhanPreviewRef.current) {
+        azanFallbackRef.current?.pause();
+        azanFallbackRef.current?.removeAttribute("src");
+        azanFallbackRef.current?.load();
         adhanPreviewRef.current = null;
         setAdhanPreviewLoading(null);
         setPreviewingAdhan(null);
@@ -145,32 +193,20 @@ export default function SettingsPage() {
       }
     }, 12000);
 
-    audio.oncanplay = () => {
+    playAzanImmediately([src], adhanSettings.adhanVolume, () => {
       if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
       setAdhanPreviewLoading(null);
       setPreviewingAdhan(voiceId);
-      mobileAudioManager.play("preview").catch(() => {
-        setPreviewingAdhan(null);
-      });
-    };
-
-    audio.onended = () => {
-      adhanPreviewRef.current = null;
-      setPreviewingAdhan(null);
-    };
-
-    audio.onerror = () => {
+    }, () => {
       if (adhanPreviewTimeoutRef.current) clearTimeout(adhanPreviewTimeoutRef.current);
-      adhanPreviewRef.current = null;
       setAdhanPreviewLoading(null);
       setPreviewingAdhan(null);
       toast.error(language === "ar" ? "تعذّر تحميل الأذان. قد يكون الخادم غير متاح مؤقتاً." : "Could not load adhan. The server may be temporarily unavailable.");
-    };
-
-    audio.src = src;
-    audio.preload = "auto";
-    audio.load();
-  }, [previewingAdhan, adhanPreviewLoading, stopAdhanPreview, adhanSettings.adhanVolume, language]);
+    }, () => {
+      adhanPreviewRef.current = null;
+      setPreviewingAdhan(null);
+    });
+  }, [previewingAdhan, adhanPreviewLoading, stopAdhanPreview, adhanSettings.adhanVolume, language, playAzanImmediately]);
 
   // Preview reciter audio
   const [previewingReciter, setPreviewingReciter] = useState<string | null>(null);
@@ -246,6 +282,11 @@ export default function SettingsPage() {
 
   // Cleanup on unmount
   useEffect(() => {
+    if (azanFallbackRef.current) {
+      azanFallbackRef.current.setAttribute("playsinline", "");
+      azanFallbackRef.current.setAttribute("webkit-playsinline", "");
+    }
+
     return () => {
       if (previewAudioRef.current) {
         previewAudioRef.current.pause();
@@ -263,15 +304,16 @@ export default function SettingsPage() {
         reminderPreviewRef.current.pause();
         reminderPreviewRef.current = null;
       }
+      if (azanFallbackRef.current) {
+        azanFallbackRef.current.pause();
+        azanFallbackRef.current = null;
+      }
     };
   }, []);
 
   // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstalled, setIsInstalled] = useState(false);
-  const browserType = detectBrowser();
-  const installInstructions = getInstallInstructions(browserType, language);
-  const isIOS = browserType === "ios-safari";
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 
   useEffect(() => {
@@ -1092,7 +1134,15 @@ export default function SettingsPage() {
                           </span>
                         </button>
                         <button
-                          onClick={() => toggleAdhanPreview(voice.id, voice.file)}
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            lastAzanTouchRef.current = Date.now();
+                            toggleAdhanPreview(voice.id, voice.file);
+                          }}
+                          onClick={() => {
+                            if (Date.now() - lastAzanTouchRef.current < 700) return;
+                            toggleAdhanPreview(voice.id, voice.file);
+                          }}
                           className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-all shrink-0 ${
                             previewingAdhan === voice.id
                               ? "bg-destructive/15 text-destructive border border-destructive/20"
@@ -1366,17 +1416,21 @@ export default function SettingsPage() {
             <div className="flex gap-2 flex-wrap">
               <button
                 data-testid="settings-test-adhan-button"
-                onClick={() => {
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  lastAzanTouchRef.current = Date.now();
                   const voice = ADHAN_VOICES.find((v) => v.id === adhanSettings.voiceId) ?? ADHAN_VOICES[0];
-                  const src = adhanSettings.takbirOnlyMode
-                    ? TAKBIR_URL
-                    : voice.file;
-                  mobileAudioManager.prime("alarm").catch(() => {});
-                  mobileAudioManager.play("alarm", src, {
-                    volume: Math.max(0, Math.min(1, adhanSettings.adhanVolume / 100)),
-                    resetTime: true,
-                  }).catch(() => {
-                    toast.error(language === "ar" ? "تعذّر تشغيل الأذان. تحقق من اتصالك بالإنترنت." : "Could not play adhan. Check your internet connection.");
+                  const src = adhanSettings.takbirOnlyMode ? TAKBIR_URL : voice.file;
+                  playAzanImmediately([src], adhanSettings.adhanVolume, undefined, () => {
+                    toast.error(language === "ar" ? "تعذر تشغيل الأذان، تحقق من الاتصال بالإنترنت" : "Could not play Azan. Check your internet connection.");
+                  });
+                }}
+                onClick={() => {
+                  if (Date.now() - lastAzanTouchRef.current < 700) return;
+                  const voice = ADHAN_VOICES.find((v) => v.id === adhanSettings.voiceId) ?? ADHAN_VOICES[0];
+                  const src = adhanSettings.takbirOnlyMode ? TAKBIR_URL : voice.file;
+                  playAzanImmediately([src], adhanSettings.adhanVolume, undefined, () => {
+                    toast.error(language === "ar" ? "تعذر تشغيل الأذان، تحقق من الاتصال بالإنترنت" : "Could not play Azan. Check your internet connection.");
                   });
                 }}
                 className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
@@ -1402,6 +1456,10 @@ export default function SettingsPage() {
                 {language === "ar" ? "اختبر الإشعار" : "Test Notification"}
               </button>
             </div>
+
+            <audio ref={azanFallbackRef} preload="auto" playsInline className="hidden" data-testid="settings-azan-fallback-audio">
+              <source src={IOS_SAFE_AZAN_URLS[0]} type="audio/mpeg" />
+            </audio>
           </motion.div>
         </section>
 

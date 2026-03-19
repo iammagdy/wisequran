@@ -4,11 +4,13 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useLocation } from "@/hooks/useLocation";
 import {
   ADHAN_STORAGE_KEY,
+  buildAzanSourceList,
   DEFAULT_ADHAN_SETTINGS,
   ADHAN_VOICES,
   TAKBIR_URL,
   type AdhanSettings,
 } from "@/lib/adhan-settings";
+import { detectBrowser } from "@/lib/browser-detect";
 import { mobileAudioManager } from "@/lib/mobile-audio";
 import { showAppNotification } from "@/lib/notifications";
 
@@ -51,6 +53,7 @@ export function useAdhan() {
   const { location } = useLocation();
   const playedRef = useRef<Set<string>>(loadPlayedEvents(todayKey()));
   const lastDayRef = useRef(todayKey());
+  const isIOSSafari = detectBrowser() === "ios-safari";
 
   const playAdhan = useCallback(async (prayerId: string, vol: number, isCatchUp = false) => {
     stopAdhan();
@@ -64,8 +67,10 @@ export function useAdhan() {
       src = voice.file;
     }
 
+    const sources = buildAzanSourceList([src], isIOSSafari);
+
     try {
-      const audio = await mobileAudioManager.play("alarm", src, {
+      const audio = await mobileAudioManager.playWithFallback("alarm", sources, {
         volume: Math.max(0, Math.min(1, vol / 100)),
         resetTime: true,
       });
@@ -84,7 +89,7 @@ export function useAdhan() {
         tag: `wise-adhan-${todayKey()}-${prayerId}`,
       });
     }
-  }, [settings.voiceId, settings.takbirOnlyMode, settings.fajrSpecialAdhan]);
+  }, [isIOSSafari, settings.voiceId, settings.takbirOnlyMode, settings.fajrSpecialAdhan]);
 
   useEffect(() => {
     if (!settings.adhanEnabled) return;

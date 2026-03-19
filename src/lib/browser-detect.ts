@@ -1,5 +1,10 @@
 export type BrowserType = "ios-safari" | "chromium" | "firefox" | "generic";
 
+export interface IOSVersionParts {
+  major: number;
+  minor: number;
+}
+
 export function detectBrowser(): BrowserType {
   const ua = navigator.userAgent;
 
@@ -18,6 +23,28 @@ export function detectBrowser(): BrowserType {
   }
 
   return "generic";
+}
+
+export function getIOSVersion(): IOSVersionParts | null {
+  const ua = navigator.userAgent;
+  if (!/iPad|iPhone|iPod/i.test(ua)) return null;
+
+  const match = ua.match(/OS (\d+)(?:_(\d+))?/i);
+  if (!match) return null;
+
+  return {
+    major: Number(match[1] ?? 0),
+    minor: Number(match[2] ?? 0),
+  };
+}
+
+export function isIOSVersionAtLeast(targetMajor: number, targetMinor = 0): boolean | null {
+  const version = getIOSVersion();
+  if (!version) return null;
+
+  if (version.major > targetMajor) return true;
+  if (version.major < targetMajor) return false;
+  return version.minor >= targetMinor;
 }
 
 export function getInstallInstructions(

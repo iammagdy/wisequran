@@ -2,6 +2,22 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.2.1] - 2026-03-18
+
+### 🍎 iPhone Safari Fix Release
+
+### 🐛 Bug Fixes
+
+- Fixed Azan playback on iOS Safari when triggered from a direct user tap
+- Fixed Recitation support detection on iPhone Safari by properly checking `webkitSpeechRecognition`
+- Improved iPhone microphone flow so recitation starts from a direct tap instead of an automatic delayed start
+
+### 📝 Changelog Popup
+
+- 🔧 إصلاح دعم متصفح Safari على iPhone
+- 🎙️ ميزة التسميع تعمل الآن على iPhone
+- 🔊 إصلاح تشغيل الأذان على iOS Safari
+
 ## [3.2.0] - 2026-03-18
 
 ### 🔊 Mobile Audio Reliability Release

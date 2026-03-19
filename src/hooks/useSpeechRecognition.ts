@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { detectBrowser } from "@/lib/browser-detect";
+import { detectBrowser, isIOSVersionAtLeast } from "@/lib/browser-detect";
 
 export type SpeechRecognitionStatus = "idle" | "listening" | "processing" | "done" | "error";
 
 export interface UseSpeechRecognitionResult {
   isSupported: boolean;
   isIOSMode: boolean;
+  iosVersionTooOld: boolean;
   status: SpeechRecognitionStatus;
   transcript: string;
   interimTranscript: string;
@@ -68,6 +69,8 @@ const ERROR_MAP: Record<string, string> = {
 
 const MAX_RESTARTS = 12;
 const RESTART_DELAY_MS = 250;
+const MIN_IOS_SPEECH_MAJOR = 14;
+const MIN_IOS_SPEECH_MINOR = 5;
 
 export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [status, setStatus] = useState<SpeechRecognitionStatus>("idle");
@@ -83,7 +86,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = useRef(false);
 
-  const isSupported = hasWebSpeechAPI();
+  const iosVersionSupported = isIOS ? isIOSVersionAtLeast(MIN_IOS_SPEECH_MAJOR, MIN_IOS_SPEECH_MINOR) : null;
+  const iosVersionTooOld = isIOS && iosVersionSupported === false;
+  const isSupported = hasWebSpeechAPI() && !iosVersionTooOld;
 
   const clearRestartTimer = () => {
     if (restartTimerRef.current) {
@@ -122,7 +127,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     const recognition = new SpeechRecognitionAPI();
 
     recognition.lang = "ar-SA";
-    recognition.continuous = true;
+    recognition.continuous = !isIOS;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
@@ -153,6 +158,8 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       if (event.error === "aborted") return;
 
       if (event.error === "no-speech") {
+        if (isIOS) return;
+
         if (!isManualStopRef.current && isActiveRef.current && restartCountRef.current < MAX_RESTARTS) {
           restartCountRef.current++;
           clearRestartTimer();
@@ -165,7 +172,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         return;
       }
 
-      const mapped = ERROR_MAP[event.error] ?? event.error;
+      const mapped = event.error === "not-allowed" && isIOS
+        ? "ios_safari_mic_permission"
+        : ERROR_MAP[event.error] ?? event.error;
       setError(mapped);
 
       const isTransient = event.error === "network";
@@ -208,6 +217,16 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         return;
       }
 
+      if (isIOS) {
+        try {
+          setStatus("listening");
+          recognition.start();
+          return;
+        } catch {
+          // Fall through to fresh restart below.
+        }
+      }
+
       restartCountRef.current++;
       clearRestartTimer();
       restartTimerRef.current = setTimeout(() => {
@@ -220,8 +239,15 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     };
 
     recognitionRef.current = recognition;
-    recognition.start();
-  }, [isSupported]);
+    try {
+      recognition.start();
+    } catch (error) {
+      const isMicDenied = error instanceof DOMException && error.name === "NotAllowedError";
+      setError(isMicDenied && isIOS ? "ios_safari_mic_permission" : "speech_error_generic");
+      setStatus("error");
+      isActiveRef.current = false;
+    }
+  }, [destroyRecognition, isSupported]);
 
   const start = useCallback(() => {
     if (!isSupported) return;
@@ -274,6 +300,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   return {
     isSupported,
     isIOSMode: isIOS,
+    iosVersionTooOld,
     status,
     transcript,
     interimTranscript,
