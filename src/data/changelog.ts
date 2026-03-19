@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.2.0";
+export const APP_VERSION = "3.2.1";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,24 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.2.1",
+    date: "2026-03-18",
+    ar: {
+      fixes: [
+        "🔧 إصلاح دعم متصفح Safari على iPhone",
+        "🎙️ ميزة التسميع تعمل الآن على iPhone",
+        "🔊 إصلاح تشغيل الأذان على iOS Safari",
+      ],
+    },
+    en: {
+      fixes: [
+        "🔧 Fixed Safari support on iPhone",
+        "🎙️ Recitation now works on iPhone",
+        "🔊 Fixed Azan playback on iOS Safari",
+      ],
+    },
+  },
   {
     version: "3.2.0",
     date: "2026-03-18",

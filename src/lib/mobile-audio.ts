@@ -34,6 +34,7 @@ class MobileAudioManager {
     const audio = new Audio();
     audio.preload = "auto";
     audio.crossOrigin = "anonymous";
+    audio.playsInline = true;
     audio.setAttribute("playsinline", "");
     audio.setAttribute("webkit-playsinline", "");
     this.channels.set(channel, audio);
@@ -128,6 +129,21 @@ class MobileAudioManager {
       }
       throw error;
     }
+  }
+
+  async playWithFallback(channel: ManagedAudioChannel, sources: string[], options: PlayOptions = {}) {
+    const uniqueSources = Array.from(new Set(sources.filter(Boolean)));
+    let lastError: unknown = null;
+
+    for (const source of uniqueSources) {
+      try {
+        return await this.play(channel, source, options);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError ?? new Error("No playable audio source available.");
   }
 
   stop(channel: ManagedAudioChannel, resetSource = false) {

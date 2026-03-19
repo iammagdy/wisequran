@@ -142,3 +142,18 @@ export const TAKBIR_URL = "/audio/adhan/makkah.mp3";
 export const CHIME_URL = "/audio/adhan/makkah.mp3";
 
 export const ADHAN_STORAGE_KEY = "wise-adhan-settings";
+
+export const IOS_SAFE_AZAN_URLS = [
+  "https://www.islamcan.com/audio/adhan/azan1.mp3",
+  "https://archive.org/download/AzanMp3/Azan-makkah.mp3",
+  "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
+];
+
+export function buildAzanSourceList(localSources: string[], preferHttpsOnIOS: boolean) {
+  const cleanedLocalSources = localSources.filter(Boolean);
+  const ordered = preferHttpsOnIOS
+    ? [...IOS_SAFE_AZAN_URLS, ...cleanedLocalSources]
+    : [...cleanedLocalSources, ...IOS_SAFE_AZAN_URLS];
+
+  return Array.from(new Set(ordered));
+}

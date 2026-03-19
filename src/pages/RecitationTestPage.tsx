@@ -47,7 +47,27 @@ const MIN_WORD_COVERAGE = 0.72;
 // silence after which we force evaluation even if score is low
 const SILENCE_TIMEOUT_MS = 3200;
 
-function IOSBanner({ language, supported }: { language: string; supported: boolean }) {
+function IOSBanner({
+  language,
+  supported,
+  versionTooOld,
+}: {
+  language: string;
+  supported: boolean;
+  versionTooOld: boolean;
+}) {
+  const message = versionTooOld
+    ? language === "ar"
+      ? "يرجى تحديث iOS إلى الإصدار 14.5 أو أحدث لاستخدام ميزة التسميع"
+      : "Please update iOS to version 14.5 or later to use recitation."
+    : supported
+      ? language === "ar"
+        ? "التسميع مدعوم على iPhone Safari. ابدأ بالضغط على زر الميكروفون، وإذا سبق رفض الإذن فاسمح به من Settings > Safari > Microphone."
+        : "Recitation is supported on iPhone Safari. Start with the mic button, and if permission was denied before, allow it from Settings > Safari > Microphone."
+      : language === "ar"
+        ? "التعرف على الصوت غير مدعوم في هذا المتصفح على iPhone/iPad."
+        : "Speech recognition is not supported in this browser on iPhone/iPad.";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
@@ -60,15 +80,7 @@ function IOSBanner({ language, supported }: { language: string; supported: boole
       )}
     >
       <AlertTriangle className={cn("h-5 w-5 flex-shrink-0 mt-0.5", supported ? "text-amber-500" : "text-destructive")} />
-      <p className={cn("text-sm", supported ? "text-amber-700 dark:text-amber-400" : "text-destructive")}>
-        {supported
-          ? language === "ar"
-            ? "التعرف على الصوت في iPhone/iPad مدعوم الآن، لكنه قد يحتاج إعادة تشغيل الميكروفون إذا انقطع الالتقاط."
-            : "Speech recognition on iPhone/iPad is enabled now, but you may need to restart the mic if capture pauses."
-          : language === "ar"
-            ? "التعرف على الصوت غير مدعوم في هذا المتصفح على iPhone/iPad."
-            : "Speech recognition is not supported in this browser on iPhone/iPad."}
-      </p>
+      <p className={cn("text-sm", supported && !versionTooOld ? "text-amber-700 dark:text-amber-400" : "text-destructive")}>{message}</p>
     </motion.div>
   );
 }
@@ -141,6 +153,7 @@ export default function RecitationTestPage() {
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentAyahRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const verseListRef = useRef<HTMLDivElement | null>(null);
+  const lastMicTouchRef = useRef(0);
 
   // Stable refs to avoid stale closures in effects
   const ayahsDataRef = useRef<Ayah[]>([]);
@@ -156,6 +169,7 @@ export default function RecitationTestPage() {
   const speech = useSpeechRecognition();
   const recitationHistory = useRecitationHistory();
   const meta = SURAH_META[surahNumber - 1];
+  const isListening = speech.status === "listening";
 
   useEffect(() => {
     setAyahFrom(1);
@@ -350,15 +364,34 @@ export default function RecitationTestPage() {
     speech.stop();
   }, [speech]);
 
+  const triggerMicAction = useCallback(() => {
+    if (isListening) {
+      handleMicStop();
+    } else {
+      handleMicStart();
+    }
+  }, [handleMicStart, handleMicStop, isListening]);
+
+  const handleMicTouchEnd = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    lastMicTouchRef.current = Date.now();
+    triggerMicAction();
+  }, [triggerMicAction]);
+
+  const handleMicClick = useCallback(() => {
+    if (Date.now() - lastMicTouchRef.current < 700) return;
+    triggerMicAction();
+  }, [triggerMicAction]);
+
   // ── Auto-start mic when phase transitions to recording ────────────
   useEffect(() => {
-    if (phase === "recording" && !isEvaluating) {
+    if (phase === "recording" && !isEvaluating && !speech.isIOSMode) {
       // Small delay so the UI renders first
       const t = setTimeout(handleMicStart, 500);
       return () => clearTimeout(t);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [phase, speech.isIOSMode]);
 
   // ── Skip ───────────────────────────────────────────────────────────
   const handleSkipAyah = useCallback(() => {
@@ -412,7 +445,6 @@ export default function RecitationTestPage() {
 
   const doneCount = ayahStates.filter(s => s.status !== "pending").length;
   const totalCount = ayahStates.length;
-  const isListening = speech.status === "listening";
 
   // ── Scroll current ayah into view on index change ─────────────────
   useEffect(() => {
@@ -452,7 +484,13 @@ export default function RecitationTestPage() {
       {/* Bottom padding = mic bar (~5rem) + nav bar (--nav-height via pb-nav) */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-4">
 
-        {speech.isIOSMode && <IOSBanner language={language} supported={speech.isSupported} />}
+        {speech.isIOSMode && (
+          <IOSBanner
+            language={language}
+            supported={speech.isSupported}
+            versionTooOld={speech.iosVersionTooOld}
+          />
+        )}
         {!speech.isSupported && !speech.isIOSMode && (
           <UnsupportedBanner message={t("speech_not_supported")} desc={t("speech_not_supported_desc")} />
         )}
@@ -819,6 +857,8 @@ export default function RecitationTestPage() {
                   <p className="text-xs text-destructive font-semibold">
                     {speech.error === "mic_permission_denied"
                       ? (language === "ar" ? "لم يتم منح إذن الميكروفون." : "Microphone permission denied.")
+                      : speech.error === "ios_safari_mic_permission"
+                        ? (language === "ar" ? "يرجى السماح بالوصول إلى الميكروفون من إعدادات Safari" : "Please allow microphone access from Safari Settings.")
                       : (language === "ar" ? "حدث خطأ. حاول مرة أخرى." : "An error occurred. Try again.")}
                   </p>
                 </div>
@@ -877,7 +917,8 @@ export default function RecitationTestPage() {
 
               <motion.button
                 whileTap={{ scale: 0.88 }}
-                onClick={isListening ? handleMicStop : handleMicStart}
+                onTouchEnd={handleMicTouchEnd}
+                onClick={handleMicClick}
                 data-testid="recitation-mic-toggle-button"
                 disabled={isEvaluating}
                 className={cn(
