@@ -129,6 +129,7 @@ export default function PrayerHistorySheet({ open, onClose }: PrayerHistorySheet
                 <button
                   onClick={onClose}
                   className="rounded-full p-2 bg-muted hover:bg-muted/80 transition-colors"
+                  aria-label={isRTL ? "إغلاق" : "Close"}
                 >
                   <X className="h-4 w-4" />
                 </button>

@@ -102,6 +102,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
                 <button
                   onClick={handleClose}
                   className="rounded-full p-2 bg-muted hover:bg-muted/80 transition-colors"
+                  aria-label={isRTL ? "إغلاق" : "Close"}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -181,6 +182,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
                         type="button"
                         onClick={() => setShowPass(!showPass)}
                         className={`absolute top-3.5 ${isRTL ? "left-3.5" : "right-3.5"} text-muted-foreground hover:text-foreground transition-colors`}
+                        aria-label={showPass ? (isRTL ? "إخفاء كلمة المرور" : "Hide password") : (isRTL ? "إظهار كلمة المرور" : "Show password")}
                       >
                         {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
