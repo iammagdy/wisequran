@@ -1,44 +1,59 @@
 # PRD
 
 ## Original Problem Statement
-المستخدم لديه تطبيق قرآن كريم PWA وكان يريد إصلاح مشاكل الصوت والتشغيل على الموبايل:
-1) استماع القرآن لم يعد يعمل على Android وiPhone.
-2) الأذان/التذكيرات الصوتية لم تعد تعمل بشكل موثوق.
-3) مطلوب تنفيذ خطة إصلاح شاملة ثم تحديث التطبيق إلى الإصدار 3.2.0 مع تحديث سجل التغييرات.
+The user requested two critical iPhone Safari fixes and a version update:
+1) Azan audio was completely silent on iPhone Safari.
+2) Recitation (tasmee3) incorrectly showed as unsupported on iPhone.
+3) After both fixes, the app version had to be updated to 3.2.1 and the changelog popup + markdown changelog had to reflect the release.
 
 ## Architecture Decisions
-- بناء طبقة صوت موحدة `mobileAudioManager` بدل تعدد مسارات `new Audio()` المبعثرة عبر المشروع.
-- إضافة bootstrap عام للصوت من أول تفاعل داخل التطبيق لرفع جاهزية التشغيل على Android/iPhone.
-- توصيل استماع القرآن، الأذان، التذكيرات، بعض معاينات الإعدادات، وآية اليوم بطبقة الصوت الموحدة.
-- تفضيل `serviceWorker.showNotification()` عند توفره عبر helper موحد للتنبيهات مع fallback داخل الصفحة.
-- تحسين PWA caching لملفات `/audio/adhan/*.mp3` عبر VitePWA/Workbox.
-- تطبيق catch-up logic عند عودة التطبيق للواجهة لتقليل ضياع أحداث الصلاة/التذكير بعد الخلفية.
+- Keep the unified mobile audio layer, but add iPhone Safari-specific direct-tap Azan playback handling in the Settings UI.
+- Prefer HTTPS Azan URLs first on iPhone Safari, with current local sources as fallback, per user choice.
+- Keep SpeechRecognition support dynamic, but make iOS detection explicit via `window.SpeechRecognition || window.webkitSpeechRecognition` and iOS version parsing.
+- Disable auto mic start on iPhone Safari so `recognition.start()` is only triggered by a direct tap on the mic button.
+- Add iOS-specific UX copy for unsupported old iOS versions and Safari microphone permission recovery.
 
 ## What Has Been Implemented
-- إنشاء `/app/src/lib/mobile-audio.ts` كمشغل صوت مركزي للقنوات: quran / alarm / preview / ambient.
-- إنشاء `/app/src/hooks/useGlobalAudioBootstrap.ts` وربطه في `App.tsx` لتهيئة الصوت بعد أول تفاعل.
-- ربط `AudioPlayerContext.tsx` بالمشغل المركزي بدل تهيئة صوت منفصلة لكل تشغيل.
-- تحديث `useAdhan.ts` و`usePrayerReminders.ts` لاستخدام المشغل المركزي + تخزين أحداث اليوم + catch-up عند الرجوع من الخلفية.
-- تحديث `usePrayerNotifications.ts`, `useAzkarNotifications.ts`, `useReadingReminder.ts`, `IftarCountdown.tsx` لاستخدام helper التنبيهات الموحد.
-- تحديث `SettingsPage.tsx` لمعاينات الأذان/التذكير وزر اختبار الأذان/الإشعار، مع إضافة data-testid للأزرار الحرجة.
-- تحديث `DailyAyah.tsx` لاستخدام مسار الصوت الموحد.
-- تحديث `vite.config.ts` لإدخال mp3 المحلية في precache/runtime cache.
-- تحديث النسخة إلى `3.2.0` في `package.json` و`src/data/changelog.ts` و`CHANGELOG.md`.
-- البناء النهائي ناجح عبر `yarn build`، مع نجاح فحص واجهات الاستماع والإعدادات في اختبارات الواجهة.
+- Added iOS version parsing utilities in `src/lib/browser-detect.ts`.
+- Updated `useSpeechRecognition.ts` to:
+  - detect `window.SpeechRecognition || window.webkitSpeechRecognition`
+  - mark iOS < 14.5 as unsupported
+  - use `continuous = false` on iPhone Safari
+  - restart recognition from `onend` while active on iOS
+  - return iOS-specific permission/compatibility state
+- Updated `RecitationTestPage.tsx` to:
+  - stop hard-blocking iPhone Safari as unsupported
+  - show the iOS 14.5+ update message only for confidently older iOS
+  - show Safari microphone settings guidance on `not-allowed`
+  - use direct `onTouchEnd` + click fallback on the mic button
+  - avoid auto-starting the mic on iOS outside a direct gesture
+- Added AudioContext warm-up in `useGlobalAudioBootstrap.ts` for first-touch iPhone Safari readiness.
+- Added HTTPS-first Azan source ordering in `src/lib/adhan-settings.ts` via `buildAzanSourceList()`.
+- Updated `useAdhan.ts` to prefer HTTPS-first Azan URLs on iPhone Safari with local fallback.
+- Updated `SettingsPage.tsx` to:
+  - add a hidden inline `<audio>` fallback element for Azan playback
+  - use direct `onTouchEnd` + click fallback on Azan preview/test buttons
+  - trigger Azan playback synchronously from the gesture path with inline playback attributes for iOS
+- Updated versioning to `3.2.1` in `package.json`, `src/data/changelog.ts`, and `CHANGELOG.md`.
+- Added the required 3.2.1 changelog popup content so users with older localStorage versions receive the update popup automatically.
+- Final build passes successfully with `yarn build`.
 
 ## Prioritized Backlog
 ### P0
-- اختبار فعلي على أجهزة Android Chrome / Samsung Internet / iPhone Safari / iPhone PWA المثبتة للتأكد من السلوك الحقيقي للصوت في foreground والخلفية.
-- إضافة شاشة تشخيص صوت داخل الإعدادات تعرض آخر سبب فشل `play()` وحالة audio unlock.
+- Run physical-device validation on real iPhone Safari for:
+  - direct-tap Azan playback
+  - microphone permission prompt behavior
+  - recitation restart-after-silence behavior
+- Add a dedicated `data-testid` for the iPhone support/help banner if deeper UI automation is needed.
 
 ### P1
-- فصل `SettingsPage.tsx` إلى أقسام/مكونات أصغر لتقليل مخاطر الارتداد في ميزات الصوت والإشعارات.
-- نقل Sleep Mode لاحقًا إلى نفس طبقة الصوت الموحدة لزيادة الاتساق.
+- Extract the iOS Azan playback logic from `SettingsPage.tsx` into a dedicated hook or component.
+- Reduce `SettingsPage.tsx` size to lower future regression risk.
 
 ### P2
-- تحسين code splitting للحزم الكبيرة وتقليل تحذيرات حجم الـ chunks.
-- توسيع اختبارات الواجهة الآلية للصوت والإشعارات.
+- Add device telemetry/debug UI for audio-play rejection reasons and mic permission state.
+- Expand automated browser checks around changelog popup and iOS-specific recitation copy.
 
 ## Next Tasks
-- تنفيذ QA فعلي على أجهزة حقيقية.
-- إذا ظهر اختلاف على جهاز معين، ربط telemetry خفيف في واجهة الإعدادات لتجميع readyState / visibilityState / NotAllowedError بشكل واضح.
+- Validate on physical iPhone Safari versions 14.5, 15, 16, 17, and 18.
+- If any iPhone-specific edge case remains, isolate it behind a dedicated Safari diagnostics panel in Settings.
