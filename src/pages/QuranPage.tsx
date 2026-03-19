@@ -65,7 +65,8 @@ export default function QuranPage() {
       const [h, m] = times[p as keyof typeof times].split(":").map(Number);
       const pMinutes = h * 60 + m;
       if (pMinutes > nowMinutes) {
-        next = { name: t(p as any), time: times[p as keyof typeof times] };
+        // Use type assertion carefully to avoid the 'any' ESLint error
+        next = { name: t(p as Parameters<typeof t>[0]), time: times[p as keyof typeof times] };
         break;
       }
     }
@@ -92,7 +93,7 @@ export default function QuranPage() {
     type === "Meccan" ? t("revelation_meccan") : t("revelation_medinan");
 
   const getSurahName = (num: number) => {
-    const s = surahs.find((s) => s.number === num);
+    const s = surahs[num - 1]; // O(1) direct index mapping instead of Array.find()
     if (!s) return String(num);
     return language === "ar" ? s.name : s.englishName;
   };
