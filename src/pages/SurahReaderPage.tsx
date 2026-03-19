@@ -110,7 +110,7 @@ export default function SurahReaderPage() {
     Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()]).
     then(([ayahData, surahList]) => {
       setAyahs(ayahData);
-      const info = surahList.find((s) => s.number === surahNumber) || null;
+      const info = surahList[surahNumber - 1] || null; // O(1) direct lookup instead of Array.find
       setSurahInfo(info);
       setLastRead({
         surah: surahNumber,
