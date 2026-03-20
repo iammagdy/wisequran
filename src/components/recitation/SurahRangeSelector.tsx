@@ -119,6 +119,7 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
                   onClick={() => handleFrom(ayahFrom - 1)}
                   disabled={ayahFrom <= 1}
                   className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-muted/70 transition-colors"
+                  aria-label={language === "ar" ? "تقليل آية البداية" : "Decrease start verse"}
                 >−</button>
                 <span className="flex-1 text-center font-bold text-lg tabular-nums">
                   {language === "ar" ? toArabicNumerals(ayahFrom) : ayahFrom}
@@ -127,6 +128,7 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
                   onClick={() => handleFrom(ayahFrom + 1)}
                   disabled={ayahFrom >= ayahTo}
                   className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-muted/70 transition-colors"
+                  aria-label={language === "ar" ? "زيادة آية البداية" : "Increase start verse"}
                 >+</button>
               </div>
             </div>
@@ -140,6 +142,7 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
                   onClick={() => handleTo(ayahTo - 1)}
                   disabled={ayahTo <= ayahFrom}
                   className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-muted/70 transition-colors"
+                  aria-label={language === "ar" ? "تقليل آية النهاية" : "Decrease end verse"}
                 >−</button>
                 <span className="flex-1 text-center font-bold text-lg tabular-nums">
                   {language === "ar" ? toArabicNumerals(ayahTo) : ayahTo}
@@ -148,6 +151,7 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
                   onClick={() => handleTo(ayahTo + 1)}
                   disabled={ayahTo >= totalAyahs}
                   className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:bg-muted/70 transition-colors"
+                  aria-label={language === "ar" ? "زيادة آية النهاية" : "Increase end verse"}
                 >+</button>
               </div>
             </div>

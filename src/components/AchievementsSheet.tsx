@@ -193,6 +193,7 @@ export function AchievementUnlockNotification() {
             <button
               onClick={dismissNewUnlock}
               className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted transition-colors"
+              aria-label={t("close")}
             >
               <X className="h-4 w-4 text-muted-foreground" />
             </button>

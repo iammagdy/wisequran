@@ -159,6 +159,8 @@ function AyahBreakdownRow({
       <button
         onClick={() => setExpanded(p => !p)}
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        aria-expanded={expanded}
+        aria-label={expanded ? (language === "ar" ? "طي التفاصيل" : "Collapse details") : (language === "ar" ? "توسيع التفاصيل" : "Expand details")}
       >
         <span className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0", badgeClass)}>
           {language === "ar" ? toArabicNumerals(ayahResult.numberInSurah) : ayahResult.numberInSurah}
