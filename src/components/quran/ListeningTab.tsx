@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
@@ -52,12 +52,25 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   const loading = isThisSurah && player.loading;
 
   const currentAyahInSurah = isThisSurah ? player.currentAyahInSurah : null;
-  const currentAyah = ayahs.find((a) => a.numberInSurah === currentAyahInSurah);
+
+  // ⚡ Bolt: Optimize currentAyah lookup. Ayahs are typically sequential 1..N.
+  // Direct indexing O(1) is preferred, with a fallback to O(N) find() if missing/filtered.
+  let currentAyah = currentAyahInSurah ? ayahs[currentAyahInSurah - 1] : undefined;
+  if (currentAyah?.numberInSurah !== currentAyahInSurah) {
+    currentAyah = currentAyahInSurah ? ayahs.find((a) => a.numberInSurah === currentAyahInSurah) : undefined;
+  }
 
   // Keep currentAyahInSurah in ref for stale closure use in onAyahEnded
   currentAyahInSurahRef.current = currentAyahInSurah;
 
   const currentReciter = getReciterById(reciterId);
+
+  // ⚡ Bolt: Optimize translation lookups from O(N*M) to O(N) during render.
+  // Instead of calling translationAyahs.find() for every ayah in the list,
+  // build an O(1) lookup map once whenever translationAyahs changes.
+  const translationMap = useMemo(() => {
+    return new Map(translationAyahs.map((ta) => [ta.numberInSurah, ta]));
+  }, [translationAyahs]);
 
   const handlePlayPause = () => {
     if (isThisSurah) {
@@ -228,7 +241,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                   {stripBismillah(currentAyah.text, surahNumber, currentAyah.numberInSurah)}
                 </p>
                 {translationAyahs.length > 0 && (() => {
-                  const tAyah = translationAyahs.find((ta) => ta.numberInSurah === currentAyah.numberInSurah);
+                  const tAyah = translationMap.get(currentAyah.numberInSurah);
                   return tAyah ? (
                     <p className="text-sm text-muted-foreground mt-3 leading-relaxed mx-auto max-w-sm text-center" dir="ltr">
                       {tAyah.text}
@@ -560,7 +573,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
           <div className="max-h-72 overflow-y-auto divide-y divide-border/30">
             {ayahs.map((ayah) => {
               const isCurrent = currentAyah?.numberInSurah === ayah.numberInSurah;
-              const tAyah = translationAyahs.find((ta) => ta.numberInSurah === ayah.numberInSurah);
+              const tAyah = translationMap.get(ayah.numberInSurah);
               return (
                 <motion.button
                   key={ayah.numberInSurah}
