@@ -55,9 +55,9 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
 
   // ⚡ Bolt: Optimize currentAyah lookup. Ayahs are typically sequential 1..N.
   // Direct indexing O(1) is preferred, with a fallback to O(N) find() if missing/filtered.
-  let currentAyah = currentAyahInSurah ? ayahs[currentAyahInSurah - 1] : undefined;
-  if (currentAyah?.numberInSurah !== currentAyahInSurah) {
-    currentAyah = currentAyahInSurah ? ayahs.find((a) => a.numberInSurah === currentAyahInSurah) : undefined;
+  let currentAyah = currentAyahInSurah != null ? ayahs[currentAyahInSurah - 1] : undefined;
+  if (currentAyahInSurah != null && currentAyah?.numberInSurah !== currentAyahInSurah) {
+    currentAyah = ayahs.find((a) => a.numberInSurah === currentAyahInSurah);
   }
 
   // Keep currentAyahInSurah in ref for stale closure use in onAyahEnded
