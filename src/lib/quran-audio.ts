@@ -1,4 +1,4 @@
-import { saveAudio, getAudio, deleteAudio, checkStorageQuota } from "./db";
+import { saveAudio, getAudio, deleteAudio, checkStorageQuota, getAllAudioEntries } from "./db";
 import { getReciterAudioUrls, getReciterAudioUrl } from "./reciters";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
@@ -214,8 +214,7 @@ export async function verifyAndRepairDownloads(
   corrupted: number[];
   repaired: number[];
 }> {
-  const db = await (await import("./db")).getDB();
-  const allAudio = await db.getAll("audio");
+  const allAudio = await getAllAudioEntries();
   const reciterAudio = allAudio.filter((a) => a.reciterId === reciterId);
 
   const valid: number[] = [];

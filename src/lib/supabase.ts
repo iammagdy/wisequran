@@ -5,10 +5,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undef
 
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
 
-if (!isSupabaseConfigured) {
-  console.warn("Supabase env vars missing — database features will be unavailable.");
-}
-
 export const supabase = createClient(
   supabaseUrl ?? "https://placeholder.supabase.co",
   supabaseAnonKey ?? "placeholder-key",

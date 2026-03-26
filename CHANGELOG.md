@@ -2,6 +2,21 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.3.0] - 2026-03-19
+
+### ⚡ Performance & Seasonal Cleanup Release
+
+### 🔧 Improvements
+
+- Improved initial-load performance with smarter bundle splitting
+- Reduced Settings page overhead by deferring heavy storage/database helpers until needed
+
+### 🐛 Fixes
+
+- Removed the Ramadan tab from current navigation now that Ramadan is over
+- Kept the Ramadan page code in the project for future reactivation without exposing it in normal navigation
+- Updated navigation transition ordering to stay smooth and consistent after removing the Ramadan tab
+
 ## [3.2.1] - 2026-03-18
 
 ### 🍎 iPhone Safari Fix Release
