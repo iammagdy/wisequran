@@ -1,59 +1,42 @@
 # PRD
 
 ## Original Problem Statement
-The user requested two critical iPhone Safari fixes and a version update:
-1) Azan audio was completely silent on iPhone Safari.
-2) Recitation (tasmee3) incorrectly showed as unsupported on iPhone.
-3) After both fixes, the app version had to be updated to 3.2.1 and the changelog popup + markdown changelog had to reflect the release.
+The user asked to analyze app performance, fix any issues without breaking functionality, remove the Ramadan tab because Ramadan is over while keeping the page code for later reuse, and update the app changelog/version to 3.3.0.
 
 ## Architecture Decisions
-- Keep the unified mobile audio layer, but add iPhone Safari-specific direct-tap Azan playback handling in the Settings UI.
-- Prefer HTTPS Azan URLs first on iPhone Safari, with current local sources as fallback, per user choice.
-- Keep SpeechRecognition support dynamic, but make iOS detection explicit via `window.SpeechRecognition || window.webkitSpeechRecognition` and iOS version parsing.
-- Disable auto mic start on iPhone Safari so `recognition.start()` is only triggered by a direct tap on the mic button.
-- Add iOS-specific UX copy for unsupported old iOS versions and Safari microphone permission recovery.
+- Keep all product flows intact and focus on safe, low-risk performance improvements.
+- Improve frontend performance through Vite bundle splitting rather than rewriting feature logic.
+- Keep the Ramadan page route/code in the app, but remove current-season navigation exposure.
+- Reduce Settings page overhead by deferring heavy storage/database helpers until they are actually needed.
+- Clean up console/runtime warnings that affect maintainability and testing confidence.
 
 ## What Has Been Implemented
-- Added iOS version parsing utilities in `src/lib/browser-detect.ts`.
-- Updated `useSpeechRecognition.ts` to:
-  - detect `window.SpeechRecognition || window.webkitSpeechRecognition`
-  - mark iOS < 14.5 as unsupported
-  - use `continuous = false` on iPhone Safari
-  - restart recognition from `onend` while active on iOS
-  - return iOS-specific permission/compatibility state
-- Updated `RecitationTestPage.tsx` to:
-  - stop hard-blocking iPhone Safari as unsupported
-  - show the iOS 14.5+ update message only for confidently older iOS
-  - show Safari microphone settings guidance on `not-allowed`
-  - use direct `onTouchEnd` + click fallback on the mic button
-  - avoid auto-starting the mic on iOS outside a direct gesture
-- Added AudioContext warm-up in `useGlobalAudioBootstrap.ts` for first-touch iPhone Safari readiness.
-- Added HTTPS-first Azan source ordering in `src/lib/adhan-settings.ts` via `buildAzanSourceList()`.
-- Updated `useAdhan.ts` to prefer HTTPS-first Azan URLs on iPhone Safari with local fallback.
-- Updated `SettingsPage.tsx` to:
-  - add a hidden inline `<audio>` fallback element for Azan playback
-  - use direct `onTouchEnd` + click fallback on Azan preview/test buttons
-  - trigger Azan playback synchronously from the gesture path with inline playback attributes for iOS
-- Updated versioning to `3.2.1` in `package.json`, `src/data/changelog.ts`, and `CHANGELOG.md`.
-- Added the required 3.2.1 changelog popup content so users with older localStorage versions receive the update popup automatically.
-- Final build passes successfully with `yarn build`.
+- Added smarter Vite manual chunk splitting to break large vendor code into smaller bundles (`motion-vendor`, `ui-vendor`, `data-vendor`, `charts-vendor`, etc.).
+- Reduced the main app chunk from roughly ~824 KB before optimization to ~172 KB after splitting (pre-gzip build output comparison).
+- Moved Settings page IndexedDB/storage helpers behind a deferred import path via `src/lib/settings-storage.ts`, so the Settings route no longer pulls those helpers eagerly.
+- Removed the Ramadan tab from the bottom navigation and removed Ramadan visibility controls from Settings.
+- Kept the `/ramadan` route and Ramadan page code in the codebase for future seasonal reuse.
+- Updated page transition ordering after Ramadan nav removal.
+- Added stronger testability coverage with `data-testid` on bottom nav links and Settings changelog controls.
+- Fixed React Router future-flag warnings by opting into supported future flags on `BrowserRouter`.
+- Fixed dialog accessibility warning in `NowPlayingScreen` by adding hidden dialog title/description.
+- Removed the unnecessary Supabase missing-env console warning and prevented eager Azan fallback audio requests in Settings.
+- Updated app version to `3.3.0` in `package.json`, `src/data/changelog.ts`, and `CHANGELOG.md`.
+- Added 3.3.0 changelog content focused on performance improvements and Ramadan tab cleanup.
 
 ## Prioritized Backlog
 ### P0
-- Run physical-device validation on real iPhone Safari for:
-  - direct-tap Azan playback
-  - microphone permission prompt behavior
-  - recitation restart-after-silence behavior
-- Add a dedicated `data-testid` for the iPhone support/help banner if deeper UI automation is needed.
+- Split `SettingsPage.tsx` into smaller feature-focused components/hooks to reduce long-term regression risk.
+- Reduce debug auth console logs in production-facing flows if no longer needed.
 
 ### P1
-- Extract the iOS Azan playback logic from `SettingsPage.tsx` into a dedicated hook or component.
-- Reduce `SettingsPage.tsx` size to lower future regression risk.
+- Further isolate database utilities used by Quran/tafsir/audio flows to optimize chunking even more.
+- Add more `data-testid` coverage to other high-impact interactive controls.
 
 ### P2
-- Add device telemetry/debug UI for audio-play rejection reasons and mic permission state.
-- Expand automated browser checks around changelog popup and iOS-specific recitation copy.
+- Explore font loading optimization/fallback strategy to reduce occasional external font request noise.
+- Add a lightweight internal performance diagnostics panel for route/chunk timing.
 
 ## Next Tasks
-- Validate on physical iPhone Safari versions 14.5, 15, 16, 17, and 18.
-- If any iPhone-specific edge case remains, isolate it behind a dedicated Safari diagnostics panel in Settings.
+- If desired, continue with a second performance pass focused specifically on auth logs, font loading, and breaking up `SettingsPage.tsx`.
+- Re-run device-level QA after any future seasonal feature reactivation (like Ramadan).

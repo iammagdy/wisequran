@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause, Loader as Loader2, SkipBack, SkipForward, Check, Copy } from "lucide-react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
@@ -131,6 +131,12 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-full h-[100dvh] w-full p-0 border-0 bg-background rounded-none data-[state=open]:slide-in-from-bottom data-[state=closed]:slide-out-to-bottom data-[state=open]:zoom-in-100 data-[state=closed]:zoom-out-100 [&>button:last-child]:hidden overflow-hidden">
+        <DialogTitle className="sr-only">{surahName}</DialogTitle>
+        <DialogDescription className="sr-only">
+          {language === "ar"
+            ? `مشغل التلاوة لسورة ${surahName} بصوت ${language === "en" && reciter.nameEn ? reciter.nameEn : reciter.name}`
+            : `Recitation player for ${surahName} by ${reciter.nameEn ?? reciter.name}`}
+        </DialogDescription>
         <div 
           className="flex flex-col h-full relative overflow-hidden"
           dir={isRTL ? "rtl" : "ltr"}

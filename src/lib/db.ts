@@ -122,6 +122,11 @@ export async function getAllDownloadedAudio(reciterId: string): Promise<number[]
   return all.filter((a) => a.reciterId === reciterId).map((a) => a.surahNumber);
 }
 
+export async function getAllAudioEntries() {
+  const db = await getDB();
+  return db.getAll("audio");
+}
+
 export async function clearAllAudio() {
   const db = await getDB();
   await db.clear("audio");

@@ -92,6 +92,7 @@ export default function BottomNav() {
               <NavLink
                 key={path}
                 to={path}
+                data-testid={`bottom-nav-link-${path === "/" ? "quran" : path.replace("/", "")}`}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-0.5 rounded-2xl transition-all duration-300 px-2 py-1.5 flex-1 min-w-0 max-w-[80px]",
                   isActive ? "text-primary" : "text-muted-foreground/60"

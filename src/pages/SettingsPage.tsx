@@ -4,7 +4,7 @@ import { toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, IOS_SAFE_AZAN_URLS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
+import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ import {
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
 
-const loadDBModule = () => import("@/lib/db");
+const loadDBModule = () => import("@/lib/settings-storage");
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
@@ -1468,9 +1468,7 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            <audio ref={azanFallbackRef} preload="auto" playsInline className="hidden" data-testid="settings-azan-fallback-audio">
-              <source src={IOS_SAFE_AZAN_URLS[0]} type="audio/mpeg" />
-            </audio>
+            <audio ref={azanFallbackRef} preload="none" playsInline className="hidden" data-testid="settings-azan-fallback-audio" />
           </motion.div>
         </section>
 
@@ -1949,6 +1947,7 @@ export default function SettingsPage() {
             
             <p className="font-arabic text-2xl font-bold text-gradient mb-1">Wise QURAN</p>
             <button
+              data-testid="settings-version-badge-button"
               onClick={() => setShowChangelog(true)}
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer mb-3">
               
@@ -1961,6 +1960,7 @@ export default function SettingsPage() {
 
             {/* What's New button */}
             <Button
+              data-testid="settings-whats-new-button"
               variant="outline"
               size="sm"
               className="w-full gap-2 mb-3"
