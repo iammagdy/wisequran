@@ -16,14 +16,12 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useReadingReminder } from "@/hooks/useReadingReminder";
-import { clearAllData, getAllDownloadedSurahs, getAllDownloadedAudio, clearAllAudio, deleteAudio, getAudio, getStorageStats, clearAllTafsir } from "@/lib/db";
 import { downloadAllSurahs, fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { downloadSurahAudio, formatBytes, verifyAndRepairDownloads } from "@/lib/quran-audio";
 import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl } from "@/lib/reciters";
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-editions";
 import { toast } from "sonner";
-import { isRamadanNow, isRamadanTabVisible, hideRamadanTab, showRamadanTab } from "@/hooks/useRamadan";
 import { APP_VERSION, changelog } from "@/data/changelog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
@@ -45,6 +43,8 @@ import {
 "@/components/ui/alert-dialog";
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
+
+const loadDBModule = () => import("@/lib/db");
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
@@ -96,6 +96,7 @@ export default function SettingsPage() {
   const refreshStorageStats = useCallback(async () => {
     setLoadingStats(true);
     try {
+      const { getStorageStats } = await loadDBModule();
       const stats = await getStorageStats();
       setStorageStats(stats);
     } catch {/* ignore */}
@@ -341,8 +342,10 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    getAllDownloadedSurahs().then(setDownloadedSurahs);
-    getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
+    loadDBModule().then(({ getAllDownloadedSurahs, getAllDownloadedAudio }) => {
+      getAllDownloadedSurahs().then(setDownloadedSurahs);
+      getAllDownloadedAudio(reciterId).then(setDownloadedAudio);
+    });
     fetchSurahList().then(setSurahs);
     refreshStorageStats();
   }, [reciterId, refreshStorageStats]);
@@ -354,6 +357,7 @@ export default function SettingsPage() {
     } catch {
       toast.error(t("settings_toast_download_failed"));
     }
+    const { getAllDownloadedSurahs } = await loadDBModule();
     const updated = await getAllDownloadedSurahs();
     setDownloadedSurahs(updated);
     setDownloading(false);
@@ -364,6 +368,7 @@ export default function SettingsPage() {
   };
 
   const handleClear = async () => {
+    const { clearAllData } = await loadDBModule();
     await clearAllData();
     setDownloadedSurahs([]);
     setDownloadedAudio([]);
@@ -401,6 +406,7 @@ export default function SettingsPage() {
       );
     }
 
+    const { getAllDownloadedAudio } = await loadDBModule();
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
     setAudioDownloading(false);
@@ -409,6 +415,7 @@ export default function SettingsPage() {
   };
 
   const handleClearAllAudio = async () => {
+    const { clearAllAudio } = await loadDBModule();
     await clearAllAudio();
     setDownloadedAudio([]);
     refreshStorageStats();
@@ -419,6 +426,7 @@ export default function SettingsPage() {
     setSingleAudioDownloading(num);
     try {
       const size = await downloadSurahAudio(reciterId, num);
+      const { getAllDownloadedAudio } = await loadDBModule();
       const updated = await getAllDownloadedAudio(reciterId);
       setDownloadedAudio(updated);
       refreshStorageStats();
@@ -430,6 +438,7 @@ export default function SettingsPage() {
   };
 
   const handleDeleteSingleAudio = async (num: number) => {
+    const { deleteAudio, getAllDownloadedAudio } = await loadDBModule();
     await deleteAudio(reciterId, num);
     const updated = await getAllDownloadedAudio(reciterId);
     setDownloadedAudio(updated);
@@ -437,6 +446,7 @@ export default function SettingsPage() {
   };
 
   const handleClearTafsir = async () => {
+    const { clearAllTafsir } = await loadDBModule();
     await clearAllTafsir();
     refreshStorageStats();
     toast.success(t("settings_toast_tafsir_cleared"));
@@ -454,6 +464,7 @@ export default function SettingsPage() {
         }
       );
 
+      const { getAllDownloadedAudio } = await loadDBModule();
       const updated = await getAllDownloadedAudio(reciterId);
       setDownloadedAudio(updated);
       refreshStorageStats();
@@ -1924,44 +1935,6 @@ export default function SettingsPage() {
             </AlertDialog>
           </motion.div>
         </section>
-
-        {/* ─── Ramadan Tab Visibility ─── */}
-        {isRamadanNow() &&
-        <section>
-            <div className="section-title flex items-center gap-1.5">
-              <Star className="h-3.5 w-3.5" />
-              {t("ramadan_tab")}
-            </div>
-            <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.17 }}
-            className="rounded-xl bg-card p-4 shadow-sm">
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">🌙</span>
-                  <span className="text-sm font-medium">{t("ramadan_show_tab")}</span>
-                </div>
-                <Switch
-                checked={isRamadanTabVisible()}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    showRamadanTab();
-                  } else {
-                    hideRamadanTab();
-                  }
-                  toast.success(checked ? t("ramadan_tab_shown") : t("ramadan_tab_hidden"));
-                  setTimeout(() => window.location.reload(), 500);
-                }} />
-
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {t("ramadan_show_tab_desc")}
-              </p>
-            </motion.div>
-          </section>
-        }
 
         <section>
           <div className="section-title flex items-center gap-1.5">

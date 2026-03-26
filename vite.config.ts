@@ -117,4 +117,31 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          if (id.includes("framer-motion")) {
+            return "motion-vendor";
+          }
+
+          if (id.includes("@radix-ui") || id.includes("cmdk") || id.includes("vaul")) {
+            return "ui-vendor";
+          }
+
+          if (id.includes("@supabase") || id.includes("@tanstack") || id.includes("idb")) {
+            return "data-vendor";
+          }
+
+          if (id.includes("recharts") || id.includes("d3-")) {
+            return "charts-vendor";
+          }
+
+          return "vendor";
+        },
+      },
+    },
+  },
 }));

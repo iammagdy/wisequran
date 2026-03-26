@@ -1,8 +1,6 @@
-import { useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { isRamadanTabVisible } from "@/hooks/useRamadan";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 function QuranIcon({ active }: { active: boolean }) {
@@ -54,15 +52,6 @@ function TasbeehIcon({ active }: { active: boolean }) {
   );
 }
 
-function RamadanIcon({ active }: { active: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="icon-responsive" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
-      <path d="M19 3l.5 1.5L21 5l-1.5.5L19 7l-.5-1.5L17 5l1.5-.5L19 3z" />
-    </svg>
-  );
-}
-
 function SettingsIcon({ active }: { active: boolean }) {
   return (
     <svg viewBox="0 0 24 24" className="icon-responsive" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
@@ -77,7 +66,6 @@ const iconMap = {
   "/azkar": AzkarIcon,
   "/prayer": MosqueIcon,
   "/tasbeeh": TasbeehIcon,
-  "/ramadan": RamadanIcon,
   "/settings": SettingsIcon,
 } as const;
 
@@ -92,22 +80,12 @@ const basePaths = [
 export default function BottomNav() {
   const location = useLocation();
   const { t } = useLanguage();
-  const showRamadan = useMemo(() => isRamadanTabVisible(), []);
-
-  const tabs = useMemo(() => {
-    if (!showRamadan) return basePaths;
-    return [
-      ...basePaths.slice(0, -1),
-      { path: "/ramadan", key: "nav_ramadan" as const },
-      basePaths[basePaths.length - 1],
-    ];
-  }, [showRamadan]);
 
   return (
     <nav className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
       <div className="glass-card rounded-[2rem] px-2 py-2 overflow-hidden border border-white/10 shadow-2xl">
         <div className="flex items-center justify-around" style={{ height: 'calc(var(--nav-height) * 0.85)' }}>
-          {tabs.map(({ path, key }) => {
+          {basePaths.map(({ path, key }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
             const IconComponent = iconMap[path as keyof typeof iconMap];
             return (

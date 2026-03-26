@@ -7,8 +7,7 @@ const TAB_ORDER: Record<string, number> = {
   "/azkar": 1,
   "/prayer": 2,
   "/tasbeeh": 3,
-  "/ramadan": 4,
-  "/settings": 5,
+  "/settings": 4,
 };
 
 const DETAIL_ROUTES = ["/surah/", "/hifz/test", "/stats", "/qibla"];

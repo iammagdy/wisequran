@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.2.1";
+export const APP_VERSION = "3.3.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,30 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.3.0",
+    date: "2026-03-19",
+    ar: {
+      improvements: [
+        "تحسين أداء التحميل الأولي عبر تقسيم الحزم الكبيرة بشكل أذكى لتقليل الضغط على أول فتح للتطبيق",
+        "تقليل الحمل داخل صفحة الإعدادات عبر تأجيل تحميل عمليات التخزين الثقيلة حتى الحاجة إليها",
+      ],
+      fixes: [
+        "إزالة تبويب رمضان من التنقل الحالي مع الإبقاء على الصفحة في الكود لإعادة تفعيلها لاحقًا عند الحاجة",
+        "تحسين انتقالات التنقل بعد إزالة تبويب رمضان لتبقى الحركة منطقية ومتسقة بين الصفحات",
+      ],
+    },
+    en: {
+      improvements: [
+        "Improved initial-load performance with smarter bundle splitting to reduce the cost of the first app open",
+        "Reduced Settings page overhead by deferring heavy storage/database operations until they are actually needed",
+      ],
+      fixes: [
+        "Removed the Ramadan tab from current navigation while keeping the page code available for future reuse",
+        "Adjusted page transition ordering after removing the Ramadan tab so navigation stays consistent",
+      ],
+    },
+  },
   {
     version: "3.2.1",
     date: "2026-03-18",
