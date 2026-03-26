@@ -181,7 +181,13 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     stoppedRef.current = false;
     const currentReciterId = reciterIdRef.current;
 
-    if (audioRef.current && surahNumberRef.current === surahNumber) {
+    // Resume playback only when the same surah AND the same reciter are already loaded.
+    // If the reciter changed we must reload even if the surah number matches.
+    if (
+      audioRef.current &&
+      surahNumberRef.current === surahNumber &&
+      activeReciterForRetryRef.current === currentReciterId
+    ) {
       audioRef.current.play().catch(() => {});
       return;
     }

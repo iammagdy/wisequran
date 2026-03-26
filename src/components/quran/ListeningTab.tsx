@@ -73,7 +73,9 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   }, [translationAyahs]);
 
   const handlePlayPause = () => {
-    if (isThisSurah) {
+    // If this surah is already loaded with the same reciter, just toggle play/pause.
+    // When the reciter has changed we must reload so the new reciter's audio is fetched.
+    if (isThisSurah && reciterId === player.playingReciterId) {
       player.togglePlayPause();
     } else {
       player.play(surahNumber, surahName, ayahs);
