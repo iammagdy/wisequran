@@ -2,6 +2,36 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.3.1] - 2026-03-26
+
+### 🎙️ Recitation Stability Release
+
+This release addresses multiple stability issues found in the recitation (listening & memorisation-testing) feature that caused failures on iPhone and Android.
+
+### 🐛 Bug Fixes
+
+- **iOS – Multi-ayah recitation now works end-to-end**
+  - Identified that calling `speech.reset()` + `speech.start()` inside a `setTimeout` between ayahs caused `webkitSpeechRecognition` to silently fail on iOS Safari. Creating a new recognition instance from a non-user-gesture context is blocked by Safari.
+  - Added `clearTranscript()` to `useSpeechRecognition`: on iOS, this resets only the accumulated transcript text without destroying the recognition instance, allowing the existing session to keep running and auto-restart via its `onend` handler.
+  - Applied the same fix to the Skip-Ayah path, which had the identical issue.
+
+- **Reciter change now takes effect immediately**
+  - `AudioPlayerContext.play()` previously returned early and resumed the currently-loaded audio whenever the surah number matched, even if the user had switched reciter. The guard now also checks the active reciter so changing the reciter always triggers a fresh load.
+  - `ListeningTab.handlePlayPause` now detects a reciter mismatch and calls `player.play()` instead of `player.togglePlayPause()`, ensuring the new reciter's audio is fetched.
+
+- **Recitation page resource cleanup**
+  - `silentAudioRef` (the silent MP3 element used to unblock the iOS audio context) is now properly paused and released when the RecitationTestPage unmounts, preventing a dangling media element.
+  - `silenceTimerRef` is also cleared on unmount, removing a potential stale timer that could call state-update functions after the component was gone.
+  - `isMountedRef` guard added around async `setTimeout` state updates in `runEvaluation` and `handleSkipAyah` to prevent calls into an unmounted component.
+
+### 📝 Changelog Popup
+
+- 🎙️ تم إصلاح التسميع متعدد الآيات على iPhone
+- 🔄 تغيير القارئ يُطبَّق فوراً دون الحاجة لإيقاف الصوت وإعادة تشغيله
+- 🧹 تحسينات في تنظيف الموارد عند مغادرة صفحة التسميع
+
+---
+
 ## [3.3.0] - 2026-03-19
 
 ### ⚡ Performance & Seasonal Cleanup Release

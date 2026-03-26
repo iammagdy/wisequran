@@ -14,6 +14,10 @@ export interface UseSpeechRecognitionResult {
   start: () => void;
   stop: () => void;
   reset: () => void;
+  /** Clear accumulated transcript without stopping or destroying the recognition instance.
+   *  Useful on iOS where destroying and re-creating a recognition instance between ayahs
+   *  requires a new user gesture. Clearing the transcript lets the same instance continue. */
+  clearTranscript: () => void;
 }
 
 declare global {
@@ -288,6 +292,20 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     setError(null);
   }, []);
 
+  /**
+   * Clear accumulated transcript without stopping the recognition instance.
+   * On iOS, destroying and re-creating a recognition instance between ayahs
+   * requires a new user gesture. This lets the same instance keep running
+   * while resetting the accumulated text for the next ayah evaluation.
+   */
+  const clearTranscript = useCallback(() => {
+    finalTranscriptRef.current = "";
+    interimRef.current = "";
+    restartCountRef.current = 0;
+    setTranscript("");
+    setInterimTranscript("");
+  }, []);
+
   useEffect(() => {
     return () => {
       isManualStopRef.current = true;
@@ -308,5 +326,6 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     start,
     stop,
     reset,
+    clearTranscript,
   };
 }

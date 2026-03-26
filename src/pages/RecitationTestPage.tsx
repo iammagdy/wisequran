@@ -154,6 +154,7 @@ export default function RecitationTestPage() {
   const currentAyahRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const verseListRef = useRef<HTMLDivElement | null>(null);
   const lastMicTouchRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   // Stable refs to avoid stale closures in effects
   const ayahsDataRef = useRef<Ayah[]>([]);
@@ -170,6 +171,20 @@ export default function RecitationTestPage() {
   const recitationHistory = useRecitationHistory();
   const meta = SURAH_META[surahNumber - 1];
   const isListening = speech.status === "listening";
+
+  // Track mounted state and clean up audio/timers on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (silentAudioRef.current) {
+        silentAudioRef.current.pause();
+        silentAudioRef.current.src = "";
+        silentAudioRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setAyahFrom(1);
@@ -271,20 +286,31 @@ export default function RecitationTestPage() {
       ayahStatesRef.current = updated;
 
       setTimeout(() => {
+        if (!isMountedRef.current) return;
         setIsEvaluating(false);
         advanceToNext(updated, idx + 1);
-        // Reset after advance
         lastTranscriptRef.current = "";
-        speech.reset();
-        // If there are more verses, restart mic after short pause
+        // If there are more verses, restart mic for next ayah
         if (idx + 1 < updated.length) {
-          setTimeout(() => {
-            if (!silentAudioRef.current) {
-              silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
-            }
-            silentAudioRef.current.play().catch(() => {});
-            speech.start();
-          }, 400);
+          if (speech.isIOSMode) {
+            // On iOS: clear transcript without destroying the recognition instance.
+            // Creating a new webkitSpeechRecognition from a non-user-gesture context
+            // is blocked by Safari. The existing instance restarts automatically via
+            // its onend handler, so we only need to reset the accumulated text.
+            speech.clearTranscript();
+          } else {
+            speech.reset();
+            setTimeout(() => {
+              if (!isMountedRef.current) return;
+              if (!silentAudioRef.current) {
+                silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
+              }
+              silentAudioRef.current.play().catch(() => {});
+              speech.start();
+            }, 400);
+          }
+        } else {
+          speech.reset();
         }
       }, 800);
     }
@@ -396,7 +422,6 @@ export default function RecitationTestPage() {
   // ── Skip ───────────────────────────────────────────────────────────
   const handleSkipAyah = useCallback(() => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    speech.reset();
     lastTranscriptRef.current = "";
 
     const idx = currentAyahIndexRef.current;
@@ -406,10 +431,21 @@ export default function RecitationTestPage() {
     setAyahStates(updated);
     ayahStatesRef.current = updated;
 
+    if (speech.isIOSMode) {
+      // On iOS: clear transcript without destroying the recognition instance so
+      // the existing session can continue for the next ayah without needing a
+      // new user gesture to re-initialise webkitSpeechRecognition.
+      speech.clearTranscript();
+    } else {
+      speech.reset();
+    }
+
     setTimeout(() => {
+      if (!isMountedRef.current) return;
       advanceToNext(updated, idx + 1);
-      if (idx + 1 < updated.length) {
+      if (idx + 1 < updated.length && !speech.isIOSMode) {
         setTimeout(() => {
+          if (!isMountedRef.current) return;
           lastTranscriptRef.current = "";
           if (!silentAudioRef.current) {
             silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
@@ -417,6 +453,8 @@ export default function RecitationTestPage() {
           silentAudioRef.current.play().catch(() => {});
           speech.start();
         }, 350);
+      } else if (idx + 1 < updated.length && speech.isIOSMode) {
+        lastTranscriptRef.current = "";
       }
     }, 200);
   }, [advanceToNext, speech]);
