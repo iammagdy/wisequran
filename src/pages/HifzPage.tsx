@@ -15,6 +15,10 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+function formatDateKey(date: Date) {
+  return date.toISOString().split("T")[0];
+}
+
 type FilterMode = "all" | "memorized" | "reading" | "none";
 
 const PENDING_REVIEW_KEY = "hifz-pending-review";
@@ -48,6 +52,15 @@ export default function HifzPage() {
   const firstInProgress = SURAH_META.find((surah) => getStatus(surah.number) === "reading");
   const nextNewSurah = SURAH_META.find((surah) => getStatus(surah.number) === "none");
   const urgentReview = [...todayQueue].sort((a, b) => (b.overdueDays - a.overdueDays) || (a.level - b.level))[0] ?? null;
+  const todayKey = formatDateKey(new Date());
+  const tomorrowKey = formatDateKey(new Date(Date.now() + 24 * 60 * 60 * 1000));
+  const weekAhead = Array.from({ length: 7 }, (_, idx) => formatDateKey(new Date(Date.now() + idx * 24 * 60 * 60 * 1000)));
+  const weeklyBuckets = weekAhead.map((day) => ({
+    day,
+    due: Object.values(review.state.items).filter((item) => item.nextReview === day).length,
+  }));
+  const dueTomorrow = Object.values(review.state.items).filter((item) => item.nextReview === tomorrowKey).length;
+  const dueThisWeek = Object.values(review.state.items).filter((item) => item.nextReview >= todayKey && item.nextReview <= weekAhead[6]).length;
 
   useEffect(() => {
     const stored = localStorage.getItem(PENDING_REVIEW_KEY);
@@ -353,6 +366,57 @@ export default function HifzPage() {
               )}
             </div>
           </div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.09 }}
+        className="mb-5 rounded-2xl glass-card p-4 shadow-soft border border-border/50"
+        dir={isRTL ? "rtl" : "ltr"}
+        data-testid="hifz-weekly-planner-card"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Clock className="h-4 w-4 text-primary" />
+          <h2 className="section-heading">{language === "ar" ? "خطة المراجعة الأسبوعية" : "Weekly Revision Plan"}</h2>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+          <div className="rounded-2xl bg-primary/5 p-3">
+            <p className="text-lg font-bold text-primary">{language === "ar" ? toArabicNumerals(todayQueue.length) : todayQueue.length}</p>
+            <p className="text-[11px] text-muted-foreground">{language === "ar" ? "اليوم" : "Today"}</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-3">
+            <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(dueTomorrow) : dueTomorrow}</p>
+            <p className="text-[11px] text-muted-foreground">{language === "ar" ? "غدًا" : "Tomorrow"}</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-3">
+            <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(dueThisWeek) : dueThisWeek}</p>
+            <p className="text-[11px] text-muted-foreground">{language === "ar" ? "هذا الأسبوع" : "This week"}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {weeklyBuckets.map((bucket, index) => (
+            <div key={bucket.day} className="flex items-center gap-3" data-testid={`hifz-weekly-bucket-${index}`}>
+              <div className="w-16 text-[11px] text-muted-foreground">
+                {new Date(bucket.day).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US", { weekday: "short" })}
+              </div>
+              <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(bucket.due * 18, 100)}%` }} />
+              </div>
+              <div className="w-8 text-xs font-semibold text-foreground text-end">
+                {language === "ar" ? toArabicNumerals(bucket.due) : bucket.due}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-2xl border border-border/40 bg-background/60 p-3 text-xs text-muted-foreground">
+          {language === "ar"
+            ? `اقتراح اليوم: راجع ${toArabicNumerals(Math.max(1, Math.min(todayQueue.length || 1, goal.surahsPerDay || 1)))} سورة ثم ثبّت سورة جديدة إذا انتهيت مبكرًا.`
+            : `Today’s suggestion: review ${Math.max(1, Math.min(todayQueue.length || 1, goal.surahsPerDay || 1))} surah(s), then reinforce one new surah if you finish early.`}
         </div>
       </motion.div>
 

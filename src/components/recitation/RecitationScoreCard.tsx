@@ -278,6 +278,18 @@ export default function RecitationScoreCard({
   const totalWrongWords = perAyah.reduce((sum, a) => sum + a.wordDiffs.filter(d => d.spoken !== null && d.matchScore < 85).length, 0);
   const incorrectAyahs = totalAyahs - correctAyahs;
   const practiceableAyahs = perAyah.filter((ayah) => !ayah.isCorrect).length;
+  const strongestAyah = perAyah.reduce((best, current) => current.score > best.score ? current : best, perAyah[0]);
+  const weakestAyah = perAyah.reduce((worst, current) => current.score < worst.score ? current : worst, perAyah[0]);
+  const wordScores = perAyah.flatMap((ayah) => ayah.wordDiffs.map((diff) => diff.matchScore));
+  const averageWordConfidence = wordScores.length > 0 ? Math.round(wordScores.reduce((sum, score) => sum + score, 0) / wordScores.length) : score;
+  const commonMistakes = Object.entries(
+    perAyah.flatMap((ayah) => ayah.wordDiffs)
+      .filter((diff) => diff.matchScore < 85)
+      .reduce<Record<string, number>>((acc, diff) => {
+        acc[diff.expected] = (acc[diff.expected] ?? 0) + 1;
+        return acc;
+      }, {})
+  ).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   const ayahTextMap = new Map(ayahsData.map(a => [a.numberInSurah, a.text]));
 
@@ -385,6 +397,40 @@ export default function RecitationScoreCard({
           </div>
         )}
       </div>
+
+      {perAyah.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-confidence-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "متوسط الثقة" : "Average confidence"}</p>
+            <p className="text-xl font-bold text-foreground">{language === "ar" ? toArabicNumerals(averageWordConfidence) : averageWordConfidence}%</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-strongest-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "أفضل آية" : "Strongest ayah"}</p>
+            <p className="text-xl font-bold text-primary">{language === "ar" ? toArabicNumerals(strongestAyah?.numberInSurah ?? 0) : strongestAyah?.numberInSurah ?? 0}</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-weakest-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "أضعف آية" : "Weakest ayah"}</p>
+            <p className="text-xl font-bold text-destructive">{language === "ar" ? toArabicNumerals(weakestAyah?.numberInSurah ?? 0) : weakestAyah?.numberInSurah ?? 0}</p>
+          </div>
+        </div>
+      )}
+
+      {commonMistakes.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden" data-testid="recitation-common-mistakes-card">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">{language === "ar" ? "أكثر الكلمات تعثرًا" : "Most difficult words"}</h3>
+            <span className="text-[0.65rem] text-muted-foreground">{language === "ar" ? "تكرار الكلمات الضعيفة" : "Repeated weak words"}</span>
+          </div>
+          <div className="px-4 pb-4 flex flex-wrap gap-2" dir="rtl">
+            {commonMistakes.map(([word, count]) => (
+              <div key={word} className="rounded-full border border-destructive/20 bg-destructive/5 px-3 py-1.5 text-sm font-arabic text-foreground">
+                {word}
+                <span className="ms-2 text-xs text-destructive">× {language === "ar" ? toArabicNumerals(count) : count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {perAyah.length > 0 && (
         <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">

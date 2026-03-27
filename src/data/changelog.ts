@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.3.1";
+export const APP_VERSION = "3.4.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,34 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.4.0",
+    date: "2026-03-27",
+    ar: {
+      features: [
+        "إضافة وضع الجمعة الكامل مع مركز مخصص يضم سورة الكهف، تذكير الجمعة، عداد الصلاة على النبي ﷺ، وقائمة متابعة",
+      ],
+      improvements: [
+        "توسيع خطة الحفظ لتشمل نظرة أسبوعية للمراجعة مع اقتراح يومي أوضح",
+        "ترقية تقارير التسميع بإحصاءات أعمق مثل متوسط الثقة وأفضل/أضعف آية وأكثر الكلمات تعثرًا",
+      ],
+      fixes: [
+        "الحفاظ على عمل تحليلات التسميع حتى بدون إعداد Supabase عبر مسار محلي احتياطي للسجل",
+      ],
+    },
+    en: {
+      features: [
+        "Added a full Friday Mode hub with Surah Al-Kahf, Friday reminders, a salawat counter, and a guided checklist",
+      ],
+      improvements: [
+        "Expanded Hifz planning with a clearer weekly revision overview and daily recommendation",
+        "Upgraded recitation reports with deeper analytics such as average confidence, strongest/weakest ayah, and most difficult words",
+      ],
+      fixes: [
+        "Kept recitation analytics working even without Supabase by adding a safe local history fallback",
+      ],
+    },
+  },
   {
     version: "3.3.1",
     date: "2026-03-27",

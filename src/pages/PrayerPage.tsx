@@ -5,7 +5,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { Progress } from "@/components/ui/progress";
 import { cn, getDayName, getHijriDateLocalized, getGregorianDateLocalized, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import { Compass, MapPin, ChevronLeft, Flame, History, Search, ArrowLeft, ArrowRight } from "lucide-react";
+import { Compass, MapPin, ChevronLeft, Flame, History, Search, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
 import PrayerGuideCard from "@/components/prayer/PrayerGuideCard";
 import PrayerHistorySheet from "@/components/prayer/PrayerHistorySheet";
 import CitySearchModal from "@/components/prayer/CitySearchModal";
@@ -287,6 +287,28 @@ export default function PrayerPage() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-foreground">{t("qibla_banner")}</p>
           <p className="text-xs text-muted-foreground">{t("qibla_subtitle")}</p>
+        </div>
+        <ChevronLeft className={cn("h-4 w-4 text-muted-foreground shrink-0", !isRTL && "rotate-180")} />
+      </motion.button>
+
+      <motion.button
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.11 }}
+        whileTap={{ scale: 0.97 }}
+        onClick={() => navigate("/friday")}
+        data-testid="prayer-friday-mode-button"
+        className={cn(
+          "w-full rounded-2xl glass-card border-primary/20 shadow-soft flex items-center gap-3 px-4 py-3 mb-4 hover-lift",
+          isRTL ? "text-right" : "text-left"
+        )}
+      >
+        <div className="rounded-xl bg-primary/10 border border-primary/20 p-2.5 shrink-0">
+          <Sparkles className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground">{language === "ar" ? "وضع الجمعة" : "Friday Mode"}</p>
+          <p className="text-xs text-muted-foreground">{language === "ar" ? "سورة الكهف، تذكير الجمعة، وعدّاد الصلاة على النبي ﷺ" : "Al-Kahf shortcut, Friday reminder, and salawat counter."}</p>
         </div>
         <ChevronLeft className={cn("h-4 w-4 text-muted-foreground shrink-0", !isRTL && "rotate-180")} />
       </motion.button>
