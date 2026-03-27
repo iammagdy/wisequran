@@ -1,42 +1,68 @@
 # PRD
 
 ## Original Problem Statement
-The user asked to analyze app performance, fix any issues without breaking functionality, remove the Ramadan tab because Ramadan is over while keeping the page code for later reuse, and update the app changelog/version to 3.3.0.
+The user asked to add improvements 1, 2, 3, 4, 5, 6 from the suggested roadmap without breaking the existing app.
+Selected scope:
+1. Safari diagnostics = full diagnostics page with logs/history.
+2. Smarter recitation = all upgrades in scope.
+3. Better offline mode = Quran text + reciter audio only.
+4. Reading personalization = implemented with safe defaults.
+5. Progress dashboard = basic first version now, expandable later.
+6. Home improvements = resume last surah + continue listening.
 
 ## Architecture Decisions
-- Keep all product flows intact and focus on safe, low-risk performance improvements.
-- Improve frontend performance through Vite bundle splitting rather than rewriting feature logic.
-- Keep the Ramadan page route/code in the app, but remove current-season navigation exposure.
-- Reduce Settings page overhead by deferring heavy storage/database helpers until they are actually needed.
-- Clean up console/runtime warnings that affect maintainability and testing confidence.
+- Keep all additions frontend-only and preserve existing product flows.
+- Add new capability pages as lazy-loaded routes (`/offline`, `/settings/safari-diagnostics`) to avoid hurting initial load.
+- Reuse existing download/audio infrastructure instead of replacing it.
+- Add lightweight reader personalization via localStorage-backed hook to avoid invasive state changes.
+- Enhance recitation incrementally inside the current flow instead of rewriting the page.
 
 ## What Has Been Implemented
-- Added smarter Vite manual chunk splitting to break large vendor code into smaller bundles (`motion-vendor`, `ui-vendor`, `data-vendor`, `charts-vendor`, etc.).
-- Reduced the main app chunk from roughly ~824 KB before optimization to ~172 KB after splitting (pre-gzip build output comparison).
-- Moved Settings page IndexedDB/storage helpers behind a deferred import path via `src/lib/settings-storage.ts`, so the Settings route no longer pulls those helpers eagerly.
-- Removed the Ramadan tab from the bottom navigation and removed Ramadan visibility controls from Settings.
-- Kept the `/ramadan` route and Ramadan page code in the codebase for future seasonal reuse.
-- Updated page transition ordering after Ramadan nav removal.
-- Added stronger testability coverage with `data-testid` on bottom nav links and Settings changelog controls.
-- Fixed React Router future-flag warnings by opting into supported future flags on `BrowserRouter`.
-- Fixed dialog accessibility warning in `NowPlayingScreen` by adding hidden dialog title/description.
-- Removed the unnecessary Supabase missing-env console warning and prevented eager Azan fallback audio requests in Settings.
-- Updated app version to `3.3.0` in `package.json`, `src/data/changelog.ts`, and `CHANGELOG.md`.
-- Added 3.3.0 changelog content focused on performance improvements and Ramadan tab cleanup.
+- Added `SafariDiagnosticsPage` with:
+  - browser/device status cards
+  - audio/microphone/notification quick tests
+  - persistent diagnostics history log in localStorage
+- Added `OfflineCenterPage` focused on:
+  - Quran text offline downloads
+  - current reciter audio downloads
+  - text/audio clear actions
+  - storage summary
+- Added `useReaderPersonalization` hook with:
+  - line spacing presets
+  - reader text tone presets
+  - focus preset options
+- Wired reader personalization into:
+  - Settings page controls
+  - SurahReaderPage
+  - MushafPageView
+  - FocusMode
+- Added separate home quick-resume cards for:
+  - continue reading
+  - continue listening
+- Improved progress dashboard (`StatsPage`) with:
+  - weekly goal card
+  - memorization snapshot card
+  - Hifz/review summaries
+- Improved recitation flow (`RecitationTestPage` + `RecitationScoreCard`) with:
+  - pause tolerance slider
+  - practice-missed-part action after result
+  - preserved start/recording flow
+- Added Settings quick tools linking to Offline Center and Safari Diagnostics.
+- Verified requested additions plus regression smoke on existing routes.
 
 ## Prioritized Backlog
 ### P0
-- Split `SettingsPage.tsx` into smaller feature-focused components/hooks to reduce long-term regression risk.
-- Reduce debug auth console logs in production-facing flows if no longer needed.
+- Split large pages (`SettingsPage`, `RecitationTestPage`, `SurahReaderPage`) into smaller modules to reduce regression risk.
+- Expand `data-testid` coverage across remaining interactive controls.
 
 ### P1
-- Further isolate database utilities used by Quran/tafsir/audio flows to optimize chunking even more.
-- Add more `data-testid` coverage to other high-impact interactive controls.
+- Upgrade the basic progress dashboard into a richer trend view with recitation analytics and listening minutes.
+- Expand Offline Center with per-surah management and sync/status insights.
 
 ### P2
-- Explore font loading optimization/fallback strategy to reduce occasional external font request noise.
-- Add a lightweight internal performance diagnostics panel for route/chunk timing.
+- Add richer Safari diagnostics export/share and deeper device troubleshooting tips.
+- Add more advanced reader personalization such as layout presets and mushaf styling options.
 
 ## Next Tasks
-- If desired, continue with a second performance pass focused specifically on auth logs, font loading, and breaking up `SettingsPage.tsx`.
-- Re-run device-level QA after any future seasonal feature reactivation (like Ramadan).
+- If requested, continue with a second pass that modularizes the large pages and deepens recitation analytics.
+- Re-run device-focused QA for Safari diagnostics and offline flows on physical phones if needed.
