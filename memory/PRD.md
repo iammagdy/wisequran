@@ -66,3 +66,7 @@ Selected scope:
 ## Next Tasks
 - If requested, continue with a second pass that modularizes the large pages and deepens recitation analytics.
 - Re-run device-focused QA for Safari diagnostics and offline flows on physical phones if needed.
+
+
+## Version Update
+- Updated package version, popup changelog data, and markdown changelog to 3.3.1.
