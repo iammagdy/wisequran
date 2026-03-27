@@ -25,6 +25,7 @@ import FocusMode from "@/components/quran/FocusMode";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getReciterById } from "@/lib/reciters";
+import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{id: string;}>();
@@ -52,6 +53,8 @@ export default function SurahReaderPage() {
   const [error, setError] = useState("");
   const [fontSize] = useLocalStorage<number>("wise-font-size", 24);
   const [, setLastRead] = useLocalStorage<{surah: number; ayah: number; mode: "reading" | "listening"} | null>("wise-last-read", null);
+  const [, setLastReading] = useLocalStorage<{surah: number; ayah: number} | null>("wise-last-reading", null);
+  const [, setLastListening] = useLocalStorage<{surah: number; ayah: number} | null>("wise-last-listening", null);
   const [bookmarks, setBookmarks] = useLocalStorage<{surah: number;ayah: number;}[]>("wise-bookmarks", []);
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
@@ -59,6 +62,7 @@ export default function SurahReaderPage() {
   const [translationEdition] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
   const [focusModeActive, setFocusModeActive] = useState(false);
+  const { lineHeight, focusLineHeight, readerToneClass, focusPreset } = useReaderPersonalization();
 
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
@@ -117,6 +121,11 @@ export default function SurahReaderPage() {
         ayah: 1,
         mode: isListeningMode ? "listening" : "reading"
       });
+      if (isListeningMode) {
+        setLastListening({ surah: surahNumber, ayah: 1 });
+      } else {
+        setLastReading({ surah: surahNumber, ayah: 1 });
+      }
       if (info) addToHistory(surahNumber, info.name);
       setLoading(false);
     }).
@@ -124,7 +133,7 @@ export default function SurahReaderPage() {
       setError(t("error_loading"));
       setLoading(false);
     });
-  }, [surahNumber, addToHistory, setLastRead, isListeningMode]);
+  }, [surahNumber, addToHistory, setLastListening, setLastRead, setLastReading, isListeningMode]);
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && !hasTracked.current) {
@@ -177,6 +186,14 @@ export default function SurahReaderPage() {
             const ayahNum = Number(entry.target.getAttribute("data-ayah"));
             const ayah = ayahs.find((a) => a.numberInSurah === ayahNum);
             if (ayah?.page) setCurrentPage(ayah.page);
+            if (ayahNum) {
+              setLastRead({ surah: surahNumber, ayah: ayahNum, mode: isListeningMode ? "listening" : "reading" });
+              if (isListeningMode) {
+                setLastListening({ surah: surahNumber, ayah: ayahNum });
+              } else {
+                setLastReading({ surah: surahNumber, ayah: ayahNum });
+              }
+            }
             break;
           }
         }
@@ -188,7 +205,7 @@ export default function SurahReaderPage() {
     if (ayahs[0]?.page) setCurrentPage(ayahs[0].page);
 
     return () => observer.disconnect();
-  }, [loading, ayahs]);
+  }, [isListeningMode, loading, ayahs, setLastListening, setLastRead, setLastReading, surahNumber]);
 
   const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
     if (el) ayahRefs.current.set(num, el);else
@@ -530,6 +547,8 @@ export default function SurahReaderPage() {
           <MushafPageView
             ayahs={ayahs}
             fontSize={fontSize}
+            lineHeight={lineHeight}
+            readerToneClass={readerToneClass}
             surahNumber={surahNumber}
             highlightedAyah={highlightedAyah}
             playingAyah={null}
@@ -592,8 +611,8 @@ export default function SurahReaderPage() {
                           </div>
                         </div>
                         <p
-                      className="font-arabic text-foreground"
-                      style={{ fontSize, lineHeight: 2.2 }}>
+                      className={cn("font-arabic", readerToneClass)}
+                      style={{ fontSize, lineHeight }}>
                           {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
                         </p>
                         {translationEnabled && translationAyahs.length > 0 && (() => {
@@ -755,6 +774,9 @@ export default function SurahReaderPage() {
           <FocusMode
             ayahs={ayahs}
             fontSize={fontSize}
+            lineHeight={focusLineHeight}
+            readerToneClass={readerToneClass}
+            focusPreset={focusPreset}
             surahNumber={surahNumber}
             surahName={displaySurahName}
             playingAyah={null}

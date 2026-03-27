@@ -15,6 +15,7 @@ import { scoreCurrentAyah, tokenize, type StrictnessLevel, type PerAyahScoreResu
 import { cn, toArabicNumerals } from "@/lib/utils";
 import SurahRangeSelector from "@/components/recitation/SurahRangeSelector";
 import RecitationScoreCard from "@/components/recitation/RecitationScoreCard";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 type PagePhase = "setup" | "recording" | "result";
 type AyahVerdict = "pending" | "correct" | "incorrect" | "skipped";
@@ -136,6 +137,7 @@ export default function RecitationTestPage() {
   const [ayahFrom, setAyahFrom] = useState(1);
   const [ayahTo, setAyahTo] = useState(7);
   const [strictness, setStrictness] = useState<StrictnessLevel>("normal");
+  const [silenceTimeoutMs, setSilenceTimeoutMs] = useLocalStorage<number>("wise-recitation-silence-ms", SILENCE_TIMEOUT_MS);
   const [phase, setPhase] = useState<PagePhase>("setup");
 
   const [ayahsData, setAyahsData] = useState<Ayah[]>([]);
@@ -310,11 +312,11 @@ export default function RecitationTestPage() {
       if (!finalT) return;
       // Force advance on silence
       runEvaluation(finalT, true);
-    }, SILENCE_TIMEOUT_MS);
+    }, silenceTimeoutMs);
 
     return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [speech.transcript, speech.interimTranscript, phase, isEvaluating]);
+  }, [speech.transcript, speech.interimTranscript, phase, isEvaluating, silenceTimeoutMs]);
 
   // ── When speech ends naturally ─────────────────────────────────────
   useEffect(() => {
@@ -435,6 +437,37 @@ export default function RecitationTestPage() {
     setPhase("setup");
   }, [speech]);
 
+  const handlePracticeMistakes = useCallback(() => {
+    if (!result) return;
+
+    const missedAyahs = result.perAyah
+      .filter((item) => !item.isCorrect)
+      .map((item) => ayahsData.find((ayah) => ayah.numberInSurah === item.numberInSurah))
+      .filter(Boolean) as Ayah[];
+
+    if (missedAyahs.length === 0) return;
+
+    speech.reset();
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    lastTranscriptRef.current = "";
+    setAyahsData(missedAyahs);
+    setAyahFrom(missedAyahs[0].numberInSurah);
+    setAyahTo(missedAyahs[missedAyahs.length - 1].numberInSurah);
+    const states: AyahState[] = missedAyahs.map((ayah) => ({
+      numberInSurah: ayah.numberInSurah,
+      status: "pending",
+      score: 0,
+      wordDiffs: [],
+    }));
+    setAyahStates(states);
+    ayahStatesRef.current = states;
+    setCurrentAyahIndex(0);
+    currentAyahIndexRef.current = 0;
+    setResult(null);
+    setIsEvaluating(false);
+    setPhase("recording");
+  }, [ayahsData, result, speech]);
+
   useEffect(() => {
     if (showHistory || showProgress) recitationHistory.fetchHistory(surahNumber);
   }, [showHistory, showProgress, surahNumber, recitationHistory]);
@@ -540,6 +573,30 @@ export default function RecitationTestPage() {
                     : strictness === "normal"
                     ? language === "ar" ? "دقة متوازنة للتقييم" : "Balanced accuracy"
                     : language === "ar" ? "يتطلب دقة عالية" : "Requires high accuracy"}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4" data-testid="recitation-pause-tolerance-card">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold">{language === "ar" ? "مهلة التوقف" : "Pause tolerance"}</p>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {language === "ar" ? toArabicNumerals((silenceTimeoutMs / 1000).toFixed(1)) : (silenceTimeoutMs / 1000).toFixed(1)}s
+                  </span>
+                </div>
+                <input
+                  data-testid="recitation-pause-tolerance-slider"
+                  type="range"
+                  min={1800}
+                  max={5000}
+                  step={200}
+                  value={silenceTimeoutMs}
+                  onChange={(e) => setSilenceTimeoutMs(Number(e.target.value))}
+                  className="w-full accent-primary"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  {language === "ar"
+                    ? "ارفع المهلة إذا كنت تقرأ بوقفات أطول، وخفّضها إذا أردت تقييمًا أسرع."
+                    : "Increase this if you pause longer between phrases, or lower it for faster evaluation."}
                 </p>
               </div>
 
@@ -884,7 +941,9 @@ export default function RecitationTestPage() {
                 ayahFrom={ayahFrom}
                 ayahTo={ayahTo}
                 strictness={strictness}
+                pauseToleranceMs={silenceTimeoutMs}
                 onTryAgain={handleTryAgain}
+                onPracticeMistakes={handlePracticeMistakes}
               />
             </motion.div>
           )}

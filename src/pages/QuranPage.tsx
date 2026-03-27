@@ -33,6 +33,8 @@ export default function QuranPage() {
   const [loadingSurahs, setLoadingSurahs] = useState(false);
   const [surahSearch, setSurahSearch] = useState("");
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number; mode: "reading" | "listening" } | null>("wise-last-read", null);
+  const [lastReading] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-reading", null);
+  const [lastListening] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-listening", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const navigate = useNavigate();
@@ -96,6 +98,32 @@ export default function QuranPage() {
     if (!s) return String(num);
     return language === "ar" ? s.name : s.englishName;
   };
+
+  const quickResumeCards = [
+    lastReading && {
+      key: "reading",
+      label: t("continue_reading"),
+      surah: lastReading.surah,
+      ayah: lastReading.ayah,
+      icon: <BookOpen className="h-5 w-5 text-primary" />,
+      onClick: () => navigate(`/surah/${lastReading.surah}?ayah=${lastReading.ayah}`),
+    },
+    lastListening && {
+      key: "listening",
+      label: t("continue_listening"),
+      surah: lastListening.surah,
+      ayah: lastListening.ayah,
+      icon: <Headphones className="h-5 w-5 text-amber-600 dark:text-amber-400" />,
+      onClick: () => navigate(`/surah/${lastListening.surah}?mode=listening&ayah=${lastListening.ayah}`),
+    },
+  ].filter(Boolean) as Array<{
+    key: string;
+    label: string;
+    surah: number;
+    ayah: number;
+    icon: React.ReactNode;
+    onClick: () => void;
+  }>;
 
   const modeCards: ModeCard[] = [
     {
@@ -297,6 +325,29 @@ export default function QuranPage() {
                   }
                 </div>
               </motion.button>
+            )}
+
+            {quickResumeCards.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" data-testid="quran-home-quick-resume-grid">
+                {quickResumeCards.map((card) => (
+                  <motion.button
+                    key={card.key}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={card.onClick}
+                    data-testid={`quran-home-quick-resume-${card.key}`}
+                    className="rounded-2xl border border-border/50 bg-card p-4 shadow-soft text-start hover:border-primary/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="rounded-xl bg-primary/10 p-2">{card.icon}</div>
+                      <p className="text-sm font-semibold text-foreground">{card.label}</p>
+                    </div>
+                    <p className="font-arabic text-base font-bold text-foreground truncate">{getSurahName(card.surah)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("ayah")} {language === "en" ? card.ayah : toArabicNumerals(card.ayah)}
+                    </p>
+                  </motion.button>
+                ))}
+              </div>
             )}
 
             {/* Mode Selection Cards — Premium Grid */}

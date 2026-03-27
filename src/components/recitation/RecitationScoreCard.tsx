@@ -16,7 +16,9 @@ interface Props {
   ayahFrom: number;
   ayahTo: number;
   strictness?: StrictnessLevel;
+  pauseToleranceMs?: number;
   onTryAgain: () => void;
+  onPracticeMistakes?: () => void;
 }
 
 function getIslamicFeedback(score: number, t: (k: string) => string): { label: string; color: string } {
@@ -261,7 +263,9 @@ export default function RecitationScoreCard({
   ayahFrom,
   ayahTo,
   strictness = "normal",
-  onTryAgain
+  pauseToleranceMs = 3200,
+  onTryAgain,
+  onPracticeMistakes,
 }: Props) {
   const { t, language, isRTL } = useLanguage();
   const feedback = getIslamicFeedback(score, t as (k: string) => string);
@@ -273,6 +277,7 @@ export default function RecitationScoreCard({
   const totalMissedWords = perAyah.reduce((sum, a) => sum + a.wordDiffs.filter(d => d.spoken === null).length, 0);
   const totalWrongWords = perAyah.reduce((sum, a) => sum + a.wordDiffs.filter(d => d.spoken !== null && d.matchScore < 85).length, 0);
   const incorrectAyahs = totalAyahs - correctAyahs;
+  const practiceableAyahs = perAyah.filter((ayah) => !ayah.isCorrect).length;
 
   const ayahTextMap = new Map(ayahsData.map(a => [a.numberInSurah, a.text]));
 
@@ -326,6 +331,11 @@ export default function RecitationScoreCard({
             {t(`strictness_${strictness}` as Parameters<typeof t>[0])}
           </span>
         </div>
+        <p className="mt-2 text-[0.7rem] text-muted-foreground">
+          {language === "ar"
+            ? `مهلة التوقف الحالية ${toArabicNumerals((pauseToleranceMs / 1000).toFixed(1))} ثانية`
+            : `Current pause tolerance ${(pauseToleranceMs / 1000).toFixed(1)}s`}
+        </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-primary/5 border border-primary/10 p-3">
@@ -400,14 +410,27 @@ export default function RecitationScoreCard({
         </div>
       )}
 
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        onClick={onTryAgain}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-muted py-4 text-sm font-semibold hover:bg-muted/70 transition-colors min-h-[52px]"
-      >
-        <RotateCcw className="h-4 w-4" />
-        {t("try_again")}
-      </motion.button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {onPracticeMistakes && practiceableAyahs > 0 && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onPracticeMistakes}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors min-h-[52px]"
+            data-testid="recitation-practice-mistakes-button"
+          >
+            <AlertCircle className="h-4 w-4" />
+            {language === "ar" ? `أعد الجزء المتعثر (${toArabicNumerals(practiceableAyahs)})` : `Practice missed part (${practiceableAyahs})`}
+          </motion.button>
+        )}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onTryAgain}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-muted py-4 text-sm font-semibold hover:bg-muted/70 transition-colors min-h-[52px]"
+        >
+          <RotateCcw className="h-4 w-4" />
+          {t("try_again")}
+        </motion.button>
+      </div>
     </motion.div>
   );
 }

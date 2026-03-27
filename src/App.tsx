@@ -19,11 +19,13 @@ const SurahReaderPage = lazy(() => import("@/pages/SurahReaderPage"));
 const AzkarPage = lazy(() => import("@/pages/AzkarPage"));
 const PrayerPage = lazy(() => import("@/pages/PrayerPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const SafariDiagnosticsPage = lazy(() => import("@/pages/SafariDiagnosticsPage"));
 const TasbeehPage = lazy(() => import("@/pages/TasbeehPage"));
 const StatsPage = lazy(() => import("@/pages/StatsPage"));
 const HifzPage = lazy(() => import("@/pages/HifzPage"));
 const RecitationTestPage = lazy(() => import("@/pages/RecitationTestPage"));
 const QiblaPage = lazy(() => import("@/pages/QiblaPage"));
+const OfflineCenterPage = lazy(() => import("@/pages/OfflineCenterPage"));
 const RamadanPage = lazy(() => import("@/pages/RamadanPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const SignInPage = lazy(() => import("@/pages/SignInPage"));
@@ -67,6 +69,8 @@ const AppContent = () => {
                   <Route path="/hifz/test" element={<RecitationTestPage />} />
                   <Route path="/qibla" element={<QiblaPage />} />
                   <Route path="/ramadan" element={<RamadanPage />} />
+                  <Route path="/offline" element={<OfflineCenterPage />} />
+                  <Route path="/settings/safari-diagnostics" element={<SafariDiagnosticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
