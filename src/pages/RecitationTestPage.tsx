@@ -138,6 +138,7 @@ export default function RecitationTestPage() {
   const [ayahTo, setAyahTo] = useState(7);
   const [strictness, setStrictness] = useState<StrictnessLevel>("normal");
   const [silenceTimeoutMs, setSilenceTimeoutMs] = useLocalStorage<number>("wise-recitation-silence-ms", SILENCE_TIMEOUT_MS);
+  const [autoPracticeWeakAyahs, setAutoPracticeWeakAyahs] = useLocalStorage<boolean>("wise-recitation-auto-practice", true);
   const [phase, setPhase] = useState<PagePhase>("setup");
 
   const [ayahsData, setAyahsData] = useState<Ayah[]>([]);
@@ -156,6 +157,7 @@ export default function RecitationTestPage() {
   const currentAyahRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const verseListRef = useRef<HTMLDivElement | null>(null);
   const lastMicTouchRef = useRef(0);
+  const autoPracticeArmedRef = useRef(true);
 
   // Stable refs to avoid stale closures in effects
   const ayahsDataRef = useRef<Ayah[]>([]);
@@ -330,6 +332,7 @@ export default function RecitationTestPage() {
 
   // ── Start test ─────────────────────────────────────────────────────
   const handleStartTest = useCallback(async () => {
+    autoPracticeArmedRef.current = autoPracticeWeakAyahs;
     const range = await loadAyahs();
     if (range.length === 0) return;
     speech.reset();
@@ -348,7 +351,7 @@ export default function RecitationTestPage() {
     setIsEvaluating(false);
     setResult(null);
     setPhase("recording");
-  }, [loadAyahs, speech]);
+  }, [autoPracticeWeakAyahs, loadAyahs, speech]);
 
   // ── Mic start (called once at the top of recording) ───────────────
   const handleMicStart = useCallback(() => {
@@ -435,6 +438,7 @@ export default function RecitationTestPage() {
     setIsEvaluating(false);
     lastTranscriptRef.current = "";
     setPhase("setup");
+    autoPracticeArmedRef.current = true;
   }, [speech]);
 
   const handlePracticeMistakes = useCallback(() => {
@@ -466,7 +470,21 @@ export default function RecitationTestPage() {
     setResult(null);
     setIsEvaluating(false);
     setPhase("recording");
+    autoPracticeArmedRef.current = false;
   }, [ayahsData, result, speech]);
+
+  useEffect(() => {
+    if (!result || phase !== "result" || !autoPracticeWeakAyahs || !autoPracticeArmedRef.current) return;
+    const hasWeakAyahs = result.perAyah.some((item) => !item.isCorrect);
+    if (!hasWeakAyahs) return;
+
+    autoPracticeArmedRef.current = false;
+    const timer = window.setTimeout(() => {
+      handlePracticeMistakes();
+    }, 1400);
+
+    return () => window.clearTimeout(timer);
+  }, [autoPracticeWeakAyahs, handlePracticeMistakes, phase, result]);
 
   useEffect(() => {
     if (showHistory || showProgress) recitationHistory.fetchHistory(surahNumber);
@@ -598,6 +616,32 @@ export default function RecitationTestPage() {
                     ? "ارفع المهلة إذا كنت تقرأ بوقفات أطول، وخفّضها إذا أردت تقييمًا أسرع."
                     : "Increase this if you pause longer between phrases, or lower it for faster evaluation."}
                 </p>
+              </div>
+
+              <div className="rounded-2xl bg-card border border-border/50 shadow-soft p-4" data-testid="recitation-auto-practice-card">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{language === "ar" ? "إعادة الجزء المتعثر تلقائيًا" : "Auto-practice weak ayahs"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {language === "ar"
+                        ? "بعد النتيجة، يعيد التطبيق الجزء غير المتقن مرة واحدة تلقائيًا."
+                        : "After scoring, the app automatically repeats the missed part once."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoPracticeWeakAyahs}
+                    onClick={() => setAutoPracticeWeakAyahs((prev) => !prev)}
+                    data-testid="recitation-auto-practice-toggle"
+                    className={cn(
+                      "relative h-8 w-14 rounded-full transition-colors shrink-0",
+                      autoPracticeWeakAyahs ? "bg-primary" : "bg-muted"
+                    )}
+                  >
+                    <span className={cn("absolute top-1 h-6 w-6 rounded-full bg-white transition-transform", autoPracticeWeakAyahs ? "translate-x-7" : "translate-x-1")} />
+                  </button>
+                </div>
               </div>
 
               <motion.button

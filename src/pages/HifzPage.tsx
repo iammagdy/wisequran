@@ -45,6 +45,9 @@ export default function HifzPage() {
 
   const filtered = SURAH_META.filter((s) => filter === "all" || getStatus(s.number) === filter);
   const todayQueue = review.getTodayQueue();
+  const firstInProgress = SURAH_META.find((surah) => getStatus(surah.number) === "reading");
+  const nextNewSurah = SURAH_META.find((surah) => getStatus(surah.number) === "none");
+  const urgentReview = [...todayQueue].sort((a, b) => (b.overdueDays - a.overdueDays) || (a.level - b.level))[0] ?? null;
 
   useEffect(() => {
     const stored = localStorage.getItem(PENDING_REVIEW_KEY);
@@ -285,6 +288,73 @@ export default function HifzPage() {
           </div>
         </motion.div>
       )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.085 }}
+        className="mb-5 rounded-2xl glass-card p-4 shadow-soft border border-border/50"
+        dir={isRTL ? "rtl" : "ltr"}
+        data-testid="hifz-smart-planner-card"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h2 className="section-heading">{language === "ar" ? "خطة الحفظ اليوم" : "Today’s Hifz Plan"}</h2>
+        </div>
+        <div className="space-y-2.5">
+          <div className="rounded-2xl bg-primary/5 border border-primary/20 p-3">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "المراجعة الأهم" : "Top review priority"}</p>
+            {urgentReview ? (
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-arabic text-base font-bold text-foreground">{urgentReview.surahName}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {urgentReview.overdueDays > 0
+                      ? (language === "ar" ? `متأخرة ${toArabicNumerals(urgentReview.overdueDays)} يوم` : `${urgentReview.overdueDays} days overdue`)
+                      : (language === "ar" ? "جاهزة للمراجعة اليوم" : "Ready to review today")}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => handleOpenSurahForReview(urgentReview.surahNumber, "read")} data-testid="hifz-smart-plan-review-read-button" className="rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground">{language === "ar" ? "اقرأ" : "Read"}</button>
+                  <button onClick={() => handleOpenSurahForReview(urgentReview.surahNumber, "listen")} data-testid="hifz-smart-plan-review-listen-button" className="rounded-xl bg-card px-3 py-2 text-xs font-semibold text-foreground border border-border/50">{language === "ar" ? "استمع" : "Listen"}</button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{language === "ar" ? "لا توجد مراجعة عاجلة الآن." : "No urgent review right now."}</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="rounded-2xl border border-border/50 bg-card p-3">
+              <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "استكمل ما بدأت" : "Continue what you started"}</p>
+              {firstInProgress ? (
+                <>
+                  <p className="font-arabic text-base font-bold text-foreground">{getSurahName(firstInProgress.number)}</p>
+                  <button onClick={() => navigate(`/surah/${firstInProgress.number}`)} data-testid="hifz-smart-plan-continue-button" className="mt-2 rounded-xl bg-muted px-3 py-2 text-xs font-semibold text-foreground w-full">
+                    {language === "ar" ? "فتح السورة" : "Open surah"}
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">{language === "ar" ? "لا توجد سورة قيد الحفظ الآن." : "No surah is currently in progress."}</p>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border/50 bg-card p-3">
+              <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "ابدأ جديدًا" : "Start something new"}</p>
+              {nextNewSurah ? (
+                <>
+                  <p className="font-arabic text-base font-bold text-foreground">{getSurahName(nextNewSurah.number)}</p>
+                  <button onClick={() => navigate(`/surah/${nextNewSurah.number}`)} data-testid="hifz-smart-plan-new-button" className="mt-2 rounded-xl bg-muted px-3 py-2 text-xs font-semibold text-foreground w-full">
+                    {language === "ar" ? "ابدأ الآن" : "Start now"}
+                  </button>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">{language === "ar" ? "كل السور بدأت فيها بالفعل." : "You’ve already started all surahs."}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Today's Review Section */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="mb-5" dir={isRTL ? "rtl" : "ltr"}>

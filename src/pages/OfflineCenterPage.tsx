@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Check, Download, HardDrive, Loader2, Trash2, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download, HardDrive, Loader2, Search, Trash2, Volume2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { formatBytes, downloadSurahAudio } from "@/lib/quran-audio";
-import { downloadAllSurahs } from "@/lib/quran-api";
-import { clearAllAudio, deleteSurah, getAllDownloadedAudio, getAllDownloadedSurahs, getStorageStats } from "@/lib/db";
+import { downloadAllSurahs, downloadSurah } from "@/lib/quran-api";
+import { clearAllAudio, deleteAudio, deleteSurah, getAllDownloadedAudio, getAllDownloadedSurahs, getStorageStats } from "@/lib/db";
 import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { SURAH_META } from "@/data/surah-meta";
+
+type OfflineFilter = "all" | "downloaded" | "pending";
 
 export default function OfflineCenterPage() {
   const navigate = useNavigate();
@@ -22,6 +25,9 @@ export default function OfflineCenterPage() {
   const [textProgress, setTextProgress] = useState(0);
   const [audioProgress, setAudioProgress] = useState(0);
   const [storageTotal, setStorageTotal] = useState(0);
+  const [filter, setFilter] = useState<OfflineFilter>("all");
+  const [search, setSearch] = useState("");
+  const [activeItemAction, setActiveItemAction] = useState<string | null>(null);
 
   const reciterName = useMemo(() => {
     const reciter = RECITERS.find((item) => item.id === reciterId);
@@ -76,6 +82,52 @@ export default function OfflineCenterPage() {
     await clearAllAudio();
     await refresh();
   }, [refresh]);
+
+  const handleTextItem = useCallback(async (surahNumber: number, shouldDelete: boolean) => {
+    setActiveItemAction(`text-${surahNumber}`);
+    try {
+      if (shouldDelete) {
+        await deleteSurah(surahNumber);
+      } else {
+        await downloadSurah(surahNumber);
+      }
+      await refresh();
+    } finally {
+      setActiveItemAction(null);
+    }
+  }, [refresh]);
+
+  const handleAudioItem = useCallback(async (surahNumber: number, shouldDelete: boolean) => {
+    setActiveItemAction(`audio-${surahNumber}`);
+    try {
+      if (shouldDelete) {
+        await deleteAudio(reciterId, surahNumber);
+      } else {
+        await downloadSurahAudio(reciterId, surahNumber);
+      }
+      await refresh();
+    } finally {
+      setActiveItemAction(null);
+    }
+  }, [reciterId, refresh]);
+
+  const filteredSurahs = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return SURAH_META.filter((surah) => {
+      const hasText = downloadedSurahs.includes(surah.number);
+      const hasAudio = downloadedAudio.includes(surah.number);
+      const matchesFilter = filter === "all"
+        ? true
+        : filter === "downloaded"
+          ? hasText || hasAudio
+          : !hasText || !hasAudio;
+      const matchesSearch = !query
+        || surah.name.includes(search.trim())
+        || surah.englishName.toLowerCase().includes(query)
+        || String(surah.number).includes(query);
+      return matchesFilter && matchesSearch;
+    });
+  }, [downloadedAudio, downloadedSurahs, filter, search]);
 
   return (
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
@@ -158,6 +210,91 @@ export default function OfflineCenterPage() {
               {language === "ar" ? "مسح" : "Clear"}
             </Button>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-2xl glass-card p-4 border border-border/40" data-testid="offline-center-per-surah-panel">
+        <div className="flex flex-col gap-3 mb-4">
+          <div>
+            <p className="text-sm font-semibold text-foreground">{language === "ar" ? "إدارة السور فرديًا" : "Per-Surah Management"}</p>
+            <p className="text-xs text-muted-foreground">{language === "ar" ? "نزّل أو احذف النص والصوت لكل سورة على حدة." : "Download or remove text and audio for each surah individually."}</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { key: "all", label: language === "ar" ? "الكل" : "All" },
+              { key: "downloaded", label: language === "ar" ? "تم تنزيله" : "Downloaded" },
+              { key: "pending", label: language === "ar" ? "ناقص" : "Pending" },
+            ] as Array<{ key: OfflineFilter; label: string }>).map((option) => (
+              <button
+                key={option.key}
+                data-testid={`offline-center-filter-${option.key}`}
+                onClick={() => setFilter(option.key)}
+                className={cn(
+                  "rounded-xl py-2 text-sm font-medium transition-colors",
+                  filter === option.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" style={isRTL ? { left: "auto", right: "0.75rem" } : {}} />
+            <input
+              data-testid="offline-center-search-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={language === "ar" ? "ابحث عن سورة..." : "Search surah..."}
+              className="w-full rounded-xl border border-border bg-background py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+              style={isRTL ? { paddingRight: "2.5rem", paddingLeft: "1rem" } : { paddingLeft: "2.5rem", paddingRight: "1rem" }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
+          {filteredSurahs.map((surah) => {
+            const hasText = downloadedSurahs.includes(surah.number);
+            const hasAudio = downloadedAudio.includes(surah.number);
+            const textBusy = activeItemAction === `text-${surah.number}`;
+            const audioBusy = activeItemAction === `audio-${surah.number}`;
+
+            return (
+              <div key={surah.number} className="rounded-2xl border border-border/40 bg-background/80 p-3" data-testid={`offline-center-surah-row-${surah.number}`}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <p className="font-arabic text-base font-bold text-foreground truncate">{language === "ar" ? surah.name : surah.englishName}</p>
+                    <p className="text-xs text-muted-foreground">{language === "ar" ? `سورة ${toArabicNumerals(surah.number)}` : `Surah ${surah.number}`}</p>
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <span className={cn("rounded-full px-2 py-1 text-[11px] font-semibold", hasText ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{language === "ar" ? "نص" : "Text"}</span>
+                    <span className={cn("rounded-full px-2 py-1 text-[11px] font-semibold", hasAudio ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{language === "ar" ? "صوت" : "Audio"}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    data-testid={`offline-center-surah-text-button-${surah.number}`}
+                    variant={hasText ? "outline" : "default"}
+                    className="gap-2"
+                    disabled={textBusy}
+                    onClick={() => handleTextItem(surah.number, hasText)}
+                  >
+                    {textBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : hasText ? <Trash2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                    {hasText ? (language === "ar" ? "حذف النص" : "Delete text") : (language === "ar" ? "تنزيل النص" : "Download text")}
+                  </Button>
+                  <Button
+                    data-testid={`offline-center-surah-audio-button-${surah.number}`}
+                    variant={hasAudio ? "outline" : "default"}
+                    className="gap-2"
+                    disabled={audioBusy}
+                    onClick={() => handleAudioItem(surah.number, hasAudio)}
+                  >
+                    {audioBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : hasAudio ? <Trash2 className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+                    {hasAudio ? (language === "ar" ? "حذف الصوت" : "Delete audio") : (language === "ar" ? "تنزيل الصوت" : "Download audio")}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

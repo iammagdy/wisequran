@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3 } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useDailyReading } from "@/hooks/useDailyReading";
@@ -12,6 +12,15 @@ import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
 
 type HomeView = "home" | "surahs" | "surahs_listening";
+type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes";
+
+const DEFAULT_DASHBOARD_ORDER: DashboardSectionId[] = [
+  "next-prayer",
+  "featured-resume",
+  "quick-resume",
+  "activity",
+  "modes",
+];
 
 
 
@@ -37,6 +46,9 @@ export default function QuranPage() {
   const [lastListening] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-listening", null);
   const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
+  const [dashboardOrder, setDashboardOrder] = useLocalStorage<DashboardSectionId[]>("wise-home-dashboard-order", DEFAULT_DASHBOARD_ORDER);
+  const [hiddenSections, setHiddenSections] = useLocalStorage<DashboardSectionId[]>("wise-home-dashboard-hidden", []);
+  const [showDashboardEditor, setShowDashboardEditor] = useState(false);
   const navigate = useNavigate();
   const { goal, todayCount } = useDailyReading();
   const { streak } = useStreak();
@@ -44,6 +56,14 @@ export default function QuranPage() {
   const { location } = useLocation();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
+
+  const sectionLabels: Record<DashboardSectionId, string> = {
+    "next-prayer": language === "ar" ? "موعد الصلاة القادمة" : "Next prayer",
+    "featured-resume": language === "ar" ? "متابعة سريعة" : "Featured resume",
+    "quick-resume": language === "ar" ? "بطاقات المتابعة" : "Quick resume cards",
+    activity: language === "ar" ? "ملخص النشاط" : "Activity summary",
+    modes: language === "ar" ? "أوضاع القرآن" : "Quran modes",
+  };
 
   // Dynamic greeting logic
   const getGreeting = () => {
@@ -125,6 +145,49 @@ export default function QuranPage() {
     onClick: () => void;
   }>;
 
+  const normalizedDashboardOrder = DEFAULT_DASHBOARD_ORDER.filter((id) => dashboardOrder.includes(id)).concat(
+    dashboardOrder.filter((id, index, arr) => DEFAULT_DASHBOARD_ORDER.includes(id) && arr.indexOf(id) === index && !DEFAULT_DASHBOARD_ORDER.filter((baseId) => dashboardOrder.includes(baseId)).includes(id))
+  );
+
+  const moveDashboardSection = (sectionId: DashboardSectionId, direction: "up" | "down") => {
+    setDashboardOrder((prev) => {
+      const order = prev.length > 0 ? [...prev] : [...DEFAULT_DASHBOARD_ORDER];
+      const index = order.indexOf(sectionId);
+      if (index === -1) return order;
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= order.length) return order;
+      [order[index], order[target]] = [order[target], order[index]];
+      return order;
+    });
+  };
+
+  const toggleSectionVisibility = (sectionId: DashboardSectionId) => {
+    setHiddenSections((prev) => prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId]);
+  };
+
+  const activitySummary = (
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 rounded-3xl glass-card p-4 shadow-soft border border-white/10" data-testid="quran-home-activity-summary">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm font-semibold text-foreground">{language === "ar" ? "ملخص اليوم" : "Today at a glance"}</p>
+        <span className="text-xs text-primary font-semibold">{language === "ar" ? `${toArabicNumerals(todayCount)} / ${toArabicNumerals(goal)}` : `${todayCount} / ${goal}`}</span>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-2xl bg-primary/5 p-3 text-center">
+          <p className="text-lg font-bold text-primary">{language === "ar" ? toArabicNumerals(todayCount) : todayCount}</p>
+          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "ورد اليوم" : "Today’s wird"}</p>
+        </div>
+        <div className="rounded-2xl bg-card p-3 text-center border border-border/50">
+          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(streak) : streak}</p>
+          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "أيام متتالية" : "Streak days"}</p>
+        </div>
+        <div className="rounded-2xl bg-card p-3 text-center border border-border/50">
+          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(bookmarkedSurahs.length) : bookmarkedSurahs.length}</p>
+          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "سور محفوظة" : "Bookmarked surahs"}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+
   const modeCards: ModeCard[] = [
     {
       key: "reading",
@@ -177,6 +240,90 @@ export default function QuranPage() {
     }
   };
 
+  const dashboardSections: Record<DashboardSectionId, React.ReactNode | null> = {
+    "next-prayer": nextPrayer ? (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex items-center gap-2 text-[11px] text-muted-foreground bg-primary/5 py-1.5 px-3 rounded-full border border-primary/10 w-fit" data-testid="quran-home-next-prayer-chip">
+        <Clock className="h-3 w-3 text-primary" />
+        <span>{t("next_prayer")}: <span className="font-bold text-foreground">{nextPrayer.name}</span></span>
+        <span className="opacity-50">•</span>
+        <span className="font-bold text-primary">{language === "ar" ? toArabicNumerals(nextPrayer.time) : nextPrayer.time}</span>
+      </motion.div>
+    ) : null,
+    "featured-resume": lastRead ? (
+      <motion.button
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        whileTap={{ scale: 0.99 }}
+        onClick={() => navigate(`/surah/${lastRead.surah}${lastRead.mode === "listening" ? "?mode=listening" : ""}`)}
+        data-testid="quran-home-featured-resume-card"
+        className={cn(
+          "flex w-full items-center rounded-[2rem] glass-card py-5 px-6 shadow-2xl border border-white/10 hover-lift gap-4 mb-4 relative overflow-hidden group",
+          isRTL ? "text-right" : "text-left"
+        )}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-inner">
+          {lastRead.mode === "listening" ? <Headphones className="h-6 w-6 text-primary" /> : <BookOpen className="h-6 w-6 text-primary" />}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest mb-1">{lastRead.mode === "listening" ? t("continue_listening") : t("continue_reading")}</p>
+          <h3 className="text-base font-serif font-bold text-foreground truncate">{t("surah")} {getSurahName(lastRead.surah)}</h3>
+          <p className="text-[11px] text-muted-foreground/80 mt-0.5">{t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}</p>
+        </div>
+        <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+          {isRTL ? <ArrowRight className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4 text-primary" />}
+        </div>
+      </motion.button>
+    ) : null,
+    "quick-resume": quickResumeCards.length > 0 ? (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" data-testid="quran-home-quick-resume-grid">
+        {quickResumeCards.map((card) => (
+          <motion.button
+            key={card.key}
+            whileTap={{ scale: 0.98 }}
+            onClick={card.onClick}
+            data-testid={`quran-home-quick-resume-${card.key}`}
+            className="rounded-2xl border border-border/50 bg-card p-4 shadow-soft text-start hover:border-primary/30 transition-colors"
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <div className="rounded-xl bg-primary/10 p-2">{card.icon}</div>
+              <p className="text-sm font-semibold text-foreground">{card.label}</p>
+            </div>
+            <p className="font-arabic text-base font-bold text-foreground truncate">{getSurahName(card.surah)}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("ayah")} {language === "en" ? card.ayah : toArabicNumerals(card.ayah)}</p>
+          </motion.button>
+        ))}
+      </div>
+    ) : null,
+    activity: activitySummary,
+    modes: (
+      <div className="grid grid-cols-2 gap-4 mt-2" dir={isRTL ? "rtl" : "ltr"} data-testid="quran-home-mode-grid">
+        {modeCards.map((card, i) => (
+          <motion.button
+            key={card.key}
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.06 + i * 0.1, duration: 0.5, ease: "easeOut" }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => handleModeCard(card)}
+            className="flex flex-col items-center justify-center text-center gap-4 rounded-[2rem] glass-card px-4 py-8 shadow-2xl border border-white/10 hover:border-primary/30 transition-all relative overflow-hidden group"
+          >
+            <div className={cn("absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity", card.bgGradient)} />
+            <div className={cn("relative z-10 flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-inner border border-white/10 bg-white/5", card.accentColor)}>
+              <div className="absolute inset-0 bg-current opacity-5 rounded-[1.5rem]" />
+              {card.icon}
+            </div>
+            <div className="relative z-10">
+              <h3 className="text-lg font-serif font-bold text-foreground mb-1">{t(card.titleKey)}</h3>
+              <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold leading-tight">{t(card.subtitleKey)}</p>
+            </div>
+            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity"><ChevronRight className="h-4 w-4 text-primary" /></div>
+          </motion.button>
+        ))}
+      </div>
+    ),
+  };
+
   const handleSurahSelect = (surahNumber: number) => {
     if (view === "surahs_listening") {
       navigate(`/surah/${surahNumber}?mode=listening`);
@@ -213,6 +360,14 @@ export default function QuranPage() {
           <div className="flex items-center gap-1.5">
             <motion.button
               whileTap={{ scale: 0.9 }}
+              onClick={() => setShowDashboardEditor((prev) => !prev)}
+              data-testid="quran-home-dashboard-editor-button"
+              className="rounded-xl p-2.5 glass-card text-muted-foreground shadow-soft hover:bg-muted/50 transition-colors"
+            >
+              <GripVertical className="h-5 w-5" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
               onClick={() => navigate("/sleep")}
               className="rounded-xl p-2.5 glass-card text-muted-foreground shadow-soft hover:bg-muted/50 transition-colors">
               <BedDouble className="h-5 w-5" />
@@ -226,16 +381,44 @@ export default function QuranPage() {
           </div>
         </div>
 
-        {/* Next Prayer Quick Info */}
-        {nextPrayer && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
+        {showDashboardEditor && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2 text-[11px] text-muted-foreground bg-primary/5 py-1.5 px-3 rounded-full border border-primary/10 w-fit">
-            <Clock className="h-3 w-3 text-primary" />
-            <span>{t("next_prayer")}: <span className="font-bold text-foreground">{nextPrayer.name}</span></span>
-            <span className="opacity-50">•</span>
-            <span className="font-bold text-primary">{language === "ar" ? toArabicNumerals(nextPrayer.time) : nextPrayer.time}</span>
+            className="mt-4 rounded-3xl glass-card border border-border/40 p-4 shadow-soft"
+            data-testid="quran-home-dashboard-editor-panel"
+          >
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{language === "ar" ? "تخصيص الصفحة الرئيسية" : "Customize Home"}</p>
+                <p className="text-xs text-muted-foreground">{language === "ar" ? "أخفِ البطاقات أو غيّر ترتيبها كما تحب." : "Show, hide, and reorder dashboard sections."}</p>
+              </div>
+              <button onClick={() => { setDashboardOrder(DEFAULT_DASHBOARD_ORDER); setHiddenSections([]); }} className="text-xs text-primary font-semibold" data-testid="quran-home-dashboard-reset-button">
+                {language === "ar" ? "إعادة ضبط" : "Reset"}
+              </button>
+            </div>
+            <div className="space-y-2">
+              {normalizedDashboardOrder.map((sectionId, index) => {
+                const hidden = hiddenSections.includes(sectionId);
+                return (
+                  <div key={sectionId} className="flex items-center gap-2 rounded-2xl border border-border/40 bg-card/70 px-3 py-2" data-testid={`quran-home-dashboard-item-${sectionId}`}>
+                    <GripVertical className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{sectionLabels[sectionId]}</p>
+                    </div>
+                    <button onClick={() => toggleSectionVisibility(sectionId)} className="rounded-lg p-2 hover:bg-muted transition-colors" data-testid={`quran-home-dashboard-toggle-${sectionId}`}>
+                      {hidden ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-primary" />}
+                    </button>
+                    <button onClick={() => moveDashboardSection(sectionId, "up")} disabled={index === 0} className="rounded-lg p-2 hover:bg-muted transition-colors disabled:opacity-30" data-testid={`quran-home-dashboard-up-${sectionId}`}>
+                      <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                    <button onClick={() => moveDashboardSection(sectionId, "down")} disabled={index === normalizedDashboardOrder.length - 1} className="rounded-lg p-2 hover:bg-muted transition-colors disabled:opacity-30" data-testid={`quran-home-dashboard-down-${sectionId}`}>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </motion.div>
         )}
       </div>
@@ -285,107 +468,11 @@ export default function QuranPage() {
             transition={{ duration: 0.22 }}>
 
 
-            {/* Continue Reading/Listening - Jewel Card */}
-            {lastRead && (
-              <motion.button
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => navigate(`/surah/${lastRead.surah}${lastRead.mode === "listening" ? "?mode=listening" : ""}`)}
-                className={cn(
-                  "flex w-full items-center rounded-[2rem] glass-card py-5 px-6 shadow-2xl border border-white/10 hover-lift gap-4 mb-4 relative overflow-hidden group",
-                  isRTL ? "text-right" : "text-left"
-                )}>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20 shadow-inner">
-                  {lastRead.mode === "listening" ? (
-                    <Headphones className="h-6 w-6 text-primary" />
-                  ) : (
-                    <BookOpen className="h-6 w-6 text-primary" />
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-muted-foreground/60 font-bold uppercase tracking-widest mb-1">
-                    {lastRead.mode === "listening" ? t("continue_listening") : t("continue_reading")}
-                  </p>
-                  <h3 className="text-base font-serif font-bold text-foreground truncate">
-                    {t("surah")} {getSurahName(lastRead.surah)}
-                  </h3>
-                  <p className="text-[11px] text-muted-foreground/80 mt-0.5">
-                    {t("ayah")} {language === "en" ? lastRead.ayah : toArabicNumerals(lastRead.ayah)}
-                  </p>
-                </div>
-
-                <div className="shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  {isRTL
-                    ? <ArrowRight className="h-4 w-4 text-primary" />
-                    : <ChevronRight className="h-4 w-4 text-primary" />
-                  }
-                </div>
-              </motion.button>
-            )}
-
-            {quickResumeCards.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" data-testid="quran-home-quick-resume-grid">
-                {quickResumeCards.map((card) => (
-                  <motion.button
-                    key={card.key}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={card.onClick}
-                    data-testid={`quran-home-quick-resume-${card.key}`}
-                    className="rounded-2xl border border-border/50 bg-card p-4 shadow-soft text-start hover:border-primary/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="rounded-xl bg-primary/10 p-2">{card.icon}</div>
-                      <p className="text-sm font-semibold text-foreground">{card.label}</p>
-                    </div>
-                    <p className="font-arabic text-base font-bold text-foreground truncate">{getSurahName(card.surah)}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t("ayah")} {language === "en" ? card.ayah : toArabicNumerals(card.ayah)}
-                    </p>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-
-            {/* Mode Selection Cards — Premium Grid */}
-            <div className="grid grid-cols-2 gap-4 mt-2" dir={isRTL ? "rtl" : "ltr"}>
-              {modeCards.map((card, i) => (
-                <motion.button
-                  key={card.key}
-                  initial={{ opacity: 0, y: 20, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ delay: 0.06 + i * 0.1, duration: 0.5, ease: "easeOut" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => handleModeCard(card)}
-                  className={cn(
-                    "flex flex-col items-center justify-center text-center gap-4 rounded-[2rem] glass-card px-4 py-8 shadow-2xl border border-white/10 hover:border-primary/30 transition-all relative overflow-hidden group"
-                  )}>
-
-                  <div className={cn("absolute inset-0 bg-gradient-to-br opacity-5 group-hover:opacity-10 transition-opacity", card.bgGradient)} />
-
-                  <div className={cn("relative z-10 flex h-16 w-16 items-center justify-center rounded-[1.5rem] shadow-inner border border-white/10 bg-white/5", card.accentColor)}>
-                    <div className="absolute inset-0 bg-current opacity-5 rounded-[1.5rem]" />
-                    {card.icon}
-                  </div>
-
-                  <div className="relative z-10">
-                    <h3 className="text-lg font-serif font-bold text-foreground mb-1">
-                      {t(card.titleKey)}
-                    </h3>
-                    <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold leading-tight">
-                      {t(card.subtitleKey)}
-                    </p>
-                  </div>
-                  
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity">
-                    <ChevronRight className="h-4 w-4 text-primary" />
-                  </div>
-                </motion.button>
+            {normalizedDashboardOrder
+              .filter((sectionId) => !hiddenSections.includes(sectionId))
+              .map((sectionId) => (
+                <div key={sectionId}>{dashboardSections[sectionId]}</div>
               ))}
-            </div>
 
           </motion.div>
         )}

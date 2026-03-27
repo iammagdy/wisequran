@@ -7,6 +7,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { useHifz } from "@/hooks/useHifz";
 import { useHifzReview } from "@/hooks/useHifzReview";
 import { useHifzGoal } from "@/hooks/useHifzStreak";
+import { useRecitationHistory } from "@/hooks/useRecitationHistory";
 import { StatCard } from "@/components/stats/StatCard";
 import { WeeklyChart } from "@/components/stats/WeeklyChart";
 import { StreakCalendar } from "@/components/stats/StreakCalendar";
@@ -15,6 +16,8 @@ import { Progress } from "@/components/ui/progress";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFadeInView } from "@/hooks/useFadeInView";
+import { useEffect } from "react";
+import { SURAH_META } from "@/data/surah-meta";
 
 export default function StatsPage() {
   const navigate = useNavigate();
@@ -24,10 +27,25 @@ export default function StatsPage() {
   const { stats: hifzStats } = useHifz();
   const review = useHifzReview();
   const memorizationGoal = useHifzGoal();
+  const recitationHistory = useRecitationHistory();
   const { t, language, isRTL } = useLanguage();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
   const weeklyGoalProgress = Math.min((weeklyTotal / (goal * 7 || 1)) * 100, 100);
+
+  useEffect(() => {
+    void recitationHistory.fetchHistory();
+  }, [recitationHistory]);
+
+  const heatmapItems = Object.values(
+    recitationHistory.history.reduce<Record<number, { surahNumber: number; attempts: number; avgScore: number }>>((acc, record) => {
+      const current = acc[record.surah_number] ?? { surahNumber: record.surah_number, attempts: 0, avgScore: 0 };
+      current.avgScore = ((current.avgScore * current.attempts) + record.score) / (current.attempts + 1);
+      current.attempts += 1;
+      acc[record.surah_number] = current;
+      return acc;
+    }, {})
+  ).sort((a, b) => (a.avgScore - b.avgScore) || (b.attempts - a.attempts)).slice(0, 6);
 
   const chart = useFadeInView(0);
   const calendar = useFadeInView(0.05);
@@ -146,6 +164,44 @@ export default function StatsPage() {
           </div>
         </motion.div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.42 }}
+        className="rounded-2xl glass-card p-4 border border-border/50 mb-5"
+        data-testid="stats-recitation-heatmap-card"
+      >
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <p className="text-sm font-semibold text-foreground">{language === "ar" ? "خريطة التعثر في التسميع" : "Recitation Mistake Heatmap"}</p>
+          <span className="text-xs text-muted-foreground">{language === "ar" ? "أضعف السور مؤخرًا" : "Recent weak surahs"}</span>
+        </div>
+
+        {heatmapItems.length === 0 ? (
+          <div className="rounded-xl bg-muted/30 px-3 py-4 text-center text-xs text-muted-foreground">
+            {language === "ar" ? "لا توجد بيانات كافية بعد — جرّب التسميع لتظهر الخريطة." : "Not enough recitation data yet — complete a recitation test to see the heatmap."}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {heatmapItems.map((item) => {
+              const meta = SURAH_META[item.surahNumber - 1];
+              const intensity = item.avgScore >= 85 ? "bg-primary/10 border-primary/30" : item.avgScore >= 60 ? "bg-accent/10 border-accent/30" : "bg-destructive/10 border-destructive/30";
+              return (
+                <div key={item.surahNumber} className={`rounded-2xl border p-3 ${intensity}`} data-testid={`stats-heatmap-surah-${item.surahNumber}`}>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <p className="font-arabic text-base font-bold text-foreground truncate">{language === "ar" ? meta?.name : meta?.englishName}</p>
+                    <span className="text-xs font-semibold text-muted-foreground">{language === "ar" ? `${toArabicNumerals(item.attempts)} محاولة` : `${item.attempts} tries`}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <Progress value={item.avgScore} variant="gradient" size="sm" className="flex-1" />
+                    <span className="text-xs font-bold text-foreground">{language === "ar" ? toArabicNumerals(Math.round(item.avgScore)) : Math.round(item.avgScore)}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
 
       {/* Weekly Chart */}
       <div className="mb-5" ref={chart.ref} style={chart.style}>
