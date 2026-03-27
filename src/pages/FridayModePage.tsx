@@ -12,7 +12,10 @@ function getFridayKey() {
   const today = new Date();
   const friday = new Date(today);
   friday.setDate(today.getDate() - ((today.getDay() + 2) % 7));
-  return friday.toISOString().slice(0, 10);
+  const year = friday.getFullYear();
+  const month = String(friday.getMonth() + 1).padStart(2, "0");
+  const day = String(friday.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export default function FridayModePage() {
