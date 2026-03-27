@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.3.0";
+export const APP_VERSION = "3.4.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,66 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.4.0",
+    date: "2026-03-27",
+    ar: {
+      features: [
+        "إضافة وضع الجمعة الكامل مع مركز مخصص يضم سورة الكهف، تذكير الجمعة، عداد الصلاة على النبي ﷺ، وقائمة متابعة",
+      ],
+      improvements: [
+        "توسيع خطة الحفظ لتشمل نظرة أسبوعية للمراجعة مع اقتراح يومي أوضح",
+        "ترقية تقارير التسميع بإحصاءات أعمق مثل متوسط الثقة وأفضل/أضعف آية وأكثر الكلمات تعثرًا",
+      ],
+      fixes: [
+        "الحفاظ على عمل تحليلات التسميع حتى بدون إعداد Supabase عبر مسار محلي احتياطي للسجل",
+      ],
+    },
+    en: {
+      features: [
+        "Added a full Friday Mode hub with Surah Al-Kahf, Friday reminders, a salawat counter, and a guided checklist",
+      ],
+      improvements: [
+        "Expanded Hifz planning with a clearer weekly revision overview and daily recommendation",
+        "Upgraded recitation reports with deeper analytics such as average confidence, strongest/weakest ayah, and most difficult words",
+      ],
+      fixes: [
+        "Kept recitation analytics working even without Supabase by adding a safe local history fallback",
+      ],
+    },
+  },
+  {
+    version: "3.3.1",
+    date: "2026-03-27",
+    ar: {
+      features: [
+        "إضافة صفحة تشخيص Safari مع فحوصات سريعة للصوت والمايك والإشعارات وسجل نتائج محفوظ",
+        "إضافة مركز بدون إنترنت لتحميل نصوص القرآن وصوت القارئ الحالي وإدارة التخزين بسهولة",
+      ],
+      improvements: [
+        "إضافة بطاقات منفصلة في الصفحة الرئيسية لمتابعة القراءة والاستماع بسرعة",
+        "إضافة تخصيصات قراءة جديدة مثل تباعد السطور، لون النص، ووضع التركيز الهادئ",
+        "تحسين لوحة الإحصائيات ببطاقة هدف أسبوعي وملخص أساسي لتقدم الحفظ",
+      ],
+      fixes: [
+        "تحسين صفحة التسميع بإضافة مهلة توقف قابلة للتعديل ومسار لإعادة الجزء المتعثر فقط",
+      ],
+    },
+    en: {
+      features: [
+        "Added a Safari Diagnostics page with quick audio, microphone, and notification checks plus persistent history logs",
+        "Added an Offline Center for Quran text and current-reciter audio downloads with simple storage management",
+      ],
+      improvements: [
+        "Added separate home quick-resume cards for reading and listening",
+        "Added new reader personalization controls for line spacing, text tone, and a calmer focus preset",
+        "Enhanced the Stats dashboard with a weekly goal card and a basic memorization snapshot",
+      ],
+      fixes: [
+        "Improved the recitation page with adjustable pause tolerance and a practice-missed-part flow",
+      ],
+    },
+  },
   {
     version: "3.3.0",
     date: "2026-03-19",

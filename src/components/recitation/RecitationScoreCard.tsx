@@ -16,7 +16,9 @@ interface Props {
   ayahFrom: number;
   ayahTo: number;
   strictness?: StrictnessLevel;
+  pauseToleranceMs?: number;
   onTryAgain: () => void;
+  onPracticeMistakes?: () => void;
 }
 
 function getIslamicFeedback(score: number, t: (k: string) => string): { label: string; color: string } {
@@ -261,7 +263,9 @@ export default function RecitationScoreCard({
   ayahFrom,
   ayahTo,
   strictness = "normal",
-  onTryAgain
+  pauseToleranceMs = 3200,
+  onTryAgain,
+  onPracticeMistakes,
 }: Props) {
   const { t, language, isRTL } = useLanguage();
   const feedback = getIslamicFeedback(score, t as (k: string) => string);
@@ -273,6 +277,19 @@ export default function RecitationScoreCard({
   const totalMissedWords = perAyah.reduce((sum, a) => sum + a.wordDiffs.filter(d => d.spoken === null).length, 0);
   const totalWrongWords = perAyah.reduce((sum, a) => sum + a.wordDiffs.filter(d => d.spoken !== null && d.matchScore < 85).length, 0);
   const incorrectAyahs = totalAyahs - correctAyahs;
+  const practiceableAyahs = perAyah.filter((ayah) => !ayah.isCorrect).length;
+  const strongestAyah = perAyah.reduce((best, current) => current.score > best.score ? current : best, perAyah[0]);
+  const weakestAyah = perAyah.reduce((worst, current) => current.score < worst.score ? current : worst, perAyah[0]);
+  const wordScores = perAyah.flatMap((ayah) => ayah.wordDiffs.map((diff) => diff.matchScore));
+  const averageWordConfidence = wordScores.length > 0 ? Math.round(wordScores.reduce((sum, score) => sum + score, 0) / wordScores.length) : score;
+  const commonMistakes = Object.entries(
+    perAyah.flatMap((ayah) => ayah.wordDiffs)
+      .filter((diff) => diff.matchScore < 85)
+      .reduce<Record<string, number>>((acc, diff) => {
+        acc[diff.expected] = (acc[diff.expected] ?? 0) + 1;
+        return acc;
+      }, {})
+  ).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   const ayahTextMap = new Map(ayahsData.map(a => [a.numberInSurah, a.text]));
 
@@ -326,6 +343,11 @@ export default function RecitationScoreCard({
             {t(`strictness_${strictness}` as Parameters<typeof t>[0])}
           </span>
         </div>
+        <p className="mt-2 text-[0.7rem] text-muted-foreground">
+          {language === "ar"
+            ? `مهلة التوقف الحالية ${toArabicNumerals((pauseToleranceMs / 1000).toFixed(1))} ثانية`
+            : `Current pause tolerance ${(pauseToleranceMs / 1000).toFixed(1)}s`}
+        </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-primary/5 border border-primary/10 p-3">
@@ -377,6 +399,40 @@ export default function RecitationScoreCard({
       </div>
 
       {perAyah.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-confidence-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "متوسط الثقة" : "Average confidence"}</p>
+            <p className="text-xl font-bold text-foreground">{language === "ar" ? toArabicNumerals(averageWordConfidence) : averageWordConfidence}%</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-strongest-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "أفضل آية" : "Strongest ayah"}</p>
+            <p className="text-xl font-bold text-primary">{language === "ar" ? toArabicNumerals(strongestAyah?.numberInSurah ?? 0) : strongestAyah?.numberInSurah ?? 0}</p>
+          </div>
+          <div className="rounded-2xl bg-card border border-border/50 p-4 shadow-soft" data-testid="recitation-analytics-weakest-card">
+            <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "أضعف آية" : "Weakest ayah"}</p>
+            <p className="text-xl font-bold text-destructive">{language === "ar" ? toArabicNumerals(weakestAyah?.numberInSurah ?? 0) : weakestAyah?.numberInSurah ?? 0}</p>
+          </div>
+        </div>
+      )}
+
+      {commonMistakes.length > 0 && (
+        <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden" data-testid="recitation-common-mistakes-card">
+          <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-foreground">{language === "ar" ? "أكثر الكلمات تعثرًا" : "Most difficult words"}</h3>
+            <span className="text-[0.65rem] text-muted-foreground">{language === "ar" ? "تكرار الكلمات الضعيفة" : "Repeated weak words"}</span>
+          </div>
+          <div className="px-4 pb-4 flex flex-wrap gap-2" dir="rtl">
+            {commonMistakes.map(([word, count]) => (
+              <div key={word} className="rounded-full border border-destructive/20 bg-destructive/5 px-3 py-1.5 text-sm font-arabic text-foreground">
+                {word}
+                <span className="ms-2 text-xs text-destructive">× {language === "ar" ? toArabicNumerals(count) : count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {perAyah.length > 0 && (
         <div className="rounded-2xl bg-card border border-border/50 shadow-soft overflow-hidden">
           <div className="px-4 pt-4 pb-2 flex items-center justify-between">
             <h3 className="text-sm font-bold text-foreground">{t("per_ayah_breakdown")}</h3>
@@ -400,14 +456,27 @@ export default function RecitationScoreCard({
         </div>
       )}
 
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        onClick={onTryAgain}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-muted py-4 text-sm font-semibold hover:bg-muted/70 transition-colors min-h-[52px]"
-      >
-        <RotateCcw className="h-4 w-4" />
-        {t("try_again")}
-      </motion.button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {onPracticeMistakes && practiceableAyahs > 0 && (
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={onPracticeMistakes}
+            className="w-full flex items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors min-h-[52px]"
+            data-testid="recitation-practice-mistakes-button"
+          >
+            <AlertCircle className="h-4 w-4" />
+            {language === "ar" ? `أعد الجزء المتعثر (${toArabicNumerals(practiceableAyahs)})` : `Practice missed part (${practiceableAyahs})`}
+          </motion.button>
+        )}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onTryAgain}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-muted py-4 text-sm font-semibold hover:bg-muted/70 transition-colors min-h-[52px]"
+        >
+          <RotateCcw className="h-4 w-4" />
+          {t("try_again")}
+        </motion.button>
+      </div>
     </motion.div>
   );
 }

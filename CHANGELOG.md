@@ -2,6 +2,42 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.4.0] - 2026-03-27
+
+### 🌙 Friday & Memorization Upgrade Release
+
+### ✨ New Features
+
+- Added a full Friday Mode hub with Surah Al-Kahf, Friday reminders, a salawat counter, and a guided checklist
+
+### 🔧 Improvements
+
+- Expanded Hifz planning with a clearer weekly revision overview and daily recommendation
+- Upgraded recitation reports with deeper analytics like average confidence, strongest/weakest ayah, and most difficult words
+
+### 🐛 Fixes
+
+- Added a safe local fallback for recitation history so analytics still work when Supabase is not configured
+
+## [3.3.1] - 2026-03-27
+
+### 🌟 Experience Expansion Release
+
+### ✨ New Features
+
+- Added a Safari Diagnostics page with quick checks for audio, microphone, notifications, and a saved diagnostics history
+- Added an Offline Center focused on Quran text and current-reciter audio downloads with simple storage management
+
+### 🔧 Improvements
+
+- Added separate home quick-resume cards for reading and listening
+- Added new reader personalization controls for line spacing, text tone, and a calmer focus preset
+- Enhanced the Stats dashboard with a weekly goal card and a basic memorization snapshot
+
+### 🐛 Fixes
+
+- Improved the recitation experience with adjustable pause tolerance and a practice-missed-part flow
+
 ## [3.3.0] - 2026-03-19
 
 ### ⚡ Performance & Seasonal Cleanup Release

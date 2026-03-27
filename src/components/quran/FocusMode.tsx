@@ -8,6 +8,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface FocusModeProps {
   ayahs: Ayah[];
   fontSize: number;
+  lineHeight: number;
+  readerToneClass: string;
+  focusPreset: "standard" | "calm";
   surahNumber: number;
   surahName: string;
   playingAyah: number | null;
@@ -19,6 +22,9 @@ interface FocusModeProps {
 export default function FocusMode({
   ayahs,
   fontSize,
+  lineHeight,
+  readerToneClass,
+  focusPreset,
   surahNumber,
   surahName,
   playingAyah,
@@ -70,7 +76,9 @@ export default function FocusMode({
       transition={{ duration: 0.4 }}
       className="fixed inset-0 z-[60] flex flex-col"
       style={{
-        background: "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 50%, hsl(var(--background)) 100%)",
+        background: focusPreset === "calm"
+          ? "linear-gradient(180deg, hsl(var(--background)) 0%, rgba(16,185,129,0.12) 45%, hsl(var(--background)) 100%)"
+          : "linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--muted)) 50%, hsl(var(--background)) 100%)",
       }}
       onClick={resetControlsTimeout}
     >
@@ -135,8 +143,8 @@ export default function FocusMode({
 
         <div className="max-w-2xl mx-auto">
           <p
-            className="font-arabic text-foreground text-justify"
-            style={{ fontSize: fontSize + 2, lineHeight: 2.6 }}
+            className={cn("font-arabic text-justify", readerToneClass)}
+            style={{ fontSize: fontSize + 2, lineHeight }}
           >
             {ayahs.map((ayah) => (
               <span

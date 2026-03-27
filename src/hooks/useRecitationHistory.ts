@@ -1,7 +1,27 @@
 import { useState, useCallback } from "react";
-import { supabase } from "@/lib/supabase";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useDeviceId } from "./useDeviceId";
 import type { StrictnessLevel, PerAyahScoreResult } from "@/lib/ayah-match";
+
+const LOCAL_HISTORY_KEY = "wise-recitation-history-local";
+
+function loadLocalHistory(deviceId: string): RecitationRecord[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as RecitationRecord[];
+    return parsed.filter((item) => item.device_id === deviceId);
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalHistory(deviceId: string, nextRecord: RecitationRecord) {
+  const existing = loadLocalHistory(deviceId);
+  const merged = [nextRecord, ...existing].slice(0, 100);
+  localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(merged));
+  return merged;
+}
 
 export interface RecitationRecord {
   id: string;
@@ -34,6 +54,24 @@ export function useRecitationHistory() {
   const [loading, setLoading] = useState(false);
 
   const saveResult = useCallback(async (params: SaveRecitationParams): Promise<void> => {
+    const localRecord: RecitationRecord = {
+      id: `${deviceId}-${Date.now()}`,
+      device_id: deviceId,
+      surah_number: params.surahNumber,
+      ayah_from: params.ayahFrom,
+      ayah_to: params.ayahTo,
+      score: params.score,
+      total_ayahs: params.totalAyahs,
+      correct_ayahs: params.correctAyahs,
+      transcript: params.transcript,
+      tested_at: new Date().toISOString(),
+    };
+
+    if (!isSupabaseConfigured) {
+      setHistory(saveLocalHistory(deviceId, localRecord));
+      return;
+    }
+
     const versesRange = `${params.ayahFrom}-${params.ayahTo}`;
 
     const [legacyResult, sessionResult] = await Promise.all([
@@ -71,6 +109,12 @@ export function useRecitationHistory() {
   }, [deviceId]);
 
   const fetchHistory = useCallback(async (surahNumber?: number): Promise<void> => {
+    if (!isSupabaseConfigured) {
+      const local = loadLocalHistory(deviceId);
+      setHistory(surahNumber === undefined ? local : local.filter((item) => item.surah_number === surahNumber));
+      return;
+    }
+
     setLoading(true);
     let query = supabase
       .from("recitation_history")
@@ -91,6 +135,13 @@ export function useRecitationHistory() {
   }, [deviceId]);
 
   const getBestScore = useCallback(async (surahNumber: number, ayahFrom: number, ayahTo: number): Promise<number> => {
+    if (!isSupabaseConfigured) {
+      const local = loadLocalHistory(deviceId)
+        .filter((item) => item.surah_number === surahNumber && item.ayah_from === ayahFrom && item.ayah_to === ayahTo)
+        .sort((a, b) => b.score - a.score);
+      return local[0]?.score ?? 0;
+    }
+
     const { data } = await supabase
       .from("recitation_history")
       .select("score")

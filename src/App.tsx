@@ -19,11 +19,14 @@ const SurahReaderPage = lazy(() => import("@/pages/SurahReaderPage"));
 const AzkarPage = lazy(() => import("@/pages/AzkarPage"));
 const PrayerPage = lazy(() => import("@/pages/PrayerPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const SafariDiagnosticsPage = lazy(() => import("@/pages/SafariDiagnosticsPage"));
 const TasbeehPage = lazy(() => import("@/pages/TasbeehPage"));
 const StatsPage = lazy(() => import("@/pages/StatsPage"));
 const HifzPage = lazy(() => import("@/pages/HifzPage"));
 const RecitationTestPage = lazy(() => import("@/pages/RecitationTestPage"));
 const QiblaPage = lazy(() => import("@/pages/QiblaPage"));
+const OfflineCenterPage = lazy(() => import("@/pages/OfflineCenterPage"));
+const FridayModePage = lazy(() => import("@/pages/FridayModePage"));
 const RamadanPage = lazy(() => import("@/pages/RamadanPage"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const SignInPage = lazy(() => import("@/pages/SignInPage"));
@@ -34,6 +37,7 @@ import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
 import { usePrayerReminders } from "@/hooks/usePrayerReminders";
 import { useGlobalAudioBootstrap } from "@/hooks/useGlobalAudioBootstrap";
+import { useFridayReminders } from "@/hooks/useFridayReminders";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +47,7 @@ const AppContent = () => {
   useAzkarNotifications();
   useAdhan();
   usePrayerReminders();
+  useFridayReminders();
   const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (
     <>
@@ -66,7 +71,10 @@ const AppContent = () => {
                   <Route path="/hifz" element={<HifzPage />} />
                   <Route path="/hifz/test" element={<RecitationTestPage />} />
                   <Route path="/qibla" element={<QiblaPage />} />
+                  <Route path="/friday" element={<FridayModePage />} />
                   <Route path="/ramadan" element={<RamadanPage />} />
+                  <Route path="/offline" element={<OfflineCenterPage />} />
+                  <Route path="/settings/safari-diagnostics" element={<SafariDiagnosticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

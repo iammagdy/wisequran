@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { toArabicNumerals } from "@/lib/utils";
+import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ import {
 "@/components/ui/alert-dialog";
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
+import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
 
 const loadDBModule = () => import("@/lib/settings-storage");
 
@@ -77,6 +78,14 @@ export default function SettingsPage() {
     updateTime: updateReadingReminderTime,
   } = useReadingReminder();
   const { goal, setGoal } = useDailyReading();
+  const {
+    lineSpacing,
+    setLineSpacing,
+    readerColorTheme,
+    setReaderColorTheme,
+    focusPreset,
+    setFocusPreset,
+  } = useReaderPersonalization();
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
   const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
   const [surahs, setSurahs] = useState<SurahMeta[]>([]);
@@ -627,6 +636,37 @@ export default function SettingsPage() {
           </FadeSection>
         )}
 
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" />
+            {language === "ar" ? "أدوات سريعة" : "Quick Tools"}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              data-testid="settings-offline-center-button"
+              onClick={() => navigate("/offline")}
+              className="rounded-2xl border border-border/50 bg-card p-4 text-start shadow-soft hover:border-primary/30 transition-colors"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Download className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">{language === "ar" ? "المكتبة بدون إنترنت" : "Offline Center"}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{language === "ar" ? "حمّل النصوص والصوت وأدرها من شاشة مخصصة." : "Download and manage text and audio from a dedicated screen."}</p>
+            </button>
+            <button
+              data-testid="settings-safari-diagnostics-button"
+              onClick={() => navigate("/settings/safari-diagnostics")}
+              className="rounded-2xl border border-border/50 bg-card p-4 text-start shadow-soft hover:border-primary/30 transition-colors"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Smartphone className="h-4 w-4 text-primary" />
+                <span className="text-sm font-semibold text-foreground">{language === "ar" ? "تشخيص Safari" : "Safari Diagnostics"}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{language === "ar" ? "افحص الصوت والمايك والإشعارات على iPhone Safari." : "Check audio, mic, and notifications on iPhone Safari."}</p>
+            </button>
+          </div>
+        </section>
+
         {/* ─── Language & Content ─── */}
         <section>
           <div className="section-title flex items-center gap-1.5">
@@ -780,6 +820,87 @@ export default function SettingsPage() {
               <div className="mt-3 text-center text-muted-foreground space-y-0.5">
                 <p className="font-arabic" style={{ fontSize }}>بِسْمِ اللَّهِ</p>
                 {language === "en" && <p className="text-xs text-muted-foreground/70">In the Name of Allah</p>}
+              </div>
+            </div>
+
+            <Separator className="my-4" />
+
+            <div className="space-y-4">
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <MoreVertical className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">{language === "ar" ? "تباعد السطور" : "Line Spacing"}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: "compact", label: language === "ar" ? "مضغوط" : "Compact" },
+                    { key: "balanced", label: language === "ar" ? "متوازن" : "Balanced" },
+                    { key: "relaxed", label: language === "ar" ? "مريح" : "Relaxed" },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      data-testid={`settings-line-spacing-${option.key}`}
+                      onClick={() => setLineSpacing(option.key as typeof lineSpacing)}
+                      className={cn(
+                        "rounded-xl py-2 text-sm font-medium transition-colors",
+                        lineSpacing === option.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <Palette className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">{language === "ar" ? "لون النص" : "Text Tone"}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: "classic", label: language === "ar" ? "كلاسيكي" : "Classic" },
+                    { key: "emerald", label: language === "ar" ? "زمردي" : "Emerald" },
+                    { key: "sepia", label: language === "ar" ? "سيبيا" : "Sepia" },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      data-testid={`settings-reader-theme-${option.key}`}
+                      onClick={() => setReaderColorTheme(option.key as typeof readerColorTheme)}
+                      className={cn(
+                        "rounded-xl py-2 text-sm font-medium transition-colors",
+                        readerColorTheme === option.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <Moon className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">{language === "ar" ? "وضع التركيز" : "Focus Preset"}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: "standard", label: language === "ar" ? "قياسي" : "Standard" },
+                    { key: "calm", label: language === "ar" ? "هادئ" : "Calm" },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      data-testid={`settings-focus-preset-${option.key}`}
+                      onClick={() => setFocusPreset(option.key as typeof focusPreset)}
+                      className={cn(
+                        "rounded-xl py-2 text-sm font-medium transition-colors",
+                        focusPreset === option.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>

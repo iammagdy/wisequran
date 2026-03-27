@@ -1,42 +1,58 @@
 # PRD
 
 ## Original Problem Statement
-The user asked to analyze app performance, fix any issues without breaking functionality, remove the Ramadan tab because Ramadan is over while keeping the page code for later reuse, and update the app changelog/version to 3.3.0.
+The user asked to go with Phase 2 while ensuring no existing functionality breaks.
+Chosen scope:
+- Friday mode + deeper memorization planning + advanced recitation feedback
+- Friday mode should be a full hub with multiple cards and reminders
+- Memorization planning should include daily + weekly revision planning
+- Advanced recitation feedback should include all proposed analytics
+- Version should be bumped and changelog updated
 
 ## Architecture Decisions
-- Keep all product flows intact and focus on safe, low-risk performance improvements.
-- Improve frontend performance through Vite bundle splitting rather than rewriting feature logic.
-- Keep the Ramadan page route/code in the app, but remove current-season navigation exposure.
-- Reduce Settings page overhead by deferring heavy storage/database helpers until they are actually needed.
-- Clean up console/runtime warnings that affect maintainability and testing confidence.
+- Add Friday mode as a dedicated lazy-loaded route instead of overloading existing pages.
+- Keep Friday reminders lightweight and app-safe via local notification checks while the app is open.
+- Extend existing Hifz and recitation screens rather than replacing them.
+- Preserve compatibility when Supabase is not configured by using a local recitation-history fallback.
+- Use a minor feature-release bump to 3.4.0.
 
 ## What Has Been Implemented
-- Added smarter Vite manual chunk splitting to break large vendor code into smaller bundles (`motion-vendor`, `ui-vendor`, `data-vendor`, `charts-vendor`, etc.).
-- Reduced the main app chunk from roughly ~824 KB before optimization to ~172 KB after splitting (pre-gzip build output comparison).
-- Moved Settings page IndexedDB/storage helpers behind a deferred import path via `src/lib/settings-storage.ts`, so the Settings route no longer pulls those helpers eagerly.
-- Removed the Ramadan tab from the bottom navigation and removed Ramadan visibility controls from Settings.
-- Kept the `/ramadan` route and Ramadan page code in the codebase for future seasonal reuse.
-- Updated page transition ordering after Ramadan nav removal.
-- Added stronger testability coverage with `data-testid` on bottom nav links and Settings changelog controls.
-- Fixed React Router future-flag warnings by opting into supported future flags on `BrowserRouter`.
-- Fixed dialog accessibility warning in `NowPlayingScreen` by adding hidden dialog title/description.
-- Removed the unnecessary Supabase missing-env console warning and prevented eager Azan fallback audio requests in Settings.
-- Updated app version to `3.3.0` in `package.json`, `src/data/changelog.ts`, and `CHANGELOG.md`.
-- Added 3.3.0 changelog content focused on performance improvements and Ramadan tab cleanup.
+- Added `/friday` with `FridayModePage` including:
+  - Surah Al-Kahf shortcut
+  - Friday reminder toggle + test reminder button
+  - salawat counter with reset
+  - Friday checklist
+- Added `useFridayReminders()` and wired it into `App.tsx` so Friday reminders can trigger safely while the app is open.
+- Added a Friday entry card to `PrayerPage`.
+- Expanded `HifzPage` with a **weekly revision planner** card:
+  - due today / tomorrow / this week
+  - seven-day due buckets
+  - daily recommendation text
+- Expanded `RecitationScoreCard` with advanced feedback:
+  - average confidence
+  - strongest ayah
+  - weakest ayah
+  - most difficult words summary
+- Added a local fallback path in `useRecitationHistory.ts` so recitation analytics continue to work without Supabase.
+- Updated version surfaces to **3.4.0** in:
+  - `package.json`
+  - `src/data/changelog.ts`
+  - `CHANGELOG.md`
+- Fixed a Friday reminder timezone edge case by switching to local date keys.
 
 ## Prioritized Backlog
 ### P0
-- Split `SettingsPage.tsx` into smaller feature-focused components/hooks to reduce long-term regression risk.
-- Reduce debug auth console logs in production-facing flows if no longer needed.
+- Add stronger deterministic data-testid coverage for recitation result analytics and Friday interactions.
+- Split oversized Hifz / Recitation pages into smaller modules.
 
 ### P1
-- Further isolate database utilities used by Quran/tafsir/audio flows to optimize chunking even more.
-- Add more `data-testid` coverage to other high-impact interactive controls.
+- Add richer Friday content such as dua collections, Jumu'ah prep reminders, and saved Friday goals.
+- Expand memorization planning into a full week planner with adjustable targets and adaptive difficulty.
 
 ### P2
-- Explore font loading optimization/fallback strategy to reduce occasional external font request noise.
-- Add a lightweight internal performance diagnostics panel for route/chunk timing.
+- Add export/share options for Friday progress and recitation summaries.
+- Add deeper per-word recitation trends across time.
 
 ## Next Tasks
-- If desired, continue with a second performance pass focused specifically on auth logs, font loading, and breaking up `SettingsPage.tsx`.
-- Re-run device-level QA after any future seasonal feature reactivation (like Ramadan).
+- If requested, continue with Phase 3 or deepen the Friday/planner analytics further.
+- Re-run device-level QA for reminder-heavy flows on real mobile devices if needed.

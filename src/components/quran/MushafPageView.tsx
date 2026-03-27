@@ -8,6 +8,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 interface MushafPageViewProps {
   ayahs: Ayah[];
   fontSize: number;
+  lineHeight: number;
+  readerToneClass: string;
   surahNumber: number;
   highlightedAyah: number | null;
   playingAyah?: number | null;
@@ -23,6 +25,8 @@ interface MushafPageViewProps {
 export default function MushafPageView({
   ayahs,
   fontSize,
+  lineHeight,
+  readerToneClass,
   surahNumber,
   highlightedAyah,
   playingAyah,
@@ -143,8 +147,8 @@ export default function MushafPageView({
               }
 
                 <p
-                className="font-arabic text-foreground text-justify flex-1"
-                style={{ fontSize, lineHeight: 2.4 }}>
+                className={cn("font-arabic text-justify flex-1", readerToneClass)}
+                style={{ fontSize, lineHeight }}>
                 
                   {pageAyahs.map((ayah) =>
                 <span
