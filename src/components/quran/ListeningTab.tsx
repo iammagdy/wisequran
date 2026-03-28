@@ -47,6 +47,18 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   currentRepeatRef.current = currentRepeat;
   activeTimerRef.current = activeTimer;
 
+  // ⚡ Bolt: Performance optimization
+  // What: Built an O(N) Map for translation lookups instead of using O(N) Array.find() inside the render loop.
+  // Why: Prevents an O(N^2) operation when mapping over ayahs (e.g., Al-Baqarah has 286 ayahs).
+  // Impact: Significantly reduces render time and CPU overhead for long Surahs.
+  const translationMap = useMemo(() => {
+    const map = new Map<number, TafsirAyah>();
+    for (const t of translationAyahs) {
+      map.set(t.numberInSurah, t);
+    }
+    return map;
+  }, [translationAyahs]);
+
   const isThisSurah = player.surahNumber === surahNumber;
   const playing = isThisSurah && player.playing;
   const loading = isThisSurah && player.loading;
