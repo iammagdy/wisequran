@@ -175,7 +175,7 @@ export default function ChangelogModal({
               <button
                 onClick={onDismissTemporary}
                 className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors`}
-                aria-label="Close"
+                aria-label={language === "ar" ? "إغلاق" : "Close"}
               >
                 <X className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
