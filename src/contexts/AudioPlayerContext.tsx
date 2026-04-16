@@ -52,6 +52,9 @@ const AudioPlayerTimeContext = createContext<AudioPlayerTimeContextType>({
   duration: 0,
   currentAyahInSurah: null,
 });
+// Separate ayah-only context so components that only need currentAyahInSurah
+// (e.g. SurahReaderPage, ListeningTab) are NOT re-rendered on every 250ms
+// timeupdate tick. This context updates only when the ayah number changes.
 const AudioPlayerAyahContext = createContext<{ currentAyahInSurah: number | null }>({
   currentAyahInSurah: null,
 });
