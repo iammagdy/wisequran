@@ -24,6 +24,15 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: true,
         runtimeCaching: [
           {
+            urlPattern: /\/data\/tafsir\/.*\.json$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "offline-tafsir-cache",
+              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: /^https?:\/\/.*\/audio\/adhan\/.*\.mp3$/i,
             handler: "CacheFirst",
             options: {

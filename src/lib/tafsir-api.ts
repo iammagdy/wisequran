@@ -1,4 +1,5 @@
 import { getTafsir, saveTafsir } from "./db";
+import { isOfflineTafsirEdition, loadOfflineTafsirSurah } from "./offline-tafsir";
 
 const API_BASE = "https://api.alquran.cloud/v1";
 
@@ -11,6 +12,11 @@ export async function fetchTafsir(
   surahNumber: number,
   editionId: string
 ): Promise<TafsirAyah[]> {
+  // Prefer bundled offline data when available.
+  if (isOfflineTafsirEdition(editionId)) {
+    return loadOfflineTafsirSurah(editionId, surahNumber);
+  }
+
   // Check cache
   const cached = await getTafsir(editionId, surahNumber);
   if (cached) return cached.ayahs;

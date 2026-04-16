@@ -24,6 +24,7 @@ import { DEFAULT_TAFSIR, TAFSIR_EDITIONS, ENGLISH_TAFSIR_ID } from "@/data/tafsi
 import { DEFAULT_TRANSLATION, TRANSLATION_EDITIONS } from "@/data/translation-editions";
 import { HighlightText } from "@/components/HighlightText";
 import MushafPageView from "@/components/quran/MushafPageView";
+import TafsirSheet from "@/components/quran/TafsirSheet";
 import FocusMode from "@/components/quran/FocusMode";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -94,6 +95,8 @@ export default function SurahReaderPage() {
   }, [isMushafActive]);
 
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
+  const [tafsirSheetAyah, setTafsirSheetAyah] = useState<number | null>(null);
+  const [tafsirSheetOpen, setTafsirSheetOpen] = useState(false);
   const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
   const [tafsirLoading, setTafsirLoading] = useState(false);
   const [tafsirError, setTafsirError] = useState("");
@@ -288,8 +291,8 @@ export default function SurahReaderPage() {
   const hasNote = (ayahNum: number) => getNoteFor(surahNumber, ayahNum).length > 0;
 
   const handleAyahTafsir = (ayahNum: number) => {
-    setFocusedAyah(ayahNum);
-    setActiveTab("tafsir");
+    setTafsirSheetAyah(ayahNum);
+    setTafsirSheetOpen(true);
   };
 
   const currentReciterName = (() => { const r = getReciterById(audioPlayer.reciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })();
@@ -982,6 +985,17 @@ export default function SurahReaderPage() {
           />
         );
       })()}
+
+      {/* Per-ayah Tafsir bottom sheet */}
+      <TafsirSheet
+        open={tafsirSheetOpen}
+        onOpenChange={setTafsirSheetOpen}
+        surahNumber={surahNumber}
+        surahName={displaySurahName}
+        ayahNumber={tafsirSheetAyah}
+        ayahText={tafsirSheetAyah !== null ? ayahs.find((a) => a.numberInSurah === tafsirSheetAyah)?.text : undefined}
+        editionId={effectiveTafsirEdition}
+      />
 
       {/* Global Quran Search Modal */}
       <SearchModal
