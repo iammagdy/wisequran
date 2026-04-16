@@ -5,12 +5,28 @@ import { clearAllAudio } from "@/lib/db";
 const THEMES = ["light", "dark", "system"] as const;
 const LANGS = ["ar", "en"] as const;
 const THEME_KEY = "wise-quran-theme";
+const LANG_KEY = "wise-language";
+const LS_SYNC_EVENT = "local-storage-sync";
+
+function lsRead(key: string, fallback: string): string {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as string) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function lsWrite(key: string, value: string) {
+  localStorage.setItem(key, JSON.stringify(value));
+  window.dispatchEvent(new CustomEvent(LS_SYNC_EVENT, { detail: { key, newValue: value } }));
+}
 
 function readTheme() {
-  return (localStorage.getItem(THEME_KEY) ?? "system") as string;
+  return lsRead(THEME_KEY, "system");
 }
 function readLang() {
-  return (localStorage.getItem("wise-language") ?? "ar") as string;
+  return lsRead(LANG_KEY, "ar");
 }
 
 export default function AppControlsPanel() {
@@ -25,9 +41,8 @@ export default function AppControlsPanel() {
   };
 
   const applyTheme = (t: string) => {
-    localStorage.setItem(THEME_KEY, t);
+    lsWrite(THEME_KEY, t);
     setTheme(t);
-    window.dispatchEvent(new StorageEvent("storage", { key: THEME_KEY, newValue: t }));
     document.documentElement.classList.remove("light", "dark");
     if (t === "dark") document.documentElement.classList.add("dark");
     else if (t === "light") document.documentElement.classList.remove("dark");
@@ -39,7 +54,7 @@ export default function AppControlsPanel() {
   };
 
   const applyLang = (l: string) => {
-    localStorage.setItem("wise-language", l);
+    lsWrite(LANG_KEY, l);
     setLang(l);
     flash(`Language → ${l} (reload the main app to see changes)`);
   };

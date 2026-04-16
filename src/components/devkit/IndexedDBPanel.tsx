@@ -10,6 +10,9 @@ interface StoreStats {
   syncQueue: number;
   audioBytes: number;
   surahBytes: number;
+  azkarBytes: number;
+  tafsirBytes: number;
+  syncQueueBytes: number;
 }
 
 interface AudioEntry {
@@ -38,6 +41,15 @@ export default function IndexedDBPanel() {
       let surahBytes = 0;
       for (const s of surahs) surahBytes += new Blob([JSON.stringify(s)]).size;
 
+      let azkarBytes = 0;
+      for (const a of azkar) azkarBytes += new Blob([JSON.stringify(a)]).size;
+
+      let tafsirBytes = 0;
+      for (const t of tafsir) tafsirBytes += new Blob([JSON.stringify(t)]).size;
+
+      let syncQueueBytes = 0;
+      for (const s of syncQueue) syncQueueBytes += new Blob([JSON.stringify(s)]).size;
+
       let audioBytes = 0;
       const ae: AudioEntry[] = [];
       for (const a of audio) {
@@ -54,6 +66,9 @@ export default function IndexedDBPanel() {
         syncQueue: syncQueue.length,
         audioBytes,
         surahBytes,
+        azkarBytes,
+        tafsirBytes,
+        syncQueueBytes,
       });
       setAudioEntries(ae);
     } catch (err) {
@@ -90,7 +105,7 @@ export default function IndexedDBPanel() {
     }
   };
 
-  const stores: { name: string; count: number | undefined; bytes: number | null | undefined; clear: (() => void) | undefined }[] = [
+  const stores: { name: string; count: number | undefined; bytes: number | undefined; clear: (() => void) | undefined }[] = [
     {
       name: "surahs",
       count: stats?.surahs,
@@ -100,7 +115,7 @@ export default function IndexedDBPanel() {
     {
       name: "azkar",
       count: stats?.azkar,
-      bytes: null,
+      bytes: stats?.azkarBytes,
       clear: () => act(clearAzkarStore, "Clear azkar store"),
     },
     {
@@ -112,13 +127,13 @@ export default function IndexedDBPanel() {
     {
       name: "tafsir",
       count: stats?.tafsir,
-      bytes: null,
+      bytes: stats?.tafsirBytes,
       clear: () => act(clearAllTafsir, "Clear tafsir store"),
     },
     {
       name: "syncQueue",
       count: stats?.syncQueue,
-      bytes: null,
+      bytes: stats?.syncQueueBytes,
       clear: clearSyncQueue,
     },
   ];
@@ -131,7 +146,12 @@ export default function IndexedDBPanel() {
           <div className="flex gap-2">
             <button onClick={() => void load()} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
             <button
-              onClick={() => act(async () => { await clearAllData(); await clearAllTafsir(); }, "Clear ALL IndexedDB data")}
+              onClick={() => act(async () => {
+                await clearAllData();
+                await clearAllTafsir();
+                const db = await getDB();
+                await db.clear("syncQueue");
+              }, "Clear ALL IndexedDB data (surahs, azkar, audio, tafsir, syncQueue)")}
               disabled={loading}
               className={`${DK.btnBase} ${DK.btnRed}`}
             >

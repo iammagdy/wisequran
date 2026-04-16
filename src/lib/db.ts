@@ -7,6 +7,7 @@ export interface SyncQueueEntry {
   payload: Record<string, unknown>;
   onConflict?: string;
   timestamp: number;
+  retryCount?: number;
 }
 
 interface WiseQuranDB extends DBSchema {

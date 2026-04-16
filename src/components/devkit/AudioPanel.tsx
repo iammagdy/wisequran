@@ -18,16 +18,17 @@ export default function AudioPanel() {
   const { currentAyahInSurah } = useAudioPlayerAyah();
   const [audioEntries, setAudioEntries] = useState<{ id: string; surahNumber: number; reciterId: string; bytes: number }[]>([]);
 
+  const loadAudio = async () => {
+    const all = await getAllAudioEntries();
+    setAudioEntries(
+      all.map((a) => ({ id: a.id, surahNumber: a.surahNumber, reciterId: a.reciterId, bytes: a.data.byteLength }))
+        .sort((a, b) => a.surahNumber - b.surahNumber)
+    );
+  };
+
   useEffect(() => {
-    const load = async () => {
-      const all = await getAllAudioEntries();
-      setAudioEntries(
-        all.map((a) => ({ id: a.id, surahNumber: a.surahNumber, reciterId: a.reciterId, bytes: a.data.byteLength }))
-          .sort((a, b) => a.surahNumber - b.surahNumber)
-      );
-    };
-    void load();
-    const id = setInterval(load, 5000);
+    void loadAudio();
+    const id = setInterval(loadAudio, 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -42,14 +43,17 @@ export default function AudioPanel() {
       <div className={`rounded-lg p-4 ${DK.card}`}>
         <div className="flex items-center justify-between mb-3">
           <span className={`font-mono text-xs uppercase tracking-widest ${DK.muted}`}>Player state</span>
-          {stable.playing && (
-            <button
-              onClick={stable.stop}
-              className={`${DK.btnBase} ${DK.btnRed}`}
-            >
-              ■ Stop
-            </button>
-          )}
+          <div className="flex gap-2">
+            <button onClick={() => void loadAudio()} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
+            {stable.playing && (
+              <button
+                onClick={stable.stop}
+                className={`${DK.btnBase} ${DK.btnRed}`}
+              >
+                ■ Stop
+              </button>
+            )}
+          </div>
         </div>
 
         <Row

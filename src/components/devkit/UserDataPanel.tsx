@@ -168,10 +168,19 @@ function GroupSection({ group }: { group: Group }) {
 }
 
 export default function UserDataPanel() {
+  const [refreshKey, setRefreshKey] = useState(0);
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <button
+          onClick={() => setRefreshKey((k) => k + 1)}
+          className={`${DK.btnBase} ${DK.btnGray}`}
+        >
+          ↻ Refresh all
+        </button>
+      </div>
       {GROUPS.map((g) => (
-        <GroupSection key={g.label} group={g} />
+        <GroupSection key={`${g.label}-${refreshKey}`} group={g} />
       ))}
     </div>
   );

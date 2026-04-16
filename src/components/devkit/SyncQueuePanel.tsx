@@ -109,6 +109,9 @@ export default function SyncQueuePanel() {
                   <span className={`font-mono text-xs ${DK.muted} flex-1 truncate`}>
                     {jsonPreview(e.payload)}
                   </span>
+                  <span className={`font-mono text-xs w-16 shrink-0 ${(e.retryCount ?? 0) > 0 ? DK.red : DK.muted}`}>
+                    ↺{e.retryCount ?? 0}
+                  </span>
                   <span className={`font-mono text-xs ${DK.muted} shrink-0`}>
                     {formatTs(e.timestamp)}
                   </span>
