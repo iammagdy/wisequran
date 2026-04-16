@@ -69,13 +69,17 @@ export default function SurahReaderPage() {
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
   const [focusModeActive, setFocusModeActive] = useState(false);
   const { lineHeight, focusLineHeight, readerToneClass, focusPreset, mushafFontClass } = useReaderPersonalization();
-  useReaderWakeLock(!isListeningMode);
   const [showBismillahGreeting, setShowBismillahGreeting] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
+  const isMushafActive = !isListeningMode && readerMode === "mushaf" && activeTab === "text";
+  useReaderWakeLock(isMushafActive);
+
   useEffect(() => {
-    if (isListeningMode) return;
+    if (!isMushafActive) return;
     try {
-      const todayKey = new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const last = localStorage.getItem("wise-bismillah-greeting-date");
       if (last !== todayKey) {
         localStorage.setItem("wise-bismillah-greeting-date", todayKey);
@@ -84,9 +88,8 @@ export default function SurahReaderPage() {
         return () => clearTimeout(timer);
       }
     } catch { /* ignore */ }
-  }, [isListeningMode]);
+  }, [isMushafActive]);
 
-  const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
   const [tafsirAyahs, setTafsirAyahs] = useState<TafsirAyah[]>([]);
   const [tafsirLoading, setTafsirLoading] = useState(false);
