@@ -1,9 +1,14 @@
 import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { azkarData } from "@/data/azkar-data";
+import { adjustDateByHijriOffset } from "./useRamadan";
 
 function getTodayKey() {
-  const d = new Date();
+  // Honour the user's Hijri ±2 day adjustment so "today's azkar" roll
+  // over at the same moment the user considers the Islamic date to
+  // change. With offset=0 this is identical to the prior local-date
+  // behavior.
+  const d = adjustDateByHijriOffset();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 

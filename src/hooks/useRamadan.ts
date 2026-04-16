@@ -1,20 +1,42 @@
 import { useMemo } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
-const HIJRI_OFFSET_KEY = "wise-hijri-offset";
+const HIJRI_OFFSET_ANON_KEY = "wise-hijri-offset";
+const HIJRI_OFFSET_USER_PREFIX = "wise-hijri-offset:";
+
+// Tracks the currently signed-in user so the helpers below can read
+// the per-user offset without having to be inside a React context.
+// AuthContext calls `setActiveHijriUser` on sign-in/sign-out.
+let activeUserId: string | null = null;
+
+export function setActiveHijriUser(userId: string | null): void {
+  activeUserId = userId;
+}
+
+function offsetKeyForActiveUser(): string {
+  return activeUserId
+    ? `${HIJRI_OFFSET_USER_PREFIX}${activeUserId}`
+    : HIJRI_OFFSET_ANON_KEY;
+}
 
 function getToday(): string {
   return new Date().toISOString().split("T")[0];
 }
 
 /**
- * Read the user-configured Hijri calendar offset (−2…+2 days).
+ * Read the Hijri calendar offset (−2…+2 days) for the active user.
  * Regions that follow a different moonsighting can nudge the default
  * Islamic calendar so Ramadan and Azkar date detection match locally.
+ * When signed in, the value is stored per-user so each account keeps
+ * its own preference across devices; signed-out sessions fall back to
+ * an anonymous key.
  */
 export function getHijriOffsetDays(): number {
   try {
-    const raw = localStorage.getItem(HIJRI_OFFSET_KEY);
+    // Prefer the user-scoped key; fall back to the anonymous key if
+    // the user just signed in and hasn't set their preference yet.
+    const primary = localStorage.getItem(offsetKeyForActiveUser());
+    const raw = primary ?? (activeUserId ? localStorage.getItem(HIJRI_OFFSET_ANON_KEY) : null);
     if (!raw) return 0;
     const n = Number(raw);
     if (!Number.isFinite(n)) return 0;
@@ -27,10 +49,23 @@ export function getHijriOffsetDays(): number {
 export function setHijriOffsetDays(days: number): void {
   const clamped = Math.max(-2, Math.min(2, Math.round(days)));
   try {
-    localStorage.setItem(HIJRI_OFFSET_KEY, String(clamped));
+    localStorage.setItem(offsetKeyForActiveUser(), String(clamped));
   } catch {
     /* ignore quota/unavailable */
   }
+}
+
+/**
+ * Adjust any Gregorian date by the active user's Hijri offset. Exposed
+ * so consumers like useAzkarCompletion can produce a local date-key
+ * that honors the same ±2-day shift as Ramadan detection.
+ */
+export function adjustDateByHijriOffset(date: Date = new Date()): Date {
+  const offset = getHijriOffsetDays();
+  if (offset === 0) return date;
+  const d = new Date(date);
+  d.setDate(d.getDate() + offset);
+  return d;
 }
 
 /** Returns the adjusted date that should be used as "today" for Hijri lookups. */

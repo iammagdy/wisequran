@@ -4,6 +4,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { claimBookmarksForUser, releaseBookmarksForUser } from "@/lib/bookmarks";
 import { handleAuthCallback, validateAndPersistSession } from "@/lib/auth-callback";
 import { logger } from "@/lib/logger";
+import { setActiveHijriUser } from "@/hooks/useRamadan";
 
 interface AuthContextValue {
   user: User | null;
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         const uid = session?.user?.id ?? null;
+        setActiveHijriUser(uid);
         if (uid) {
           void claimBookmarksForUser(uid).catch(() => {});
         } else {
@@ -79,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       const uid = session?.user?.id ?? null;
+      setActiveHijriUser(uid);
       if (uid) {
         void claimBookmarksForUser(uid).catch(() => {});
       } else {
