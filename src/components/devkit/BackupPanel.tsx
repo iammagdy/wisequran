@@ -19,6 +19,198 @@ interface PendingBackupImport {
   changelogEntries: ChangelogEntry[];
 }
 
+/* ─── Helpers ─────────────────────────────────────────────────────────────── */
+
+function countCatItems(cat: { features?: string[]; improvements?: string[]; fixes?: string[] }): number {
+  return (cat.features?.length ?? 0) + (cat.improvements?.length ?? 0) + (cat.fixes?.length ?? 0);
+}
+
+function countItems(entry: Partial<ChangelogEntry>): number {
+  return countCatItems(entry.en ?? {}) + countCatItems(entry.ar ?? {});
+}
+
+function formatFlagValue(v: unknown): string {
+  if (typeof v === "boolean") return v ? "ON" : "OFF";
+  if (typeof v === "string") return v.length > 48 ? v.slice(0, 48) + "…" : `"${v}"`;
+  return String(v);
+}
+
+/* ─── Diff sub-components ─────────────────────────────────────────────────── */
+
+function FlagDiffRow({ flagKey, current, incoming }: { flagKey: string; current: unknown; incoming: unknown }) {
+  return (
+    <div className={`py-2 border-b ${DK.border} last:border-0`}>
+      <p className={`font-mono text-[10px] ${DK.muted} mb-1`}>{flagKey}</p>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={`font-mono text-[11px] px-1.5 py-0.5 rounded bg-[#6e1c1c]/30 border border-[#f85149]/20 ${DK.red}`}>
+          {formatFlagValue(current)}
+        </span>
+        <span className={`font-mono text-[10px] ${DK.muted}`}>→</span>
+        <span className={`font-mono text-[11px] px-1.5 py-0.5 rounded bg-[#2ea043]/20 border border-[#3fb950]/20 ${DK.green}`}>
+          {formatFlagValue(incoming)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+interface FlagDiffProps {
+  incoming: FeatureFlags;
+  current: FeatureFlags;
+}
+
+function FlagsDiff({ incoming, current }: FlagDiffProps) {
+  const allKeys = Array.from(new Set([...Object.keys(current), ...Object.keys(incoming)])) as (keyof FeatureFlags)[];
+  const changed = allKeys.filter((k) => JSON.stringify(current[k]) !== JSON.stringify(incoming[k]));
+  const unchanged = allKeys.filter((k) => JSON.stringify(current[k]) === JSON.stringify(incoming[k]));
+
+  if (changed.length === 0) {
+    return (
+      <p className={`font-mono text-xs ${DK.green} px-1`}>✓ No flag changes — all values match current state</p>
+    );
+  }
+
+  return (
+    <div>
+      <p className={`font-mono text-[10px] ${DK.yellow} mb-2`}>
+        ⚡ {changed.length} flag{changed.length !== 1 ? "s" : ""} will change:
+      </p>
+      <div>
+        {changed.map((k) => (
+          <FlagDiffRow
+            key={k}
+            flagKey={String(k)}
+            current={current[k]}
+            incoming={incoming[k]}
+          />
+        ))}
+      </div>
+      {unchanged.length > 0 && (
+        <p className={`font-mono text-[10px] ${DK.muted} mt-2`}>
+          {unchanged.length} flag{unchanged.length !== 1 ? "s" : ""} unchanged
+        </p>
+      )}
+    </div>
+  );
+}
+
+interface ChangelogDiffProps {
+  incoming: ChangelogEntry[];
+  current: ChangelogEntry[];
+}
+
+function ChangelogDiff({ incoming, current }: ChangelogDiffProps) {
+  const currentByVersion = new Map(current.map((e) => [e.version, e]));
+  const incomingByVersion = new Map(incoming.map((e) => [e.version, e]));
+
+  const overwritten = incoming.filter((e) => currentByVersion.has(e.version));
+  const added = incoming.filter((e) => !currentByVersion.has(e.version));
+  const removed = current.filter((e) => !incomingByVersion.has(e.version));
+
+  const countDelta = incoming.length - current.length;
+
+  return (
+    <div className="space-y-3">
+      {/* Count summary */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <span className={`font-mono text-xs ${DK.muted}`}>
+          Current: <span className={DK.blue}>{current.length}</span>
+        </span>
+        <span className={`font-mono text-xs ${DK.muted}`}>→</span>
+        <span className={`font-mono text-xs ${DK.muted}`}>
+          Incoming: <span className={DK.blue}>{incoming.length}</span>
+          {countDelta !== 0 && (
+            <span className={countDelta > 0 ? DK.green : DK.red}>
+              {" "}({countDelta > 0 ? "+" : ""}{countDelta})
+            </span>
+          )}
+        </span>
+      </div>
+
+      {/* Overwritten versions with item-count delta */}
+      {overwritten.length > 0 && (
+        <div>
+          <p className={`font-mono text-[10px] ${DK.yellow} mb-1.5`}>
+            ⚡ {overwritten.length} version{overwritten.length !== 1 ? "s" : ""} will be overwritten:
+          </p>
+          <div className="rounded bg-[#0d1117] divide-y divide-[#30363d]">
+            {overwritten.map((e) => {
+              const currentItems = countItems(currentByVersion.get(e.version)!);
+              const incomingItems = countItems(e);
+              const delta = incomingItems - currentItems;
+              return (
+                <div key={e.version} className="flex items-center gap-3 px-3 py-2 flex-wrap">
+                  <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
+                    v{e.version}
+                  </span>
+                  <span className={`font-mono text-[10px] ${DK.muted}`}>
+                    was {currentItems} item{currentItems !== 1 ? "s" : ""} →{" "}
+                    {incomingItems} item{incomingItems !== 1 ? "s" : ""}
+                  </span>
+                  {delta !== 0 ? (
+                    <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded ${delta > 0 ? `${DK.green} bg-[#2ea043]/10` : `${DK.red} bg-[#f85149]/10`}`}>
+                      {delta > 0 ? `+${delta}` : delta}
+                    </span>
+                  ) : (
+                    <span className={`font-mono text-[10px] ${DK.muted}`}>(same content)</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* New versions */}
+      {added.length > 0 && (
+        <div>
+          <p className={`font-mono text-[10px] ${DK.green} mb-1.5`}>
+            + {added.length} new version{added.length !== 1 ? "s" : ""}:
+          </p>
+          <div className="rounded bg-[#0d1117] divide-y divide-[#30363d]">
+            {added.map((e) => (
+              <div key={e.version} className="flex items-center gap-3 px-3 py-2">
+                <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
+                  v{e.version}
+                </span>
+                <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>{e.date}</span>
+                <span className={`font-mono text-[11px] ${DK.green}`}>+{countItems(e)} items</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Removed versions */}
+      {removed.length > 0 && (
+        <div>
+          <p className={`font-mono text-[10px] ${DK.red} mb-1.5`}>
+            − {removed.length} version{removed.length !== 1 ? "s" : ""} will be removed:
+          </p>
+          <div className="rounded bg-[#0d1117] divide-y divide-[#30363d]">
+            {removed.map((e) => (
+              <div key={e.version} className="flex items-center gap-3 px-3 py-2">
+                <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
+                  v{e.version}
+                </span>
+                <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>{e.date}</span>
+                <span className={`font-mono text-[11px] ${DK.red}`}>−{countItems(e)} items</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* No changes */}
+      {overwritten.length === 0 && added.length === 0 && removed.length === 0 && (
+        <p className={`font-mono text-xs ${DK.green} px-1`}>✓ No changelog changes — entries match current state</p>
+      )}
+    </div>
+  );
+}
+
+/* ─── Main panel ──────────────────────────────────────────────────────────── */
+
 export default function BackupPanel() {
   const [toast, setToast] = useState("");
   const [pendingImport, setPendingImport] = useState<PendingBackupImport | null>(null);
@@ -110,6 +302,9 @@ export default function BackupPanel() {
     setPendingImport(null);
   };
 
+  const currentFlags = getFeatureFlags();
+  const currentChangelog = getDevkitChangelog();
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -146,53 +341,32 @@ export default function BackupPanel() {
         />
       </div>
 
-      {/* Import preview */}
+      {/* Import diff preview */}
       {pendingImport && (
         <div className={`rounded-lg ${DK.card} p-4 space-y-4`}>
-          <p className={`font-mono text-xs font-semibold ${DK.yellow}`}>
-            Import Preview — review before applying
-          </p>
+          <div className={`rounded p-2.5 bg-[#d29922]/10 border border-[#d29922]/30`}>
+            <p className={`font-mono text-xs font-semibold ${DK.yellow}`}>
+              ⚠ Review changes before applying
+            </p>
+            <p className={`font-mono text-[10px] ${DK.muted} mt-0.5`}>
+              Highlighted differences against your current state
+            </p>
+          </div>
 
-          {/* Flags preview */}
-          <div className="space-y-1">
+          {/* Feature flags diff */}
+          <div className="space-y-2">
             <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
               Feature Flags
             </p>
-            <pre className={`font-mono text-xs ${DK.text} whitespace-pre-wrap break-all bg-[#0d1117] rounded p-3`}>
-              {JSON.stringify(pendingImport.featureFlags, null, 2)}
-            </pre>
+            <FlagsDiff incoming={pendingImport.featureFlags} current={currentFlags} />
           </div>
 
-          {/* Changelog entries preview */}
-          <div className="space-y-1">
+          {/* Changelog entries diff */}
+          <div className="space-y-2">
             <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
-              Changelog Entries ({pendingImport.changelogEntries.length})
+              Changelog Entries
             </p>
-            {pendingImport.changelogEntries.length === 0 ? (
-              <p className={`font-mono text-xs ${DK.muted} px-3 py-2 bg-[#0d1117] rounded`}>
-                No custom entries in this backup.
-              </p>
-            ) : (
-              <div className="rounded bg-[#0d1117] divide-y divide-[#30363d]">
-                {pendingImport.changelogEntries.map((e) => {
-                  const total =
-                    (e.en.features?.length ?? 0) +
-                    (e.en.improvements?.length ?? 0) +
-                    (e.en.fixes?.length ?? 0);
-                  return (
-                    <div key={e.version} className="flex items-center gap-3 px-3 py-2">
-                      <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
-                        v{e.version}
-                      </span>
-                      <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>
-                        {e.date}
-                      </span>
-                      <span className={`font-mono text-[11px] ${DK.muted}`}>{total} items</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <ChangelogDiff incoming={pendingImport.changelogEntries} current={currentChangelog} />
           </div>
 
           <p className={`font-mono text-[11px] ${DK.muted}`}>
@@ -218,25 +392,22 @@ export default function BackupPanel() {
         <div className="space-y-1">
           <p className={`font-mono text-[11px] ${DK.muted} mb-1`}>Feature Flags</p>
           <pre className={`font-mono text-xs ${DK.text} whitespace-pre-wrap break-all bg-[#0d1117] rounded p-3`}>
-            {JSON.stringify(getFeatureFlags(), null, 2)}
+            {JSON.stringify(currentFlags, null, 2)}
           </pre>
         </div>
 
         <div className="space-y-1">
           <p className={`font-mono text-[11px] ${DK.muted} mb-1`}>
-            Custom Changelog Entries ({getDevkitChangelog().length})
+            Custom Changelog Entries ({currentChangelog.length})
           </p>
-          {getDevkitChangelog().length === 0 ? (
+          {currentChangelog.length === 0 ? (
             <p className={`font-mono text-xs ${DK.muted} px-3 py-2 bg-[#0d1117] rounded`}>
               No custom entries.
             </p>
           ) : (
             <div className="rounded bg-[#0d1117] divide-y divide-[#30363d]">
-              {getDevkitChangelog().map((e) => {
-                const total =
-                  (e.en.features?.length ?? 0) +
-                  (e.en.improvements?.length ?? 0) +
-                  (e.en.fixes?.length ?? 0);
+              {currentChangelog.map((e) => {
+                const total = countItems(e);
                 return (
                   <div key={e.version} className="flex items-center gap-3 px-3 py-2">
                     <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
