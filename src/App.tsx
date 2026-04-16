@@ -1,4 +1,4 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,6 +13,13 @@ import UpdateNotification from "@/components/UpdateNotification";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
+
+const prefetchTopTabs = () => {
+  import("@/pages/QuranPage");
+  import("@/pages/PrayerPage");
+  import("@/pages/AzkarPage");
+  import("@/pages/TasbeehPage");
+};
 
 const QuranPage = lazy(() => import("@/pages/QuranPage"));
 const SurahReaderPage = lazy(() => import("@/pages/SurahReaderPage"));
@@ -101,12 +108,30 @@ const AppContent = () => {
   );
 };
 
+const PREFETCH_DELAY_MS = 3000;
+
 const App = () => {
   const [appReady, setAppReady] = useState(false);
 
   const handleSplashComplete = useCallback(() => {
     setAppReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!appReady) return;
+    let idleId: number | undefined;
+    const timerId = setTimeout(() => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(prefetchTopTabs);
+      } else {
+        prefetchTopTabs();
+      }
+    }, PREFETCH_DELAY_MS);
+    return () => {
+      clearTimeout(timerId);
+      if (idleId !== undefined) window.cancelIdleCallback(idleId);
+    };
+  }, [appReady]);
 
   return (
     <>
