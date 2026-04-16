@@ -114,13 +114,6 @@ export function useServiceWorkerUpdate() {
     }
   }, [registration, isUpdating]);
 
-  // Auto-apply updates immediately when detected
-  useEffect(() => {
-    if (updateAvailable && !isUpdating) {
-      applyUpdate();
-    }
-  }, [updateAvailable, isUpdating, applyUpdate]);
-
   const checkForUpdate = useCallback(async (): Promise<boolean> => {
     if (!("serviceWorker" in navigator) || !navigator.onLine) return false;
 
