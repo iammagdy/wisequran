@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DK } from "./devkit-utils";
 import { clearAllAudio } from "@/lib/db";
 import { DEVKIT_FORCE_CHANGELOG_KEY } from "@/hooks/usePostUpdateChangelog";
 
-const THEMES = ["light", "dark", "system"] as const;
+const THEMES = ["light", "dark"] as const;
 const LANGS = ["ar", "en"] as const;
 const THEME_KEY = "wise-quran-theme";
 const LANG_KEY = "wise-language";
@@ -24,7 +24,7 @@ function lsWrite(key: string, value: string) {
 }
 
 function readTheme() {
-  return lsRead(THEME_KEY, "system");
+  return lsRead(THEME_KEY, "light");
 }
 function readLang() {
   return lsRead(LANG_KEY, "ar");
@@ -41,6 +41,11 @@ export default function AppControlsPanel() {
     setLang(readLang());
   };
 
+  useEffect(() => {
+    const id = setInterval(refresh, 5000);
+    return () => clearInterval(id);
+  }, []);
+
   const flash = (text: string) => {
     setMsg(text);
     setTimeout(() => setMsg(""), 2500);
@@ -49,13 +54,8 @@ export default function AppControlsPanel() {
   const applyTheme = (t: string) => {
     lsWrite(THEME_KEY, t);
     setTheme(t);
-    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.remove("dark");
     if (t === "dark") document.documentElement.classList.add("dark");
-    else if (t === "light") document.documentElement.classList.remove("dark");
-    else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      if (prefersDark) document.documentElement.classList.add("dark");
-    }
     flash(`Theme → ${t}`);
   };
 
@@ -151,7 +151,7 @@ export default function AppControlsPanel() {
           ))}
         </div>
         <p className={`font-mono text-xs ${DK.muted} mt-2`}>
-          Current: <span className={DK.blue}>{theme}</span> · key: <span className={DK.muted}>{THEME_KEY}</span>
+          Current: <span className={DK.blue}>{theme}</span> · applies immediately + persists via {THEME_KEY}
         </p>
       </div>
 
