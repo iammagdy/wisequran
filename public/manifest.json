@@ -46,8 +46,8 @@
       "url": "/",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
+          "src": "/icons/shortcut-quran.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
@@ -59,8 +59,8 @@
       "url": "/prayer",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
+          "src": "/icons/shortcut-prayer.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
@@ -72,8 +72,8 @@
       "url": "/azkar",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
+          "src": "/icons/shortcut-azkar.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
@@ -85,8 +85,8 @@
       "url": "/tasbeeh",
       "icons": [
         {
-          "src": "/icons/icon-192.png",
-          "sizes": "192x192",
+          "src": "/icons/shortcut-tasbeeh.png",
+          "sizes": "96x96",
           "type": "image/png"
         }
       ]
