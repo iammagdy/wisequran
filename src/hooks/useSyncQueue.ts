@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from "@/lib/supabase";
 
 export function useSyncQueue() {
   const [pendingCount, setPendingCount] = useState(0);
+  const [flushing, setFlushing] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!isSupabaseConfigured) return;
@@ -17,8 +18,13 @@ export function useSyncQueue() {
 
   const flush = useCallback(async () => {
     if (!isSupabaseConfigured || !navigator.onLine) return;
-    await flushSyncQueue();
-    await refresh();
+    setFlushing(true);
+    try {
+      await flushSyncQueue();
+      await refresh();
+    } finally {
+      setFlushing(false);
+    }
   }, [refresh]);
 
   useEffect(() => {
@@ -30,14 +36,22 @@ export function useSyncQueue() {
       void flush();
     }
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        void flush();
+      }
+    };
+
     window.addEventListener("online", flush);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     const unsubscribe = subscribeToQueueChanges(refresh);
 
     return () => {
       window.removeEventListener("online", flush);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       unsubscribe();
     };
   }, [flush, refresh]);
 
-  return { pendingCount, refresh, flush };
+  return { pendingCount, flushing, refresh, flush };
 }

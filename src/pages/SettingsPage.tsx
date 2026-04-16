@@ -55,7 +55,7 @@ export default function SettingsPage() {
   const isIOS = browserType === "ios-safari";
   const installInstructions = getInstallInstructions(browserType, language);
   const { user, signOut } = useAuth();
-  const { pendingCount } = useSyncQueue();
+  const { pendingCount, flushing, flush } = useSyncQueue();
   const navigate = useNavigate();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -545,12 +545,22 @@ export default function SettingsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
                     {pendingCount > 0 ? (
-                      <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
-                        <CloudOff className="h-3 w-3 shrink-0" />
-                        {isRTL
-                          ? `${toArabicNumerals(String(pendingCount))} عملية في انتظار المزامنة`
-                          : `${pendingCount} update${pendingCount > 1 ? "s" : ""} pending sync`}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs text-amber-500 flex items-center gap-1">
+                          <CloudOff className="h-3 w-3 shrink-0" />
+                          {isRTL
+                            ? `${toArabicNumerals(String(pendingCount))} في انتظار المزامنة`
+                            : `${pendingCount} pending sync`}
+                        </span>
+                        <button
+                          onClick={() => void flush()}
+                          disabled={flushing || !navigator.onLine}
+                          aria-label={isRTL ? "أعد المحاولة" : "Retry sync"}
+                          className="text-amber-500 hover:text-amber-600 disabled:opacity-40 transition-colors"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${flushing ? "animate-spin" : ""}`} />
+                        </button>
+                      </div>
                     ) : (
                       <p className="text-xs text-muted-foreground">{isRTL ? "حساب نشط" : "Active account"}</p>
                     )}
@@ -575,12 +585,22 @@ export default function SettingsPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground">{isRTL ? "غير مسجّل" : "Not signed in"}</p>
                     {pendingCount > 0 ? (
-                      <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
-                        <CloudOff className="h-3 w-3 shrink-0" />
-                        {isRTL
-                          ? `${toArabicNumerals(String(pendingCount))} عملية في انتظار المزامنة`
-                          : `${pendingCount} update${pendingCount > 1 ? "s" : ""} pending sync`}
-                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-xs text-amber-500 flex items-center gap-1">
+                          <CloudOff className="h-3 w-3 shrink-0" />
+                          {isRTL
+                            ? `${toArabicNumerals(String(pendingCount))} في انتظار المزامنة`
+                            : `${pendingCount} pending sync`}
+                        </span>
+                        <button
+                          onClick={() => void flush()}
+                          disabled={flushing || !navigator.onLine}
+                          aria-label={isRTL ? "أعد المحاولة" : "Retry sync"}
+                          className="text-amber-500 hover:text-amber-600 disabled:opacity-40 transition-colors"
+                        >
+                          <RefreshCw className={`h-3 w-3 ${flushing ? "animate-spin" : ""}`} />
+                        </button>
+                      </div>
                     ) : (
                       <p className="text-xs text-muted-foreground">{isRTL ? "سجّل الدخول لحفظ تقدمك عبر أجهزتك" : "Sign in to save progress across devices"}</p>
                     )}
