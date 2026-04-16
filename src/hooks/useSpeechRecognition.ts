@@ -74,6 +74,10 @@ const RESTART_DELAY_MS = 250;
 // Capped to keep responsiveness when they resume.
 const NO_SPEECH_BACKOFF_MS = [500, 1000, 2000, 4000, 8000] as const;
 const NO_SPEECH_BACKOFF_CAP_MS = 8000;
+// Hard cutoff on cumulative silence: if the user hasn't spoken for
+// this long the hook stops on its own and requires a manual restart,
+// so we never spin the Web Speech API indefinitely in the background.
+const SILENCE_STOP_MS = 30_000;
 const MIN_IOS_SPEECH_MAJOR = 14;
 const MIN_IOS_SPEECH_MINOR = 5;
 
@@ -89,6 +93,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const isManualStopRef = useRef(false);
   const restartCountRef = useRef(0);
   const noSpeechCountRef = useRef(0);
+  const silenceElapsedMsRef = useRef(0);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = useRef(false);
 
@@ -156,6 +161,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         interimRef.current = "";
         setTranscript(finalTranscriptRef.current.trim());
         noSpeechCountRef.current = 0;
+        silenceElapsedMsRef.current = 0;
       }
       interimRef.current = interimText;
       setInterimTranscript(interimText);
@@ -237,6 +243,20 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
             Math.min(noSpeechCountRef.current - 1, NO_SPEECH_BACKOFF_MS.length - 1)
           ] ?? NO_SPEECH_BACKOFF_CAP_MS
         : RESTART_DELAY_MS;
+
+      // Cumulative-silence cutoff: if the user has been quiet for
+      // long enough, stop listening entirely. The UI shows a silence
+      // error and waits for the user to tap start again before we
+      // touch the Web Speech API.
+      if (noSpeechCountRef.current > 0) {
+        silenceElapsedMsRef.current += delay;
+        if (silenceElapsedMsRef.current >= SILENCE_STOP_MS) {
+          isActiveRef.current = false;
+          setError("speech_silence_timeout");
+          setStatus("idle");
+          return;
+        }
+      }
 
       clearRestartTimer();
       restartTimerRef.current = setTimeout(() => {

@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/, /^\/auth/, /^\/api\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        // Pulls our SW-side adhan scheduler into the generated SW so
+        // it can fire prayer notifications even when the page is
+        // backgrounded. See `public/sw-adhan.js` for the protocol.
+        importScripts: ["/sw-adhan.js"],
         runtimeCaching: [
           {
             urlPattern: /\/data\/tafsir\/.*\.json$/i,

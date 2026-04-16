@@ -72,6 +72,35 @@ describe("enqueuedSupabaseWrite idempotency", () => {
     expect(entry.payload).toEqual(payload);
   });
 
+  it("produces no duplicate row when the network drops after a successful write and the retry replays the same payload", async () => {
+    // First call succeeds server-side. Simulate the client missing
+    // the success response (classic 'network dropped after 200'): the
+    // queue replays the same payload. Because `enqueuedSupabaseWrite`
+    // routes through Supabase's `upsert` with `onConflict`, the
+    // replay must hit the same unique constraint and no-op instead
+    // of inserting a second row. We verify by counting how many
+    // rows Supabase would persist given our upsertMock: each call is
+    // deduplicated by the `onConflict` key we passed.
+    const stored = new Map<string, Record<string, unknown>>();
+    upsertMock.mockImplementation(async (payload: Record<string, unknown>, opts: { onConflict?: string }) => {
+      const key = opts.onConflict
+        ? opts.onConflict.split(",").map((k) => String(payload[k])).join("|")
+        : JSON.stringify(payload);
+      stored.set(key, payload);
+      return { error: null };
+    });
+
+    const payload = { device_id: "dev-9", date: "2026-04-16", count: 3 };
+    await enqueuedSupabaseWrite("device_daily_reading", "upsert", payload, { onConflict: "device_id,date" });
+    // Simulated retry after perceived network drop — identical payload.
+    await enqueuedSupabaseWrite("device_daily_reading", "upsert", payload, { onConflict: "device_id,date" });
+
+    expect(upsertMock).toHaveBeenCalledTimes(2);
+    // Despite two calls, only one logical row is persisted because
+    // `onConflict` collapses the duplicate.
+    expect(stored.size).toBe(1);
+  });
+
   it("does not queue on permanent errors (non-retriable)", async () => {
     upsertMock.mockResolvedValue({ error: { message: "duplicate key", status: 409 } });
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);

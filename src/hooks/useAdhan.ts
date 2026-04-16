@@ -22,6 +22,43 @@ const MISSED_PRAYER_GRACE_MINUTES = 15;
 // anyway (suspended tabs, DST, sleep/wake).
 const MAX_SCHEDULE_MS = 12 * 60 * 60 * 1000;
 
+const PRAYER_LABEL_AR: Record<string, string> = {
+  fajr: "الفجر",
+  dhuhr: "الظهر",
+  asr: "العصر",
+  maghrib: "المغرب",
+  isha: "العشاء",
+};
+
+// Forwards the next scheduled adhan to the service worker so it can
+// show a notification even when the tab is suspended. The in-page
+// scheduler still runs as a foreground fallback; if both fire, the
+// notification `tag` (minute-precision) dedupes them.
+async function postAdhanScheduleToSW(prayerId: string, fireAt: number) {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.active?.postMessage({
+      type: "WISE_ADHAN_SCHEDULE",
+      prayerId,
+      prayerLabel: PRAYER_LABEL_AR[prayerId] ?? prayerId,
+      fireAt,
+    });
+  } catch {
+    /* ignore — SW scheduling is best-effort */
+  }
+}
+
+async function postAdhanCancelToSW() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.active?.postMessage({ type: "WISE_ADHAN_CANCEL" });
+  } catch {
+    /* ignore */
+  }
+}
+
 function todayKey() {
   const d = new Date();
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -163,11 +200,34 @@ export function useAdhan() {
       return next;
     };
 
+    // Locate which prayer the next scheduled Date corresponds to so
+    // we can pass the right label to the service worker.
+    const findPrayerIdAt = (scheduled: Date): string | null => {
+      const baseOpts = location
+        ? { latitude: location.latitude, longitude: location.longitude }
+        : {};
+      const sameDay = calculatePrayerTimes(scheduled, baseOpts);
+      for (const id of PRAYER_ORDER) {
+        const [h, m] = sameDay[id].split(":").map(Number);
+        if (h === scheduled.getHours() && m === scheduled.getMinutes()) return id;
+      }
+      return null;
+    };
+
     const schedule = (allowCatchUp: boolean) => {
       if (scheduleTimer) clearTimeout(scheduleTimer);
       const next = processAndFindNext(allowCatchUp);
-      if (!next) return;
+      if (!next) {
+        void postAdhanCancelToSW();
+        return;
+      }
       const delay = Math.min(Math.max(next.getTime() - Date.now(), 1_000), MAX_SCHEDULE_MS);
+      // Ship the exact fire time to the service worker so it can show
+      // a notification even when the tab is suspended. The in-page
+      // scheduler below is the foreground fallback; the SW uses a
+      // minute-precision notification tag to avoid double-firing.
+      const nextPrayerId = findPrayerIdAt(next);
+      if (nextPrayerId) void postAdhanScheduleToSW(nextPrayerId, next.getTime());
       // Always allow catch-up on scheduled wake-ups: if the tab/device
       // was suspended past the scheduled time, `setTimeout` can fire
       // late without ever triggering a focus/visibility event, so we
