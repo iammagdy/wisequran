@@ -19,7 +19,7 @@ import {
 "@/lib/prayer-times";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { enqueuedSupabaseWrite } from "@/lib/syncQueue";
 import type { City } from "@/data/cities";
 import { useLocation } from "@/hooks/useLocation";
 
@@ -135,13 +135,18 @@ export default function PrayerPage() {
 
     if (user) {
       const today = getTodayKey();
-      supabase.from("user_prayer_history").upsert({
-        user_id: user.id,
-        date: today,
-        prayer_name: prayerId,
-        completed: isCompleting,
-        completed_at: isCompleting ? new Date().toISOString() : null,
-      }, { onConflict: "user_id,date,prayer_name" }).then(() => {});
+      void enqueuedSupabaseWrite(
+        "user_prayer_history",
+        "upsert",
+        {
+          user_id: user.id,
+          date: today,
+          prayer_name: prayerId,
+          completed: isCompleting,
+          completed_at: isCompleting ? new Date().toISOString() : null,
+        },
+        { onConflict: "user_id,date,prayer_name" }
+      );
     }
   }, [todayData, setData, user]);
 

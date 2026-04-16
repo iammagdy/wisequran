@@ -1,5 +1,14 @@
 import { openDB, type DBSchema } from "idb";
 
+export interface SyncQueueEntry {
+  id?: number;
+  table: string;
+  operation: "upsert" | "insert";
+  payload: Record<string, unknown>;
+  onConflict?: string;
+  timestamp: number;
+}
+
 interface WiseQuranDB extends DBSchema {
   surahs: {
     key: number;
@@ -33,10 +42,14 @@ interface WiseQuranDB extends DBSchema {
       ayahs: { numberInSurah: number; text: string }[];
     };
   };
+  syncQueue: {
+    key: number;
+    value: SyncQueueEntry;
+  };
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 function audioKey(reciterId: string, surahNumber: number): string {
   return `${reciterId}-${surahNumber}`;
@@ -65,6 +78,9 @@ function openDatabase() {
       }
       if (!db.objectStoreNames.contains("tafsir")) {
         db.createObjectStore("tafsir", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("syncQueue")) {
+        db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
       }
     },
   });
@@ -142,6 +158,26 @@ export async function clearAllData() {
 export async function clearAllTafsir() {
   const db = await getDB();
   await db.clear("tafsir");
+}
+
+export async function addToSyncQueue(entry: Omit<SyncQueueEntry, "id">): Promise<void> {
+  const db = await getDB();
+  await db.add("syncQueue", entry as SyncQueueEntry);
+}
+
+export async function getAllSyncQueueEntries(): Promise<SyncQueueEntry[]> {
+  const db = await getDB();
+  return db.getAll("syncQueue");
+}
+
+export async function deleteSyncQueueEntry(id: number): Promise<void> {
+  const db = await getDB();
+  await db.delete("syncQueue", id);
+}
+
+export async function getSyncQueueCount(): Promise<number> {
+  const db = await getDB();
+  return db.count("syncQueue");
 }
 
 export async function saveTafsir(editionId: string, surahNumber: number, ayahs: { numberInSurah: number; text: string }[]) {

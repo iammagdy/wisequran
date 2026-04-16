@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
@@ -44,6 +44,7 @@ import {
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
 import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
+import { useSyncQueue } from "@/hooks/useSyncQueue";
 
 const loadDBModule = () => import("@/lib/settings-storage");
 
@@ -54,6 +55,7 @@ export default function SettingsPage() {
   const isIOS = browserType === "ios-safari";
   const installInstructions = getInstallInstructions(browserType, language);
   const { user, signOut } = useAuth();
+  const { pendingCount } = useSyncQueue();
   const navigate = useNavigate();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
@@ -542,7 +544,16 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">{isRTL ? "حساب نشط" : "Active account"}</p>
+                    {pendingCount > 0 ? (
+                      <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+                        <CloudOff className="h-3 w-3 shrink-0" />
+                        {isRTL
+                          ? `${toArabicNumerals(String(pendingCount))} عملية في انتظار المزامنة`
+                          : `${pendingCount} update${pendingCount > 1 ? "s" : ""} pending sync`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{isRTL ? "حساب نشط" : "Active account"}</p>
+                    )}
                   </div>
                 </div>
                 <Button
@@ -563,7 +574,16 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground">{isRTL ? "غير مسجّل" : "Not signed in"}</p>
-                    <p className="text-xs text-muted-foreground">{isRTL ? "سجّل الدخول لحفظ تقدمك عبر أجهزتك" : "Sign in to save progress across devices"}</p>
+                    {pendingCount > 0 ? (
+                      <p className="text-xs text-amber-500 flex items-center gap-1 mt-0.5">
+                        <CloudOff className="h-3 w-3 shrink-0" />
+                        {isRTL
+                          ? `${toArabicNumerals(String(pendingCount))} عملية في انتظار المزامنة`
+                          : `${pendingCount} update${pendingCount > 1 ? "s" : ""} pending sync`}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{isRTL ? "سجّل الدخول لحفظ تقدمك عبر أجهزتك" : "Sign in to save progress across devices"}</p>
+                    )}
                   </div>
                 </div>
                 <Button
