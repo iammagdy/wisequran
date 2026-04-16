@@ -185,40 +185,42 @@ function EntryRow({
             ★ current
           </span>
         )}
-        {isDevKit ? (
-          <div
-            className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {onSetCurrent && !isCurrent && (
-              <button
-                onClick={onSetCurrent}
-                className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
-                title="Mark as the current version shown in the app"
-              >
-                ★ Set current
-              </button>
-            )}
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
-              >
-                Edit
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                className={`${DK.btnBase} ${DK.btnRed} px-2 py-0.5 text-[11px]`}
-              >
-                ×
-              </button>
-            )}
-          </div>
-        ) : (
-          <span className={`font-mono text-[10px] ${DK.subtle} shrink-0`}>built-in</span>
-        )}
+        <div
+          className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {onSetCurrent && !isCurrent && (
+            <button
+              onClick={onSetCurrent}
+              className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
+              title="Mark as the current version shown in the app"
+            >
+              ★ Set current
+            </button>
+          )}
+          {isDevKit ? (
+            <>
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
+                >
+                  Edit
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  className={`${DK.btnBase} ${DK.btnRed} px-2 py-0.5 text-[11px]`}
+                >
+                  ×
+                </button>
+              )}
+            </>
+          ) : (
+            <span className={`font-mono text-[10px] ${DK.subtle} shrink-0`}>built-in</span>
+          )}
+        </div>
         <span className={`font-mono text-[10px] ${DK.muted} ml-1`}>{expanded ? "▲" : "▼"}</span>
       </div>
 
@@ -441,6 +443,7 @@ export default function ChangelogEditorPanel() {
               entry={e}
               isDevKit={false}
               isCurrent={e.version === effectiveVer}
+              onSetCurrent={!isFormOpen ? () => setCurrent(e.version) : undefined}
             />
           ))}
         </div>
