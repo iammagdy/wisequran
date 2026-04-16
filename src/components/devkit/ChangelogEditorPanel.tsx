@@ -261,6 +261,7 @@ function EntryRow({
   onSetCurrent?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const total =
     (entry.en.features?.length ?? 0) +
     (entry.en.improvements?.length ?? 0) +
@@ -295,6 +296,12 @@ function EntryRow({
               ★ Set current
             </button>
           )}
+          <button
+            onClick={() => setShowPreview(true)}
+            className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
+          >
+            Preview
+          </button>
           {isDevKit ? (
             <>
               {onEdit && (
@@ -345,6 +352,10 @@ function EntryRow({
             );
           })}
         </div>
+      )}
+
+      {showPreview && (
+        <EntryPreviewModal entry={entry} onClose={() => setShowPreview(false)} />
       )}
     </div>
   );
