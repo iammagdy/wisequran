@@ -18,6 +18,12 @@ export { bookmarkKey } from "@/lib/db";
 const CHANGE_EVENT = "wise-bookmarks-changed";
 const LEGACY_KEY = "wise-bookmarks";
 const MIGRATION_FLAG = "wise-bookmarks-migrated-v1";
+// Per-user record of anonymous bookmark IDs the user has already decided
+// about (either merged into their account or explicitly discarded). A
+// bookmark ID added to this set is never re-prompted. IDs that are not
+// in the set and whose underlying anon record still exists will prompt
+// again the next time the user signs in.
+const CLAIM_RESOLVED_KEY = (userId: string) => `wise-bm-claim-resolved:${userId}`;
 
 function emitChange(): void {
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
@@ -368,52 +374,125 @@ export async function pullRemoteBookmarks(): Promise<void> {
 }
 
 /**
- * Invoked when a user signs in on this device. Merges cloud + local
- * state for the signed-in user safely:
+ * Invoked when a user signs in on this device. Safely reconciles cloud
+ * state for the signed-in user WITHOUT touching records owned by any
+ * anonymous (`d:<deviceId>`) or previously-signed-in owner:
  *
  *   1. Pull cloud rows owned by the signed-in user into IDB via LWW.
- *   2. Copy each record that belongs to **this device's anonymous
- *      owner** (`d:<deviceId>`) into the new user owner, using LWW
- *      against whatever was pulled in step 1. Records belonging to any
- *      other owner on this browser (e.g., a previous signed-in user)
- *      are NOT touched or pushed, so notes cannot leak across accounts.
- *   3. Push the user-owned records back to the cloud. Because step 1
- *      pulled freshest cloud state first and step 2 merges LWW, these
- *      writes cannot clobber newer remote rows from other devices.
+ *   2. Push any locally-stored user-owned records back to the cloud.
+ *
+ * Merging of anonymous device bookmarks into the signed-in account is
+ * now an explicit, user-confirmed action — see `mergeAnonymousBookmarksIntoUser`
+ * and `discardAnonymousClaims`, driven by `listPendingAnonymousClaims`.
  */
 export async function claimBookmarksForUser(userId: string): Promise<void> {
   setCurrentUserIdCache(userId);
   if (!isSupabaseConfigured) return;
   const userOwnerKey = `u:${userId}`;
-  const anonOwner = anonymousOwnerKey();
 
   // Step 1: pull cloud state for the signed-in user.
   await pullRemoteBookmarks();
 
-  // Step 2: merge this device's anonymous records into the user owner.
-  if (anonOwner && anonOwner !== userOwnerKey) {
-    const anonRecords = await getBookmarksForOwner(anonOwner);
-    for (const anon of anonRecords) {
-      const existing = await getBookmark(userOwnerKey, anon.surah, anon.ayah);
-      // LWW: only promote when the anonymous record is strictly newer
-      // than the user-owned one pulled from cloud.
-      if (existing && existing.updatedAt >= anon.updatedAt) continue;
-      const promoted: BookmarkRecord = {
-        ...anon,
-        id: bookmarkKey(userOwnerKey, anon.surah, anon.ayah),
-        ownerKey: userOwnerKey,
-      };
-      await putBookmark(promoted);
-    }
-  }
-
-  // Step 3: push merged user-owned records back to the cloud. Each
-  // upsert is safe because step 1 already ensured our local row is
-  // >= any row currently stored for the same (user, surah, ayah).
+  // Step 2: push any local user-owned records (e.g. made offline on
+  // this device while signed in previously) back to the cloud.
   const userRecords = await getBookmarksForOwner(userOwnerKey);
   for (const record of userRecords) {
     syncBookmarkUpsert(record);
   }
+  emitChange();
+}
+
+// ─── Anonymous bookmark claim flow ────────────────────────────────────────────
+
+function readResolvedClaims(userId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem(CLAIM_RESOLVED_KEY(userId));
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((x): x is string => typeof x === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+function writeResolvedClaims(userId: string, ids: Set<string>): void {
+  try {
+    localStorage.setItem(CLAIM_RESOLVED_KEY(userId), JSON.stringify([...ids]));
+  } catch {
+    // storage full / unavailable — resolutions won't persist, user will
+    // be re-prompted on next sign-in; acceptable fallback
+  }
+}
+
+async function listActiveAnonymousRecords(): Promise<BookmarkRecord[]> {
+  const anon = anonymousOwnerKey();
+  if (!anon) return [];
+  const rows = await getBookmarksForOwner(anon);
+  return rows.filter((b) => b.bookmarked || b.note);
+}
+
+/**
+ * Returns anonymous (device-scoped) bookmarks/notes on this device
+ * that the given user has NOT yet decided about. A non-empty result
+ * should trigger the "Add to account / Don't add / Decide later"
+ * dialog.
+ */
+export async function listPendingAnonymousClaims(userId: string): Promise<BookmarkRecord[]> {
+  const userOwnerKey = `u:${userId}`;
+  const anon = anonymousOwnerKey();
+  if (!anon || anon === userOwnerKey) return [];
+  const resolved = readResolvedClaims(userId);
+  const rows = await listActiveAnonymousRecords();
+  return rows.filter((r) => !resolved.has(`${r.surah}:${r.ayah}`));
+}
+
+/**
+ * Promotes every pending anonymous record into the signed-in user's
+ * owner scope (LWW against whatever the user already has) and records
+ * all current anonymous IDs as resolved so they don't re-prompt.
+ * Returns the number of records merged (added or updated).
+ */
+export async function mergeAnonymousBookmarksIntoUser(userId: string): Promise<number> {
+  const userOwnerKey = `u:${userId}`;
+  const anon = anonymousOwnerKey();
+  if (!anon || anon === userOwnerKey) return 0;
+
+  const pending = await listPendingAnonymousClaims(userId);
+  let merged = 0;
+  for (const rec of pending) {
+    const existing = await getBookmark(userOwnerKey, rec.surah, rec.ayah);
+    if (existing && existing.updatedAt >= rec.updatedAt) continue;
+    const promoted: BookmarkRecord = {
+      ...rec,
+      id: bookmarkKey(userOwnerKey, rec.surah, rec.ayah),
+      ownerKey: userOwnerKey,
+    };
+    await putBookmark(promoted);
+    syncBookmarkUpsert(promoted);
+    merged++;
+  }
+
+  // Mark every currently-existing anon ID as resolved so none re-prompt.
+  const all = await listActiveAnonymousRecords();
+  const resolved = readResolvedClaims(userId);
+  for (const r of all) resolved.add(`${r.surah}:${r.ayah}`);
+  writeResolvedClaims(userId, resolved);
+  emitChange();
+  return merged;
+}
+
+/**
+ * Records every currently-pending anonymous bookmark as resolved
+ * WITHOUT copying it into the signed-in account. The underlying
+ * anonymous records remain on the device (they will still be visible
+ * after sign-out) but the user will not be prompted about them again.
+ */
+export async function discardAnonymousClaims(userId: string): Promise<void> {
+  const all = await listActiveAnonymousRecords();
+  const resolved = readResolvedClaims(userId);
+  for (const r of all) resolved.add(`${r.surah}:${r.ayah}`);
+  writeResolvedClaims(userId, resolved);
   emitChange();
 }
 

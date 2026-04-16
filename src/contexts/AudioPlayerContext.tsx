@@ -161,7 +161,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       album: "القرآن الكريم",
     });
 
-    const handlePlay = () => { mobileAudioManager.play("quran").catch(() => {}); };
+    const handlePlay = () => {
+      const audio = audioRef.current;
+      const savedUrl = currentUrlRef.current;
+      // After long background suspension (iOS lock screen, app switched
+      // away), the <audio> element can lose its src. If that happened,
+      // reload from the remembered URL before asking the manager to play.
+      const srcLost = !audio || !audio.src || audio.src === "" || audio.src === window.location.href;
+      if (srcLost && savedUrl) {
+        mobileAudioManager.play("quran", savedUrl, { forceLoad: true }).catch(() => {});
+        return;
+      }
+      mobileAudioManager.play("quran").catch(() => {});
+    };
     const handlePause = () => { audioRef.current?.pause(); };
 
     navigator.mediaSession.setActionHandler("play", handlePlay);
@@ -180,6 +192,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const activeSurahForRetryRef = useRef<number | null>(null);
   const activeReciterForRetryRef = useRef<string>("");
   const sourceSetRef = useRef(false);
+  // Remember the URL currently loaded into the audio element so the
+  // Media Session (lock screen / Bluetooth) "play" handler can rebuild
+  // the source if the element lost its src during background suspension.
+  const currentUrlRef = useRef<string | null>(null);
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
@@ -224,6 +240,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       if (nextIndex < fallbacks.length && audioRef.current === audio) {
         const nextUrl = fallbacks[nextIndex];
         fallbackIndexRef.current = nextIndex + 1;
+        currentUrlRef.current = nextUrl;
         mobileAudioManager.play("quran", nextUrl, { forceLoad: true }).catch(() => {});
         return;
       }
@@ -354,6 +371,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       if (audioRef.current) {
         try {
+          currentUrlRef.current = orderedUrls[0];
           await mobileAudioManager.play("quran", orderedUrls[0], { forceLoad: true });
           if (!blobUrlRef.current) {
             cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
@@ -391,6 +409,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     mobileAudioManager.stop("quran", true);
     audioRef.current = null;
     cleanupBlobUrl();
+    currentUrlRef.current = null;
     timestampsRef.current = [];
     ayahsRef.current = [];
     setStableState(INITIAL_STABLE);
