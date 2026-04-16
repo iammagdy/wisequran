@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,15 @@ export default function UpdateNotification() {
   const { updateAvailable, isUpdating, applyUpdate } = useServiceWorkerUpdate();
   const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
+
+  // Reset dismissed whenever a new update becomes available so the user
+  // gets re-prompted if they dismissed a previous notification and a
+  // newer version arrives later in the same session.
+  useEffect(() => {
+    if (updateAvailable) {
+      setDismissed(false);
+    }
+  }, [updateAvailable]);
 
   const visible = updateAvailable && !dismissed;
 
