@@ -53,7 +53,7 @@ const GROUPS: Group[] = [
     label: "Preferences",
     keys: [
       "wise-reciter",
-      "wise-theme",
+      "wise-quran-theme",
       "wise-language",
       "wise-font-size",
       "wise-device-id",

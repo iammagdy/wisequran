@@ -155,6 +155,16 @@ export async function clearAllData() {
   await db.clear("audio");
 }
 
+export async function clearSurahsStore() {
+  const db = await getDB();
+  await db.clear("surahs");
+}
+
+export async function clearAzkarStore() {
+  const db = await getDB();
+  await db.clear("azkar");
+}
+
 export async function clearAllTafsir() {
   const db = await getDB();
   await db.clear("tafsir");

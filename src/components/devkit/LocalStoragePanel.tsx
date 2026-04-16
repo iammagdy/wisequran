@@ -81,10 +81,17 @@ function EditRow({
                 ref={taRef}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onBlur={save}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    save();
+                  }
+                }}
                 rows={Math.min(20, draft.split("\n").length + 2)}
                 className={`w-full font-mono text-xs p-2 rounded bg-[#0d1117] ${DK.text} ${DK.border} border resize-y outline-none focus:border-[#388bfd] focus:ring-1 focus:ring-[#388bfd]`}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-2 items-center">
                 <button onClick={save} className={`${DK.btnBase} ${DK.btnGreen}`}>
                   Save
                 </button>
@@ -97,6 +104,7 @@ function EditRow({
                 >
                   Cancel
                 </button>
+                <span className={`font-mono text-xs ${DK.muted} ml-auto`}>blur or Ctrl+Enter to save</span>
               </div>
             </>
           ) : (

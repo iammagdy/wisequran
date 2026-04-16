@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDB, clearAllData, clearAllTafsir, clearAllAudio, getAllSyncQueueEntries } from "@/lib/db";
+import { getDB, clearAllData, clearAllTafsir, clearAllAudio, clearSurahsStore, clearAzkarStore, getAllSyncQueueEntries } from "@/lib/db";
 import { DK, formatBytes } from "./devkit-utils";
 
 interface StoreStats {
@@ -90,6 +90,39 @@ export default function IndexedDBPanel() {
     }
   };
 
+  const stores: { name: string; count: number | undefined; bytes: number | null | undefined; clear: (() => void) | undefined }[] = [
+    {
+      name: "surahs",
+      count: stats?.surahs,
+      bytes: stats?.surahBytes,
+      clear: () => act(clearSurahsStore, "Clear surahs store"),
+    },
+    {
+      name: "azkar",
+      count: stats?.azkar,
+      bytes: null,
+      clear: () => act(clearAzkarStore, "Clear azkar store"),
+    },
+    {
+      name: "audio",
+      count: stats?.audio,
+      bytes: stats?.audioBytes,
+      clear: () => act(clearAllAudio, "Clear audio store"),
+    },
+    {
+      name: "tafsir",
+      count: stats?.tafsir,
+      bytes: null,
+      clear: () => act(clearAllTafsir, "Clear tafsir store"),
+    },
+    {
+      name: "syncQueue",
+      count: stats?.syncQueue,
+      bytes: null,
+      clear: clearSyncQueue,
+    },
+  ];
+
   return (
     <div className="space-y-4">
       <div className={`rounded-lg p-4 ${DK.card}`}>
@@ -98,7 +131,7 @@ export default function IndexedDBPanel() {
           <div className="flex gap-2">
             <button onClick={() => void load()} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
             <button
-              onClick={() => act(async () => { await clearAllData(); await clearAllTafsir(); await clearAllAudio(); }, "Clear ALL IndexedDB data")}
+              onClick={() => act(async () => { await clearAllData(); await clearAllTafsir(); }, "Clear ALL IndexedDB data")}
               disabled={loading}
               className={`${DK.btnBase} ${DK.btnRed}`}
             >
@@ -107,13 +140,7 @@ export default function IndexedDBPanel() {
           </div>
         </div>
 
-        {[
-          { name: "surahs", count: stats?.surahs, bytes: stats?.surahBytes, clear: () => act(clearAllData, "Clear surahs + azkar + audio store") },
-          { name: "azkar", count: stats?.azkar, bytes: null, clear: undefined },
-          { name: "audio", count: stats?.audio, bytes: stats?.audioBytes, clear: () => act(clearAllAudio, "Clear all audio") },
-          { name: "tafsir", count: stats?.tafsir, bytes: null, clear: () => act(clearAllTafsir, "Clear tafsir") },
-          { name: "syncQueue", count: stats?.syncQueue, bytes: null, clear: clearSyncQueue },
-        ].map(({ name, count, bytes, clear }) => (
+        {stores.map(({ name, count, bytes, clear }) => (
           <div key={name} className={`flex items-center gap-4 py-2 border-b ${DK.border} last:border-0`}>
             <span className={`w-28 font-mono text-xs ${DK.blue}`}>{name}</span>
             <span className={`font-mono text-xs ${DK.text} flex-1`}>

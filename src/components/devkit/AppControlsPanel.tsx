@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { DK } from "./devkit-utils";
+import { clearAllAudio } from "@/lib/db";
 
 const THEMES = ["light", "dark", "system"] as const;
 const LANGS = ["ar", "en"] as const;
+const THEME_KEY = "wise-quran-theme";
 
 function readTheme() {
-  return (localStorage.getItem("wise-theme") ?? "system") as string;
+  return (localStorage.getItem(THEME_KEY) ?? "system") as string;
 }
 function readLang() {
   return (localStorage.getItem("wise-language") ?? "ar") as string;
@@ -15,6 +17,7 @@ export default function AppControlsPanel() {
   const [theme, setTheme] = useState(readTheme);
   const [lang, setLang] = useState(readLang);
   const [msg, setMsg] = useState("");
+  const [offlineMode, setOfflineMode] = useState(false);
 
   const flash = (text: string) => {
     setMsg(text);
@@ -22,9 +25,9 @@ export default function AppControlsPanel() {
   };
 
   const applyTheme = (t: string) => {
-    localStorage.setItem("wise-theme", t);
+    localStorage.setItem(THEME_KEY, t);
     setTheme(t);
-    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new StorageEvent("storage", { key: THEME_KEY, newValue: t }));
     document.documentElement.classList.remove("light", "dark");
     if (t === "dark") document.documentElement.classList.add("dark");
     else if (t === "light") document.documentElement.classList.remove("dark");
@@ -54,13 +57,28 @@ export default function AppControlsPanel() {
   };
 
   const clearCaches = async () => {
-    if (!confirm("Clear all Cache API caches? The PWA will re-fetch assets on next visit.")) return;
+    if (!confirm("Clear Cache API caches + IDB audio? App will re-fetch assets and audio on next visit.")) return;
+    let cacheCount = 0;
     if ("caches" in window) {
       const keys = await caches.keys();
+      cacheCount = keys.length;
       await Promise.all(keys.map((k) => caches.delete(k)));
-      flash(`Cleared ${keys.length} cache(s): ${keys.join(", ")}`);
+    }
+    await clearAllAudio();
+    flash(`Cleared ${cacheCount} Cache API cache(s) + IDB audio store`);
+  };
+
+  const toggleOffline = () => {
+    const next = !offlineMode;
+    setOfflineMode(next);
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: "DEVKIT_SIMULATE_OFFLINE",
+        value: next,
+      });
+      flash(`Offline simulation ${next ? "ON" : "OFF"} — SW message sent`);
     } else {
-      flash("Cache API not supported in this browser");
+      flash(`Offline simulation ${next ? "ON" : "OFF"} — no active SW controller`);
     }
   };
 
@@ -109,7 +127,7 @@ export default function AppControlsPanel() {
           ))}
         </div>
         <p className={`font-mono text-xs ${DK.muted} mt-2`}>
-          Current: <span className={DK.blue}>{theme}</span>
+          Current: <span className={DK.blue}>{theme}</span> · key: <span className={DK.muted}>{THEME_KEY}</span>
         </p>
       </div>
 
@@ -174,10 +192,26 @@ export default function AppControlsPanel() {
       </div>
 
       <div className={`rounded-lg p-4 ${DK.card}`}>
+        <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted} mb-3`}>Network simulation</h3>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className={`font-mono text-xs ${DK.text}`}>Simulate offline</p>
+            <p className={`font-mono text-xs ${DK.muted}`}>Sends DEVKIT_SIMULATE_OFFLINE message to active service worker</p>
+          </div>
+          <button
+            onClick={toggleOffline}
+            className={`${DK.btnBase} ${offlineMode ? DK.btnRed : DK.btnGray} shrink-0`}
+          >
+            {offlineMode ? "Online ↺" : "Go offline"}
+          </button>
+        </div>
+      </div>
+
+      <div className={`rounded-lg p-4 ${DK.card}`}>
         <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted} mb-3`}>Caches</h3>
         <div className="flex items-center justify-between">
           <p className={`font-mono text-xs ${DK.muted}`}>
-            Wipes all Cache API entries (PWA assets). App will refetch on next load.
+            Wipes all Cache API entries + IDB audio store. App will refetch on next load.
           </p>
           <button
             onClick={() => void clearCaches()}

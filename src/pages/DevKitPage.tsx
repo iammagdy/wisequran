@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AppStatusPanel from "@/components/devkit/AppStatusPanel";
 import LocalStoragePanel from "@/components/devkit/LocalStoragePanel";
 import IndexedDBPanel from "@/components/devkit/IndexedDBPanel";
@@ -8,6 +8,7 @@ import UserDataPanel from "@/components/devkit/UserDataPanel";
 import AudioPanel from "@/components/devkit/AudioPanel";
 import NotificationsPanel from "@/components/devkit/NotificationsPanel";
 import { DK } from "@/components/devkit/devkit-utils";
+import { getSyncQueueCount } from "@/lib/db";
 
 const DEVKIT_PIN = "devkit";
 const SESSION_KEY = "wise-devkit-unlocked";
@@ -64,6 +65,7 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
           <input
             ref={inputRef}
             type="password"
+            autoComplete="new-password"
             autoFocus
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -94,50 +96,79 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
 function Sidebar({
   active,
   onSelect,
+  collapsed,
+  onToggleCollapse,
+  syncQueueCount,
 }: {
   active: PanelKey;
   onSelect: (k: PanelKey) => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  syncQueueCount: number;
 }) {
   return (
     <aside
-      className={`w-52 shrink-0 h-screen sticky top-0 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto`}
+      className={`${collapsed ? "w-14" : "w-52"} shrink-0 h-screen sticky top-0 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-all duration-200`}
     >
-      <div className={`p-4 border-b ${DK.border}`}>
-        <div className="flex items-center gap-2">
-          <span className="text-lg">⚙</span>
-          <div>
+      <div className={`p-3 border-b ${DK.border} flex items-center ${collapsed ? "justify-center" : "gap-2"}`}>
+        {!collapsed && (
+          <div className="flex-1 min-w-0">
             <h1 className={`font-mono text-sm font-bold ${DK.text}`}>DevKit</h1>
             <p className={`font-mono text-xs ${DK.muted}`}>wise-quran</p>
           </div>
-        </div>
+        )}
+        <button
+          onClick={onToggleCollapse}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={`${DK.btnBase} ${DK.btnGray} text-xs px-2`}
+        >
+          {collapsed ? "»" : "«"}
+        </button>
       </div>
 
       <nav className="flex-1 p-2">
-        {NAV.map(({ key, label, icon }) => (
-          <button
-            key={key}
-            onClick={() => onSelect(key)}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-left transition-colors font-mono text-xs ${
-              active === key
-                ? `bg-[#388bfd]/20 text-[#79c0ff] border border-[#388bfd]/30`
-                : `${DK.muted} hover:bg-[#21262d] hover:${DK.text}`
-            }`}
-          >
-            <span className="text-sm shrink-0">{icon}</span>
-            <span>{label}</span>
-          </button>
-        ))}
+        {NAV.map(({ key, label, icon }) => {
+          const badge = key === "syncqueue" && syncQueueCount > 0 ? syncQueueCount : 0;
+          return (
+            <button
+              key={key}
+              onClick={() => onSelect(key)}
+              title={collapsed ? label : undefined}
+              className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg mb-0.5 text-left transition-colors font-mono text-xs ${
+                active === key
+                  ? `bg-[#388bfd]/20 text-[#79c0ff] border border-[#388bfd]/30`
+                  : `${DK.muted} hover:bg-[#21262d] hover:${DK.text}`
+              } ${collapsed ? "justify-center" : ""}`}
+            >
+              <span className="text-sm shrink-0 relative">
+                {icon}
+                {badge > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-[#f85149] text-white font-mono text-[9px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                )}
+              </span>
+              {!collapsed && <span className="flex-1 truncate">{label}</span>}
+              {!collapsed && badge > 0 && (
+                <span className="shrink-0 bg-[#f85149] text-white font-mono text-[10px] leading-none rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                  {badge > 99 ? "99+" : badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
-      <div className={`p-3 border-t ${DK.border}`}>
+      <div className={`p-2 border-t ${DK.border}`}>
         <button
           onClick={() => {
             sessionStorage.removeItem(SESSION_KEY);
             window.location.reload();
           }}
-          className={`w-full ${DK.btnBase} ${DK.btnGray} text-xs`}
+          title="Lock"
+          className={`w-full ${DK.btnBase} ${DK.btnGray} text-xs ${collapsed ? "px-2" : ""}`}
         >
-          Lock
+          {collapsed ? "🔒" : "Lock"}
         </button>
       </div>
     </aside>
@@ -162,6 +193,24 @@ export default function DevKitPage() {
     () => sessionStorage.getItem(SESSION_KEY) === "1"
   );
   const [active, setActive] = useState<PanelKey>("status");
+  const [collapsed, setCollapsed] = useState(false);
+  const [syncQueueCount, setSyncQueueCount] = useState(0);
+
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const count = await getSyncQueueCount();
+        setSyncQueueCount(count);
+      } catch {
+        // ignore
+      }
+    };
+    if (unlocked) {
+      void poll();
+      const id = setInterval(poll, 5000);
+      return () => clearInterval(id);
+    }
+  }, [unlocked]);
 
   if (!unlocked) {
     return <PinGate onUnlock={() => setUnlocked(true)} />;
@@ -171,12 +220,23 @@ export default function DevKitPage() {
 
   return (
     <div className={`min-h-screen ${DK.bg} flex`}>
-      <Sidebar active={active} onSelect={setActive} />
+      <Sidebar
+        active={active}
+        onSelect={setActive}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((v) => !v)}
+        syncQueueCount={syncQueueCount}
+      />
 
       <main className="flex-1 min-w-0 overflow-auto">
         <div className={`sticky top-0 z-10 flex items-center gap-3 px-6 py-4 border-b ${DK.border} ${DK.bg}`}>
           <span className="text-lg">{nav.icon}</span>
           <h2 className={`font-mono text-sm font-semibold ${DK.text}`}>{nav.label}</h2>
+          {active === "syncqueue" && syncQueueCount > 0 && (
+            <span className="bg-[#f85149] text-white font-mono text-xs rounded-full px-2 py-0.5">
+              {syncQueueCount} pending
+            </span>
+          )}
           <span className={`font-mono text-xs ${DK.muted} ml-auto`}>
             auto-refresh every 5s
           </span>
