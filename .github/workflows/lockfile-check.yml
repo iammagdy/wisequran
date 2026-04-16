@@ -1,0 +1,58 @@
+name: Lockfile consistency
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  npm-lockfile:
+    name: Verify package-lock.json matches package.json
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify npm lockfile is in sync with package.json
+        run: |
+          if ! npm ci --dry-run --ignore-scripts; then
+            echo ""
+            echo "::error::package-lock.json is out of sync with package.json."
+            echo "::error::Run 'npm install' locally and commit the updated package-lock.json."
+            exit 1
+          fi
+
+  pnpm-lockfile:
+    name: Verify pnpm-lock.yaml matches package.json
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify pnpm lockfile is in sync with package.json
+        run: |
+          if ! pnpm install --frozen-lockfile --ignore-scripts; then
+            echo ""
+            echo "::error::pnpm-lock.yaml is out of sync with package.json."
+            echo "::error::Run 'pnpm install' locally and commit the updated pnpm-lock.yaml."
+            exit 1
+          fi
