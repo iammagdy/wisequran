@@ -1,4 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { useTransition } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -81,6 +82,8 @@ const basePaths = [
 
 export default function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [, startTransition] = useTransition();
   const { t } = useLanguage();
   const { pendingCount } = useSyncQueueContext();
   const showSyncBadge = isSupabaseConfigured && pendingCount > 0;
@@ -96,6 +99,11 @@ export default function BottomNav() {
               <NavLink
                 key={path}
                 to={path}
+                onClick={(e) => {
+                  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  startTransition(() => { navigate(path); });
+                }}
                 data-testid={`bottom-nav-link-${path === "/" ? "quran" : path.replace("/", "")}`}
                 className={cn(
                   "relative flex flex-col items-center justify-center gap-0.5 rounded-2xl transition-all duration-300 px-2 py-1.5 flex-1 min-w-0 max-w-[80px]",
