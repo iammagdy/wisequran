@@ -1,6 +1,9 @@
 import { useLocalStorage } from "./useLocalStorage";
 import { juzData } from "@/data/juz-hizb-data";
 import { SURAH_META } from "@/data/surah-meta";
+import { useDeviceId } from "./useDeviceId";
+import { enqueuedSupabaseWrite } from "@/lib/syncQueue";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 export type WirdPlan = 30 | 60 | 90 | 180;
 
@@ -20,9 +23,28 @@ function daysBetween(a: string, b: string) {
 
 export function useDailyWird() {
   const [state, setState] = useLocalStorage<WirdState | null>("wise-daily-wird", null);
+  const deviceId = useDeviceId();
+
+  const syncWird = (wirdState: WirdState) => {
+    if (!isSupabaseConfigured) return;
+    enqueuedSupabaseWrite(
+      "device_daily_wird",
+      "upsert",
+      {
+        device_id: deviceId,
+        plan: wirdState.plan,
+        start_date: wirdState.startDate,
+        completed_days: wirdState.completedDays,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "device_id" }
+    );
+  };
 
   const startPlan = (plan: WirdPlan) => {
-    setState({ plan, startDate: getTodayKey(), completedDays: [] });
+    const newState: WirdState = { plan, startDate: getTodayKey(), completedDays: [] };
+    setState(newState);
+    syncWird(newState);
   };
 
   const resetPlan = () => setState(null);
@@ -30,9 +52,10 @@ export function useDailyWird() {
   const markTodayDone = () => {
     if (!state) return;
     const today = getTodayKey();
-    if (!state.completedDays.includes(today)) {
-      setState({ ...state, completedDays: [...state.completedDays, today] });
-    }
+    if (state.completedDays.includes(today)) return;
+    const newState: WirdState = { ...state, completedDays: [...state.completedDays, today] };
+    setState(newState);
+    syncWird(newState);
   };
 
   const getTodayPortion = () => {
