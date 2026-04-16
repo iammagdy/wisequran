@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.0";
+export const APP_VERSION = "3.5.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,22 +14,6 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
-  {
-    version: "3.6.0",
-    date: "2026-04-16",
-    ar: {
-      improvements: [
-        "تحسينات داخلية وصيانة مستمرة لضمان استقرار التطبيق وسلاسة أدائه",
-        "نحن نعمل دائماً خلف الكواليس لتجهيز ميزات قادمة وتحسين التجربة",
-      ],
-    },
-    en: {
-      improvements: [
-        "Internal improvements and ongoing maintenance to keep the app stable and running smoothly",
-        "Work is always happening behind the scenes to prepare upcoming features and refine your experience",
-      ],
-    },
-  },
   {
     version: "3.5.0",
     date: "2026-04-16",
