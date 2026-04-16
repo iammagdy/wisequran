@@ -95,10 +95,23 @@
   function scheduleFromState(state) {
     cancelTimer();
     if (!state || typeof state.fireAt !== "number") return;
-    const delay = Math.min(Math.max(state.fireAt - Date.now(), 0), MAX_SCHEDULE_MS);
+    const remaining = state.fireAt - Date.now();
+    if (remaining <= 0) {
+      // We're already past the intended fire time: fire immediately
+      // (showNotification will still dedupe on tag).
+      void fireNotification(state);
+      return;
+    }
+    if (remaining > MAX_SCHEDULE_MS) {
+      // Don't fire yet — re-arm in chunks until we're within the
+      // 12 h safe window of `fireAt`. Prevents early notifications
+      // when the prayer is more than 12 h out.
+      timerId = setTimeout(() => scheduleFromState(state), MAX_SCHEDULE_MS);
+      return;
+    }
     timerId = setTimeout(() => {
       void fireNotification(state);
-    }, delay);
+    }, remaining);
   }
 
   self.addEventListener("message", (event) => {

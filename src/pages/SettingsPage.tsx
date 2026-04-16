@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff, ArchiveRestore, ArchiveX } from "lucide-react";
-import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup, estimateBackupSize, type BackupSizeEstimate } from "@/lib/backup";
+import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup, estimateBackupSize, exportBackupBinary, downloadBackupBlob, restoreBackupFromFile, type BackupSizeEstimate } from "@/lib/backup";
 import { clearAllLocalBookmarks } from "@/lib/bookmarks";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
@@ -483,8 +483,17 @@ export default function SettingsPage() {
   const handleExportBackup = async (includeOfflineContent = false, includeAudio = false) => {
     setBackupBusy(true);
     try {
-      const data = await exportBackup({ includeOfflineContent, includeAudio });
-      downloadBackupFile(data);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      if (includeAudio) {
+        // Large archives go through the streamed binary format so we
+        // never materialise hundreds of megabytes of audio as a single
+        // JSON string.
+        const blob = await exportBackupBinary({ includeOfflineContent: true, includeAudio: true });
+        downloadBackupBlob(blob, `wise-quran-backup-${dateStr}.wqb`);
+      } else {
+        const data = await exportBackup({ includeOfflineContent, includeAudio: false });
+        downloadBackupFile(data);
+      }
       toast.success(language === "ar" ? "تم تصدير النسخة الاحتياطية" : "Backup exported successfully");
     } catch {
       toast.error(language === "ar" ? "فشل تصدير النسخة الاحتياطية" : "Backup export failed");
@@ -512,26 +521,40 @@ export default function SettingsPage() {
     void refreshBackupEstimate();
   }, [refreshBackupEstimate]);
 
+  const [pendingBackupFile, setPendingBackupFile] = useState<File | null>(null);
+
   const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
+    // For large `.wqb` archives we intentionally don't parse the audio
+    // body up-front — `restoreBackupFromFile` streams it on demand.
+    // For small `.json` files we still pre-validate so we can show a
+    // clean confirm dialog.
+    if (/\.wqb$/i.test(file.name)) {
+      setPendingBackupFile(file);
+      setPendingBackup(null);
+      return;
+    }
     try {
       const data = await parseBackupFile(file);
       setPendingBackup(data);
+      setPendingBackupFile(null);
     } catch (err) {
       toast.error(language === "ar" ? "فشل قراءة الملف" : `Cannot read file: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
   const handleConfirmRestore = async () => {
-    if (!pendingBackup) return;
+    if (!pendingBackup && !pendingBackupFile) return;
     setBackupBusy(true);
     try {
-      const result = await restoreBackup(pendingBackup);
+      const result = pendingBackupFile
+        ? await restoreBackupFromFile(pendingBackupFile)
+        : await restoreBackup(pendingBackup!);
       const summary = language === "ar"
-        ? `تمت الاستعادة (${result.lsKeysRestored} إعداد · ${result.azkarRestored} ذكر) — إعادة تحميل…`
-        : `Restored ${result.lsKeysRestored} settings · ${result.azkarRestored} azkar — reloading…`;
+        ? `تمت الاستعادة (${result.lsKeysRestored} إعداد · ${result.azkarRestored} ذكر · ${result.audioRestored} مقطع صوتي) — إعادة تحميل…`
+        : `Restored ${result.lsKeysRestored} settings · ${result.azkarRestored} azkar · ${result.audioRestored} audio — reloading…`;
       toast.success(summary);
       setTimeout(() => window.location.reload(), 1200);
     } catch (err) {
@@ -539,6 +562,7 @@ export default function SettingsPage() {
     } finally {
       setBackupBusy(false);
       setPendingBackup(null);
+      setPendingBackupFile(null);
     }
   };
 

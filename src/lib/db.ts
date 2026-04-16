@@ -112,26 +112,31 @@ function openDatabase() {
       // succeeds. The post-boot migration in `bookmarks.ts` rehydrates
       // these rows under the current anonymous owner.
       if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
-        let copied = false;
+        // Best-effort copy of the v6 rows to LS before we drop the old
+        // store. Whatever happens, we MUST delete + recreate the store
+        // here so the v7 schema (owner index) is present — any data
+        // we failed to copy is gone, but the app won't be left with a
+        // half-migrated, queryable-broken bookmarks store.
         try {
           const oldStore = transaction.objectStore("bookmarks");
           const rows = (await oldStore.getAll()) as Array<Record<string, unknown>>;
           if (Array.isArray(rows) && rows.length > 0) {
             localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
           }
-          copied = true;
         } catch {
-          // If we couldn't read the old store we leave it in place so
-          // the user still has the data on disk. A subsequent app load
-          // can retry the migration.
-        }
-        if (copied) {
-          db.deleteObjectStore("bookmarks");
+          // Reading the old rows failed — we still have to move to v7
+          // schema below, so log via LS for post-boot visibility.
           try {
-            localStorage.removeItem("wise-bookmarks-migrated-v1");
+            localStorage.setItem("wise-bookmarks-v6-migration-error", String(Date.now()));
           } catch {
             /* ignore */
           }
+        }
+        db.deleteObjectStore("bookmarks");
+        try {
+          localStorage.removeItem("wise-bookmarks-migrated-v1");
+        } catch {
+          /* ignore */
         }
       }
       if (!db.objectStoreNames.contains("bookmarks")) {

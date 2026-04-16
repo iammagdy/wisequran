@@ -393,3 +393,200 @@ export function parseBackupFile(file: File): Promise<BackupData> {
     reader.readAsText(file);
   });
 }
+
+// ---------------------------------------------------------------------------
+// Binary (streamed) backup format
+// ---------------------------------------------------------------------------
+// Layout on disk:
+//   [4 bytes]  magic "WQB\0"
+//   [4 bytes]  header-length (little-endian uint32)
+//   [N bytes]  header JSON (same shape as BackupData, but `idb.audio` is a
+//              `audioManifest: Array<{id,reciterId,surahNumber,length}>`)
+//   [rest]     concatenated audio buffers, in manifest order
+//
+// Export assembles a single `Blob` from individual buffer parts — the
+// browser streams it to disk without materialising the whole archive
+// in memory, which is what makes this safe for hundreds of MB of audio.
+// Restore uses `File.slice(...).arrayBuffer()` to pull out each audio
+// buffer one at a time, so the restore side is also streaming.
+
+const BINARY_MAGIC = new Uint8Array([0x57, 0x51, 0x42, 0x00]); // "WQB\0"
+const BINARY_FORMAT_VERSION = 1;
+
+interface AudioManifestEntry {
+  id: string;
+  reciterId: string;
+  surahNumber: number;
+  length: number;
+}
+
+interface BinaryBackupHeader {
+  magicVersion: number;
+  version: number;
+  exportedAt: string;
+  localStorage: Record<string, string>;
+  idb: {
+    azkar: AzkarEntry[];
+    syncQueue: SyncQueueEntry[];
+    surahCount: number;
+    audioCount: number;
+    tafsirCount: number;
+    surahs?: SurahEntry[];
+    tafsir?: TafsirEntry[];
+    audioManifest: AudioManifestEntry[];
+  };
+}
+
+function u32ToBytes(n: number): Uint8Array {
+  const out = new Uint8Array(4);
+  new DataView(out.buffer).setUint32(0, n >>> 0, true);
+  return out;
+}
+
+function bytesToU32(bytes: Uint8Array): number {
+  return new DataView(bytes.buffer, bytes.byteOffset, 4).getUint32(0, true);
+}
+
+export async function exportBackupBinary(options: ExportOptions = {}): Promise<Blob> {
+  const lsData: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(WISE_LS_PREFIX)) continue;
+    const value = localStorage.getItem(key);
+    if (value !== null) lsData[key] = value;
+  }
+
+  const db = await getDB();
+  const azkar = await db.getAll("azkar");
+  const syncQueue = await db.getAll("syncQueue");
+  const surahCount = await db.count("surahs");
+  const audioCount = await db.count("audio");
+  const tafsirCount = await db.count("tafsir");
+
+  const idb: BinaryBackupHeader["idb"] = {
+    azkar,
+    syncQueue,
+    surahCount,
+    audioCount,
+    tafsirCount,
+    audioManifest: [],
+  };
+  if (options.includeOfflineContent) {
+    idb.surahs = await db.getAll("surahs");
+    idb.tafsir = await db.getAll("tafsir");
+  }
+
+  const audioBuffers: ArrayBuffer[] = [];
+  if (options.includeAudio) {
+    const rows = await db.getAll("audio");
+    for (const r of rows) {
+      idb.audioManifest.push({
+        id: r.id,
+        reciterId: r.reciterId,
+        surahNumber: r.surahNumber,
+        length: r.data.byteLength,
+      });
+      audioBuffers.push(r.data);
+    }
+  }
+
+  const header: BinaryBackupHeader = {
+    magicVersion: BINARY_FORMAT_VERSION,
+    version: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    localStorage: lsData,
+    idb,
+  };
+
+  const headerBytes = new TextEncoder().encode(JSON.stringify(header));
+  const parts: BlobPart[] = [BINARY_MAGIC, u32ToBytes(headerBytes.byteLength), headerBytes, ...audioBuffers];
+  return new Blob(parts, { type: "application/octet-stream" });
+}
+
+export function downloadBackupBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function readBinaryHeader(file: File | Blob): Promise<{ header: BinaryBackupHeader; bodyOffset: number } | null> {
+  // We only read the first few KB to parse the header — no need to
+  // materialise the audio body. Header size is bounded by the JSON
+  // text containing only metadata (surahs/tafsir may be bulky, so
+  // we read them on demand by slicing enough bytes).
+  if (file.size < 8) return null;
+  const preludeBytes = new Uint8Array(await file.slice(0, 8).arrayBuffer());
+  for (let i = 0; i < 4; i++) {
+    if (preludeBytes[i] !== BINARY_MAGIC[i]) return null;
+  }
+  const headerLen = bytesToU32(preludeBytes.slice(4, 8));
+  if (!Number.isFinite(headerLen) || headerLen <= 0 || headerLen > 256 * 1024 * 1024) return null;
+  const headerBytes = new Uint8Array(await file.slice(8, 8 + headerLen).arrayBuffer());
+  const header = JSON.parse(new TextDecoder().decode(headerBytes)) as BinaryBackupHeader;
+  return { header, bodyOffset: 8 + headerLen };
+}
+
+async function restoreBinaryBackup(file: File | Blob, header: BinaryBackupHeader, bodyOffset: number): Promise<RestoreResult> {
+  if (!SUPPORTED_VERSIONS.includes(header.version as (typeof SUPPORTED_VERSIONS)[number])) {
+    throw new Error(`Unsupported backup version: ${header.version}`);
+  }
+
+  // Reuse the JSON restore for everything except audio.
+  const jsonShape: BackupData = {
+    version: header.version,
+    exportedAt: header.exportedAt,
+    localStorage: header.localStorage,
+    idb: {
+      azkar: header.idb.azkar,
+      syncQueue: header.idb.syncQueue,
+      surahCount: header.idb.surahCount,
+      audioCount: header.idb.audioCount,
+      tafsirCount: header.idb.tafsirCount,
+      surahs: header.idb.surahs,
+      tafsir: header.idb.tafsir,
+      audio: undefined, // restored separately below, streaming
+    },
+  };
+  const base = await restoreBackup(jsonShape);
+
+  let audioRestored = 0;
+  if (Array.isArray(header.idb.audioManifest) && header.idb.audioManifest.length > 0) {
+    const db = await getDB();
+    await db.clear("audio");
+    let cursor = bodyOffset;
+    for (const entry of header.idb.audioManifest) {
+      if (!entry || typeof entry.length !== "number" || entry.length < 0) {
+        cursor += Number(entry?.length) > 0 ? Number(entry.length) : 0;
+        continue;
+      }
+      try {
+        const buf = await file.slice(cursor, cursor + entry.length).arrayBuffer();
+        await saveAudio(entry.reciterId, entry.surahNumber, buf);
+        audioRestored++;
+      } catch {
+        // Skip this entry but keep streaming subsequent ones.
+      }
+      cursor += entry.length;
+    }
+    await recalculateAudioBytes();
+  }
+
+  return { ...base, audioRestored: base.audioRestored + audioRestored };
+}
+
+/**
+ * Single entry point for restore. Detects binary vs JSON and handles
+ * each without materialising the full archive in memory.
+ */
+export async function restoreBackupFromFile(file: File): Promise<RestoreResult> {
+  const binary = await readBinaryHeader(file);
+  if (binary) {
+    return restoreBinaryBackup(file, binary.header, binary.bodyOffset);
+  }
+  // Fall back to legacy JSON.
+  const parsed = await parseBackupFile(file);
+  return restoreBackup(parsed);
+}
