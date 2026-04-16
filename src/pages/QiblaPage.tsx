@@ -55,6 +55,10 @@ export default function QiblaPage() {
   const smoothedHeading = useRef<number | null>(null);
   const rafId = useRef<number>(0);
   const pendingHeading = useRef<number | null>(null);
+  const continuousNeedleRotation = useRef<number>(0);
+  const lastNeedleRotation = useRef<number | null>(null);
+  const continuous3DRotation = useRef<number>(0);
+  const last3DRotation = useRef<number | null>(null);
 
   const qiblaBearing = location ? calculateQibla(location.latitude, location.longitude) : null;
   const distanceToKaaba = location ? calculateDistance(location.latitude, location.longitude, KAABA_LAT, KAABA_LNG) : null;
@@ -123,23 +127,36 @@ export default function QiblaPage() {
       }
     };
 
+    // Prefer absolute event on Android (true magnetic heading) and fall back to relative
+    const supportsAbsolute = "ondeviceorientationabsolute" in window;
+
+    const attachListeners = () => {
+      if (supportsAbsolute) {
+        window.addEventListener("deviceorientationabsolute" as any, handleOrientation, true);
+      }
+      window.addEventListener("deviceorientation", handleOrientation, true);
+    };
+
     // iOS 13+ requires permission
     if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
       (DeviceOrientationEvent as any)
         .requestPermission()
         .then((response: string) => {
           if (response === "granted") {
-            window.addEventListener("deviceorientation", handleOrientation, true);
+            attachListeners();
           } else {
             setCompassErrorKey("allow_compass");
           }
         })
         .catch(() => setCompassErrorKey("sensor_error"));
     } else {
-      window.addEventListener("deviceorientation", handleOrientation, true);
+      attachListeners();
     }
 
     return () => {
+      if (supportsAbsolute) {
+        window.removeEventListener("deviceorientationabsolute" as any, handleOrientation, true);
+      }
       window.removeEventListener("deviceorientation", handleOrientation, true);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
@@ -174,9 +191,39 @@ export default function QiblaPage() {
     }
   }, [isLocked, correctedHeading]);
 
-  const needleRotation = qiblaBearing !== null && activeHeading !== null
-    ? qiblaBearing - activeHeading
-    : 0;
+  // Continuous, unwrapped needle rotation so CSS transitions never spin the long way around
+  // when the heading crosses 0°/360°. We track the previous wrapped value and add the
+  // shortest signed delta to a running accumulator.
+  let needleRotation = 0;
+  if (qiblaBearing !== null && activeHeading !== null) {
+    const target = qiblaBearing - activeHeading;
+    if (lastNeedleRotation.current === null) {
+      continuousNeedleRotation.current = target;
+    } else {
+      let delta = target - lastNeedleRotation.current;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      continuousNeedleRotation.current += delta;
+    }
+    lastNeedleRotation.current = target;
+    needleRotation = continuousNeedleRotation.current;
+  }
+
+  // Same unwrapping for the 3D arrow
+  let arrow3DRotation = 0;
+  if (qiblaBearing !== null) {
+    const target = qiblaBearing - (correctedHeading || 0);
+    if (last3DRotation.current === null) {
+      continuous3DRotation.current = target;
+    } else {
+      let delta = target - last3DRotation.current;
+      if (delta > 180) delta -= 360;
+      if (delta < -180) delta += 360;
+      continuous3DRotation.current += delta;
+    }
+    last3DRotation.current = target;
+    arrow3DRotation = continuous3DRotation.current;
+  }
 
   useEffect(() => {
     if (mode !== "3D") return;
@@ -340,7 +387,7 @@ export default function QiblaPage() {
                       {/* Compass rose + direction indicator */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <motion.div
-                          animate={{ rotate: qiblaBearing - (correctedHeading || 0) }}
+                          animate={{ rotate: arrow3DRotation }}
                           transition={{ type: "spring", stiffness: 60, damping: 18 }}
                           className="relative flex flex-col items-center"
                           style={{ width: 120, height: 200 }}
