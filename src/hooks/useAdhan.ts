@@ -133,7 +133,13 @@ export function useAdhan() {
   }, [isIOSSafari, settings.voiceId, settings.takbirOnlyMode, settings.fajrSpecialAdhan]);
 
   useEffect(() => {
-    if (!settings.adhanEnabled) return;
+    if (!settings.adhanEnabled) {
+      // Toggling adhan off must also clear any timer already armed
+      // inside the service worker — otherwise a previously scheduled
+      // notification will still fire.
+      void postAdhanCancelToSW();
+      return;
+    }
 
     let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
 

@@ -64,7 +64,15 @@
           body: "الأذان يعمل الآن",
           dir: "rtl",
           lang: "ar",
-          tag: `wise-adhan-${state.prayerId}-${Math.floor(state.fireAt / 60000)}`,
+          // Matches the in-page notification tag format in
+          // `useAdhan.ts` (`wise-adhan-<Y-M-D>-<prayerId>`) so the
+          // browser collapses duplicates if both the foreground and
+          // the SW try to notify for the same prayer.
+          tag: (() => {
+            const d = new Date(state.fireAt);
+            const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+            return `wise-adhan-${key}-${state.prayerId}`;
+          })(),
           renotify: false,
           silent: false,
           data: { prayerId: state.prayerId, firedAt: Date.now() },

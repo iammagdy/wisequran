@@ -287,6 +287,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     isActiveRef.current = true;
     restartCountRef.current = 0;
     noSpeechCountRef.current = 0;
+    silenceElapsedMsRef.current = 0;
     finalTranscriptRef.current = "";
     interimRef.current = "";
 
@@ -314,6 +315,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     interimRef.current = "";
     restartCountRef.current = 0;
     noSpeechCountRef.current = 0;
+    silenceElapsedMsRef.current = 0;
     setStatus("idle");
     setTranscript("");
     setInterimTranscript("");
