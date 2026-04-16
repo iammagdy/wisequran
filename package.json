@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate:shortcut-icons": "node scripts/generate-shortcut-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
