@@ -39,6 +39,7 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const SignInPage = lazy(() => import("@/pages/SignInPage"));
 const SleepModePage = lazy(() => import("@/pages/SleepModePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
+const DevKitPage = lazy(() => import("@/pages/DevKitPage"));
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -68,6 +69,7 @@ const AppContent = () => {
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/sleep" element={<SleepModePage />} />
+        <Route path="/devkit" element={<DevKitPage />} />
         <Route
           path="*"
           element={
