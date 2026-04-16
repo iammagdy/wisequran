@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { showAppNotification } from "@/lib/notifications";
 import { DK } from "./devkit-utils";
 
 export default function NotificationsPanel() {
   const [msg, setMsg] = useState("");
-  const permission = typeof Notification !== "undefined" ? Notification.permission : "not-supported";
+  const [permission, setPermission] = useState(
+    () => (typeof Notification !== "undefined" ? Notification.permission : "not-supported") as string
+  );
+
+  const refresh = useCallback(() => {
+    setPermission(typeof Notification !== "undefined" ? Notification.permission : "not-supported");
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(refresh, 5000);
+    return () => clearInterval(id);
+  }, [refresh]);
 
   const flash = (text: string) => {
     setMsg(text);
@@ -17,6 +29,7 @@ export default function NotificationsPanel() {
       return;
     }
     const result = await Notification.requestPermission();
+    setPermission(result);
     flash(`Permission result: ${result}`);
   };
 
@@ -58,7 +71,10 @@ export default function NotificationsPanel() {
       )}
 
       <div className={`rounded-lg p-4 ${DK.card}`}>
-        <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted} mb-3`}>Status</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted}`}>Status</h3>
+          <button onClick={refresh} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
+        </div>
         <div className={`flex items-center gap-4 py-2 border-b ${DK.border}`}>
           <span className={`w-40 font-mono text-xs ${DK.muted}`}>permission</span>
           <span className={`font-mono text-xs font-semibold ${permColor}`}>{permission}</span>

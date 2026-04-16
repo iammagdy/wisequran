@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DK } from "./devkit-utils";
 import { clearAllAudio } from "@/lib/db";
+import { DEVKIT_FORCE_CHANGELOG_KEY } from "@/hooks/usePostUpdateChangelog";
 
 const THEMES = ["light", "dark", "system"] as const;
 const LANGS = ["ar", "en"] as const;
@@ -35,6 +36,11 @@ export default function AppControlsPanel() {
   const [msg, setMsg] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
 
+  const refresh = () => {
+    setTheme(readTheme());
+    setLang(readLang());
+  };
+
   const flash = (text: string) => {
     setMsg(text);
     setTimeout(() => setMsg(""), 2500);
@@ -67,8 +73,8 @@ export default function AppControlsPanel() {
   };
 
   const forceChangelog = () => {
-    localStorage.removeItem("wise-last-seen-version");
-    flash("Changelog reset — open the main app tab to see the modal");
+    sessionStorage.setItem(DEVKIT_FORCE_CHANGELOG_KEY, "1");
+    window.location.href = "/";
   };
 
   const clearCaches = async () => {
@@ -122,6 +128,9 @@ export default function AppControlsPanel() {
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <button onClick={refresh} className={`${DK.btnBase} ${DK.btnGray}`}>↻ Refresh</button>
+      </div>
       {msg && (
         <div className={`rounded p-3 bg-[#238636]/20 border border-[#238636] font-mono text-xs ${DK.green}`}>
           ✓ {msg}
@@ -179,10 +188,10 @@ export default function AppControlsPanel() {
           <div className={`border-t ${DK.border} pt-3 flex items-center justify-between`}>
             <div>
               <p className={`font-mono text-xs ${DK.text}`}>Changelog modal</p>
-              <p className={`font-mono text-xs ${DK.muted}`}>Clears seen-version so modal shows on next app open</p>
+              <p className={`font-mono text-xs ${DK.muted}`}>Navigates to / and immediately opens the changelog modal</p>
             </div>
-            <button onClick={forceChangelog} className={`${DK.btnBase} ${DK.btnGray} shrink-0`}>
-              Reset
+            <button onClick={forceChangelog} className={`${DK.btnBase} ${DK.btnGreen} shrink-0`}>
+              Open now ↗
             </button>
           </div>
           <div className={`border-t ${DK.border} pt-3 flex items-center justify-between`}>
