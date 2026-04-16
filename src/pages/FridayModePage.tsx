@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toArabicNumerals } from "@/lib/utils";
 import { showAppNotification } from "@/lib/notifications";
+import { cancelFridayReminderInSW } from "@/hooks/useFridayReminders";
 
 function getFridayKey() {
   const today = new Date();
@@ -98,7 +99,11 @@ export default function FridayModePage() {
           <p className="text-xs text-muted-foreground mb-3">{language === "ar" ? "إشعار صباح الجمعة لفتح هذه الصفحة وقراءة الكهف." : "Friday morning reminder to open this page and read Al-Kahf."}</p>
           <div className="flex items-center justify-between gap-3 mb-3">
             <span className="text-xs text-muted-foreground">{reminderEnabled ? (language === "ar" ? "مفعّل" : "Enabled") : (language === "ar" ? "متوقف" : "Disabled")}</span>
-            <button type="button" role="switch" aria-checked={reminderEnabled} onClick={() => setReminderEnabled((prev) => !prev)} data-testid="friday-mode-reminder-toggle" className={`relative h-8 w-14 rounded-full transition-colors ${reminderEnabled ? 'bg-primary' : 'bg-muted'}`}>
+            <button type="button" role="switch" aria-checked={reminderEnabled} onClick={() => setReminderEnabled((prev) => {
+              const next = !prev;
+              if (!next) void cancelFridayReminderInSW();
+              return next;
+            })} data-testid="friday-mode-reminder-toggle" className={`relative h-8 w-14 rounded-full transition-colors ${reminderEnabled ? 'bg-primary' : 'bg-muted'}`}>
               <span className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-transform ${reminderEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
             </button>
           </div>

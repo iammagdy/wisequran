@@ -14,6 +14,21 @@ const SW_SCHEDULED_KEY = "wise-friday-reminder-sw-scheduled";
  * lacks SW / messaging support — the in-tab interval below still covers
  * the case where the app is open.
  */
+/**
+ * Tells the SW to drop any pending Friday reminder timer. Call when the
+ * user disables the toggle so an already-scheduled reminder doesn't fire.
+ */
+export async function cancelFridayReminderInSW(): Promise<void> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.active?.postMessage({ type: "CANCEL_FRIDAY_REMINDER" });
+    localStorage.removeItem(SW_SCHEDULED_KEY);
+  } catch (err) {
+    logger.debug("[friday] sw cancel skipped:", err);
+  }
+}
+
 async function scheduleFridayReminderInSW(): Promise<void> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
 

@@ -139,21 +139,29 @@
       // `setTimeout` in an SW becomes unreliable beyond ~12 h, and we
       // must never fire early. Re-arm in 12 h increments until we're
       // within the safe window, then fire at the exact `fireAt`.
+      //
+      // We also track the pending timer id on `self` so the companion
+      // `CANCEL_FRIDAY_REMINDER` message can abort a scheduled reminder
+      // when the user disables the toggle after scheduling.
       const scheduleFriday = () => {
         const remaining = fireAt - Date.now();
         if (remaining <= 0) {
+          self._fridayTimerId = null;
           self.registration
             .showNotification(title, { body, dir: "rtl", lang: "ar", tag, renotify: false })
             .catch(() => {});
           return;
         }
-        if (remaining > MAX_SCHEDULE_MS) {
-          setTimeout(scheduleFriday, MAX_SCHEDULE_MS);
-          return;
-        }
-        setTimeout(scheduleFriday, remaining);
+        const delay = remaining > MAX_SCHEDULE_MS ? MAX_SCHEDULE_MS : remaining;
+        self._fridayTimerId = setTimeout(scheduleFriday, delay);
       };
+      if (self._fridayTimerId) clearTimeout(self._fridayTimerId);
       scheduleFriday();
+    } else if (data.type === "CANCEL_FRIDAY_REMINDER") {
+      if (self._fridayTimerId) {
+        clearTimeout(self._fridayTimerId);
+        self._fridayTimerId = null;
+      }
     }
   });
 
