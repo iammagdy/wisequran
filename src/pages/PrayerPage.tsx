@@ -383,15 +383,25 @@ export default function PrayerPage() {
                   )}>
                     {t(prayer.id as any)}
                   </p>
-                  {streaksByPrayer[prayer.id] >= 2 && (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full bg-accent/12 border border-accent/25 px-1.5 py-0.5 text-[10px] font-bold text-accent leading-none"
-                      aria-label={`${t(prayer.id as any)} streak ${streaksByPrayer[prayer.id]} ${t("prayer_streak_days")}`}
-                    >
-                      <Flame className="h-2.5 w-2.5" />
-                      {language === "ar" ? toArabicNumerals(String(streaksByPrayer[prayer.id])) : streaksByPrayer[prayer.id]}
-                    </span>
-                  )}
+                  {(() => {
+                    const v = streaksByPrayer[prayer.id] ?? 0;
+                    const active = v > 0;
+                    const label = `${language === "ar" ? toArabicNumerals(String(v)) : v} ${t("prayer_streak_days")}`;
+                    return (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none border",
+                          active
+                            ? "bg-accent/12 border-accent/25 text-accent"
+                            : "bg-muted/40 border-border/40 text-muted-foreground/70"
+                        )}
+                        aria-label={`${t(prayer.id as any)}: ${label}`}
+                      >
+                        {active && <Flame className="h-2.5 w-2.5" />}
+                        {label}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatLocalizedTime(time, language)}

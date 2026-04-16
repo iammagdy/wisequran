@@ -85,13 +85,23 @@ export default function PrayerHistorySheet({ open, onClose }: PrayerHistorySheet
   }, [open, user, dateRange]);
 
   const perPrayerStreaks = useMemo(() => {
-    // Compute from local log so it works for signed-out users.
-    // For signed-in users, this still reflects the local mirror, which is up to date.
-    const log = loadPrayerLog();
+    // For signed-in users, derive streaks from the same `history` rows the
+    // grid below renders (cloud-backed). For signed-out users, the `history`
+    // is built from the local log already, so this stays consistent.
     const out: Record<PrayerId, number> = { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 };
-    for (const p of PRAYERS) out[p] = getPrayerStreak(log, p);
+    if (user) {
+      const asLog: Record<string, Partial<Record<PrayerId, boolean>>> = {};
+      for (const [date, day] of Object.entries(history)) {
+        asLog[date] = {};
+        for (const p of PRAYERS) if (day[p]) asLog[date]![p] = true;
+      }
+      for (const p of PRAYERS) out[p] = getPrayerStreak(asLog, p);
+    } else {
+      const log = loadPrayerLog();
+      for (const p of PRAYERS) out[p] = getPrayerStreak(log, p);
+    }
     return out;
-  }, [history]);
+  }, [history, user]);
 
   const FULL_NAMES = language === "ar" ? PRAYER_FULL_AR : PRAYER_FULL_EN;
 
