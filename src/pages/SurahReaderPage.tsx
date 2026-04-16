@@ -885,7 +885,7 @@ export default function SurahReaderPage() {
                       </article>
                     </div>);
             })}
-              </div>
+              </ol>
           }
           </>) : (
 

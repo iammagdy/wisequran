@@ -134,17 +134,26 @@
       const title = String(data.title || "جمعة مباركة");
       const body = String(data.body || "");
       const tag = `wise-friday-reminder-${String(data.key || fireAt)}`;
-      const remaining = fireAt - Date.now();
-      // setTimeout in an SW is only reliable for the near term; if the
-      // user closes the tab more than ~12h before Friday, Chrome will
-      // throttle/evict this timer. That is acceptable — the in-tab
-      // interval in useFridayReminders.ts still covers the open case.
-      const delay = Math.min(remaining, 12 * 60 * 60 * 1000);
-      setTimeout(() => {
-        self.registration
-          .showNotification(title, { body, dir: "rtl", lang: "ar", tag, renotify: false })
-          .catch(() => {});
-      }, delay);
+
+      // Mirror the chunked re-arming pattern used for adhan timers:
+      // `setTimeout` in an SW becomes unreliable beyond ~12 h, and we
+      // must never fire early. Re-arm in 12 h increments until we're
+      // within the safe window, then fire at the exact `fireAt`.
+      const scheduleFriday = () => {
+        const remaining = fireAt - Date.now();
+        if (remaining <= 0) {
+          self.registration
+            .showNotification(title, { body, dir: "rtl", lang: "ar", tag, renotify: false })
+            .catch(() => {});
+          return;
+        }
+        if (remaining > MAX_SCHEDULE_MS) {
+          setTimeout(scheduleFriday, MAX_SCHEDULE_MS);
+          return;
+        }
+        setTimeout(scheduleFriday, remaining);
+      };
+      scheduleFriday();
     }
   });
 
