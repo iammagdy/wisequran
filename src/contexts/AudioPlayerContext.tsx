@@ -122,6 +122,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   }, [reciterId]);
 
   useEffect(() => {
+    // Initialise from current state in case the provider mounts while already hidden.
+    isVisibleRef.current = document.visibilityState === "visible";
+
     const handleVisibility = () => {
       const visible = document.visibilityState === "visible";
       isVisibleRef.current = visible;
