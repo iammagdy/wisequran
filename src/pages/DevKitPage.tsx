@@ -147,31 +147,31 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
   );
 }
 
-/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+/* ─── Sidebar nav content (shared between desktop and mobile drawer) ───────── */
 
-function Sidebar({
+function SidebarNav({
   active,
   onSelect,
   collapsed,
   onToggleCollapse,
   syncQueueCount,
+  isMobile,
 }: {
   active: PanelKey;
   onSelect: (k: PanelKey) => void;
   collapsed: boolean;
-  onToggleCollapse: () => void;
+  onToggleCollapse?: () => void;
   syncQueueCount: number;
+  isMobile?: boolean;
 }) {
   return (
-    <aside
-      className={`${collapsed ? "w-14" : "w-56"} shrink-0 h-screen sticky top-0 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-all duration-200`}
-    >
+    <>
       {/* Header */}
       <div className={`px-3 py-3.5 border-b ${DK.border} flex items-center gap-2.5 min-h-[52px]`}>
         <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0d1117] border border-[#30363d] shrink-0">
           <span className="text-sm leading-none select-none">⚙</span>
         </div>
-        {!collapsed && (
+        {(!collapsed || isMobile) && (
           <div className="flex-1 min-w-0">
             <p className={`font-mono text-sm font-bold ${DK.text} leading-tight`}>DevKit</p>
             <p className={`font-mono text-[10px] ${DK.muted} leading-tight truncate`}>
@@ -179,7 +179,7 @@ function Sidebar({
             </p>
           </div>
         )}
-        {!collapsed && (
+        {!collapsed && !isMobile && (
           <button
             onClick={onToggleCollapse}
             title="Collapse sidebar"
@@ -195,26 +195,27 @@ function Sidebar({
         {NAV.map(({ key, label, icon }) => {
           const badge = key === "syncqueue" && syncQueueCount > 0 ? syncQueueCount : 0;
           const isActive = active === key;
+          const showLabel = !collapsed || isMobile;
           return (
             <button
               key={key}
               onClick={() => onSelect(key)}
-              title={collapsed ? label : undefined}
+              title={collapsed && !isMobile ? label : undefined}
               className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors font-mono text-xs ${
                 isActive
                   ? DK.activeNav
                   : `${DK.muted} ${DK.hoverNav}`
-              } ${collapsed ? "justify-center" : ""}`}
+              } ${!showLabel ? "justify-center" : ""}`}
             >
               <span className="text-sm shrink-0 relative">
                 {icon}
-                {badge > 0 && collapsed && (
+                {badge > 0 && !showLabel && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[#f85149] text-white font-mono text-[8px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
                     {badge > 99 ? "99+" : badge}
                   </span>
                 )}
               </span>
-              {!collapsed && (
+              {showLabel && (
                 <>
                   <span className="flex-1 truncate">{label}</span>
                   {badge > 0 && (
@@ -231,7 +232,7 @@ function Sidebar({
 
       {/* Footer */}
       <div className={`px-2 py-3 border-t ${DK.border} space-y-1.5`}>
-        {collapsed && (
+        {collapsed && !isMobile && (
           <button
             onClick={onToggleCollapse}
             title="Expand sidebar"
@@ -249,10 +250,111 @@ function Sidebar({
           className={`w-full ${DK.btnBase} ${DK.btnGray} flex items-center justify-center gap-1.5 py-1.5`}
         >
           <span>🔒</span>
-          {!collapsed && <span>Lock</span>}
+          {(!collapsed || isMobile) && <span>Lock</span>}
         </button>
       </div>
+    </>
+  );
+}
+
+/* ─── Desktop Sidebar ─────────────────────────────────────────────────────── */
+
+function Sidebar({
+  active,
+  onSelect,
+  collapsed,
+  onToggleCollapse,
+  syncQueueCount,
+}: {
+  active: PanelKey;
+  onSelect: (k: PanelKey) => void;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  syncQueueCount: number;
+}) {
+  return (
+    <aside
+      className={`${collapsed ? "w-14" : "w-56"} shrink-0 h-screen sticky top-0 hidden sm:flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-all duration-200`}
+    >
+      <SidebarNav
+        active={active}
+        onSelect={onSelect}
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+        syncQueueCount={syncQueueCount}
+      />
     </aside>
+  );
+}
+
+/* ─── Mobile Drawer ───────────────────────────────────────────────────────── */
+
+function MobileDrawer({
+  open,
+  onClose,
+  active,
+  onSelect,
+  syncQueueCount,
+}: {
+  open: boolean;
+  onClose: () => void;
+  active: PanelKey;
+  onSelect: (k: PanelKey) => void;
+  syncQueueCount: number;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open, onClose]);
+
+  const handleSelect = (k: PanelKey) => {
+    onSelect(k);
+    onClose();
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        className={`sm:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Drawer panel */}
+      <div
+        className={`sm:hidden fixed top-0 left-0 z-50 h-full w-64 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-transform duration-200 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="DevKit navigation"
+      >
+        {/* Close button row */}
+        <div className={`flex justify-end px-3 pt-2`}>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className={`${DK.btnBase} ${DK.btnGray} px-2 py-1 text-xs`}
+          >
+            ✕
+          </button>
+        </div>
+        <SidebarNav
+          active={active}
+          onSelect={handleSelect}
+          collapsed={false}
+          syncQueueCount={syncQueueCount}
+          isMobile
+        />
+      </div>
+    </>
   );
 }
 
@@ -279,6 +381,7 @@ export default function DevKitPage() {
   );
   const [active, setActive] = useState<PanelKey>("status");
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
 
   useEffect(() => {
@@ -308,6 +411,7 @@ export default function DevKitPage() {
       dir="ltr"
       className={`min-h-screen ${DK.bg} ${DK.ltr} flex`}
     >
+      {/* Desktop sidebar */}
       <Sidebar
         active={active}
         onSelect={setActive}
@@ -316,24 +420,42 @@ export default function DevKitPage() {
         syncQueueCount={syncQueueCount}
       />
 
+      {/* Mobile slide-out drawer */}
+      <MobileDrawer
+        open={mobileDrawerOpen}
+        onClose={() => setMobileDrawerOpen(false)}
+        active={active}
+        onSelect={setActive}
+        syncQueueCount={syncQueueCount}
+      />
+
       <main className="flex-1 min-w-0 overflow-auto flex flex-col">
         {/* Top header bar */}
         <div
-          className={`sticky top-0 z-10 flex items-center gap-3 px-6 py-3 border-b ${DK.border} bg-[#161b22]/95 backdrop-blur min-h-[52px]`}
+          className={`sticky top-0 z-10 flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 border-b ${DK.border} bg-[#161b22]/95 backdrop-blur min-h-[52px]`}
         >
+          {/* Hamburger – mobile only */}
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            aria-label="Open navigation menu"
+            className={`sm:hidden shrink-0 ${DK.btnBase} ${DK.btnGray} px-2 py-1.5 text-base leading-none`}
+          >
+            ☰
+          </button>
+
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0d1117] border border-[#30363d] shrink-0">
             <span className="text-sm leading-none select-none">{nav.icon}</span>
           </div>
-          <h2 className={`font-mono text-sm font-semibold ${DK.text}`}>
+          <h2 className={`font-mono text-sm font-semibold ${DK.text} truncate`}>
             {nav.label}
           </h2>
           {active === "syncqueue" && syncQueueCount > 0 && (
-            <span className="bg-[#f85149] text-white font-mono text-[11px] rounded-full px-2 py-0.5 font-semibold leading-none">
+            <span className="shrink-0 bg-[#f85149] text-white font-mono text-[11px] rounded-full px-2 py-0.5 font-semibold leading-none">
               {syncQueueCount} pending
             </span>
           )}
-          <div className="ml-auto flex items-center gap-2.5">
-            <span className={`font-mono text-[10px] ${DK.subtle}`}>
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
+            <span className={`hidden sm:inline font-mono text-[10px] ${DK.subtle}`}>
               auto-refresh 5s
             </span>
             <span
@@ -345,18 +467,18 @@ export default function DevKitPage() {
         </div>
 
         {/* Panel content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-3 sm:p-6">
           <div className="max-w-4xl">
             <Panel id={active} />
           </div>
         </div>
 
         {/* Footer bar */}
-        <div className={`border-t ${DK.border} px-6 py-2 flex items-center gap-4`}>
+        <div className={`border-t ${DK.border} px-3 sm:px-6 py-2 flex items-center gap-4`}>
           <span className={`font-mono text-[10px] ${DK.subtle}`}>
             DevKit · Internal use only
           </span>
-          <span className={`font-mono text-[10px] ${DK.subtle}`}>
+          <span className={`hidden sm:inline font-mono text-[10px] ${DK.subtle}`}>
             Admin: <span className={`${DK.muted}`}>{ADMIN_EMAIL}</span>
           </span>
         </div>
