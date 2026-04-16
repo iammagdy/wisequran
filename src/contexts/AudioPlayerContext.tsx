@@ -100,6 +100,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const timestampsRef = useRef<AyahTimestamp[]>([]);
   const ayahsRef = useRef<Ayah[]>([]);
   const stoppedRef = useRef(false);
+  const lastTimeUpdateRef = useRef(0);
 
   const [stableState, setStableState] = useState<AudioPlayerStableState>(INITIAL_STABLE);
   const [volatileState, setVolatileState] = useState<AudioPlayerVolatileState>(INITIAL_VOLATILE);
@@ -158,6 +159,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setVolatileState((s) => ({ ...s, duration: audio.duration }));
     });
     audio.addEventListener("timeupdate", () => {
+      const now = Date.now();
+      if (now - lastTimeUpdateRef.current < 250) return;
+      lastTimeUpdateRef.current = now;
+
       const currentTime = audio.currentTime;
       const timestamps = timestampsRef.current;
 
