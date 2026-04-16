@@ -45,8 +45,9 @@ function snooze() {
   localStorage.setItem(SNOOZED_UNTIL_KEY, String(Date.now() + SNOOZE_MS));
 }
 
-function permanentlyDismiss() {
-  // Push snooze far into the future so the banner never reappears.
+// Called when the user accepts the install — push snooze 1 year ahead so the
+// banner effectively never reappears (named to reflect intent, not duration).
+function dismissForever() {
   localStorage.setItem(SNOOZED_UNTIL_KEY, String(Date.now() + 365 * 24 * 60 * 60 * 1000));
 }
 
@@ -66,10 +67,16 @@ export default function InstallBanner() {
     const sessionCount = recordSession();
     const eligible = sessionCount >= MIN_SESSIONS;
 
+    // Pick up the event captured early in main.tsx (before the splash-screen delay).
+    const earlyPrompt = (window as Window & { __installPromptEvent?: BeforeInstallPromptEvent })
+      .__installPromptEvent ?? null;
+    if (earlyPrompt) {
+      setDeferredPrompt(earlyPrompt);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // Only show the prompt automatically once the user is engaged enough.
       if (eligible) {
         setTimeout(() => setShow(true), 1500);
       }
@@ -77,10 +84,12 @@ export default function InstallBanner() {
 
     window.addEventListener("beforeinstallprompt", handler);
 
-    // For browsers that never fire beforeinstallprompt (iOS Safari, Firefox),
-    // still show the manual-instructions variant once the threshold is met.
-    if (eligible && browserType !== "chromium") {
-      setTimeout(() => setShow(true), 1500);
+    if (eligible) {
+      // Show if we already have the event (captured early) or if the browser never
+      // fires it (iOS Safari, Firefox — show manual-install instructions).
+      if (earlyPrompt || browserType !== "chromium") {
+        setTimeout(() => setShow(true), 1500);
+      }
     }
 
     return () => {
@@ -99,7 +108,7 @@ export default function InstallBanner() {
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
-      permanentlyDismiss();
+      dismissForever();
     } else {
       snooze();
     }
