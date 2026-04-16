@@ -13,6 +13,7 @@ import { APP_VERSION } from "@/data/changelog";
 
 const DEVKIT_PIN = "thewisedeveloper";
 const SESSION_KEY = "wise-devkit-unlocked";
+const ACTIVE_PANEL_KEY = "wise-devkit-active-panel";
 const ADMIN_EMAIL = "Magdy.saber@outlook.com";
 
 type PanelKey =
@@ -379,7 +380,15 @@ export default function DevKitPage() {
   const [unlocked, setUnlocked] = useState(
     () => sessionStorage.getItem(SESSION_KEY) === "1"
   );
-  const [active, setActive] = useState<PanelKey>("status");
+  const [active, setActive] = useState<PanelKey>(() => {
+    const saved = sessionStorage.getItem(ACTIVE_PANEL_KEY) as PanelKey | null;
+    return saved && NAV.some((n) => n.key === saved) ? saved : "status";
+  });
+
+  const selectPanel = (key: PanelKey) => {
+    sessionStorage.setItem(ACTIVE_PANEL_KEY, key);
+    setActive(key);
+  };
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
@@ -414,7 +423,7 @@ export default function DevKitPage() {
       {/* Desktop sidebar */}
       <Sidebar
         active={active}
-        onSelect={setActive}
+        onSelect={selectPanel}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((v) => !v)}
         syncQueueCount={syncQueueCount}
@@ -425,7 +434,7 @@ export default function DevKitPage() {
         open={mobileDrawerOpen}
         onClose={() => setMobileDrawerOpen(false)}
         active={active}
-        onSelect={setActive}
+        onSelect={selectPanel}
         syncQueueCount={syncQueueCount}
       />
 
