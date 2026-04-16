@@ -111,6 +111,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const ayahsRef = useRef<Ayah[]>([]);
   const stoppedRef = useRef(false);
   const lastTimeUpdateRef = useRef(0);
+  const isVisibleRef = useRef(true);
 
   const [stableState, setStableState] = useState<AudioPlayerStableState>(INITIAL_STABLE);
   const [volatileState, setVolatileState] = useState<AudioPlayerVolatileState>(INITIAL_VOLATILE);
@@ -119,6 +120,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     reciterIdRef.current = reciterId;
   }, [reciterId]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      const visible = document.visibilityState === "visible";
+      isVisibleRef.current = visible;
+      if (visible) {
+        // Force an immediate timeupdate on return so the progress bar syncs at once.
+        lastTimeUpdateRef.current = 0;
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   const cleanupBlobUrl = useCallback(() => {
     if (blobUrlRef.current) {
@@ -170,6 +184,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       setVolatileState((s) => ({ ...s, duration: audio.duration }));
     });
     audio.addEventListener("timeupdate", () => {
+      if (!isVisibleRef.current) return;
       const now = Date.now();
       if (now - lastTimeUpdateRef.current < 250) return;
       lastTimeUpdateRef.current = now;
