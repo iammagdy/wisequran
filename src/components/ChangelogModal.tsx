@@ -91,7 +91,7 @@ function CategorySection({
   );
 }
 
-function VersionBlock({
+export function VersionBlock({
   entry,
   language,
   entryIndex,

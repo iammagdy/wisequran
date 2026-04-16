@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { DK } from "./devkit-utils";
 import { changelog as staticChangelog, type ChangelogEntry, type ChangelogCategory } from "@/data/changelog";
 import {
@@ -11,6 +13,8 @@ import {
   DEVKIT_CURRENT_VERSION_KEY,
 } from "@/lib/changelog-overrides";
 import { APP_VERSION } from "@/data/changelog";
+import { VersionBlock } from "@/components/ChangelogModal";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type CatKey = keyof ChangelogCategory;
 const CAT_KEYS: CatKey[] = ["features", "improvements", "fixes"];
@@ -65,6 +69,63 @@ function formToEntry(f: FormState): ChangelogEntry {
   };
 }
 
+function EntryPreviewModal({
+  entry,
+  onClose,
+}: {
+  entry: ChangelogEntry;
+  onClose: () => void;
+}) {
+  const { language } = useLanguage();
+  const isRTL = language === "ar";
+  const labelPreview = language === "ar" ? "معاينة المدخل" : "Entry Preview";
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 40 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 40 }}
+          transition={{ type: "spring", damping: 22, stiffness: 260 }}
+          dir={isRTL ? "rtl" : "ltr"}
+          className="bg-card rounded-3xl shadow-2xl border border-border/50 w-full max-w-sm overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="relative px-6 pt-5 pb-3 border-b border-border/40 flex items-center">
+            <span className="font-semibold text-sm text-foreground/80">{labelPreview}</span>
+            <button
+              onClick={onClose}
+              className={`absolute top-4 ${isRTL ? "left-4" : "right-4"} flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted transition-colors`}
+              aria-label="Close preview"
+            >
+              <X className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto px-5 py-4 overscroll-contain">
+            <VersionBlock entry={entry} language={language} entryIndex={0} />
+          </div>
+          <div className="border-t border-border/40 px-5 py-3 flex justify-end">
+            <button
+              onClick={onClose}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+            >
+              {language === "ar" ? "إغلاق" : "Close"}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 function EntryForm({
   form,
   setForm,
@@ -78,6 +139,9 @@ function EntryForm({
   onCancel: () => void;
   isEditing: boolean;
 }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const previewEntry = formToEntry(form);
+
   return (
     <div className={`rounded-lg ${DK.card} p-4 space-y-4`}>
       <p className={`font-mono text-xs font-semibold ${DK.text}`}>
@@ -136,6 +200,9 @@ function EntryForm({
         <button onClick={onSave} className={`${DK.btnBase} ${DK.btnGreen}`}>
           {isEditing ? "Update Entry" : "Save Entry"}
         </button>
+        <button onClick={() => setShowPreview(true)} className={`${DK.btnBase} ${DK.btnGray}`}>
+          Preview
+        </button>
         <button onClick={onCancel} className={`${DK.btnBase} ${DK.btnGray}`}>
           Cancel
         </button>
@@ -143,6 +210,10 @@ function EntryForm({
           Appears in-app after next reload
         </p>
       </div>
+
+      {showPreview && (
+        <EntryPreviewModal entry={previewEntry} onClose={() => setShowPreview(false)} />
+      )}
     </div>
   );
 }
