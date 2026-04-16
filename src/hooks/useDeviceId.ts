@@ -17,11 +17,15 @@ function generateUUID(): string {
   });
 }
 
-export function useDeviceId(): string {
+export function getDeviceId(): string {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
     id = generateUUID();
     localStorage.setItem(DEVICE_ID_KEY, id);
   }
   return id;
+}
+
+export function useDeviceId(): string {
+  return getDeviceId();
 }

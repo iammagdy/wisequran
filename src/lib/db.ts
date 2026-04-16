@@ -10,6 +10,19 @@ export interface SyncQueueEntry {
   retryCount?: number;
 }
 
+export interface BookmarkRecord {
+  id: string; // `${ownerKey}|${surah}:${ayah}` — owner-scoped so local records cannot leak across accounts on shared devices
+  ownerKey: string; // `"u:"+userId` for signed-in users, `"d:"+deviceId` for anonymous
+  surah: number;
+  ayah: number;
+  ayahText: string;
+  surahName: string;
+  note: string; // empty string when no note
+  bookmarked: boolean; // true when the ayah is explicitly bookmarked
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface WiseQuranDB extends DBSchema {
   surahs: {
     key: number;
@@ -47,10 +60,15 @@ interface WiseQuranDB extends DBSchema {
     key: number;
     value: SyncQueueEntry;
   };
+  bookmarks: {
+    key: string;
+    value: BookmarkRecord;
+    indexes: { "by-updated": number; "by-owner": string };
+  };
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 5;
+const DB_VERSION = 7;
 
 function audioKey(reciterId: string, surahNumber: number): string {
   return `${reciterId}-${surahNumber}`;
@@ -82,6 +100,24 @@ function openDatabase() {
       }
       if (!db.objectStoreNames.contains("syncQueue")) {
         db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
+      }
+      // v6 added the bookmarks store. v7 reshapes records to be
+      // owner-scoped (new `ownerKey` field + composite `id`). Drop any
+      // v6 data and recreate the store. Legacy localStorage bookmarks
+      // will be re-imported on next app boot via migrateLegacyBookmarks
+      // (gated flag is reset below).
+      if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
+        db.deleteObjectStore("bookmarks");
+        try {
+          localStorage.removeItem("wise-bookmarks-migrated-v1");
+        } catch {
+          /* ignore */
+        }
+      }
+      if (!db.objectStoreNames.contains("bookmarks")) {
+        const bookmarksStore = db.createObjectStore("bookmarks", { keyPath: "id" });
+        bookmarksStore.createIndex("by-updated", "updatedAt");
+        bookmarksStore.createIndex("by-owner", "ownerKey");
       }
     },
   });
@@ -225,6 +261,66 @@ export async function deleteSyncQueueEntry(id: number): Promise<void> {
 export async function getSyncQueueCount(): Promise<number> {
   const db = await getDB();
   return db.count("syncQueue");
+}
+
+// ── Bookmarks + Notes ─────────────────────────────────────────────────────
+// Bookmarks are owner-scoped: each record carries an `ownerKey`
+// (`"u:"+userId` when signed in, `"d:"+deviceId` otherwise) and the IDB
+// key is `${ownerKey}|${surah}:${ayah}`. This prevents local records
+// from leaking across accounts on shared devices — signing out of one
+// account and into another on the same browser only exposes the newly
+// signed-in user's records.
+
+export function bookmarkKey(ownerKey: string, surah: number, ayah: number): string {
+  return `${ownerKey}|${surah}:${ayah}`;
+}
+
+export async function getBookmark(
+  ownerKey: string,
+  surah: number,
+  ayah: number,
+): Promise<BookmarkRecord | undefined> {
+  const db = await getDB();
+  return db.get("bookmarks", bookmarkKey(ownerKey, surah, ayah));
+}
+
+export async function putBookmark(record: BookmarkRecord): Promise<void> {
+  const db = await getDB();
+  await db.put("bookmarks", record);
+}
+
+export async function deleteBookmark(
+  ownerKey: string,
+  surah: number,
+  ayah: number,
+): Promise<void> {
+  const db = await getDB();
+  await db.delete("bookmarks", bookmarkKey(ownerKey, surah, ayah));
+}
+
+export async function getBookmarksForOwner(ownerKey: string): Promise<BookmarkRecord[]> {
+  const db = await getDB();
+  return db.getAllFromIndex("bookmarks", "by-owner", ownerKey);
+}
+
+export async function getAllBookmarks(): Promise<BookmarkRecord[]> {
+  const db = await getDB();
+  return db.getAll("bookmarks");
+}
+
+export async function clearAllBookmarks(): Promise<void> {
+  const db = await getDB();
+  await db.clear("bookmarks");
+}
+
+export async function clearBookmarksForOwner(ownerKey: string): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction("bookmarks", "readwrite");
+  const index = tx.store.index("by-owner");
+  for await (const cursor of index.iterate(ownerKey)) {
+    await cursor.delete();
+  }
+  await tx.done;
 }
 
 export async function saveTafsir(editionId: string, surahNumber: number, ayahs: { numberInSurah: number; text: string }[]) {

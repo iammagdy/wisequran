@@ -4,6 +4,7 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff, ArchiveRestore, ArchiveX } from "lucide-react";
 import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup } from "@/lib/backup";
+import { clearAllLocalBookmarks } from "@/lib/bookmarks";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
@@ -2166,6 +2167,7 @@ export default function SettingsPage() {
                       localStorage.removeItem("wise-daily-reading");
                       localStorage.removeItem("wise-streak");
                       localStorage.removeItem("wise-reading-history");
+                      void clearAllLocalBookmarks().catch(() => {});
                       toast.success(t("reset_progress_success"));
                       setTimeout(() => window.location.reload(), 500);
                     }}

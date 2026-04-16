@@ -1,0 +1,430 @@
+import {
+  bookmarkKey,
+  clearAllBookmarks,
+  clearBookmarksForOwner,
+  deleteBookmark,
+  getBookmark,
+  getBookmarksForOwner,
+  putBookmark,
+  type BookmarkRecord,
+} from "@/lib/db";
+import { enqueuedSupabaseWrite } from "@/lib/syncQueue";
+import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { getDeviceId } from "@/hooks/useDeviceId";
+
+export type { BookmarkRecord } from "@/lib/db";
+export { bookmarkKey } from "@/lib/db";
+
+const CHANGE_EVENT = "wise-bookmarks-changed";
+const LEGACY_KEY = "wise-bookmarks";
+const MIGRATION_FLAG = "wise-bookmarks-migrated-v1";
+
+function emitChange(): void {
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT));
+}
+
+export function subscribeToBookmarkChanges(cb: () => void): () => void {
+  const handler = () => cb();
+  window.addEventListener(CHANGE_EVENT, handler);
+  return () => window.removeEventListener(CHANGE_EVENT, handler);
+}
+
+// ─── Ownership helpers ────────────────────────────────────────────────────────
+
+let cachedUserId: string | null = null;
+
+export function setCurrentUserIdCache(id: string | null): void {
+  cachedUserId = id;
+}
+
+function getCurrentUserId(): string | null {
+  if (!isSupabaseConfigured) return null;
+  return cachedUserId;
+}
+
+interface Ownership {
+  ownerKey: string;
+  userId: string | null;
+  deviceId: string;
+}
+
+function computeOwnership(): Ownership | null {
+  const deviceId = getDeviceId();
+  if (!deviceId) return null;
+  const userId = getCurrentUserId();
+  if (userId) {
+    return { ownerKey: `u:${userId}`, userId, deviceId };
+  }
+  return { ownerKey: `d:${deviceId}`, userId: null, deviceId };
+}
+
+function currentOwnerKey(): string | null {
+  return computeOwnership()?.ownerKey ?? null;
+}
+
+function anonymousOwnerKey(): string | null {
+  const deviceId = getDeviceId();
+  return deviceId ? `d:${deviceId}` : null;
+}
+
+// ─── Supabase sync ────────────────────────────────────────────────────────────
+
+function syncBookmarkUpsert(record: BookmarkRecord): void {
+  if (!isSupabaseConfigured) return;
+  const own = computeOwnership();
+  if (!own) return;
+  // Only sync records that belong to the currently-active owner. Records
+  // left over from a previously signed-in user are never pushed under a
+  // different owner's key.
+  if (record.ownerKey !== own.ownerKey) return;
+  void enqueuedSupabaseWrite(
+    "device_bookmarks",
+    "upsert",
+    {
+      owner_key: own.ownerKey,
+      user_id: own.userId,
+      device_id: own.deviceId,
+      surah: record.surah,
+      ayah: record.ayah,
+      ayah_text: record.ayahText,
+      surah_name: record.surahName,
+      note: record.note,
+      bookmarked: record.bookmarked,
+      created_at: new Date(record.createdAt).toISOString(),
+      updated_at: new Date(record.updatedAt).toISOString(),
+      deleted: false,
+    },
+    { onConflict: "owner_key,surah,ayah" },
+  );
+}
+
+function syncBookmarkDelete(ownerKey: string, surah: number, ayah: number): void {
+  if (!isSupabaseConfigured) return;
+  const own = computeOwnership();
+  if (!own) return;
+  if (ownerKey !== own.ownerKey) return;
+  // Offline queue does not support DELETE, so mark the row as deleted via upsert.
+  void enqueuedSupabaseWrite(
+    "device_bookmarks",
+    "upsert",
+    {
+      owner_key: own.ownerKey,
+      user_id: own.userId,
+      device_id: own.deviceId,
+      surah,
+      ayah,
+      ayah_text: "",
+      surah_name: "",
+      note: "",
+      bookmarked: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted: true,
+    },
+    { onConflict: "owner_key,surah,ayah" },
+  );
+}
+
+// ─── Local CRUD ───────────────────────────────────────────────────────────────
+
+export interface UpsertBookmarkInput {
+  surah: number;
+  ayah: number;
+  ayahText?: string;
+  surahName?: string;
+  note?: string;
+  bookmarked?: boolean;
+}
+
+async function writeOrPrune(record: BookmarkRecord): Promise<void> {
+  if (!record.bookmarked && !record.note) {
+    await deleteBookmark(record.ownerKey, record.surah, record.ayah);
+    syncBookmarkDelete(record.ownerKey, record.surah, record.ayah);
+  } else {
+    await putBookmark(record);
+    syncBookmarkUpsert(record);
+  }
+}
+
+/**
+ * Add or update a bookmark / note for the **current owner**. For new
+ * records `bookmarked` defaults to `false` — callers must explicitly
+ * set `bookmarked: true` to bookmark an ayah.
+ */
+export async function upsertBookmark(input: UpsertBookmarkInput): Promise<BookmarkRecord | null> {
+  const ownerKey = currentOwnerKey();
+  if (!ownerKey) return null;
+  const now = Date.now();
+  const existing = await getBookmark(ownerKey, input.surah, input.ayah);
+  const record: BookmarkRecord = {
+    id: bookmarkKey(ownerKey, input.surah, input.ayah),
+    ownerKey,
+    surah: input.surah,
+    ayah: input.ayah,
+    ayahText: input.ayahText ?? existing?.ayahText ?? "",
+    surahName: input.surahName ?? existing?.surahName ?? "",
+    note: input.note !== undefined ? input.note : existing?.note ?? "",
+    bookmarked:
+      input.bookmarked !== undefined
+        ? input.bookmarked
+        : existing?.bookmarked ?? false,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
+  await writeOrPrune(record);
+  emitChange();
+  return record;
+}
+
+/**
+ * Toggle the bookmark flag for the current owner, preserving any
+ * existing note on the ayah.
+ */
+export async function toggleBookmarkFlag(input: UpsertBookmarkInput): Promise<void> {
+  const ownerKey = currentOwnerKey();
+  if (!ownerKey) return;
+  const existing = await getBookmark(ownerKey, input.surah, input.ayah);
+  const nextFlag = !(existing?.bookmarked ?? false);
+  await upsertBookmark({ ...input, bookmarked: nextFlag });
+}
+
+export async function removeBookmark(surah: number, ayah: number): Promise<void> {
+  const ownerKey = currentOwnerKey();
+  if (!ownerKey) return;
+  await deleteBookmark(ownerKey, surah, ayah);
+  syncBookmarkDelete(ownerKey, surah, ayah);
+  emitChange();
+}
+
+/**
+ * Returns all records for the current owner that have either a
+ * bookmark flag or a note.
+ */
+export async function listBookmarks(): Promise<BookmarkRecord[]> {
+  const ownerKey = currentOwnerKey();
+  if (!ownerKey) return [];
+  const rows = await getBookmarksForOwner(ownerKey);
+  return rows.filter((b) => b.bookmarked || b.note);
+}
+
+/**
+ * Clears all bookmarks for the current owner locally, and issues a
+ * soft-delete sync for each. Rows belonging to other owners on the
+ * same device are untouched.
+ */
+export async function clearBookmarks(): Promise<void> {
+  const ownerKey = currentOwnerKey();
+  if (!ownerKey) return;
+  const mine = await getBookmarksForOwner(ownerKey);
+  await clearBookmarksForOwner(ownerKey);
+  for (const b of mine) syncBookmarkDelete(ownerKey, b.surah, b.ayah);
+  emitChange();
+}
+
+/**
+ * Nuclear: clear every owner's local records. Used by the "reset
+ * progress" setting. No sync writes are issued here — that would
+ * require iterating multiple owners and is out of scope for reset.
+ */
+export async function clearAllLocalBookmarks(): Promise<void> {
+  await clearAllBookmarks();
+  emitChange();
+}
+
+// ─── Legacy migration ─────────────────────────────────────────────────────────
+
+/**
+ * One-time migration from the legacy `wise-bookmarks` localStorage
+ * array (`{surah, ayah}[]`) to the IDB store, under the **current
+ * anonymous device** owner. Safe to call repeatedly; gated by a flag.
+ */
+export async function migrateLegacyBookmarks(): Promise<void> {
+  try {
+    if (localStorage.getItem(MIGRATION_FLAG) === "1") return;
+    const ownerKey = anonymousOwnerKey();
+    if (!ownerKey) return;
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        const now = Date.now();
+        for (let i = 0; i < parsed.length; i++) {
+          const entry = parsed[i] as { surah?: unknown; ayah?: unknown };
+          const surah = Number(entry?.surah);
+          const ayah = Number(entry?.ayah);
+          if (!Number.isFinite(surah) || !Number.isFinite(ayah) || surah < 1 || ayah < 1) continue;
+          const existing = await getBookmark(ownerKey, surah, ayah);
+          if (existing) continue;
+          const record: BookmarkRecord = {
+            id: bookmarkKey(ownerKey, surah, ayah),
+            ownerKey,
+            surah,
+            ayah,
+            ayahText: "",
+            surahName: "",
+            note: "",
+            bookmarked: true,
+            createdAt: now - (parsed.length - i),
+            updatedAt: now - (parsed.length - i),
+          };
+          await putBookmark(record);
+          // Only enqueue sync if the legacy anon owner matches the
+          // currently active owner (user may have signed in before first
+          // visit post-upgrade; in that case, their initial sign-in flow
+          // will claim the records).
+          syncBookmarkUpsert(record);
+        }
+      }
+    }
+    localStorage.setItem(MIGRATION_FLAG, "1");
+    localStorage.removeItem(LEGACY_KEY);
+    emitChange();
+  } catch {
+    // swallow — migration is best-effort
+  }
+}
+
+// ─── Remote pull / reconciliation ─────────────────────────────────────────────
+
+interface RemoteBookmarkRow {
+  owner_key: string;
+  user_id: string | null;
+  device_id: string | null;
+  surah: number;
+  ayah: number;
+  ayah_text: string | null;
+  surah_name: string | null;
+  note: string | null;
+  bookmarked: boolean | null;
+  created_at: string;
+  updated_at: string;
+  deleted: boolean | null;
+}
+
+async function mergeRemoteRows(ownerKey: string, rows: RemoteBookmarkRow[]): Promise<boolean> {
+  let changed = false;
+  for (const row of rows) {
+    const remoteUpdated = Date.parse(row.updated_at);
+    if (!Number.isFinite(remoteUpdated)) continue;
+    const existing = await getBookmark(ownerKey, row.surah, row.ayah);
+    if (existing && existing.updatedAt >= remoteUpdated) continue;
+    if (row.deleted) {
+      if (existing) {
+        await deleteBookmark(ownerKey, row.surah, row.ayah);
+        changed = true;
+      }
+      continue;
+    }
+    const bookmarked = row.bookmarked ?? false;
+    const note = row.note ?? "";
+    if (!bookmarked && !note) {
+      if (existing) {
+        await deleteBookmark(ownerKey, row.surah, row.ayah);
+        changed = true;
+      }
+      continue;
+    }
+    const record: BookmarkRecord = {
+      id: bookmarkKey(ownerKey, row.surah, row.ayah),
+      ownerKey,
+      surah: row.surah,
+      ayah: row.ayah,
+      ayahText: row.ayah_text ?? existing?.ayahText ?? "",
+      surahName: row.surah_name ?? existing?.surahName ?? "",
+      note,
+      bookmarked,
+      createdAt: Date.parse(row.created_at) || existing?.createdAt || remoteUpdated,
+      updatedAt: remoteUpdated,
+    };
+    await putBookmark(record);
+    changed = true;
+  }
+  return changed;
+}
+
+/**
+ * Pull remote bookmarks for the current owner from Supabase and merge
+ * into local IDB using LWW on `updated_at`, honoring soft-delete.
+ * Best-effort: silently returns when offline, unconfigured, or on error.
+ */
+export async function pullRemoteBookmarks(): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  const own = computeOwnership();
+  if (!own) return;
+  try {
+    const { data, error } = await supabase
+      .from("device_bookmarks")
+      .select(
+        "owner_key,user_id,device_id,surah,ayah,ayah_text,surah_name,note,bookmarked,created_at,updated_at,deleted",
+      )
+      .eq("owner_key", own.ownerKey);
+    if (error || !data) return;
+    const changed = await mergeRemoteRows(own.ownerKey, data as RemoteBookmarkRow[]);
+    if (changed) emitChange();
+  } catch {
+    // swallow — pull is best-effort
+  }
+}
+
+/**
+ * Invoked when a user signs in on this device. Merges cloud + local
+ * state for the signed-in user safely:
+ *
+ *   1. Pull cloud rows owned by the signed-in user into IDB via LWW.
+ *   2. Copy each record that belongs to **this device's anonymous
+ *      owner** (`d:<deviceId>`) into the new user owner, using LWW
+ *      against whatever was pulled in step 1. Records belonging to any
+ *      other owner on this browser (e.g., a previous signed-in user)
+ *      are NOT touched or pushed, so notes cannot leak across accounts.
+ *   3. Push the user-owned records back to the cloud. Because step 1
+ *      pulled freshest cloud state first and step 2 merges LWW, these
+ *      writes cannot clobber newer remote rows from other devices.
+ */
+export async function claimBookmarksForUser(userId: string): Promise<void> {
+  setCurrentUserIdCache(userId);
+  if (!isSupabaseConfigured) return;
+  const userOwnerKey = `u:${userId}`;
+  const anonOwner = anonymousOwnerKey();
+
+  // Step 1: pull cloud state for the signed-in user.
+  await pullRemoteBookmarks();
+
+  // Step 2: merge this device's anonymous records into the user owner.
+  if (anonOwner && anonOwner !== userOwnerKey) {
+    const anonRecords = await getBookmarksForOwner(anonOwner);
+    for (const anon of anonRecords) {
+      const existing = await getBookmark(userOwnerKey, anon.surah, anon.ayah);
+      // LWW: only promote when the anonymous record is strictly newer
+      // than the user-owned one pulled from cloud.
+      if (existing && existing.updatedAt >= anon.updatedAt) continue;
+      const promoted: BookmarkRecord = {
+        ...anon,
+        id: bookmarkKey(userOwnerKey, anon.surah, anon.ayah),
+        ownerKey: userOwnerKey,
+      };
+      await putBookmark(promoted);
+    }
+  }
+
+  // Step 3: push merged user-owned records back to the cloud. Each
+  // upsert is safe because step 1 already ensured our local row is
+  // >= any row currently stored for the same (user, surah, ayah).
+  const userRecords = await getBookmarksForOwner(userOwnerKey);
+  for (const record of userRecords) {
+    syncBookmarkUpsert(record);
+  }
+  emitChange();
+}
+
+/**
+ * Invoked when a user signs out. Clears the cached user id so
+ * subsequent writes are stamped with the anonymous device owner.
+ * Local user-owned records remain in IDB but are not visible to the
+ * anonymous session (they are keyed under the user owner and not
+ * returned by `listBookmarks`).
+ */
+export function releaseBookmarksForUser(): void {
+  setCurrentUserIdCache(null);
+  emitChange();
+}

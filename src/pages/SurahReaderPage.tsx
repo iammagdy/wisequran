@@ -2,8 +2,10 @@ import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } fr
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones, MoreVertical, NotebookPen } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
+import AyahActionsSheet from "@/components/quran/AyahActionsSheet";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { SearchModal } from "@/components/quran/SearchModal";
 import ListeningTab from "@/components/quran/ListeningTab";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,8 +63,9 @@ export default function SurahReaderPage() {
   const [, setLastRead] = useLocalStorage<{surah: number; ayah: number; mode: "reading" | "listening"} | null>("wise-last-read", null);
   const [, setLastReading] = useLocalStorage<{surah: number; ayah: number} | null>("wise-last-reading", null);
   const [, setLastListening] = useLocalStorage<{surah: number; ayah: number} | null>("wise-last-listening", null);
-  const [bookmarks, setBookmarks] = useLocalStorage<{surah: number;ayah: number;}[]>("wise-bookmarks", []);
+  const { isBookmarked: isAyahBookmarked, getNoteFor, toggleBookmark: toggleBookmarkRecord, saveNote, deleteNote } = useBookmarks();
   const [favorites, setFavorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
+  const [actionSheetAyah, setActionSheetAyah] = useState<number | null>(null);
   const [tafsirEdition] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
   const [translationEnabled] = useLocalStorage<boolean>("wise-translation-enabled", false);
   const [translationEdition] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
@@ -259,16 +262,30 @@ export default function SurahReaderPage() {
     fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
   }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
 
-  const isBookmarked = (ayahNum: number) =>
-  bookmarks.some((b) => b.surah === surahNumber && b.ayah === ayahNum);
+  const isBookmarked = (ayahNum: number) => isAyahBookmarked(surahNumber, ayahNum);
+
+  const ayahSnapshot = useCallback(
+    (ayahNum: number) => {
+      const a = ayahs.find((x) => x.numberInSurah === ayahNum);
+      return {
+        ayahText: a?.text ?? "",
+        surahName: displaySurahName,
+      };
+    },
+    [ayahs, displaySurahName],
+  );
 
   const toggleBookmark = (ayahNum: number) => {
-    if (isBookmarked(ayahNum)) {
-      setBookmarks(bookmarks.filter((b) => !(b.surah === surahNumber && b.ayah === ayahNum)));
-    } else {
-      setBookmarks([...bookmarks, { surah: surahNumber, ayah: ayahNum }]);
-    }
+    const snap = ayahSnapshot(ayahNum);
+    void toggleBookmarkRecord({
+      surah: surahNumber,
+      ayah: ayahNum,
+      ayahText: snap.ayahText,
+      surahName: snap.surahName,
+    });
   };
+
+  const hasNote = (ayahNum: number) => getNoteFor(surahNumber, ayahNum).length > 0;
 
   const handleAyahTafsir = (ayahNum: number) => {
     setFocusedAyah(ayahNum);
@@ -647,8 +664,10 @@ export default function SurahReaderPage() {
             highlightedAyah={highlightedAyah}
             playingAyah={null}
             isBookmarked={isBookmarked}
+            hasNote={hasNote}
             toggleBookmark={toggleBookmark}
             onAyahTafsir={handleAyahTafsir}
+            onAyahMore={(ayahNum) => setActionSheetAyah(ayahNum)}
             setAyahRef={setAyahRef}
             targetPage={mushafTargetPage}
             onPageChange={(page) => setCurrentPage(page)}
@@ -712,6 +731,23 @@ export default function SurahReaderPage() {
                           surahName={displaySurahName}
                           ayahNumber={ayah.numberInSurah}
                           surahNumber={surahNumber} />
+                            <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setActionSheetAyah(ayah.numberInSurah)}
+                          data-testid={`ayah-more-button-${ayah.numberInSurah}`}
+                          className={cn(
+                            "rounded-xl p-2 transition-colors hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center",
+                            hasNote(ayah.numberInSurah)
+                              ? "text-primary"
+                              : "text-muted-foreground opacity-30 group-hover:opacity-100",
+                          )}
+                          title={language === "ar" ? "المزيد" : "More"}>
+                              {hasNote(ayah.numberInSurah) ? (
+                                <NotebookPen className="h-4 w-4" />
+                              ) : (
+                                <MoreVertical className="h-4 w-4" />
+                              )}
+                            </motion.button>
                           </div>
                           <div className="number-badge h-8 w-8 text-xs">
                             {language === "ar" ? toArabicNumerals(ayah.numberInSurah) : ayah.numberInSurah}
@@ -735,6 +771,17 @@ export default function SurahReaderPage() {
                             </p>
                           );
                         })()}
+                        {hasNote(ayah.numberInSurah) && (
+                          <button
+                            type="button"
+                            onClick={() => setActionSheetAyah(ayah.numberInSurah)}
+                            data-testid={`ayah-note-preview-${ayah.numberInSurah}`}
+                            className="mt-2 flex w-full items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-start text-xs text-foreground/90 hover:bg-primary/10 transition-colors"
+                          >
+                            <NotebookPen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                            <span className="line-clamp-2 flex-1">{getNoteFor(surahNumber, ayah.numberInSurah)}</span>
+                          </button>
+                        )}
                       </div>
                     </div>);
             })}
@@ -907,6 +954,34 @@ export default function SurahReaderPage() {
           }
         </AnimatePresence>
       )}
+
+      {/* Ayah actions sheet (bookmark / note / share) */}
+      {actionSheetAyah !== null && (() => {
+        const snap = ayahSnapshot(actionSheetAyah);
+        return (
+          <AyahActionsSheet
+            open
+            onOpenChange={(o) => { if (!o) setActionSheetAyah(null); }}
+            surah={surahNumber}
+            ayah={actionSheetAyah}
+            ayahText={snap.ayahText}
+            surahName={snap.surahName}
+            isBookmarked={isBookmarked(actionSheetAyah)}
+            note={getNoteFor(surahNumber, actionSheetAyah)}
+            onToggleBookmark={() => toggleBookmark(actionSheetAyah)}
+            onSaveNote={(note) =>
+              saveNote({
+                surah: surahNumber,
+                ayah: actionSheetAyah,
+                ayahText: snap.ayahText,
+                surahName: snap.surahName,
+                note,
+              })
+            }
+            onDeleteNote={() => deleteNote(surahNumber, actionSheetAyah)}
+          />
+        );
+      })()}
 
       {/* Global Quran Search Modal */}
       <SearchModal

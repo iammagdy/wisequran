@@ -43,6 +43,7 @@ const SignInPage = lazy(() => import("@/pages/SignInPage"));
 const SleepModePage = lazy(() => import("@/pages/SleepModePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 const DevKitPage = lazy(() => import("@/pages/DevKitPage"));
+const BookmarksPage = lazy(() => import("@/pages/BookmarksPage"));
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -91,6 +92,7 @@ const AppContent = () => {
                   <Route path="/friday" element={<FridayModePage />} />
                   <Route path="/ramadan" element={<RamadanPage />} />
                   <Route path="/offline" element={<OfflineCenterPage />} />
+                  <Route path="/bookmarks" element={<BookmarksPage />} />
                   <Route path="/settings/safari-diagnostics" element={<SafariDiagnosticsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={<NotFound />} />

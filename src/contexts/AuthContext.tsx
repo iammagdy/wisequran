@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { claimBookmarksForUser, releaseBookmarksForUser } from "@/lib/bookmarks";
 import { handleAuthCallback, validateAndPersistSession } from "@/lib/auth-callback";
 
 interface AuthContextValue {
@@ -52,6 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         setSession(session);
         setUser(session?.user ?? null);
+        const uid = session?.user?.id ?? null;
+        if (uid) {
+          void claimBookmarksForUser(uid).catch(() => {});
+        } else {
+          releaseBookmarksForUser();
+        }
         setLoading(false);
       } catch (err) {
         logAuthDebug('Error during auth initialization', {
@@ -72,6 +79,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       setSession(session);
       setUser(session?.user ?? null);
+      const uid = session?.user?.id ?? null;
+      if (uid) {
+        void claimBookmarksForUser(uid).catch(() => {});
+      } else {
+        releaseBookmarksForUser();
+      }
     });
 
     return () => subscription.unsubscribe();

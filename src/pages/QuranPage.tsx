@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals } from "@/lib/utils";
@@ -44,7 +45,7 @@ export default function QuranPage() {
   const [lastRead] = useLocalStorage<{ surah: number; ayah: number; mode: "reading" | "listening" } | null>("wise-last-read", null);
   const [lastReading] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-reading", null);
   const [lastListening] = useLocalStorage<{ surah: number; ayah: number } | null>("wise-last-listening", null);
-  const [bookmarks] = useLocalStorage<{ surah: number; ayah: number }[]>("wise-bookmarks", []);
+  const { bookmarks } = useBookmarks();
   const [favorites] = useLocalStorage<number[]>("wise-favorite-surahs", []);
   const [dashboardOrder, setDashboardOrder] = useLocalStorage<DashboardSectionId[]>("wise-home-dashboard-order", DEFAULT_DASHBOARD_ORDER);
   const [hiddenSections, setHiddenSections] = useLocalStorage<DashboardSectionId[]>("wise-home-dashboard-hidden", []);
@@ -180,10 +181,15 @@ export default function QuranPage() {
           <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(streak) : streak}</p>
           <p className="text-[11px] text-muted-foreground">{language === "ar" ? "أيام متتالية" : "Streak days"}</p>
         </div>
-        <div className="rounded-2xl bg-card p-3 text-center border border-border/50">
-          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(bookmarkedSurahs.length) : bookmarkedSurahs.length}</p>
-          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "سور محفوظة" : "Bookmarked surahs"}</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/bookmarks")}
+          data-testid="quran-home-bookmarks-stat"
+          className="rounded-2xl bg-card p-3 text-center border border-border/50 hover:border-primary/30 hover:bg-muted/40 transition-colors"
+        >
+          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(bookmarks.length) : bookmarks.length}</p>
+          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "آيات محفوظة" : "Bookmarked ayat"}</p>
+        </button>
       </div>
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Bookmark, BookmarkCheck, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
+import { Bookmark, BookmarkCheck, BookOpen, ChevronLeft, ChevronRight, NotebookPen, MoreVertical } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { type Ayah } from "@/lib/quran-api";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
@@ -15,8 +15,10 @@ interface MushafPageViewProps {
   highlightedAyah: number | null;
   playingAyah?: number | null;
   isBookmarked: (ayahNum: number) => boolean;
+  hasNote?: (ayahNum: number) => boolean;
   toggleBookmark: (ayahNum: number) => void;
   onAyahTafsir: (ayahNum: number) => void;
+  onAyahMore?: (ayahNum: number) => void;
   setAyahRef: (el: HTMLDivElement | null, num: number) => void;
   targetPage?: number | null;
   onPageChange?: (pageNum: number) => void;
@@ -33,8 +35,10 @@ export default function MushafPageView({
   highlightedAyah,
   playingAyah,
   isBookmarked,
+  hasNote,
   toggleBookmark,
   onAyahTafsir,
+  onAyahMore,
   setAyahRef,
   targetPage,
   onPageChange,
@@ -215,6 +219,26 @@ export default function MushafPageView({
                   
                         <BookOpen className="h-4 w-4" />
                       </button>
+                      {onAyahMore && (
+                        <button
+                          aria-label={language === "ar" ? "المزيد" : "More"}
+                          data-testid={`mushaf-ayah-more-${selectedAyah}`}
+                          onClick={() => {
+                            onAyahMore(selectedAyah);
+                            setSelectedAyah(null);
+                          }}
+                          className={cn(
+                            "rounded-lg p-1.5 transition-colors hover:bg-background",
+                            hasNote?.(selectedAyah) ? "text-primary" : "text-muted-foreground",
+                          )}
+                        >
+                          {hasNote?.(selectedAyah) ? (
+                            <NotebookPen className="h-4 w-4" />
+                          ) : (
+                            <MoreVertical className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
                     </div>
               }
               </div>
