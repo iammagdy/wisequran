@@ -34,6 +34,7 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 4. Friday Mode hub for Jumu'ah activities
 5. Sleep Mode with gradual audio fade-out and nature sounds
 6. Ramadan tracker, Azkar collections, stats dashboard
+7. Backup & Restore — export/import all user progress (hifz, reading, azkar, wird) as a JSON file from Settings and the DevKit
 
 ## Performance Notes
 

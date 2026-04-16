@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff } from "lucide-react";
+import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff, ArchiveRestore, ArchiveX } from "lucide-react";
+import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup } from "@/lib/backup";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
@@ -119,6 +120,10 @@ export default function SettingsPage() {
   // Adhan voice preview
   const [previewingAdhan, setPreviewingAdhan] = useState<string | null>(null);
   const [adhanPreviewLoading, setAdhanPreviewLoading] = useState<string | null>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState<import("@/lib/backup").BackupData | null>(null);
+  const backupImportRef = useRef<HTMLInputElement>(null);
+
   const adhanPreviewRef = useRef<HTMLAudioElement | null>(null);
   const adhanPreviewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const azanFallbackRef = useRef<HTMLAudioElement | null>(null);
@@ -461,6 +466,49 @@ export default function SettingsPage() {
     await clearAllTafsir();
     refreshStorageStats();
     toast.success(t("settings_toast_tafsir_cleared"));
+  };
+
+  const handleExportBackup = async () => {
+    setBackupBusy(true);
+    try {
+      const data = await exportBackup();
+      downloadBackupFile(data);
+      toast.success(language === "ar" ? "تم تصدير النسخة الاحتياطية" : "Backup exported successfully");
+    } catch {
+      toast.error(language === "ar" ? "فشل تصدير النسخة الاحتياطية" : "Backup export failed");
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    try {
+      const data = await parseBackupFile(file);
+      setPendingBackup(data);
+    } catch (err) {
+      toast.error(language === "ar" ? "فشل قراءة الملف" : `Cannot read file: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!pendingBackup) return;
+    setBackupBusy(true);
+    try {
+      const result = await restoreBackup(pendingBackup);
+      const summary = language === "ar"
+        ? `تمت الاستعادة (${result.lsKeysRestored} إعداد · ${result.azkarRestored} ذكر) — إعادة تحميل…`
+        : `Restored ${result.lsKeysRestored} settings · ${result.azkarRestored} azkar — reloading…`;
+      toast.success(summary);
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err) {
+      toast.error(language === "ar" ? "فشل استيراد النسخة الاحتياطية" : `Restore failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBackupBusy(false);
+      setPendingBackup(null);
+    }
   };
 
   const handleVerifyDownloads = async () => {
@@ -2094,6 +2142,83 @@ export default function SettingsPage() {
             </AlertDialog>
           </motion.div>
         </section>
+
+        {/* ─── Backup & Restore ─── */}
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <ArchiveRestore className="h-3.5 w-3.5" />
+            {isRTL ? "النسخ الاحتياطي والاستعادة" : "Backup & Restore"}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.19 }}
+            className="rounded-xl bg-card p-4 shadow-sm space-y-4">
+
+            <p className="text-xs text-muted-foreground">
+              {isRTL
+                ? "احفظ تقدمك (الحفظ، القراءة، الأذكار، الأوراد، قائمة المزامنة) في ملف JSON للاستعادة على أي جهاز. الملفات الصوتية ونص القرآن المحملان لا يُضمَّنان ويمكن إعادة تحميلهما."
+                : "Save your progress (hifz, reading, azkar, wird, pending sync) to a JSON file and restore it on any device. Downloaded audio and Quran text are not included — they can be re-downloaded."}
+            </p>
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => void handleExportBackup()}
+                disabled={backupBusy}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
+                {backupBusy
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Download className="h-4 w-4" />}
+                {isRTL ? "تصدير البيانات" : "Export all data"}
+              </button>
+
+              <button
+                onClick={() => backupImportRef.current?.click()}
+                disabled={backupBusy}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-muted py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 disabled:opacity-50">
+                {backupBusy
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <ArchiveX className="h-4 w-4" />}
+                {isRTL ? "استيراد نسخة احتياطية" : "Import backup"}
+              </button>
+            </div>
+
+            <input
+              ref={backupImportRef}
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={(e) => void handleImportBackup(e)}
+            />
+          </motion.div>
+        </section>
+
+        {/* Restore confirmation dialog */}
+        <AlertDialog open={!!pendingBackup} onOpenChange={(open) => { if (!open) setPendingBackup(null); }}>
+          <AlertDialogContent dir={isRTL ? "rtl" : "ltr"}>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {isRTL ? "تأكيد استعادة النسخة الاحتياطية" : "Restore backup?"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {isRTL
+                  ? `سيتم استبدال جميع البيانات الحالية بالنسخة الاحتياطية المؤرخة في ${pendingBackup ? new Date(pendingBackup.exportedAt).toLocaleString() : ""}. لا يمكن التراجع عن هذا الإجراء.`
+                  : `All current data will be replaced with the backup from ${pendingBackup ? new Date(pendingBackup.exportedAt).toLocaleString() : ""}. This cannot be undone.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex-row-reverse gap-2">
+              <AlertDialogAction
+                onClick={() => void handleConfirmRestore()}
+                disabled={backupBusy}
+                className="bg-primary text-primary-foreground hover:bg-primary/90">
+                {backupBusy
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : (isRTL ? "استعادة" : "Restore")}
+              </AlertDialogAction>
+              <AlertDialogCancel>{isRTL ? "إلغاء" : "Cancel"}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <section>
           <div className="section-title flex items-center gap-1.5">

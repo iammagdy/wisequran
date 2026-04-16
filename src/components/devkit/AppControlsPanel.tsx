@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DK } from "./devkit-utils";
 import { clearAllAudio } from "@/lib/db";
 import { DEVKIT_FORCE_CHANGELOG_KEY } from "@/hooks/usePostUpdateChangelog";
+import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup } from "@/lib/backup";
 
 const THEMES = ["light", "dark"] as const;
 const LANGS = ["ar", "en"] as const;
@@ -35,6 +36,8 @@ export default function AppControlsPanel() {
   const [lang, setLang] = useState(readLang);
   const [msg, setMsg] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
+  const [backupBusy, setBackupBusy] = useState(false);
+  const importRef = useRef<HTMLInputElement>(null);
 
   const refresh = () => {
     setTheme(readTheme());
@@ -124,6 +127,38 @@ export default function AppControlsPanel() {
       "wise-hifz-streak",
     ].forEach((k) => localStorage.removeItem(k));
     flash("Hifz data cleared");
+  };
+
+  const handleExport = async () => {
+    setBackupBusy(true);
+    try {
+      const data = await exportBackup();
+      downloadBackupFile(data);
+      const lsCount = Object.keys(data.localStorage).length;
+      flash(`Exported ${lsCount} keys · surahs:${data.idb.surahCount} audio:${data.idb.audioCount} tafsir:${data.idb.tafsirCount}`);
+    } catch (err) {
+      flash(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    if (!confirm(`Restore from "${file.name}"? This will overwrite current localStorage and azkar data.`)) return;
+    setBackupBusy(true);
+    try {
+      const data = await parseBackupFile(file);
+      const result = await restoreBackup(data);
+      flash(`Restored ${result.lsKeysRestored} LS keys · ${result.azkarRestored} azkar · ${result.syncQueueRestored} sync queue entries — reloading…`);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      flash(`Import failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBackupBusy(false);
+    }
   };
 
   return (
@@ -244,6 +279,48 @@ export default function AppControlsPanel() {
             Clear all caches
           </button>
         </div>
+      </div>
+
+      <div className={`rounded-lg p-4 ${DK.card}`}>
+        <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted} mb-3`}>Backup</h3>
+        <p className={`font-mono text-xs ${DK.muted} mb-4`}>
+          Export all wise-* localStorage keys + IDB azkar + sync queue to a JSON file. Import restores localStorage, azkar, and sync queue. Audio and downloaded text are not included (re-downloadable).
+        </p>
+        <div className="grid grid-cols-1 gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`font-mono text-xs ${DK.text}`}>Export all data</p>
+              <p className={`font-mono text-xs ${DK.muted}`}>Downloads wise-quran-backup-YYYY-MM-DD.json</p>
+            </div>
+            <button
+              onClick={() => void handleExport()}
+              disabled={backupBusy}
+              className={`${DK.btnBase} ${DK.btnGreen} shrink-0`}
+            >
+              {backupBusy ? "…" : "Export ↓"}
+            </button>
+          </div>
+          <div className={`border-t ${DK.border} pt-3 flex items-center justify-between`}>
+            <div>
+              <p className={`font-mono text-xs ${DK.text}`}>Import backup</p>
+              <p className={`font-mono text-xs ${DK.muted}`}>Restore from a previously exported .json file</p>
+            </div>
+            <button
+              onClick={() => importRef.current?.click()}
+              disabled={backupBusy}
+              className={`${DK.btnBase} ${DK.btnGray} shrink-0`}
+            >
+              {backupBusy ? "…" : "Import ↑"}
+            </button>
+          </div>
+        </div>
+        <input
+          ref={importRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={(e) => void handleImport(e)}
+        />
       </div>
     </div>
   );
