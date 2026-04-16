@@ -44,6 +44,8 @@ export default function SurahReaderPage() {
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const scrollToAyahRef = useRef<((ayahNum: number) => void) | null>(null);
+  const currentVisibleAyahRef = useRef<number>(1);
+  const highlightClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioPlayer = useAudioPlayerState();
   const { currentAyahInSurah: audioCurrentAyahInSurah } = useAudioPlayerTime();
   const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioCurrentAyahInSurah : null;
@@ -167,15 +169,28 @@ export default function SurahReaderPage() {
     }
   }, [loading, ayahs.length, targetAyah]);
 
-  useEffect(() => {
-    if (playingAyahInSurah && readerMode === "ayah") {
-      scrollToAyahRef.current?.(playingAyahInSurah);
-    }
-  }, [playingAyahInSurah, readerMode]);
-
   const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
     void el; void num;
   }, []);
+
+  const navigateToAyah = useCallback((ayahNum: number) => {
+    const distance = Math.abs(ayahNum - currentVisibleAyahRef.current);
+    scrollToAyahRef.current?.(ayahNum);
+    if (distance > 10) {
+      if (highlightClearTimerRef.current) clearTimeout(highlightClearTimerRef.current);
+      setHighlightedAyah(ayahNum);
+      highlightClearTimerRef.current = setTimeout(() => {
+        setHighlightedAyah(null);
+        highlightClearTimerRef.current = null;
+      }, 1800);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (playingAyahInSurah && readerMode === "ayah") {
+      navigateToAyah(playingAyahInSurah);
+    }
+  }, [playingAyahInSurah, readerMode, navigateToAyah]);
 
   useEffect(() => {
     if (activeTab !== "tafsir") return;
@@ -260,6 +275,7 @@ export default function SurahReaderPage() {
     if (!midAyah) return;
     if (midAyah.page) setCurrentPage(midAyah.page);
     const ayahNum = midAyah.numberInSurah;
+    currentVisibleAyahRef.current = ayahNum;
     setLastRead({ surah: surahNumber, ayah: ayahNum, mode: isListeningMode ? "listening" : "reading" });
     if (isListeningMode) {
       setLastListening({ surah: surahNumber, ayah: ayahNum });
@@ -329,7 +345,7 @@ export default function SurahReaderPage() {
                         } else {
                           const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
                           if (targetAyahOnPage) {
-                            scrollToAyahRef.current?.(targetAyahOnPage.numberInSurah);
+                            navigateToAyah(targetAyahOnPage.numberInSurah);
                           }
                         }
                         setGoToPageInput("");
@@ -809,11 +825,7 @@ export default function SurahReaderPage() {
         surahNumber={surahNumber}
         translationAyahs={translationAyahs}
         language={language}
-        onScrollToAyah={(numberInSurah) => {
-          scrollToAyahRef.current?.(numberInSurah);
-          setHighlightedAyah(numberInSurah);
-          setTimeout(() => setHighlightedAyah(null), 2000);
-        }}
+        onScrollToAyah={navigateToAyah}
       />
     </div>);
 }
