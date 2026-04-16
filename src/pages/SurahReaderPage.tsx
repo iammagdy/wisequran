@@ -97,6 +97,12 @@ export default function SurahReaderPage() {
 
   const tafsirMap = useMemo(() => new Map(tafsirAyahs.map(a => [a.numberInSurah, a])), [tafsirAyahs]);
   const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
+  const filteredTafsir = useMemo(() =>
+    tafsirSearch.trim()
+      ? tafsirAyahs.filter((item) => item.text.includes(tafsirSearch.trim()))
+      : tafsirAyahs,
+    [tafsirAyahs, tafsirSearch]
+  );
   const currentTranslationEdition = TRANSLATION_EDITIONS.find(e => e.id === translationEdition);
 
   const toggleFavorite = () => {
@@ -252,8 +258,11 @@ export default function SurahReaderPage() {
   const currentReciterName = (() => { const r = getReciterById(audioPlayer.reciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })();
 
   const parentOffsetRef = useRef(0);
+  const tafsirListRef = useRef<HTMLDivElement>(null);
+  const tafsirParentOffsetRef = useRef(0);
   useLayoutEffect(() => {
     parentOffsetRef.current = listRef.current?.offsetTop ?? 0;
+    tafsirParentOffsetRef.current = tafsirListRef.current?.offsetTop ?? 0;
   });
 
   const rowVirtualizer = useWindowVirtualizer({
@@ -261,6 +270,23 @@ export default function SurahReaderPage() {
     estimateSize: () => 170,
     overscan: 5,
     scrollMargin: parentOffsetRef.current,
+  });
+
+  const tafsirVirtualizer = useWindowVirtualizer({
+    count: activeTab === "tafsir" && focusedAyah === null ? filteredTafsir.length : 0,
+    estimateSize: () => 250,
+    overscan: 3,
+    scrollMargin: tafsirParentOffsetRef.current,
+  });
+
+  const tafsirScrollToAyahRef = useRef<((ayahNum: number) => void) | null>(null);
+  useEffect(() => {
+    tafsirScrollToAyahRef.current = (ayahNum: number) => {
+      const idx = filteredTafsir.findIndex((a) => a.numberInSurah === ayahNum);
+      if (idx >= 0) {
+        tafsirVirtualizer.scrollToIndex(idx, { align: "start", behavior: "smooth" });
+      }
+    };
   });
 
   useEffect(() => {
@@ -735,7 +761,7 @@ export default function SurahReaderPage() {
                 <div className="flex gap-2 mb-2">
                   <Select
                 value=""
-                onValueChange={(val) => setFocusedAyah(Number(val))}>
+                onValueChange={(val) => tafsirScrollToAyahRef.current?.(Number(val))}>
                     <SelectTrigger className="w-40 shrink-0 text-right">
                       <SelectValue placeholder={language === "ar" ? "انتقل إلى آية..." : t("jump_to_ayah")} />
                     </SelectTrigger>
@@ -758,45 +784,60 @@ export default function SurahReaderPage() {
                   </div>
                 </div>
 
-                {(() => {
-              const filteredTafsir = tafsirSearch.trim() ?
-              tafsirAyahs.filter((tafsirItem) => tafsirItem.text.includes(tafsirSearch.trim())) :
-              tafsirAyahs;
-
-              if (filteredTafsir.length === 0) {
-                return (
+                {filteredTafsir.length === 0 ? (
                   <p className="text-center text-sm text-muted-foreground py-8">
-                        لا توجد نتائج لـ "{tafsirSearch}"
-                      </p>);
-              }
-
-              return filteredTafsir.map((tafsirItem) =>
-              <div key={tafsirItem.numberInSurah} className="rounded-xl bg-card p-4 shadow-sm border border-border">
-                      <div className="mb-2 flex items-center gap-2">
-                        <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
-                          <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
-                            {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}
-                          </span>
-                        </span>
-                        <span className="text-xs text-muted-foreground">{t("ayah")} {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}</span>
-                      </div>
-                      <p
-                  className="font-arabic text-foreground/90 leading-[2.2]"
-                  style={{ fontSize: 17 }}>
-                        <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
-                      </p>
-                      {language === "en" && translationAyahs.length > 0 && (() => {
-                        const tAyah = translationMap.get(tafsirItem.numberInSurah);
-                        if (!tAyah) return null;
-                        return (
-                          <p className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
-                            {tAyah.text}
-                          </p>
-                        );
-                      })()}
-                    </div>
-              );
-            })()}
+                    لا توجد نتائج لـ "{tafsirSearch}"
+                  </p>
+                ) : (
+                  <div
+                    ref={tafsirListRef}
+                    style={{ height: `${tafsirVirtualizer.getTotalSize()}px`, position: "relative" }}
+                  >
+                    {tafsirVirtualizer.getVirtualItems().map((virtualItem) => {
+                      const tafsirItem = filteredTafsir[virtualItem.index];
+                      return (
+                        <div
+                          key={tafsirItem.numberInSurah}
+                          data-index={virtualItem.index}
+                          ref={tafsirVirtualizer.measureElement}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualItem.start - tafsirVirtualizer.options.scrollMargin}px)`,
+                            paddingBottom: "20px",
+                          }}
+                        >
+                          <div className="rounded-xl bg-card p-4 shadow-sm border border-border">
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
+                                <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
+                                  {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}
+                                </span>
+                              </span>
+                              <span className="text-xs text-muted-foreground">{t("ayah")} {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}</span>
+                            </div>
+                            <p
+                              className="font-arabic text-foreground/90 leading-[2.2]"
+                              style={{ fontSize: 17 }}>
+                              <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
+                            </p>
+                            {language === "en" && translationAyahs.length > 0 && (() => {
+                              const tAyah = translationMap.get(tafsirItem.numberInSurah);
+                              if (!tAyah) return null;
+                              return (
+                                <p className="mt-2 border-t border-border/30 pt-2 text-sm text-muted-foreground leading-relaxed" dir="ltr" style={{ textAlign: "left" }}>
+                                  {tAyah.text}
+                                </p>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>)
           }
           </div>)
