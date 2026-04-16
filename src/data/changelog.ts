@@ -47,10 +47,10 @@ export const changelog: ChangelogEntry[] = [
       ],
       improvements: [
         "توسيع خطة الحفظ لتشمل نظرة أسبوعية للمراجعة مع اقتراح يومي أوضح",
-        "ترقية تقارير التسميع بإحصاءات أعمق مثل متوسط الثقة وأفضل/أضعف آية وأكثر الكلمات تعثرًا",
+        "تقارير التسميع أصبحت أغنى بإحصاءات تفصيلية كمتوسط الثقة وأفضل آية وأضعفها وأكثر الكلمات تعثراً",
       ],
       fixes: [
-        "الحفاظ على عمل تحليلات التسميع حتى بدون إعداد Supabase عبر مسار محلي احتياطي للسجل",
+        "تقارير التسميع تعمل الآن بشكل صحيح حتى بدون اتصال بالإنترنت",
       ],
     },
     en: {
@@ -59,10 +59,10 @@ export const changelog: ChangelogEntry[] = [
       ],
       improvements: [
         "Expanded Hifz planning with a clearer weekly revision overview and daily recommendation",
-        "Upgraded recitation reports with deeper analytics such as average confidence, strongest/weakest ayah, and most difficult words",
+        "Recitation reports now show richer stats — average confidence, strongest and weakest ayah, and the words you struggle with most",
       ],
       fixes: [
-        "Kept recitation analytics working even without Supabase by adding a safe local history fallback",
+        "Recitation reports now work correctly even without an internet connection",
       ],
     },
   },
@@ -71,7 +71,7 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-27",
     ar: {
       features: [
-        "إضافة صفحة تشخيص Safari مع فحوصات سريعة للصوت والمايك والإشعارات وسجل نتائج محفوظ",
+        "إضافة صفحة تشخيص لمستخدمي iPhone للتحقق السريع من إعدادات الصوت والميكروفون والإشعارات",
         "إضافة مركز بدون إنترنت لتحميل نصوص القرآن وصوت القارئ الحالي وإدارة التخزين بسهولة",
       ],
       improvements: [
@@ -80,13 +80,13 @@ export const changelog: ChangelogEntry[] = [
         "تحسين لوحة الإحصائيات ببطاقة هدف أسبوعي وملخص أساسي لتقدم الحفظ",
       ],
       fixes: [
-        "تحسين صفحة التسميع بإضافة مهلة توقف قابلة للتعديل ومسار لإعادة الجزء المتعثر فقط",
+        "تحسين صفحة التسميع — يمكنك الآن ضبط مدة الانتظار قبل التقييم، وإعادة تدريب الأجزاء التي واجهت فيها صعوبة فقط",
       ],
     },
     en: {
       features: [
-        "Added a Safari Diagnostics page with quick audio, microphone, and notification checks plus persistent history logs",
-        "Added an Offline Center for Quran text and current-reciter audio downloads with simple storage management",
+        "Added a diagnostics page for iPhone users to quickly check audio, microphone, and notification settings",
+        "Added an Offline Center for downloading Quran text and reciter audio so you can use the app without internet",
       ],
       improvements: [
         "Added separate home quick-resume cards for reading and listening",
@@ -94,7 +94,7 @@ export const changelog: ChangelogEntry[] = [
         "Enhanced the Stats dashboard with a weekly goal card and a basic memorization snapshot",
       ],
       fixes: [
-        "Improved the recitation page with adjustable pause tolerance and a practice-missed-part flow",
+        "Improved the recitation page — you can now adjust how long the app waits before scoring, and re-practice only the parts you struggled with",
       ],
     },
   },
@@ -103,22 +103,22 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-19",
     ar: {
       improvements: [
-        "تحسين أداء التحميل الأولي عبر تقسيم الحزم الكبيرة بشكل أذكى لتقليل الضغط على أول فتح للتطبيق",
-        "تقليل الحمل داخل صفحة الإعدادات عبر تأجيل تحميل عمليات التخزين الثقيلة حتى الحاجة إليها",
+        "التطبيق يفتح أسرع من أي وقت مضى — التحميل الأول أصبح أخف وأسرع بشكل ملحوظ",
+        "صفحة الإعدادات تُحمَّل بشكل أسرع وبأداء أخف",
       ],
       fixes: [
-        "إزالة تبويب رمضان من التنقل الحالي مع الإبقاء على الصفحة في الكود لإعادة تفعيلها لاحقًا عند الحاجة",
-        "تحسين انتقالات التنقل بعد إزالة تبويب رمضان لتبقى الحركة منطقية ومتسقة بين الصفحات",
+        "إزالة تبويب رمضان من شريط التنقل مؤقتاً — سيعود في تحديث قادم",
+        "تحسين سلاسة التنقل بين الصفحات بعد تحديث شريط التبويب",
       ],
     },
     en: {
       improvements: [
-        "Improved initial-load performance with smarter bundle splitting to reduce the cost of the first app open",
-        "Reduced Settings page overhead by deferring heavy storage/database operations until they are actually needed",
+        "The app opens faster than ever — startup is noticeably quicker on every visit",
+        "The Settings page loads more quickly and uses less memory",
       ],
       fixes: [
-        "Removed the Ramadan tab from current navigation while keeping the page code available for future reuse",
-        "Adjusted page transition ordering after removing the Ramadan tab so navigation stays consistent",
+        "Removed the Ramadan tab from the navigation bar for now — it will return in a future update",
+        "Navigation flow updated to stay smooth and consistent after the tab change",
       ],
     },
   },
@@ -129,14 +129,14 @@ export const changelog: ChangelogEntry[] = [
       fixes: [
         "🔧 إصلاح دعم متصفح Safari على iPhone",
         "🎙️ ميزة التسميع تعمل الآن على iPhone",
-        "🔊 إصلاح تشغيل الأذان على iOS Safari",
+        "🔊 إصلاح تشغيل الأذان على iPhone",
       ],
     },
     en: {
       fixes: [
         "🔧 Fixed Safari support on iPhone",
         "🎙️ Recitation now works on iPhone",
-        "🔊 Fixed Azan playback on iOS Safari",
+        "🔊 Fixed Azan playback on iPhone",
       ],
     },
   },
@@ -145,32 +145,32 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-18",
     ar: {
       features: [
-        "إطلاق طبقة صوت موحدة للموبايل تربط استماع القرآن والأذان والتنبيهات ومعاينات الإعدادات في مسار تشغيل واحد",
+        "إعادة بناء نظام الصوت بالكامل — تشغيل القرآن والأذان والتذكيرات يعمل بشكل موثوق على جميع الأجهزة",
       ],
       improvements: [
-        "تحسين تهيئة الصوت على Android وiPhone عبر تفعيل global audio bootstrap من أول تفاعل داخل التطبيق",
-        "تحسين تنبيهات الصلاة والأذكار وورد القراءة لتعمل عبر service worker عند توفره مع fallback تلقائي داخل الصفحة",
-        "إدخال ملفات الأذان المحلية ضمن كاش الـPWA لتحسين الاعتمادية والتحميل على الأجهزة المحمولة",
+        "الصوت جاهز للتشغيل على Android وiPhone فور أول لمسة داخل التطبيق",
+        "تذكيرات الصلاة والأذكار وورد القراءة أصبحت أكثر موثوقية — تصلك حتى عندما يكون التطبيق يعمل في الخلفية",
+        "الأذان يُشغَّل حتى مع اتصال ضعيف أو متقطع — ملفاته محفوظة على جهازك مسبقاً",
       ],
       fixes: [
-        "إصلاح regression في تشغيل استماع القرآن على الموبايل عبر إعادة بناء مسار التشغيل على مشغل مركزي موحد",
-        "إصلاح تشغيل الأذان والتذكيرات من مسارات متعددة غير متناسقة كانت تسبب فشلًا على Android وiPhone",
-        "إضافة تعويض ذكي عند عودة التطبيق للواجهة لتقليل ضياع الأذان أو التذكير إذا تم تعليق التطبيق مؤقتًا بالخلفية",
+        "إصلاح مشكلة تشغيل صوت القرآن التي توقفت عن العمل بشكل صحيح على الهاتف",
+        "إصلاح أصوات الأذان والتذكيرات التي كانت تفشل في التشغيل على Android وiPhone",
+        "إذا فاتك إشعار صلاة أثناء توقف الهاتف، يعرضه التطبيق تلقائياً عند فتحه مجدداً",
       ],
     },
     en: {
       features: [
-        "Introduced a unified mobile audio layer connecting Quran listening, Adhan, reminders, and Settings previews through one playback pipeline",
+        "Rebuilt the audio system from the ground up — Quran playback, Adhan, and reminders now all work together reliably on every device",
       ],
       improvements: [
-        "Improved Android and iPhone audio readiness with a global audio bootstrap on the user's first interaction",
-        "Prayer, azkar, and reading reminders now prefer service-worker notifications when available with page fallback",
-        "Local Adhan audio files are now included in PWA caching for better reliability on mobile devices",
+        "Audio is now ready to play on Android and iPhone from the moment you first tap anything in the app",
+        "Prayer times, azkar, and reading reminders are more reliable — they reach you even when the app is running in the background",
+        "The Adhan now plays even with a slow or unstable connection — audio files are saved locally on your device",
       ],
       fixes: [
-        "Fixed the mobile Quran listening regression by rebuilding playback on top of a centralized audio manager",
-        "Fixed fragmented Adhan/reminder playback paths that were causing failures on Android and iPhone",
-        "Added catch-up handling when the app returns to the foreground so recent missed prayer events can still surface",
+        "Fixed Quran audio playback that had stopped working correctly on mobile",
+        "Fixed Adhan and reminder sounds that were failing to play on Android and iPhone",
+        "If you missed a prayer notification while your phone was idle, the app now shows it when you open it again",
       ],
     },
   },
@@ -180,25 +180,25 @@ export const changelog: ChangelogEntry[] = [
     ar: {
       fixes: [
         "إصلاح فشل تشغيل الصوت على أجهزة iPhone — يعمل الآن بسلاسة على Safari",
-        "إصلاح واجهة بوصلة القبلة التي كانت تتحرك بالكامل مع الجيروسكوب — الواجهة ثابتة والإبرة فقط تتحرك",
-        "إصلاح فشل تسجيل الدخول على النطاق المخصص مع رسالة خطأ أوضح",
+        "إصلاح بوصلة القبلة التي كانت تدور مع الهاتف — الشاشة ثابتة والإبرة فقط تتحرك",
+        "إصلاح مشكلة في تسجيل الدخول كانت تؤثر على بعض المستخدمين، مع رسائل أوضح عند حدوث أي خطأ",
       ],
       improvements: [
         "التحديث التلقائي الفوري عند اكتشاف إصدار جديد بدون تدخل يدوي",
-        "تحسين أداء التطبيق: تحميل الصفحات عند الطلب لتقليل وقت التحميل الأولي",
-        "تحسين استجابة بوصلة القبلة باستخدام انتقالات CSS خفيفة بدلاً من الرسوم المتحركة الثقيلة",
+        "الصفحات تُحمَّل بشكل أسرع — التطبيق يُحمِّل فقط ما تحتاجه عندما تحتاجه",
+        "بوصلة القبلة أكثر سلاسة وطبيعية في الحركة",
       ],
     },
     en: {
       fixes: [
         "Fixed audio playback failure on iPhone — now works smoothly on Safari",
-        "Fixed Qibla compass UI gyroscoping with device — UI stays stable, only needle rotates",
-        "Fixed authentication failure on custom domain with clearer error messaging",
+        "Fixed the Qibla compass spinning with the phone — the screen stays still, only the needle moves",
+        "Fixed a sign-in issue that was affecting some users, with clearer messages when something goes wrong",
       ],
       improvements: [
         "Automatic instant updates — app updates immediately when a new version is detected",
-        "Performance boost: lazy-loaded pages reduce initial load time significantly",
-        "Smoother compass animations using lightweight CSS transitions instead of spring physics",
+        "Pages load much faster — the app only loads what you need, when you need it",
+        "The Qibla compass moves more smoothly and feels more natural to use",
       ],
     },
   },
@@ -207,32 +207,32 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-17",
     ar: {
       features: [
-        "إصلاح شامل لأحجام العناصر التفاعلية: جميع الأزرار تحقق معايير الوصول WCAG بحد أدنى 44x44px",
-        "تحسين تجربة الاستخدام للمستخدمين ذوي الإعاقات الحركية من خلال زيادة أحجام الأهداف اللمسية",
+        "جميع الأزرار والعناصر أصبحت أكبر وأسهل للضغط — لا مزيد من الضغط الخاطئ على العناصر الصغيرة",
+        "تحسين تجربة الاستخدام للمستخدمين ذوي الإعاقات الحركية من خلال مناطق لمس أوسع وأسهل",
       ],
       improvements: [
-        "تم زيادة حجم أزرار التحكم في مشغل الصوت (إيقاف، نسخ، اختيار السرعة)",
-        "تحسين أحجام أزرار التنقل والتحكم عبر جميع الصفحات",
-        "توسيع المناطق القابلة للنقر للعناصر الصغيرة مع الحفاظ على حجم الرموز البصري",
+        "تم تكبير أزرار التحكم في مشغل الصوت (إيقاف، نسخ، اختيار السرعة)",
+        "أزرار التنقل والتحكم في جميع أنحاء التطبيق أصبحت أسهل للضغط",
+        "توسيع مناطق الضغط للعناصر الصغيرة مع الحفاظ على حجم الرموز البصري",
       ],
       fixes: [
-        "إصلاح أزرار صغيرة لا تلبي معايير الوصول في 23+ عنصر تفاعلي",
-        "توحيد أحجام الأزرار عبر جميع المكونات لتجربة متسقة",
+        "إصلاح أكثر من 20 زراً وعنصراً كانت صغيرة جداً ويصعب الضغط عليها بدقة",
+        "الأزرار في جميع أنحاء التطبيق أصبحت بحجم موحد ومتناسق",
       ],
     },
     en: {
       features: [
-        "Comprehensive accessibility overhaul: all interactive elements now meet WCAG 44x44px minimum touch target size",
-        "Improved usability for users with motor impairments through larger, easier-to-tap touch targets",
+        "All buttons and controls are now larger and easier to tap — no more accidentally missing small targets",
+        "Improved usability for users with motor impairments through larger, easier-to-tap areas throughout the app",
       ],
       improvements: [
         "Increased audio player control sizes (stop button, copy button, speed selector)",
-        "Enhanced touch targets for navigation and control buttons across all pages",
+        "All navigation and control buttons across the app are now easier to tap",
         "Expanded clickable areas for small elements while preserving icon visual size",
       ],
       fixes: [
-        "Fixed 23+ undersized interactive elements failing WCAG AAA accessibility requirements",
-        "Unified button sizing across components for consistent user experience",
+        "Fixed over 20 buttons and controls that were too small to tap comfortably",
+        "Buttons are now a consistent size throughout the app",
       ],
     },
   },
@@ -245,14 +245,14 @@ export const changelog: ChangelogEntry[] = [
         "نظام الاستماع الذكي: التقييم التلقائي وبدء الآية التالية بدون تدخل يدوي (تسميع متواصل)",
       ],
       improvements: [
-        "تنسيق أرقام الآيات والإحصائيات لتظهر بالأرقام العربية (١٢٣) عند استخدام الواجهة العربية",
+        "الأرقام تظهر بصيغتها العربية (١٢٣) في جميع أنحاء التطبيق عند استخدام الواجهة العربية",
         "تحسين رؤية الآيات القادمة بإطارات رمادية مميزة في الوضع الليلي",
         "إضافة زر الرجوع المفقود في صفحات الأذكار والصلوات لتحسين التنقل",
       ],
       fixes: [
-        "شريط تحكم ثابت للميكروفون أعلى شريط التنقل لضمان رؤية كاملة لجميع الآيات",
+        "شريط الميكروفون يبقى ثابتاً أعلى شريط التنقل حتى لا يتداخل مع الآيات",
         "إصلاح تداخل شريط الميكروفون مع الآية الأخيرة في صفحة الاختبار",
-        "إخفاء شريط الصوت العالمي تلقائياً عند دخول صفحة اختبار التلاوة",
+        "يختفي شريط التشغيل تلقائياً عند فتح صفحة اختبار التلاوة لتحصل على واجهة أنظف",
       ],
     },
     en: {
@@ -261,14 +261,14 @@ export const changelog: ChangelogEntry[] = [
         "Hands-free mode: auto-evaluation on silence and automatic advance to the next verse",
       ],
       improvements: [
-        "Localized Arabic numerals throughout the app (Settings, Install Modal, and testing pages)",
+        "Arabic numerals now appear in their proper Arabic-Indic form (١٢٣) throughout the app when using Arabic",
         "Improved visibility of upcoming verses with clear gray frames in Dark Mode",
         "Fixed missing back buttons on Azkar and Prayer pages for smoother navigation",
       ],
       fixes: [
-        "Stationary Mic Bar boundary positioned above navigation for a clean, non-overlapping layout",
-        "Fixed mic bar overlapping the last verse on the recitation test page",
-        "Automatically hide the global audio bar when entering the recitation test",
+        "The microphone bar stays fixed above the navigation bar so it never overlaps with the verses",
+        "Fixed the microphone bar overlapping the last verse on the recitation test page",
+        "The audio player bar now hides automatically when you start the recitation test, giving you a cleaner view",
       ],
     },
   },
@@ -277,16 +277,16 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-17",
     ar: {
       fixes: [
-        "إصلاح تعليق تحميل الصوت (Infinite Loading) على متصفح Safari لجهاز iPhone",
-        "تحسين إعادة استخدام مشغل الصوت ومعالجة الأخطاء لتجربة أكثر سلاسة على iOS",
-        "إصلاح مشكلة فقدان مكتبة Supabase عند بناء التطبيق لضمان استقرار التشغيل",
+        "إصلاح تعليق الصوت في حلقة تحميل لا تنتهي على iPhone",
+        "تشغيل الصوت أكثر استقراراً ويتعافى بشكل أفضل من الأخطاء على iPhone",
+        "إصلاح مشكلة في الخلفية كانت تتسبب أحياناً في عدم عمل التطبيق بشكل صحيح",
       ],
     },
     en: {
       fixes: [
-        "Fixed infinite loading/deadlock of audio playback on iOS Safari",
-        "Improved audio element reuse and error handling for a smoother experience on iPhone",
-        "Fixed missing @supabase/supabase-js dependency during the build process",
+        "Fixed audio getting stuck in a loading loop on iPhone",
+        "Audio playback is now more stable and recovers better from errors on iPhone",
+        "Fixed a background issue that was occasionally causing the app to not work correctly",
       ],
     },
   },
@@ -297,8 +297,8 @@ export const changelog: ChangelogEntry[] = [
       improvements: [
         "تحسين الاستجابة على مستويات التكبير المختلفة — النص والأيقونات والأزرار تتكيف تلقائياً",
         "شريط التنقل السفلي يتناسب مع جميع أحجام الشاشات والتكبير — لا تختفي الأيقونات",
-        "شريط التشغيل العالمي (audio bar) محسّن لسهولة الاستخدام على شاشات صغيرة وكبيرة",
-        "مناطق اللمس ديناميكية تضمن بقاءها فوق ٤٤ بكسل حتى عند تكبير الواجهة",
+        "شريط تشغيل الصوت أصبح أفضل تنسيقاً على جميع أحجام الشاشات",
+        "الأزرار تبقى سهلة الضغط حتى عند تكبير الشاشة",
         "السماح بالتكبير حتى ٥ مرات — يمكنك تكبير أي جزء من التطبيق حسب احتياجك",
       ],
     },
@@ -306,8 +306,8 @@ export const changelog: ChangelogEntry[] = [
       improvements: [
         "Improved responsiveness across different zoom levels — text, icons, and buttons scale automatically",
         "Bottom navigation adapts to all screen sizes and zoom levels — icons never disappear",
-        "Global audio bar optimized for both small and large screens with proper spacing",
-        "Dynamic touch targets ensure they stay above 44px even when UI is enlarged",
+        "The audio player bar is now better laid out on all screen sizes",
+        "Buttons remain easy to tap even when you zoom in on the screen",
         "User zoom now supported up to 5x — you can magnify any part of the app as needed",
       ],
     },
@@ -317,26 +317,24 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-17",
     ar: {
       fixes: [
-        "إصلاح تسجيل الدخول والتسجيل على النطاقات المخصصة — يعمل بشكل موثوق على أي نطاق",
-        "إضافة معالجة قوية لروابط التحقق من البريد الإلكتروني من النطاقات المخصصة",
-        "تحسين رسائل الأخطاء لتوضيح السبب الفعلي للفشل",
+        "إصلاح تسجيل الدخول والتسجيل ليعمل بشكل موثوق في جميع الأحوال",
+        "روابط التحقق من البريد الإلكتروني تعمل الآن بشكل صحيح دائماً",
+        "رسائل أخطاء أوضح تخبرك بالسبب الفعلي عند حدوث أي مشكلة",
       ],
       improvements: [
-        "التحقق من الجلسة بعد تسجيل الدخول لضمان استقرار أفضل",
-        "سجلات تفصيلية للمطورين في وضع التطوير لتتبع مشاكل المصادقة",
-        "معالجة أفضل للأخطاء المتعلقة بالشبكة والرموز",
+        "تسجيل الدخول أكثر استقراراً — جلستك تُؤكَّد بشكل صحيح بعد تسجيل الدخول",
+        "تحسين معالجة مشاكل الاتصال أثناء تسجيل الدخول",
       ],
     },
     en: {
       fixes: [
-        "Fixed sign-in and sign-up on custom domains — now works reliably on any domain",
-        "Added robust handling for email verification links from custom domains",
-        "Better error messages that clarify the actual reason for authentication failures",
+        "Fixed sign-in and sign-up to work reliably in all situations",
+        "Email verification links now always work correctly",
+        "Clearer error messages that tell you exactly what went wrong when signing in",
       ],
       improvements: [
-        "Session validation after login ensures more stable authentication",
-        "Detailed developer logs in development mode to track auth issues",
-        "Improved handling of network errors and token-related issues",
+        "Signing in is now more stable — your session is confirmed properly after logging in",
+        "Better handling of connection problems during sign-in",
       ],
     },
   },
@@ -351,7 +349,7 @@ export const changelog: ChangelogEntry[] = [
       ],
       fixes: [
         "إصلاح فقدان الكلمات الأخيرة أثناء التلاوة",
-        "تحسين استقرار نظام التعرف على الصوت عند انتهاء الجلسة",
+        "تحسين استقرار التعرف على الصوت عند انتهاء الجلسة",
       ],
     },
     en: {
@@ -362,7 +360,7 @@ export const changelog: ChangelogEntry[] = [
       ],
       fixes: [
         "Fixed issue where the last words were sometimes lost during recitation",
-        "Improved speech recognition stability when a session ends",
+        "Improved voice recognition stability when a session ends",
       ],
     },
   },
@@ -371,16 +369,16 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-03-16",
     ar: {
       improvements: [
-        "إزالة بانر تسجيل الدخول المزعج — يمكنك تسجيل الدخول من الإعدادات في أي وقت",
-        "إصلاح تسجيل الدخول على النطاقات المخصصة — يعمل الآن بشكل صحيح خارج Bolt Preview",
-        "تحسين إعدادات PWA لضمان تثبيت أفضل وتحديثات أكثر موثوقية",
+        "إزالة إشعار تسجيل الدخول المزعج — يمكنك تسجيل الدخول من الإعدادات في أي وقت",
+        "إصلاح تسجيل الدخول ليعمل بشكل صحيح في كل مكان",
+        "تحسين طريقة تثبيت التطبيق على جهازك وإيصال التحديثات",
       ],
     },
     en: {
       improvements: [
         "Removed the sign-in banner — you can now sign in from Settings whenever you want",
-        "Fixed authentication on custom domains — no longer limited to Bolt Preview",
-        "Improved PWA configuration for better installation and more reliable updates",
+        "Fixed sign-in so it works correctly everywhere",
+        "Improved how the app installs on your device and how updates are delivered",
       ],
     },
   },
@@ -394,7 +392,7 @@ export const changelog: ChangelogEntry[] = [
         "واجهة ليلية ساحرة مع قمر متحرك ونجوم تتلألأ وعداد دائري",
         "٣ قراء جدد بأصوات هادئة: سعد الغامدي، ناصر القطامي، خالد القحطاني",
         "بحث في آيات السورة مع تمييز النتائج والتنقل بينها",
-        "واجهة قبلة ثلاثية الأبعاد بنمط AR مع سهم توجيه متحرك",
+        "بوصلة قبلة ثلاثية الأبعاد بتصميم احترافي مع سهم توجيه متحرك",
       ],
       improvements: [
         "حفظ إحصائيات جلسات وضع النوم لمتابعة عاداتك",
@@ -408,10 +406,10 @@ export const changelog: ChangelogEntry[] = [
       features: [
         "Sleep Mode — listen to Quran before bed with a smart timer and gradual fade-out",
         "Nature sounds: rain, ocean waves, and forest play alongside the Quran while you sleep",
-        "Beautiful night-themed UI with an animated moon, twinkling stars, and circular countdown",
+        "Beautiful night-themed screen with an animated moon, twinkling stars, and circular countdown",
         "3 new calm reciters: Saad Al-Ghamdi, Nasser Al-Qatami, Khalid Al-Qahtani",
         "Search inside any surah with highlighted results and previous/next navigation",
-        "Redesigned 3D Qibla with professional AR-style overlay and animated directional arrow",
+        "Redesigned 3D Qibla compass with a professional look and animated directional arrow",
       ],
       improvements: [
         "Sleep Mode session stats are now saved so you can track your listening habits",
@@ -431,19 +429,19 @@ export const changelog: ChangelogEntry[] = [
         "إصلاح نظام التسجيل والدخول للعمل بدون تأكيد البريد الإلكتروني",
       ],
       improvements: [
-        "رسائل أخطاء أوضح في نظام المصادقة مع سجلات تفصيلية للمطورين",
-        "التحقق من الجلسة بعد التسجيل لضمان الدخول التلقائي",
+        "رسائل أخطاء أوضح عند حدوث أي مشكلة أثناء تسجيل الدخول",
+        "بعد إنشاء حسابك، تسجيل دخولك يتم تلقائياً في كل مرة",
         "استقرار وموثوقية أفضل عند إنشاء حسابات جديدة",
       ],
     },
     en: {
       fixes: [
-        "Fixed UI overlap between the install banner and save progress banner",
+        "Fixed overlapping banners at the bottom of the screen",
         "Fixed sign-up and sign-in to work without email confirmation",
       ],
       improvements: [
-        "Clearer authentication error messages with detailed developer logs",
-        "Session validation after signup ensures automatic login always works",
+        "Clearer error messages when something goes wrong during sign-in",
+        "After signing up, you are now logged in automatically every time",
         "More reliable and stable account creation process",
       ],
     },
@@ -481,10 +479,10 @@ export const changelog: ChangelogEntry[] = [
       fixes: [
         "إصلاح تجاوز الحد في صفحة التسبيح على الشاشات الصغيرة",
         "إصلاح اقتطاع النص في بطاقة متابعة القراءة وشريط تشغيل السورة",
-        "إصلاح شبكة إحصائيات الحفظ لتناسب الشاشات الضيقة (٣٢٠ بكسل)",
+        "إصلاح عرض إحصائيات الحفظ على شاشات الهواتف الصغيرة",
       ],
       improvements: [
-        "مناطق اللمس في جميع الأزرار محسّنة لتصل إلى ٤٤ بكسل كحد أدنى",
+        "جميع الأزرار في التطبيق أصبحت أسهل للضغط بدقة",
       ],
     },
     en: {
@@ -495,10 +493,10 @@ export const changelog: ChangelogEntry[] = [
       fixes: [
         "Fixed Tasbeeh page overflowing on small screens",
         "Fixed text truncation in the Continue Reading card and Surah bottom bar",
-        "Fixed Hifz stats grid for narrow screens (320px)",
+        "Fixed the memorization statistics display on small phone screens",
       ],
       improvements: [
-        "All tap targets improved to meet the 44px minimum across the app",
+        "All buttons across the app are now easier to tap accurately",
       ],
     },
   },
@@ -581,7 +579,6 @@ export const changelog: ChangelogEntry[] = [
       ],
       improvements: [
         "التحقق اليدوي من التحديثات في أي وقت",
-        "بطاقة المطوّر بتصميم رمضاني",
       ],
     },
     en: {
@@ -592,7 +589,6 @@ export const changelog: ChangelogEntry[] = [
       ],
       improvements: [
         "Manual update check available anytime in Settings",
-        "Developer card with a Ramadan-inspired design",
       ],
     },
   },
