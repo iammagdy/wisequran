@@ -6,6 +6,7 @@ import {
   getBookmark,
   getBookmarksForOwner,
   putBookmark,
+  V6_BOOKMARKS_BACKUP_LS_KEY,
   type BookmarkRecord,
 } from "@/lib/db";
 import { enqueuedSupabaseWrite } from "@/lib/syncQueue";
@@ -244,42 +245,70 @@ export async function clearAllLocalBookmarks(): Promise<void> {
  * array (`{surah, ayah}[]`) to the IDB store, under the **current
  * anonymous device** owner. Safe to call repeatedly; gated by a flag.
  */
+async function importBookmarkPairs(
+  ownerKey: string,
+  pairs: Array<{ surah: number; ayah: number }>,
+  baseTimestamp: number,
+): Promise<boolean> {
+  let imported = false;
+  for (let i = 0; i < pairs.length; i++) {
+    const { surah, ayah } = pairs[i];
+    if (!Number.isFinite(surah) || !Number.isFinite(ayah) || surah < 1 || ayah < 1) continue;
+    const existing = await getBookmark(ownerKey, surah, ayah);
+    if (existing) continue;
+    const ts = baseTimestamp - (pairs.length - i);
+    const record: BookmarkRecord = {
+      id: bookmarkKey(ownerKey, surah, ayah),
+      ownerKey,
+      surah,
+      ayah,
+      ayahText: "",
+      surahName: "",
+      note: "",
+      bookmarked: true,
+      createdAt: ts,
+      updatedAt: ts,
+    };
+    await putBookmark(record);
+    syncBookmarkUpsert(record);
+    imported = true;
+  }
+  return imported;
+}
+
 export async function migrateLegacyBookmarks(): Promise<void> {
   try {
-    if (localStorage.getItem(MIGRATION_FLAG) === "1") return;
     const ownerKey = anonymousOwnerKey();
     if (!ownerKey) return;
+
+    // v6 → v7 IDB-rescued rows (see openDatabase upgrade callback).
+    // Consumed once, regardless of the LS-legacy migration flag.
+    const v6Raw = localStorage.getItem(V6_BOOKMARKS_BACKUP_LS_KEY);
+    if (v6Raw) {
+      try {
+        const parsed = JSON.parse(v6Raw) as unknown;
+        if (Array.isArray(parsed)) {
+          const pairs = parsed
+            .map((e) => ({ surah: Number((e as { surah?: unknown })?.surah), ayah: Number((e as { ayah?: unknown })?.ayah) }))
+            .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah));
+          const imported = await importBookmarkPairs(ownerKey, pairs, Date.now());
+          if (imported) emitChange();
+        }
+      } catch {
+        /* ignore malformed backup */
+      }
+      localStorage.removeItem(V6_BOOKMARKS_BACKUP_LS_KEY);
+    }
+
+    if (localStorage.getItem(MIGRATION_FLAG) === "1") return;
     const raw = localStorage.getItem(LEGACY_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        const now = Date.now();
-        for (let i = 0; i < parsed.length; i++) {
-          const entry = parsed[i] as { surah?: unknown; ayah?: unknown };
-          const surah = Number(entry?.surah);
-          const ayah = Number(entry?.ayah);
-          if (!Number.isFinite(surah) || !Number.isFinite(ayah) || surah < 1 || ayah < 1) continue;
-          const existing = await getBookmark(ownerKey, surah, ayah);
-          if (existing) continue;
-          const record: BookmarkRecord = {
-            id: bookmarkKey(ownerKey, surah, ayah),
-            ownerKey,
-            surah,
-            ayah,
-            ayahText: "",
-            surahName: "",
-            note: "",
-            bookmarked: true,
-            createdAt: now - (parsed.length - i),
-            updatedAt: now - (parsed.length - i),
-          };
-          await putBookmark(record);
-          // Only enqueue sync if the legacy anon owner matches the
-          // currently active owner (user may have signed in before first
-          // visit post-upgrade; in that case, their initial sign-in flow
-          // will claim the records).
-          syncBookmarkUpsert(record);
-        }
+        const pairs = parsed
+          .map((e) => ({ surah: Number((e as { surah?: unknown })?.surah), ayah: Number((e as { ayah?: unknown })?.ayah) }))
+          .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah));
+        await importBookmarkPairs(ownerKey, pairs, Date.now());
       }
     }
     localStorage.setItem(MIGRATION_FLAG, "1");

@@ -69,6 +69,11 @@ const ERROR_MAP: Record<string, string> = {
 
 const MAX_RESTARTS = 12;
 const RESTART_DELAY_MS = 250;
+// Exponential backoff for repeated "no-speech" errors so we do not
+// hammer the recognition API when the user has simply stopped speaking.
+// Capped to keep responsiveness when they resume.
+const NO_SPEECH_BACKOFF_MS = [500, 1000, 2000, 4000, 8000] as const;
+const NO_SPEECH_BACKOFF_CAP_MS = 8000;
 const MIN_IOS_SPEECH_MAJOR = 14;
 const MIN_IOS_SPEECH_MINOR = 5;
 
@@ -83,6 +88,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const interimRef = useRef("");
   const isManualStopRef = useRef(false);
   const restartCountRef = useRef(0);
+  const noSpeechCountRef = useRef(0);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = useRef(false);
 
@@ -149,6 +155,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         finalTranscriptRef.current = mergeTranscriptWithOverlap(finalTranscriptRef.current, newFinalText);
         interimRef.current = "";
         setTranscript(finalTranscriptRef.current.trim());
+        noSpeechCountRef.current = 0;
       }
       interimRef.current = interimText;
       setInterimTranscript(interimText);
@@ -159,16 +166,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
       if (event.error === "no-speech") {
         if (isIOS) return;
-
-        if (!isManualStopRef.current && isActiveRef.current && restartCountRef.current < MAX_RESTARTS) {
-          restartCountRef.current++;
-          clearRestartTimer();
-          restartTimerRef.current = setTimeout(() => {
-            if (!isManualStopRef.current && isActiveRef.current) {
-              createAndStartRecognition();
-            }
-          }, RESTART_DELAY_MS);
-        }
+        // Don't schedule a restart here — `onend` always fires next and
+        // handles the restart. We just bump the no-speech counter so
+        // `onend` picks the correct exponential backoff delay.
+        noSpeechCountRef.current++;
         return;
       }
 
@@ -228,6 +229,15 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       }
 
       restartCountRef.current++;
+
+      // Apply exponential backoff if the cycle ended with repeated
+      // "no-speech" errors so we don't hammer the recognition API.
+      const delay = noSpeechCountRef.current > 0
+        ? NO_SPEECH_BACKOFF_MS[
+            Math.min(noSpeechCountRef.current - 1, NO_SPEECH_BACKOFF_MS.length - 1)
+          ] ?? NO_SPEECH_BACKOFF_CAP_MS
+        : RESTART_DELAY_MS;
+
       clearRestartTimer();
       restartTimerRef.current = setTimeout(() => {
         if (!isManualStopRef.current && isActiveRef.current) {
@@ -235,7 +245,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         } else {
           setStatus("done");
         }
-      }, RESTART_DELAY_MS);
+      }, delay);
     };
 
     recognitionRef.current = recognition;
@@ -256,6 +266,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     isManualStopRef.current = false;
     isActiveRef.current = true;
     restartCountRef.current = 0;
+    noSpeechCountRef.current = 0;
     finalTranscriptRef.current = "";
     interimRef.current = "";
 
@@ -282,6 +293,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     finalTranscriptRef.current = "";
     interimRef.current = "";
     restartCountRef.current = 0;
+    noSpeechCountRef.current = 0;
     setStatus("idle");
     setTranscript("");
     setInterimTranscript("");

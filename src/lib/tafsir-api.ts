@@ -10,7 +10,8 @@ export interface TafsirAyah {
 
 export async function fetchTafsir(
   surahNumber: number,
-  editionId: string
+  editionId: string,
+  signal?: AbortSignal,
 ): Promise<TafsirAyah[]> {
   // Prefer bundled offline data when available.
   if (isOfflineTafsirEdition(editionId)) {
@@ -21,7 +22,7 @@ export async function fetchTafsir(
   const cached = await getTafsir(editionId, surahNumber);
   if (cached) return cached.ayahs;
 
-  const res = await fetch(`${API_BASE}/surah/${surahNumber}/${editionId}`);
+  const res = await fetch(`${API_BASE}/surah/${surahNumber}/${editionId}`, { signal });
   if (!res.ok) throw new Error("Failed to fetch tafsir");
   const data = await res.json();
 

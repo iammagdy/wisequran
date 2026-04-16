@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { DK } from "./devkit-utils";
-import { clearAllAudio } from "@/lib/db";
+import { clearAllAudio, recalculateAudioBytes } from "@/lib/db";
 import { DEVKIT_FORCE_CHANGELOG_KEY } from "@/hooks/usePostUpdateChangelog";
 import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup } from "@/lib/backup";
 
@@ -37,6 +37,7 @@ export default function AppControlsPanel() {
   const [msg, setMsg] = useState("");
   const [offlineMode, setOfflineMode] = useState(false);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [recalcBusy, setRecalcBusy] = useState(false);
   const importRef = useRef<HTMLInputElement>(null);
 
   const refresh = () => {
@@ -127,6 +128,19 @@ export default function AppControlsPanel() {
       "wise-hifz-streak",
     ].forEach((k) => localStorage.removeItem(k));
     flash("Hifz data cleared");
+  };
+
+  const handleRecalcAudio = async () => {
+    setRecalcBusy(true);
+    try {
+      const bytes = await recalculateAudioBytes();
+      const mb = (bytes / (1024 * 1024)).toFixed(2);
+      flash(`Recalculated audio storage: ${mb} MB (${bytes.toLocaleString()} bytes)`);
+    } catch (err) {
+      flash(`Recalculate failed: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setRecalcBusy(false);
+    }
   };
 
   const handleExport = async () => {
@@ -268,16 +282,36 @@ export default function AppControlsPanel() {
 
       <div className={`rounded-lg p-4 ${DK.card}`}>
         <h3 className={`font-mono text-xs uppercase tracking-widest ${DK.muted} mb-3`}>Caches</h3>
-        <div className="flex items-center justify-between">
-          <p className={`font-mono text-xs ${DK.muted}`}>
-            Wipes all Cache API entries + IDB audio store. App will refetch on next load.
-          </p>
-          <button
-            onClick={() => void clearCaches()}
-            className={`${DK.btnBase} ${DK.btnRed} shrink-0 ml-4`}
-          >
-            Clear all caches
-          </button>
+        <div className="grid grid-cols-1 gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className={`font-mono text-xs ${DK.text}`}>Clear all caches</p>
+              <p className={`font-mono text-xs ${DK.muted}`}>
+                Wipes Cache API entries + IDB audio store. App refetches on next load.
+              </p>
+            </div>
+            <button
+              onClick={() => void clearCaches()}
+              className={`${DK.btnBase} ${DK.btnRed} shrink-0 ml-4`}
+            >
+              Clear
+            </button>
+          </div>
+          <div className={`border-t ${DK.border} pt-3 flex items-center justify-between`}>
+            <div>
+              <p className={`font-mono text-xs ${DK.text}`}>Recalculate audio storage</p>
+              <p className={`font-mono text-xs ${DK.muted}`}>
+                Rebuilds the cached audio-bytes total by re-scanning IDB. Fixes drift from aborted downloads.
+              </p>
+            </div>
+            <button
+              onClick={() => void handleRecalcAudio()}
+              disabled={recalcBusy}
+              className={`${DK.btnBase} ${DK.btnGray} shrink-0 ml-4`}
+            >
+              {recalcBusy ? "…" : "Recalculate"}
+            </button>
+          </div>
         </div>
       </div>
 

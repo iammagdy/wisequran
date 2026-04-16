@@ -151,8 +151,10 @@ export default function SurahReaderPage() {
     setTafsirAyahs([]);
     setTafsirSearch("");
     setTranslationAyahs([]);
-    Promise.all([fetchSurahAyahs(surahNumber), fetchSurahList()]).
+    const controller = new AbortController();
+    Promise.all([fetchSurahAyahs(surahNumber, controller.signal), fetchSurahList()]).
     then(([ayahData, surahList]) => {
+      if (controller.signal.aborted) return;
       setAyahs(ayahData);
       const info = surahList.find((s) => s.number === surahNumber) || null;
       setSurahInfo(info);
@@ -169,11 +171,13 @@ export default function SurahReaderPage() {
       if (info) addToHistory(surahNumber, info.name);
       setLoading(false);
     }).
-    catch(() => {
+    catch((err) => {
+      if (controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
       setError(t("error_loading"));
       setLoading(false);
     });
-  }, [surahNumber, addToHistory, setLastListening, setLastRead, setLastReading, isListeningMode]);
+    return () => controller.abort();
+  }, [surahNumber, addToHistory, setLastListening, setLastRead, setLastReading, isListeningMode, t]);
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && !hasTracked.current) {
@@ -194,18 +198,40 @@ export default function SurahReaderPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  const targetAyahHandledRef = useRef<string | null>(null);
+  const ayahElementsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+
   useEffect(() => {
-    if (!loading && ayahs.length > 0 && targetAyah) {
-      setTimeout(() => {
+    if (loading || ayahs.length === 0 || !targetAyah) return;
+    // Key the guard by surah+ayah so navigating between surahs with the
+    // same ?ayah=N still triggers the scroll.
+    const handledKey = `${surahNumber}:${targetAyah}`;
+    if (targetAyahHandledRef.current === handledKey) return;
+    targetAyahHandledRef.current = handledKey;
+
+    // One frame is enough for the virtualizer to measure the initial
+    // range. If the row still isn't mounted, `requestAnimationFrame`
+    // retries until it is — no arbitrary timeouts.
+    const tryScroll = () => {
+      const idx = ayahs.findIndex((a) => a.numberInSurah === targetAyah);
+      if (idx < 0) return;
+      // Mushaf mode: scroll the real DOM node (registered via setAyahRef).
+      const el = ayahElementsRef.current.get(targetAyah);
+      if (el) {
+        el.scrollIntoView({ block: "center", behavior: "smooth" });
+      } else {
         scrollToAyahRef.current?.(targetAyah);
-        setHighlightedAyah(targetAyah);
-        setTimeout(() => setHighlightedAyah(null), 2000);
-      }, 300);
-    }
-  }, [loading, ayahs.length, targetAyah]);
+      }
+      setHighlightedAyah(targetAyah);
+      setTimeout(() => setHighlightedAyah(null), 2000);
+    };
+    const raf = requestAnimationFrame(tryScroll);
+    return () => cancelAnimationFrame(raf);
+  }, [loading, ayahs, targetAyah]);
 
   const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
-    void el; void num;
+    if (el) ayahElementsRef.current.set(num, el);
+    else ayahElementsRef.current.delete(num);
   }, []);
 
   const navigateToAyah = useCallback((ayahNum: number) => {
@@ -243,16 +269,20 @@ export default function SurahReaderPage() {
 
     setTafsirLoading(true);
     setTafsirError("");
-    fetchTafsir(surahNumber, effectiveTafsirEdition).
+    const controller = new AbortController();
+    fetchTafsir(surahNumber, effectiveTafsirEdition, controller.signal).
     then((data) => {
+      if (controller.signal.aborted) return;
       setTafsirAyahs(data);
       setTafsirLoading(false);
     }).
-    catch(() => {
+    catch((err) => {
+      if (controller.signal.aborted || (err instanceof DOMException && err.name === "AbortError")) return;
       setTafsirError(t("error_loading"));
       setTafsirLoading(false);
     });
-  }, [activeTab, surahNumber, effectiveTafsirEdition, tafsirAyahs.length]);
+    return () => controller.abort();
+  }, [activeTab, surahNumber, effectiveTafsirEdition, tafsirAyahs.length, t]);
 
   useEffect(() => {
     if (!translationEnabled) {
@@ -265,7 +295,16 @@ export default function SurahReaderPage() {
     translationEnabledRef.current = translationEnabled;
     if (!editionChanged && !enabledChanged && translationAyahs.length > 0) return;
 
-    fetchTafsir(surahNumber, translationEdition).then(setTranslationAyahs).catch(() => {});
+    const controller = new AbortController();
+    fetchTafsir(surahNumber, translationEdition, controller.signal).
+      then((data) => {
+        if (!controller.signal.aborted) setTranslationAyahs(data);
+      }).
+      catch((err) => {
+        if (controller.signal.aborted) return;
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      });
+    return () => controller.abort();
   }, [translationEnabled, translationEdition, surahNumber, translationAyahs.length]);
 
   const isBookmarked = (ayahNum: number) => isAyahBookmarked(surahNumber, ayahNum);

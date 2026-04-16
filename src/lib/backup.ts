@@ -1,8 +1,9 @@
-import { getDB, addToSyncQueue } from "@/lib/db";
+import { getDB, addToSyncQueue, recalculateAudioBytes } from "@/lib/db";
 import type { SyncQueueEntry } from "@/lib/db";
 
 const WISE_LS_PREFIX = "wise-";
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2;
+const SUPPORTED_VERSIONS = [1, 2] as const;
 
 interface AzkarItem {
   id: string;
@@ -16,6 +17,18 @@ interface AzkarEntry {
   items: AzkarItem[];
 }
 
+interface SurahEntry {
+  number: number;
+  ayahs: { number: number; text: string; numberInSurah: number }[];
+}
+
+interface TafsirEntry {
+  id: string;
+  editionId: string;
+  surahNumber: number;
+  ayahs: { numberInSurah: number; text: string }[];
+}
+
 export interface BackupData {
   version: number;
   exportedAt: string;
@@ -26,10 +39,19 @@ export interface BackupData {
     surahCount: number;
     audioCount: number;
     tafsirCount: number;
+    // v2+ optional offline text content. Audio is intentionally
+    // excluded: ArrayBuffers can run into hundreds of MB and do not
+    // round-trip through JSON without ballooning.
+    surahs?: SurahEntry[];
+    tafsir?: TafsirEntry[];
   };
 }
 
-export async function exportBackup(): Promise<BackupData> {
+export interface ExportOptions {
+  includeOfflineContent?: boolean;
+}
+
+export async function exportBackup(options: ExportOptions = {}): Promise<BackupData> {
   const lsData: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -50,17 +72,24 @@ export async function exportBackup(): Promise<BackupData> {
     ({ id: _id, ...rest }): SyncQueueEntry => rest as SyncQueueEntry,
   );
 
+  const idb: BackupData["idb"] = {
+    azkar,
+    syncQueue,
+    surahCount,
+    audioCount,
+    tafsirCount,
+  };
+
+  if (options.includeOfflineContent) {
+    idb.surahs = await db.getAll("surahs");
+    idb.tafsir = await db.getAll("tafsir");
+  }
+
   return {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     localStorage: lsData,
-    idb: {
-      azkar,
-      syncQueue,
-      surahCount,
-      audioCount,
-      tafsirCount,
-    },
+    idb,
   };
 }
 
@@ -80,6 +109,8 @@ export interface RestoreResult {
   lsKeysRestored: number;
   azkarRestored: number;
   syncQueueRestored: number;
+  surahsRestored: number;
+  tafsirRestored: number;
 }
 
 function isAzkarEntry(value: unknown): value is AzkarEntry {
@@ -88,12 +119,28 @@ function isAzkarEntry(value: unknown): value is AzkarEntry {
   return typeof v.category === "string" && Array.isArray(v.items);
 }
 
+function isSurahEntry(value: unknown): value is SurahEntry {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.number === "number" && Array.isArray(v.ayahs);
+}
+
+function isTafsirEntry(value: unknown): value is TafsirEntry {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === "string" &&
+    typeof v.editionId === "string" &&
+    typeof v.surahNumber === "number" &&
+    Array.isArray(v.ayahs)
+  );
+}
+
 export async function restoreBackup(data: BackupData): Promise<RestoreResult> {
-  if (data.version !== BACKUP_VERSION) {
+  if (!SUPPORTED_VERSIONS.includes(data.version as (typeof SUPPORTED_VERSIONS)[number])) {
     throw new Error(`Unsupported backup version: ${data.version}`);
   }
 
-  // Clear all existing wise-* keys so restore is a clean snapshot, not a merge
   const keysToRemove: string[] = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
@@ -126,25 +173,50 @@ export async function restoreBackup(data: BackupData): Promise<RestoreResult> {
     }
   }
 
-  // Always restore the sync queue from backup (even when empty) so no stale
-  // writes from the previous state carry forward
+  let syncQueueRestored = 0;
   if (Array.isArray(data.idb?.syncQueue)) {
     await db.clear("syncQueue");
-    let syncQueueRestored = 0;
     for (const entry of data.idb.syncQueue) {
       await addToSyncQueue(entry);
       syncQueueRestored++;
     }
-    return { lsKeysRestored, azkarRestored, syncQueueRestored };
   }
 
-  return { lsKeysRestored, azkarRestored, syncQueueRestored: 0 };
+  let surahsRestored = 0;
+  if (Array.isArray(data.idb?.surahs)) {
+    await db.clear("surahs");
+    for (const entry of data.idb.surahs) {
+      if (isSurahEntry(entry)) {
+        await db.put("surahs", entry);
+        surahsRestored++;
+      }
+    }
+  }
+
+  let tafsirRestored = 0;
+  if (Array.isArray(data.idb?.tafsir)) {
+    await db.clear("tafsir");
+    for (const entry of data.idb.tafsir) {
+      if (isTafsirEntry(entry)) {
+        await db.put("tafsir", entry);
+        tafsirRestored++;
+      }
+    }
+  }
+
+  // The audio byte tracker lives in LS and may have been overwritten
+  // by the restored snapshot. Recompute from the actual audio store
+  // so storage stats stay accurate.
+  await recalculateAudioBytes();
+
+  return { lsKeysRestored, azkarRestored, syncQueueRestored, surahsRestored, tafsirRestored };
 }
 
 function validateBackupData(raw: unknown): raw is BackupData {
   if (!raw || typeof raw !== "object") return false;
   const r = raw as Record<string, unknown>;
-  if (r.version !== BACKUP_VERSION) return false;
+  if (typeof r.version !== "number") return false;
+  if (!SUPPORTED_VERSIONS.includes(r.version as (typeof SUPPORTED_VERSIONS)[number])) return false;
   if (typeof r.exportedAt !== "string") return false;
   if (!r.localStorage || typeof r.localStorage !== "object" || Array.isArray(r.localStorage)) return false;
   if (!r.idb || typeof r.idb !== "object" || Array.isArray(r.idb)) return false;
@@ -154,6 +226,8 @@ function validateBackupData(raw: unknown): raw is BackupData {
   if (typeof idb.surahCount !== "number") return false;
   if (typeof idb.audioCount !== "number") return false;
   if (typeof idb.tafsirCount !== "number") return false;
+  if (idb.surahs !== undefined && !Array.isArray(idb.surahs)) return false;
+  if (idb.tafsir !== undefined && !Array.isArray(idb.tafsir)) return false;
   return true;
 }
 

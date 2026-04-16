@@ -478,10 +478,10 @@ export default function SettingsPage() {
     toast.success(t("settings_toast_tafsir_cleared"));
   };
 
-  const handleExportBackup = async () => {
+  const handleExportBackup = async (includeOfflineContent = false) => {
     setBackupBusy(true);
     try {
-      const data = await exportBackup();
+      const data = await exportBackup({ includeOfflineContent });
       downloadBackupFile(data);
       toast.success(language === "ar" ? "تم تصدير النسخة الاحتياطية" : "Backup exported successfully");
     } catch {
@@ -2254,7 +2254,7 @@ export default function SettingsPage() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => void handleExportBackup()}
+                onClick={() => void handleExportBackup(false)}
                 disabled={backupBusy}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
                 {backupBusy
@@ -2273,6 +2273,16 @@ export default function SettingsPage() {
                 {isRTL ? "استيراد نسخة احتياطية" : "Import backup"}
               </button>
             </div>
+
+            <button
+              onClick={() => void handleExportBackup(true)}
+              disabled={backupBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50">
+              <Download className="h-3.5 w-3.5" />
+              {isRTL
+                ? "تصدير شامل (يضم نص القرآن والتفاسير المخزَّنة)"
+                : "Export including offline Quran text & tafsir"}
+            </button>
 
             <input
               ref={backupImportRef}

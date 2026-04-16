@@ -24,12 +24,12 @@ export async function fetchSurahList(): Promise<SurahMeta[]> {
   return SURAH_META;
 }
 
-export async function fetchSurahAyahs(surahNumber: number): Promise<Ayah[]> {
+export async function fetchSurahAyahs(surahNumber: number, signal?: AbortSignal): Promise<Ayah[]> {
   // Check local cache first
   const cached = await getSurah(surahNumber);
   if (cached) return cached.ayahs;
 
-  const res = await fetch(`${API_BASE}/surah/${surahNumber}/quran-uthmani`);
+  const res = await fetch(`${API_BASE}/surah/${surahNumber}/quran-uthmani`, { signal });
   const data = await res.json();
   const ayahs: Ayah[] = data.data.ayahs.map((a: unknown) => ({
     number: a.number,

@@ -80,9 +80,11 @@ function tafsirKey(editionId: string, surahNumber: number): string {
 
 let dbPromise: ReturnType<typeof openDB<WiseQuranDB>> | null = null;
 
+export const V6_BOOKMARKS_BACKUP_LS_KEY = "wise-bookmarks-v6-backup";
+
 function openDatabase() {
   return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
+    upgrade(db, oldVersion, _newVersion, transaction) {
       if (!db.objectStoreNames.contains("surahs")) {
         db.createObjectStore("surahs", { keyPath: "number" });
       }
@@ -101,12 +103,30 @@ function openDatabase() {
       if (!db.objectStoreNames.contains("syncQueue")) {
         db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
       }
-      // v6 added the bookmarks store. v7 reshapes records to be
-      // owner-scoped (new `ownerKey` field + composite `id`). Drop any
-      // v6 data and recreate the store. Legacy localStorage bookmarks
-      // will be re-imported on next app boot via migrateLegacyBookmarks
-      // (gated flag is reset below).
+      // v6 → v7: reshape bookmarks to be owner-scoped. Salvage the
+      // (surah, ayah) pairs from any v6 rows into localStorage so the
+      // post-boot migration in `bookmarks.ts` can re-import them under
+      // the current anonymous owner — no data is silently lost.
       if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
+        try {
+          const oldStore = transaction.objectStore("bookmarks");
+          const req = oldStore.getAll() as unknown as IDBRequest<Array<{ surah?: unknown; ayah?: unknown }>>;
+          req.onsuccess = () => {
+            try {
+              const rows = req.result ?? [];
+              const pairs = rows
+                .map((r) => ({ surah: Number(r?.surah), ayah: Number(r?.ayah) }))
+                .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah) && p.surah >= 1 && p.ayah >= 1);
+              if (pairs.length > 0) {
+                localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(pairs));
+              }
+            } catch {
+              /* ignore */
+            }
+          };
+        } catch {
+          /* ignore */
+        }
         db.deleteObjectStore("bookmarks");
         try {
           localStorage.removeItem("wise-bookmarks-migrated-v1");
@@ -218,6 +238,22 @@ export async function clearAllAudio() {
   const db = await getDB();
   await db.clear("audio");
   resetTrackedAudioBytes();
+}
+
+/**
+ * Scan every audio row and rewrite the LS byte tracker from scratch.
+ * Use this when the tracker drifts from reality (e.g. backup restore,
+ * crash during save, manual IDB tampering).
+ */
+export async function recalculateAudioBytes(): Promise<number> {
+  const db = await getDB();
+  const all = await db.getAll("audio");
+  let total = 0;
+  for (const row of all) {
+    total += row.data?.byteLength ?? 0;
+  }
+  localStorage.setItem(AUDIO_BYTES_LS_KEY, String(total));
+  return total;
 }
 
 export async function clearAllData() {
