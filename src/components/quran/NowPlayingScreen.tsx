@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause, Loader as Loader2, SkipBack, SkipForward, Check, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals, cn } from "@/lib/utils";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";
@@ -55,9 +55,6 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
     playing,
     loading,
     playingReciterId,
-    currentTime,
-    duration,
-    currentAyahInSurah,
     togglePlayPause,
     seekToAyah,
     seek,
@@ -66,7 +63,8 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
     playPreviousSurah,
     hasPrev,
     hasNext,
-  } = useAudioPlayer();
+  } = useAudioPlayerState();
+  const { currentTime, duration, currentAyahInSurah } = useAudioPlayerTime();
 
   const { t, language, isRTL } = useLanguage();
 

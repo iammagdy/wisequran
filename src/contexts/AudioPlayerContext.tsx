@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useCallback, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl, getReciterAudioUrls } from "@/lib/reciters";
@@ -8,23 +8,26 @@ import { toast } from "sonner";
 import type { Ayah } from "@/lib/quran-api";
 import { mobileAudioManager } from "@/lib/mobile-audio";
 
-interface AudioPlayerState {
+interface AudioPlayerStableState {
   surahNumber: number | null;
   surahName: string;
   playing: boolean;
-  currentTime: number;
-  duration: number;
   loading: boolean;
   offline: boolean;
   playingReciterId: string;
   currentAyahNumber: number | null;
-  currentAyahInSurah: number | null;
   isAyahMode: boolean;
   currentAyahIndex: number;
   totalAyahs: number;
 }
 
-interface AudioPlayerContextType extends AudioPlayerState {
+interface AudioPlayerVolatileState {
+  currentTime: number;
+  duration: number;
+  currentAyahInSurah: number | null;
+}
+
+interface AudioPlayerActions {
   reciterId: string;
   play: (surahNumber: number, surahName: string, ayahs?: Ayah[]) => void;
   togglePlayPause: () => Promise<void>;
@@ -39,28 +42,50 @@ interface AudioPlayerContextType extends AudioPlayerState {
   hasNext: boolean;
 }
 
-const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
+type AudioPlayerStateContextType = AudioPlayerStableState & AudioPlayerActions;
+type AudioPlayerTimeContextType = AudioPlayerVolatileState;
+type AudioPlayerContextType = AudioPlayerStateContextType & AudioPlayerTimeContextType;
 
-export function useAudioPlayer() {
-  const ctx = useContext(AudioPlayerContext);
-  if (!ctx) throw new Error("useAudioPlayer must be used within AudioPlayerProvider");
+const AudioPlayerStateContext = createContext<AudioPlayerStateContextType | null>(null);
+const AudioPlayerTimeContext = createContext<AudioPlayerTimeContextType>({
+  currentTime: 0,
+  duration: 0,
+  currentAyahInSurah: null,
+});
+
+export function useAudioPlayerState() {
+  const ctx = useContext(AudioPlayerStateContext);
+  if (!ctx) throw new Error("useAudioPlayerState must be used within AudioPlayerProvider");
   return ctx;
 }
 
-const INITIAL_STATE: AudioPlayerState = {
+export function useAudioPlayerTime() {
+  return useContext(AudioPlayerTimeContext);
+}
+
+export function useAudioPlayer(): AudioPlayerContextType {
+  const state = useAudioPlayerState();
+  const time = useAudioPlayerTime();
+  return { ...state, ...time };
+}
+
+const INITIAL_STABLE: AudioPlayerStableState = {
   surahNumber: null,
   surahName: "",
   playing: false,
-  currentTime: 0,
-  duration: 0,
   loading: false,
   offline: false,
   playingReciterId: DEFAULT_RECITER,
   currentAyahNumber: null,
-  currentAyahInSurah: null,
   isAyahMode: false,
   currentAyahIndex: 0,
   totalAyahs: 0,
+};
+
+const INITIAL_VOLATILE: AudioPlayerVolatileState = {
+  currentTime: 0,
+  duration: 0,
+  currentAyahInSurah: null,
 };
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
@@ -69,7 +94,6 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const onAyahEndedRef = useRef<(() => void) | null>(null);
   const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
-  // Use refs so callbacks always have latest values without re-memoizing
   const reciterIdRef = useRef(reciterId);
   const surahNumberRef = useRef<number | null>(null);
 
@@ -77,9 +101,9 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const ayahsRef = useRef<Ayah[]>([]);
   const stoppedRef = useRef(false);
 
-  const [state, setState] = useState<AudioPlayerState>(INITIAL_STATE);
+  const [stableState, setStableState] = useState<AudioPlayerStableState>(INITIAL_STABLE);
+  const [volatileState, setVolatileState] = useState<AudioPlayerVolatileState>(INITIAL_VOLATILE);
 
-  // Keep refs in sync with latest values
   useEffect(() => {
     reciterIdRef.current = reciterId;
   }, [reciterId]);
@@ -99,13 +123,12 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     };
   }, [cleanupBlobUrl]);
 
-  // Media Session API
   useEffect(() => {
-    if (!("mediaSession" in navigator) || !state.playing) return;
+    if (!("mediaSession" in navigator) || !stableState.playing) return;
 
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: state.surahName,
-      artist: getReciterById(state.playingReciterId).name,
+      title: stableState.surahName,
+      artist: getReciterById(stableState.playingReciterId).name,
       album: "القرآن الكريم",
     });
 
@@ -121,7 +144,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         navigator.mediaSession.setActionHandler("pause", null);
       }
     };
-  }, [state.playing, state.surahName, state.playingReciterId]);
+  }, [stableState.playing, stableState.surahName, stableState.playingReciterId]);
 
   const fallbackUrlsRef = useRef<string[]>([]);
   const fallbackIndexRef = useRef(0);
@@ -131,7 +154,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const setupAudioListeners = useCallback((audio: HTMLAudioElement) => {
     audio.addEventListener("loadedmetadata", () => {
-      setState((s) => ({ ...s, duration: audio.duration, loading: false }));
+      setStableState((s) => ({ ...s, loading: false }));
+      setVolatileState((s) => ({ ...s, duration: audio.duration }));
     });
     audio.addEventListener("timeupdate", () => {
       const currentTime = audio.currentTime;
@@ -142,14 +166,15 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         ayahInSurah = findCurrentAyahByTime(timestamps, currentTime * 1000);
       }
 
-      setState((s) => ({
+      setVolatileState((s) => ({
         ...s,
         currentTime,
         currentAyahInSurah: ayahInSurah,
       }));
     });
     audio.addEventListener("ended", () => {
-      setState((s) => ({ ...s, playing: false, currentAyahInSurah: null }));
+      setStableState((s) => ({ ...s, playing: false }));
+      setVolatileState((s) => ({ ...s, currentAyahInSurah: null }));
       onAyahEndedRef.current?.();
     });
     audio.addEventListener("error", () => {
@@ -165,15 +190,14 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setState((s) => ({ ...s, loading: false }));
+      setStableState((s) => ({ ...s, loading: false }));
       toast.error("تعذر تشغيل الصوت. يرجى المحاولة مرة أخرى.");
     });
-    // Sync playing state if browser pauses audio (e.g. interruption)
     audio.addEventListener("pause", () => {
-      setState((s) => ({ ...s, playing: false }));
+      setStableState((s) => ({ ...s, playing: false }));
     });
     audio.addEventListener("play", () => {
-      setState((s) => ({ ...s, playing: true, loading: false }));
+      setStableState((s) => ({ ...s, playing: true, loading: false }));
     });
   }, []);
 
@@ -202,26 +226,26 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
     const primePromise = mobileAudioManager.prime("quran");
 
-    setState((s) => ({
-      ...INITIAL_STATE,
+    setStableState(() => ({
+      ...INITIAL_STABLE,
       surahNumber,
       surahName,
       loading: true,
       playingReciterId: currentReciterId,
     }));
+    setVolatileState(INITIAL_VOLATILE);
 
     const loadAndPlay = async () => {
       try {
         await primePromise;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'NotAllowedError') {
-          setState((s) => ({ ...s, loading: false }));
+          setStableState((s) => ({ ...s, loading: false }));
           toast.error("يحتاج المتصفح إلى التفاعل لتشغيل الصوت. يرجى الضغط على زر التشغيل مرة أخرى.");
         }
         return;
       }
-      
-      // If another play request has started, abort this one
+
       if (surahNumberRef.current !== surahNumber || stoppedRef.current) return;
 
       activeSurahForRetryRef.current = surahNumber;
@@ -234,7 +258,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         if (qfData) {
           timestampsRef.current = qfData.timestamps;
           primaryUrl = qfData.audioUrl;
-          setState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
+          setStableState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
         }
       } catch {/* fallback */}
 
@@ -250,7 +274,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
       const allUrls = await getReciterAudioUrls(currentReciterId, surahNumber);
       if (!primaryUrl && !navigator.onLine) {
-        setState((s) => ({ ...s, offline: true, loading: false }));
+        setStableState((s) => ({ ...s, offline: true, loading: false }));
         return;
       }
 
@@ -259,7 +283,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       allUrls.forEach(u => !orderedUrls.includes(u) && orderedUrls.push(u));
 
       if (orderedUrls.length === 0) {
-        setState((s) => ({ ...s, offline: true, loading: false }));
+        setStableState((s) => ({ ...s, offline: true, loading: false }));
         return;
       }
 
@@ -274,7 +298,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
             cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
           }
         } catch (error) {
-          setState((s) => ({ ...s, loading: false }));
+          setStableState((s) => ({ ...s, loading: false }));
         }
       }
     };
@@ -296,7 +320,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const seek = useCallback((time: number) => {
     if (audioRef.current) {
       audioRef.current.currentTime = time;
-      setState((s) => ({ ...s, currentTime: time }));
+      setVolatileState((s) => ({ ...s, currentTime: time }));
     }
   }, []);
 
@@ -308,7 +332,8 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     cleanupBlobUrl();
     timestampsRef.current = [];
     ayahsRef.current = [];
-    setState(INITIAL_STATE);
+    setStableState(INITIAL_STABLE);
+    setVolatileState(INITIAL_VOLATILE);
   }, [cleanupBlobUrl]);
 
   const setPlaybackRate = useCallback((rate: number) => {
@@ -326,14 +351,14 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     if (ts && audioRef.current) {
       const timeInSeconds = ts.from / 1000;
       audioRef.current.currentTime = timeInSeconds;
-      setState((s) => ({ ...s, currentTime: timeInSeconds }));
+      setVolatileState((s) => ({ ...s, currentTime: timeInSeconds }));
     }
   }, []);
 
   const playNextSurah = useCallback(() => {
     const current = surahNumberRef.current;
     if (!current || current >= 114) return;
-    const next = SURAH_META[current]; // index is surahNumber (1-based), so index = current gives next surah
+    const next = SURAH_META[current];
     if (next) {
       play(next.number, next.name);
     }
@@ -342,34 +367,40 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
   const playPreviousSurah = useCallback(() => {
     const current = surahNumberRef.current;
     if (!current || current <= 1) return;
-    const prev = SURAH_META[current - 2]; // index current-2 gives previous surah
+    const prev = SURAH_META[current - 2];
     if (prev) {
       play(prev.number, prev.name);
     }
   }, [play]);
 
-  const hasPrev = state.surahNumber !== null && state.surahNumber > 1;
-  const hasNext = state.surahNumber !== null && state.surahNumber < 114;
+  const hasPrev = stableState.surahNumber !== null && stableState.surahNumber > 1;
+  const hasNext = stableState.surahNumber !== null && stableState.surahNumber < 114;
+
+  const stableContextValue = useMemo<AudioPlayerStateContextType>(
+    () => ({
+      ...stableState,
+      reciterId,
+      play,
+      togglePlayPause,
+      seek,
+      seekToAyah,
+      stop,
+      setPlaybackRate,
+      setOnAyahEnded,
+      playNextSurah,
+      playPreviousSurah,
+      hasPrev,
+      hasNext,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stableState, reciterId, play, togglePlayPause, seek, seekToAyah, stop, setPlaybackRate, setOnAyahEnded, playNextSurah, playPreviousSurah, hasPrev, hasNext]
+  );
 
   return (
-    <AudioPlayerContext.Provider
-      value={{
-        ...state,
-        reciterId,
-        play,
-        togglePlayPause,
-        seek,
-        seekToAyah,
-        stop,
-        setPlaybackRate,
-        setOnAyahEnded,
-        playNextSurah,
-        playPreviousSurah,
-        hasPrev,
-        hasNext,
-      }}
-    >
-      {children}
-    </AudioPlayerContext.Provider>
+    <AudioPlayerStateContext.Provider value={stableContextValue}>
+      <AudioPlayerTimeContext.Provider value={volatileState}>
+        {children}
+      </AudioPlayerTimeContext.Provider>
+    </AudioPlayerStateContext.Provider>
   );
 }

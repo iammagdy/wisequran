@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Loader as Loader2, X } from "lucide-react";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals } from "@/lib/utils";
 import NowPlayingScreen from "./NowPlayingScreen";
@@ -36,8 +36,9 @@ function WaveformBars({ playing }: { playing: boolean }) {
 export default function GlobalAudioBar() {
   const {
     surahNumber, surahName, playing, loading, playingReciterId,
-    togglePlayPause, stop, currentTime, duration, seek,
-  } = useAudioPlayer();
+    togglePlayPause, stop, seek,
+  } = useAudioPlayerState();
+  const { currentTime, duration } = useAudioPlayerTime();
 
   const [showNowPlaying, setShowNowPlaying] = useState(false);
   const { t, language } = useLanguage();

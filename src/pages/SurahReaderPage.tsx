@@ -17,7 +17,7 @@ import { useDailyReading } from "@/hooks/useDailyReading";
 import { useStreak } from "@/hooks/useStreak";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import SurahBottomBar from "@/components/quran/SurahBottomBar";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
 import { DEFAULT_TAFSIR, TAFSIR_EDITIONS, ENGLISH_TAFSIR_ID } from "@/data/tafsir-editions";
 import { DEFAULT_TRANSLATION, TRANSLATION_EDITIONS } from "@/data/translation-editions";
 import { HighlightText } from "@/components/HighlightText";
@@ -44,8 +44,9 @@ export default function SurahReaderPage() {
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const scrollToAyahRef = useRef<((ayahNum: number) => void) | null>(null);
-  const audioPlayer = useAudioPlayer();
-  const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioPlayer.currentAyahInSurah : null;
+  const audioPlayer = useAudioPlayerState();
+  const { currentAyahInSurah: audioCurrentAyahInSurah } = useAudioPlayerTime();
+  const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioCurrentAyahInSurah : null;
 
   const { t, language, isRTL } = useLanguage();
 

@@ -5,7 +5,7 @@ import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
 import { getAudio } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals, formatTime } from "@/lib/utils";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
 import { getReciterById } from "@/lib/reciters";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -21,7 +21,8 @@ interface Props {
 const TIMER_PRESETS = [5, 10, 15, 20];
 
 export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props) {
-  const player = useAudioPlayer();
+  const player = useAudioPlayerState();
+  const { currentTime: playerCurrentTime, duration: playerDuration } = useAudioPlayerTime();
   const { t, language } = useLanguage();
   const isThisSurah = player.surahNumber === surahNumber;
 
@@ -106,8 +107,8 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
 
   const playing = isThisSurah && player.playing;
   const loading = isThisSurah && player.loading;
-  const currentTime = isThisSurah ? player.currentTime : 0;
-  const duration = isThisSurah ? player.duration : 0;
+  const currentTime = isThisSurah ? playerCurrentTime : 0;
+  const duration = isThisSurah ? playerDuration : 0;
   const offline = isThisSurah && player.offline;
   const pct = duration > 0 ? currentTime / duration * 100 : 0;
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
@@ -24,7 +24,8 @@ interface Props {
 
 export default function ListeningTab({ surahNumber, surahName, ayahs, translationAyahs = [] }: Props) {
   const { t, language, isRTL } = useLanguage();
-  const player = useAudioPlayer();
+  const player = useAudioPlayerState();
+  const { currentAyahInSurah: currentAyahInSurahFromTime } = useAudioPlayerTime();
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   const [speed, setSpeed] = useState<number>(1);
@@ -51,7 +52,7 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   const playing = isThisSurah && player.playing;
   const loading = isThisSurah && player.loading;
 
-  const currentAyahInSurah = isThisSurah ? player.currentAyahInSurah : null;
+  const currentAyahInSurah = isThisSurah ? currentAyahInSurahFromTime : null;
 
   // ⚡ Bolt: Optimize currentAyah lookup. Ayahs are typically sequential 1..N.
   // Direct indexing O(1) is preferred, with a fallback to O(N) find() if missing/filtered.

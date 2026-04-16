@@ -5,7 +5,7 @@ import BottomNav from "./BottomNav";
 import PageTransition from "./PageTransition";
 import GlobalAudioBar from "@/components/quran/GlobalAudioBar";
 import { AchievementUnlockNotification } from "@/components/AchievementsSheet";
-import { useAudioPlayer } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState } from "@/contexts/AudioPlayerContext";
 import { useTheme } from "@/hooks/useTheme";
 
 interface Props {
@@ -14,7 +14,7 @@ interface Props {
 
 export default function AppShell({ children }: Props) {
   const location = useLocation();
-  const { surahNumber } = useAudioPlayer();
+  const { surahNumber } = useAudioPlayerState();
   const onSurahPage = location.pathname.startsWith("/surah/");
   const isRecitationTest = location.pathname === "/hifz/test";
   const showGlobalBar = surahNumber !== null && !onSurahPage && !isRecitationTest;
