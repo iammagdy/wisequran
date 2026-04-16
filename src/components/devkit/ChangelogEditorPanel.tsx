@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { DK } from "./devkit-utils";
+import { DK, downloadJson, exportFilename } from "./devkit-utils";
 import { changelog as staticChangelog, type ChangelogEntry, type ChangelogCategory } from "@/data/changelog";
 import {
   getDevkitChangelog,
@@ -323,6 +323,11 @@ function EntryRow({
   );
 }
 
+interface PendingChangelogImport {
+  entries: ChangelogEntry[];
+  mode: "merge" | "replace";
+}
+
 export default function ChangelogEditorPanel() {
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const [effectiveVer, setEffectiveVer] = useState(() => getEffectiveVersion());
@@ -330,6 +335,8 @@ export default function ChangelogEditorPanel() {
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<FormState>(blankForm());
   const [toast, setToast] = useState("");
+  const [pendingImport, setPendingImport] = useState<PendingChangelogImport | null>(null);
+  const importRef = useRef<HTMLInputElement>(null);
 
   const load = () => {
     setEntries(getDevkitChangelog());
@@ -400,6 +407,64 @@ export default function ChangelogEditorPanel() {
     flash(`✓ Reset to static v${APP_VERSION}`);
   };
 
+  const handleExport = () => {
+    const current = getDevkitChangelog();
+    downloadJson(current, exportFilename("devkit-changelog"));
+    flash(`✓ Exported ${current.length} custom entr${current.length === 1 ? "y" : "ies"}`);
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target?.result as string);
+        if (!Array.isArray(parsed)) {
+          flash("❌ Invalid file: expected a JSON array of entries");
+          return;
+        }
+        const validEntries = (parsed as unknown[]).filter(
+          (item): item is ChangelogEntry =>
+            typeof item === "object" &&
+            item !== null &&
+            typeof (item as Record<string, unknown>).version === "string" &&
+            typeof (item as Record<string, unknown>).date === "string"
+        );
+        if (validEntries.length === 0) {
+          flash("❌ No valid changelog entries found in file");
+          return;
+        }
+        setPendingImport({ entries: validEntries, mode: "merge" });
+      } catch {
+        flash("❌ Failed to parse JSON file");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const confirmImport = () => {
+    if (!pendingImport) return;
+    const { entries: incoming, mode } = pendingImport;
+    if (mode === "replace") {
+      setDevkitChangelog(incoming);
+    } else {
+      const currentVersions = new Map(entries.map((e) => [e.version, e]));
+      for (const entry of incoming) {
+        currentVersions.set(entry.version, entry);
+      }
+      setDevkitChangelog(Array.from(currentVersions.values()));
+    }
+    setPendingImport(null);
+    flash(`✓ Imported ${incoming.length} entr${incoming.length === 1 ? "y" : "ies"} (${mode})`);
+    load();
+  };
+
+  const cancelImport = () => {
+    setPendingImport(null);
+  };
+
   const isFormOpen = adding || editing !== null;
   const devkitVersions = new Set(entries.map((e) => e.version));
   const staticEntries = staticChangelog.filter((e) => !devkitVersions.has(e.version));
@@ -433,7 +498,7 @@ export default function ChangelogEditorPanel() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         {toast ? (
           <div
             className={`flex-1 rounded px-3 py-1.5 font-mono text-xs ${
@@ -449,14 +514,94 @@ export default function ChangelogEditorPanel() {
             DevKit entries layer on top of static ones. Reload the app to see changes.
           </p>
         )}
-        <button
-          onClick={() => { setAdding(true); setEditing(null); setForm(blankForm()); }}
-          disabled={isFormOpen}
-          className={`${DK.btnBase} ${DK.btnGreen} shrink-0`}
-        >
-          + New Entry
-        </button>
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          <button onClick={handleExport} className={`${DK.btnBase} ${DK.btnGray}`}>
+            Export entries
+          </button>
+          <button onClick={() => importRef.current?.click()} className={`${DK.btnBase} ${DK.btnGray}`}>
+            Import entries
+          </button>
+          <button
+            onClick={() => { setAdding(true); setEditing(null); setForm(blankForm()); }}
+            disabled={isFormOpen}
+            className={`${DK.btnBase} ${DK.btnGreen}`}
+          >
+            + New Entry
+          </button>
+        </div>
+        <input
+          ref={importRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
       </div>
+
+      {/* Import preview */}
+      {pendingImport && (
+        <div className={`rounded-lg ${DK.card} p-4 space-y-3`}>
+          <p className={`font-mono text-xs font-semibold ${DK.yellow}`}>
+            Import Preview — {pendingImport.entries.length} entr{pendingImport.entries.length === 1 ? "y" : "ies"} found
+          </p>
+          <div className={`rounded bg-[#0d1117] divide-y divide-[#30363d]`}>
+            {pendingImport.entries.map((e) => {
+              const total =
+                (e.en.features?.length ?? 0) +
+                (e.en.improvements?.length ?? 0) +
+                (e.en.fixes?.length ?? 0);
+              const isExisting = devkitVersions.has(e.version);
+              return (
+                <div key={e.version} className="flex items-center gap-3 px-3 py-2">
+                  <span className={`font-mono text-xs font-semibold ${DK.blue} w-16 shrink-0`}>
+                    v{e.version}
+                  </span>
+                  <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>{e.date}</span>
+                  <span className={`font-mono text-[11px] ${DK.muted} flex-1`}>{total} items</span>
+                  {isExisting && (
+                    <span className={`font-mono text-[10px] ${DK.yellow}`}>overwrites existing</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <label className={`font-mono text-[11px] ${DK.muted}`}>Import mode:</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPendingImport({ ...pendingImport, mode: "merge" })}
+                className={`${DK.btnBase} px-2 py-0.5 text-[11px] ${
+                  pendingImport.mode === "merge" ? DK.btnGreen : DK.btnGray
+                }`}
+              >
+                Merge (keep existing)
+              </button>
+              <button
+                onClick={() => setPendingImport({ ...pendingImport, mode: "replace" })}
+                className={`${DK.btnBase} px-2 py-0.5 text-[11px] ${
+                  pendingImport.mode === "replace" ? DK.btnRed : DK.btnGray
+                }`}
+              >
+                Replace all
+              </button>
+            </div>
+          </div>
+          <p className={`font-mono text-[11px] ${DK.muted}`}>
+            {pendingImport.mode === "merge"
+              ? "Incoming entries will be added or will overwrite entries with matching versions. Other existing entries are kept."
+              : "All current DevKit entries will be replaced by the imported entries."}
+          </p>
+          <div className="flex gap-2">
+            <button onClick={confirmImport} className={`${DK.btnBase} ${DK.btnGreen}`}>
+              Apply import
+            </button>
+            <button onClick={cancelImport} className={`${DK.btnBase} ${DK.btnGray}`}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add / Edit form */}
       {isFormOpen && (
