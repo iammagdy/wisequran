@@ -1,7 +1,6 @@
 import { saveAudio, getAudio, deleteAudio, checkStorageQuota, getAllAudioEntries } from "./db";
 import { getReciterAudioUrls, getReciterAudioUrl } from "./reciters";
-
-const DEV = import.meta.env.DEV;
+import { logger } from "./logger";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
 
@@ -117,16 +116,16 @@ export async function downloadSurahAudio(
 
   for (let i = 0; i < urls.length; i++) {
     try {
-      if (DEV) console.log(`[audio-dl] trying source ${i + 1}/${urls.length}: ${urls[i].substring(0, 80)}...`);
+      logger.debug(`[audio-dl] trying source ${i + 1}/${urls.length}: ${urls[i].substring(0, 80)}...`);
       const buf = await fetchAudioFromUrl(urls[i], onProgress);
 
       if (buf.byteLength < MIN_AUDIO_SIZE) {
-        if (DEV) console.warn(`[audio-dl] source ${i + 1} too small (${buf.byteLength}B), skipping`);
+        logger.warn(`[audio-dl] source ${i + 1} too small (${buf.byteLength}B), skipping`);
         continue;
       }
 
       if (!isValidAudioFile(buf)) {
-        if (DEV) console.warn(`[audio-dl] source ${i + 1} not valid audio (${buf.byteLength}B), skipping`);
+        logger.warn(`[audio-dl] source ${i + 1} not valid audio (${buf.byteLength}B), skipping`);
         continue;
       }
 
@@ -161,11 +160,11 @@ export async function downloadSurahAudio(
       }
 
       onProgress?.(100);
-      if (DEV) console.log(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
+      logger.debug(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
       return buf.byteLength;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
-      if (DEV) console.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
+      logger.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
       onProgress?.(0);
 
       await deleteAudio(reciterId, surahNumber).catch(() => {});
@@ -198,7 +197,7 @@ export async function cachePlayingAudio(
     if (!isValidAudioFile(buf)) return;
 
     await saveAudio(reciterId, surahNumber, buf);
-    if (DEV) console.log(`[auto-cache] cached surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
+    logger.debug(`[auto-cache] cached surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
   } catch {
     // Silent fail — caching is best-effort
   }
@@ -228,14 +227,14 @@ export async function verifyAndRepairDownloads(
 
     try {
       if (audio.data.byteLength < MIN_AUDIO_SIZE) {
-        if (DEV) console.warn(`[verify] surah ${audio.surahNumber}: too small (${audio.data.byteLength}B)`);
+        logger.warn(`[verify] surah ${audio.surahNumber}: too small (${audio.data.byteLength}B)`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
       }
 
       if (!isValidAudioFile(audio.data)) {
-        if (DEV) console.warn(`[verify] surah ${audio.surahNumber}: invalid audio format`);
+        logger.warn(`[verify] surah ${audio.surahNumber}: invalid audio format`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
@@ -243,7 +242,7 @@ export async function verifyAndRepairDownloads(
 
       const blobTest = new Blob([audio.data], { type: "audio/mpeg" });
       if (blobTest.size < MIN_AUDIO_SIZE) {
-        if (DEV) console.warn(`[verify] surah ${audio.surahNumber}: blob creation failed`);
+        logger.warn(`[verify] surah ${audio.surahNumber}: blob creation failed`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
@@ -253,7 +252,7 @@ export async function verifyAndRepairDownloads(
       URL.revokeObjectURL(url);
 
       valid.push(audio.surahNumber);
-      if (DEV) console.log(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(audio.data.byteLength)})`);
+      logger.debug(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(audio.data.byteLength)})`);
     } catch (e) {
       console.error(`[verify] surah ${audio.surahNumber}: error during verification`, e);
       corrupted.push(audio.surahNumber);

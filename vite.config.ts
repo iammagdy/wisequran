@@ -141,6 +141,11 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime"],
   },
   build: {
+    // Don't ship JS source maps to end users. In production builds we
+    // still generate "hidden" maps so uploaded Sentry/Supabase logs
+    // can be symbolicated out-of-band, but browsers will never fetch
+    // them. Dev builds (`pnpm run dev`) keep default inline maps.
+    sourcemap: mode === "production" ? "hidden" : true,
     rollupOptions: {
       output: {
         manualChunks(id) {

@@ -3,6 +3,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { claimBookmarksForUser, releaseBookmarksForUser } from "@/lib/bookmarks";
 import { handleAuthCallback, validateAndPersistSession } from "@/lib/auth-callback";
+import { logger } from "@/lib/logger";
 
 interface AuthContextValue {
   user: User | null;
@@ -19,11 +20,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // this constant is statically false and the entire console.log call below is removed
 // by the bundler's dead-code elimination, so no `[Auth Debug]` lines reach the
 // production browser console. Real failures still flow through `console.error`.
-const DEBUG_AUTH = import.meta.env.DEV;
-
 function logAuthDebug(message: string, data?: unknown): void {
-  if (!DEBUG_AUTH) return;
-  console.log(`[Auth Debug] ${message}`, data ?? '');
+  // Gated through the shared `logger` so it's a no-op in production.
+  logger.debug(`[Auth] ${message}`, data ?? '');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

@@ -109,7 +109,16 @@ export default function BottomNav() {
       : corePaths;
 
   return (
-    <nav className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
+    <nav
+      aria-label="Primary"
+      className="fixed left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg"
+      style={{
+        // Lift the floating dock above the iOS home indicator. The
+        // `0.75rem`/`1.5rem` base corresponds to the previous
+        // `bottom-3` / `sm:bottom-6` Tailwind classes.
+        bottom: "calc(var(--bottom-nav-gap, 0.75rem) + env(safe-area-inset-bottom, 0px))",
+      }}
+    >
       <div className="glass-card rounded-[2rem] px-2 py-2 overflow-hidden border border-white/10 shadow-2xl">
         <div className="flex items-center justify-around" style={{ height: 'calc(var(--nav-height) * 0.85)' }}>
           {basePaths.map(({ path, key, label }) => {

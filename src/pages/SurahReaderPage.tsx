@@ -761,6 +761,8 @@ export default function SurahReaderPage() {
 
           <div
                 ref={listRef}
+                role="list"
+                aria-label={language === "ar" ? `آيات ${displaySurahName}` : `${displaySurahName} ayahs`}
                 style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
                 dir={isRTL ? "rtl" : "ltr"}>
                 {rowVirtualizer.getVirtualItems().map((virtualItem) => {
@@ -787,9 +789,15 @@ export default function SurahReaderPage() {
                           <div className="h-px flex-1 bg-border" />
                         </div>
                   }
-                      <div
+                      <article
                     id={`ayah-${ayah.numberInSurah}`}
                     data-ayah={ayah.numberInSurah}
+                    role="listitem"
+                    aria-label={
+                      language === "ar"
+                        ? `${displaySurahName} الآية ${toArabicNumerals(ayah.numberInSurah)}`
+                        : `${displaySurahName}, ayah ${ayah.numberInSurah}`
+                    }
                     className={cn("group relative rounded-2xl bg-card shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] pl-[10px] pr-[10px]",
                     highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
                     playingAyahInSurah === ayah.numberInSurah && "ring-1 ring-primary/30"
@@ -874,7 +882,7 @@ export default function SurahReaderPage() {
                             <span className="line-clamp-2 flex-1">{getNoteFor(surahNumber, ayah.numberInSurah)}</span>
                           </button>
                         )}
-                      </div>
+                      </article>
                     </div>);
             })}
               </div>

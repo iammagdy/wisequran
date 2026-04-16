@@ -1,8 +1,57 @@
 import { useMemo } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 
+const HIJRI_OFFSET_KEY = "wise-hijri-offset";
+
 function getToday(): string {
   return new Date().toISOString().split("T")[0];
+}
+
+/**
+ * Read the user-configured Hijri calendar offset (−2…+2 days).
+ * Regions that follow a different moonsighting can nudge the default
+ * Islamic calendar so Ramadan and Azkar date detection match locally.
+ */
+export function getHijriOffsetDays(): number {
+  try {
+    const raw = localStorage.getItem(HIJRI_OFFSET_KEY);
+    if (!raw) return 0;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(-2, Math.min(2, Math.round(n)));
+  } catch {
+    return 0;
+  }
+}
+
+export function setHijriOffsetDays(days: number): void {
+  const clamped = Math.max(-2, Math.min(2, Math.round(days)));
+  try {
+    localStorage.setItem(HIJRI_OFFSET_KEY, String(clamped));
+  } catch {
+    /* ignore quota/unavailable */
+  }
+}
+
+/** Returns the adjusted date that should be used as "today" for Hijri lookups. */
+function adjustedNow(): Date {
+  const offset = getHijriOffsetDays();
+  if (offset === 0) return new Date();
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d;
+}
+
+/** Returns the current Hijri year as a number (e.g. 1446). */
+export function getHijriYear(): number {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-u-ca-islamic", { year: "numeric" });
+    const str = fmt.format(adjustedNow());
+    const match = str.match(/\d+/);
+    return match ? Number(match[0]) : new Date().getFullYear();
+  } catch {
+    return new Date().getFullYear();
+  }
 }
 
 /** Detect if current date is in Ramadan using Hijri calendar */
@@ -13,7 +62,7 @@ export function isRamadanNow(): boolean {
   }
   try {
     const formatter = new Intl.DateTimeFormat("en-u-ca-islamic", { month: "numeric" });
-    const parts = formatter.formatToParts(new Date());
+    const parts = formatter.formatToParts(adjustedNow());
     const monthPart = parts.find((p) => p.type === "month");
     return monthPart?.value === "9";
   } catch {
@@ -41,7 +90,7 @@ export function showRamadanTab() {
 export function getRamadanDay(): number {
   try {
     const formatter = new Intl.DateTimeFormat("en-u-ca-islamic", { day: "numeric", month: "numeric" });
-    const parts = formatter.formatToParts(new Date());
+    const parts = formatter.formatToParts(adjustedNow());
     const monthPart = parts.find((p) => p.type === "month");
     const dayPart = parts.find((p) => p.type === "day");
     if (monthPart?.value === "9" && dayPart) {
@@ -81,9 +130,11 @@ const DEFAULT_STATE: RamadanState = {
 export function useRamadan() {
   const [state, setState] = useLocalStorage<RamadanState>("wise-ramadan", DEFAULT_STATE);
   const today = getToday();
-  const currentYear = new Date().getFullYear();
+  // Key khatmah/checklist reset by the Hijri year so travel and the
+  // rolling Gregorian year don't wipe progress mid-Ramadan.
+  const currentYear = getHijriYear();
 
-  // Reset khatmah if new year
+  // Reset khatmah if new Hijri year
   const khatmah = state.khatmah.year === currentYear ? state.khatmah : { completedJuz: [], year: currentYear };
 
   // Reset checklist if new day

@@ -1,8 +1,50 @@
 import { useEffect } from "react";
 import { showAppNotification } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
 
 const ENABLED_KEY = "wise-friday-reminder-enabled";
 const LAST_FIRED_KEY = "wise-friday-reminder-last-fired";
+const SW_SCHEDULED_KEY = "wise-friday-reminder-sw-scheduled";
+
+/**
+ * Ask the service worker to pre-schedule a "Jumuʿah" showNotification for
+ * the upcoming Friday at 07:00 local time. Because the SW keeps running
+ * even when the tab is closed, this gets reminders to users who don't
+ * leave the PWA open on Fridays. Falls back silently when the environment
+ * lacks SW / messaging support — the in-tab interval below still covers
+ * the case where the app is open.
+ */
+async function scheduleFridayReminderInSW(): Promise<void> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+
+  const today = new Date();
+  const day = today.getDay();
+  const daysUntilFriday = day === 5 ? 0 : (5 - day + 7) % 7;
+  const target = new Date(today);
+  target.setDate(target.getDate() + daysUntilFriday);
+  target.setHours(7, 0, 0, 0);
+  if (target.getTime() <= Date.now()) {
+    // Already past 7am today and it's Friday; schedule next week.
+    target.setDate(target.getDate() + 7);
+  }
+
+  const key = `${target.toISOString().split("T")[0]}`;
+  if (localStorage.getItem(SW_SCHEDULED_KEY) === key) return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    reg.active?.postMessage({
+      type: "SCHEDULE_FRIDAY_REMINDER",
+      fireAt: target.getTime(),
+      key,
+      title: "جمعة مباركة",
+      body: "افتح وضع الجمعة لقراءة سورة الكهف والإكثار من الصلاة على النبي ﷺ",
+    });
+    localStorage.setItem(SW_SCHEDULED_KEY, key);
+  } catch (err) {
+    logger.debug("[friday] sw schedule skipped:", err);
+  }
+}
 
 function getTodayKey() {
   const date = new Date();
@@ -42,6 +84,11 @@ export function useFridayReminders() {
     };
 
     checkReminder();
+    // Try to pre-schedule via the SW so users still get the reminder
+    // even if the PWA tab is closed by Friday morning.
+    if (localStorage.getItem(ENABLED_KEY) === "true") {
+      void scheduleFridayReminderInSW();
+    }
     const interval = window.setInterval(checkReminder, 60_000);
     return () => window.clearInterval(interval);
   }, []);

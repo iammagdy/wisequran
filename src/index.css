@@ -49,6 +49,21 @@
     --shadow-gold: 0 0 24px -4px hsl(var(--gold) / 0.3);
   }
 
+  /* Honor the OS "Reduce Motion" preference: collapse animation and
+     transition durations near-zero so motion-sensitive users see a
+     calm, static app. Kept at the top of @layer base so every rule
+     below (and every Tailwind/Framer default) inherits the override. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   .dark {
     --background: 24 10% 4%;
     --foreground: 38 20% 92%;
@@ -78,7 +93,9 @@
     --gold: 42 85% 55%;
     --gold-light: 42 90% 68%;
     --gold-foreground: 24 10% 4%;
-    --gold-text: 42 85% 55%;
+    /* Bumped from 55% → 78% so gold accent text clears WCAG AA
+       (contrast ~9:1 against the dark background at HSL 24 10% 4%). */
+    --gold-text: 42 90% 78%;
     
     --surface: 24 10% 10%;
     --surface-elevated: 24 10% 11%;

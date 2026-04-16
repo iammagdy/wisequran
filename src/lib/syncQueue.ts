@@ -1,5 +1,6 @@
 import { addToSyncQueue, getAllSyncQueueEntries, deleteSyncQueueEntry, getSyncQueueCount } from "./db";
 import { isSupabaseConfigured, supabase } from "./supabase";
+import { logger } from "./logger";
 
 export { getSyncQueueCount };
 
@@ -60,7 +61,7 @@ async function persistToQueue(
     await addToSyncQueue({ table, operation, payload, onConflict, timestamp: Date.now() });
     notifyQueueChanged();
   } catch (queueErr) {
-    console.error("[syncQueue] Failed to persist entry:", queueErr);
+    logger.warn("[syncQueue] Failed to persist entry:", queueErr);
   }
 }
 
@@ -95,15 +96,39 @@ export async function enqueuedSupabaseWrite(
       if (isRetriableError(result.error)) {
         await persistToQueue(table, operation, payload, options?.onConflict);
       } else {
-        console.error(`[syncQueue] Permanent error on ${operation} to ${table}:`, result.error.message);
+        logger.error(`[syncQueue] Permanent error on ${operation} to ${table}:`, result.error.message);
       }
     }
   } catch (err) {
     if (!navigator.onLine || isThrownNetworkError(err)) {
       await persistToQueue(table, operation, payload, options?.onConflict);
     } else {
-      console.error(`[syncQueue] Unexpected error on ${operation} to ${table}:`, err);
+      logger.error(`[syncQueue] Unexpected error on ${operation} to ${table}:`, err);
     }
+  }
+}
+
+// Persisted timestamp of the last successful flush. Surfaced to the
+// UI (offline/last-sync banner) without dragging in a React state
+// dependency.
+const LAST_FLUSH_LS_KEY = "wise-sync-last-flush-ms";
+
+export function getLastFlushMs(): number | null {
+  try {
+    const raw = localStorage.getItem(LAST_FLUSH_LS_KEY);
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function recordFlush(): void {
+  try {
+    localStorage.setItem(LAST_FLUSH_LS_KEY, String(Date.now()));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -125,7 +150,7 @@ export async function flushSyncQueue(): Promise<number> {
           flushed++;
         } else if (!isRetriableError(result.error)) {
           // Permanent failure — drop the entry to avoid an indefinitely stuck queue
-          console.error(`[syncQueue] Dropping permanently failed entry for ${entry.table}:`, result.error.message);
+          logger.error(`[syncQueue] Dropping permanently failed entry for ${entry.table}:`, result.error.message);
           await deleteSyncQueueEntry(entry.id);
         }
         // Retriable errors: leave in queue for the next flush
@@ -134,10 +159,13 @@ export async function flushSyncQueue(): Promise<number> {
       }
     }
   } catch (err) {
-    console.error("[syncQueue] Failed to flush queue:", err);
+    logger.warn("[syncQueue] Failed to flush queue:", err);
   } finally {
     isFlushing = false;
-    if (flushed > 0) notifyQueueChanged();
+    if (flushed > 0) {
+      recordFlush();
+      notifyQueueChanged();
+    }
   }
   return flushed;
 }

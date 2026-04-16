@@ -17,7 +17,16 @@ const DHIKR_OPTIONS = [
 const TARGET_OPTIONS = [33, 99, 100, 500, 1000];
 
 function getTodayKey() {
-  return `wise-tasbeeh-total-${new Date().toISOString().slice(0, 10)}`;
+  // Use the UTC date segment so the daily Tasbeeh counter rolls over at
+  // the same wall-clock moment everywhere (matches how Supabase stores
+  // `date` columns). Earlier revisions compared `Date` objects through
+  // `toISOString().slice(0, 10)` which worked fine, but the explicit
+  // helper documents the UTC contract and makes test-date overrides easy.
+  const now = new Date();
+  const y = now.getUTCFullYear();
+  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(now.getUTCDate()).padStart(2, "0");
+  return `wise-tasbeeh-total-${y}-${m}-${d}`;
 }
 
 function BeadRing({ progress, isComplete }: {

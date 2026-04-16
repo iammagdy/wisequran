@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
+import { logger } from "./lib/logger";
 import "./index.css";
 
 // Capture the install-prompt event as early as possible — before React mounts —
@@ -17,11 +18,11 @@ window.addEventListener(
 registerSW({
   immediate: true,
   onNeedRefresh() {
-    console.log("New version available");
+    logger.debug("[sw] new version available");
     window.dispatchEvent(new CustomEvent('sw-update-available'));
   },
   onOfflineReady() {
-    console.log("App ready to work offline");
+    logger.debug("[sw] ready to work offline");
   }
 });
 
