@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { APP_VERSION, type ChangelogEntry } from "@/data/changelog";
-import { getMergedChangelog } from "@/lib/changelog-overrides";
+import { type ChangelogEntry } from "@/data/changelog";
+import { getMergedChangelog, getEffectiveVersion } from "@/lib/changelog-overrides";
 
 const LAST_SEEN_VERSION_KEY = "wise-last-seen-version";
 export const DEVKIT_FORCE_CHANGELOG_KEY = "wise-devkit-open-changelog";
@@ -11,6 +11,7 @@ export function usePostUpdateChangelog() {
 
   useEffect(() => {
     const merged = getMergedChangelog();
+    const effectiveVersion = getEffectiveVersion();
 
     const forced = sessionStorage.getItem(DEVKIT_FORCE_CHANGELOG_KEY);
     if (forced === "1") {
@@ -23,11 +24,11 @@ export function usePostUpdateChangelog() {
     const lastSeen = localStorage.getItem(LAST_SEEN_VERSION_KEY);
 
     if (lastSeen === null) {
-      localStorage.setItem(LAST_SEEN_VERSION_KEY, APP_VERSION);
+      localStorage.setItem(LAST_SEEN_VERSION_KEY, effectiveVersion);
       return;
     }
 
-    if (lastSeen !== APP_VERSION) {
+    if (lastSeen !== effectiveVersion) {
       const lastSeenIndex = merged.findIndex((e) => e.version === lastSeen);
       const entries =
         lastSeenIndex === -1 ? merged.slice(0, 1) : merged.slice(0, lastSeenIndex);
@@ -40,7 +41,7 @@ export function usePostUpdateChangelog() {
   const dismissTemporary = () => setShowChangelog(false);
 
   const dismissPermanent = () => {
-    localStorage.setItem(LAST_SEEN_VERSION_KEY, APP_VERSION);
+    localStorage.setItem(LAST_SEEN_VERSION_KEY, getEffectiveVersion());
     setShowChangelog(false);
   };
 

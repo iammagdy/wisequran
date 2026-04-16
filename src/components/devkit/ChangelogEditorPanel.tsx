@@ -1,7 +1,16 @@
 import { useState, useEffect } from "react";
 import { DK } from "./devkit-utils";
 import { changelog as staticChangelog, type ChangelogEntry, type ChangelogCategory } from "@/data/changelog";
-import { getDevkitChangelog, setDevkitChangelog, DEVKIT_CHANGELOG_KEY } from "@/lib/changelog-overrides";
+import {
+  getDevkitChangelog,
+  setDevkitChangelog,
+  DEVKIT_CHANGELOG_KEY,
+  getEffectiveVersion,
+  setEffectiveVersion,
+  clearEffectiveVersionOverride,
+  DEVKIT_CURRENT_VERSION_KEY,
+} from "@/lib/changelog-overrides";
+import { APP_VERSION } from "@/data/changelog";
 
 type CatKey = keyof ChangelogCategory;
 const CAT_KEYS: CatKey[] = ["features", "improvements", "fixes"];
@@ -142,13 +151,17 @@ function EntryForm({
 function EntryRow({
   entry,
   isDevKit,
+  isCurrent,
   onEdit,
   onDelete,
+  onSetCurrent,
 }: {
   entry: ChangelogEntry;
   isDevKit: boolean;
+  isCurrent: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  onSetCurrent?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const total =
@@ -167,11 +180,25 @@ function EntryRow({
         </span>
         <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>{entry.date}</span>
         <span className={`font-mono text-[11px] ${DK.muted} flex-1`}>{total} items</span>
+        {isCurrent && (
+          <span className={`font-mono text-[10px] ${DK.yellow} shrink-0 mr-1`} title="This is the effective current version">
+            ★ current
+          </span>
+        )}
         {isDevKit ? (
           <div
             className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
+            {onSetCurrent && !isCurrent && (
+              <button
+                onClick={onSetCurrent}
+                className={`${DK.btnBase} ${DK.btnGray} px-2 py-0.5 text-[11px]`}
+                title="Mark as the current version shown in the app"
+              >
+                ★ Set current
+              </button>
+            )}
             {onEdit && (
               <button
                 onClick={onEdit}
@@ -226,18 +253,28 @@ function EntryRow({
 
 export default function ChangelogEditorPanel() {
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
+  const [effectiveVer, setEffectiveVer] = useState(() => getEffectiveVersion());
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState<FormState>(blankForm());
   const [toast, setToast] = useState("");
 
-  const load = () => setEntries(getDevkitChangelog());
+  const load = () => {
+    setEntries(getDevkitChangelog());
+    setEffectiveVer(getEffectiveVersion());
+  };
 
   useEffect(() => {
     load();
     const handler = (e: Event) => {
       const ce = e as CustomEvent<{ key?: string }>;
-      if (!ce.detail?.key || ce.detail.key === DEVKIT_CHANGELOG_KEY) load();
+      if (
+        !ce.detail?.key ||
+        ce.detail.key === DEVKIT_CHANGELOG_KEY ||
+        ce.detail.key === DEVKIT_CURRENT_VERSION_KEY
+      ) {
+        load();
+      }
     };
     window.addEventListener("local-storage-sync", handler);
     return () => window.removeEventListener("local-storage-sync", handler);
@@ -279,12 +316,50 @@ export default function ChangelogEditorPanel() {
     setForm(blankForm());
   };
 
+  const setCurrent = (version: string) => {
+    setEffectiveVersion(version);
+    setEffectiveVer(version);
+    flash(`✓ Current version set to v${version}`);
+  };
+
+  const resetCurrentVersion = () => {
+    clearEffectiveVersionOverride();
+    setEffectiveVer(APP_VERSION);
+    flash(`✓ Reset to static v${APP_VERSION}`);
+  };
+
   const isFormOpen = adding || editing !== null;
   const devkitVersions = new Set(entries.map((e) => e.version));
   const staticEntries = staticChangelog.filter((e) => !devkitVersions.has(e.version));
+  const isVersionOverridden = effectiveVer !== APP_VERSION;
 
   return (
     <div className="space-y-4">
+      {/* Current version status bar */}
+      <div className={`rounded-lg ${DK.card} px-4 py-3 flex items-center gap-3`}>
+        <div className="flex-1">
+          <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted} mb-0.5`}>
+            Effective current version
+          </p>
+          <p className={`font-mono text-sm font-bold ${isVersionOverridden ? DK.yellow : DK.text}`}>
+            v{effectiveVer}
+            {isVersionOverridden && (
+              <span className={`ml-2 font-mono text-[10px] ${DK.muted}`}>
+                (static: v{APP_VERSION})
+              </span>
+            )}
+          </p>
+        </div>
+        {isVersionOverridden && (
+          <button
+            onClick={resetCurrentVersion}
+            className={`${DK.btnBase} ${DK.btnGray} text-[11px]`}
+          >
+            Reset to v{APP_VERSION}
+          </button>
+        )}
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center gap-3">
         {toast ? (
@@ -299,7 +374,7 @@ export default function ChangelogEditorPanel() {
           </div>
         ) : (
           <p className={`flex-1 font-mono text-xs ${DK.muted}`}>
-            DevKit entries layer on top of static ones. Changes appear after the next app reload.
+            DevKit entries layer on top of static ones. Reload the app to see changes.
           </p>
         )}
         <button
@@ -339,6 +414,8 @@ export default function ChangelogEditorPanel() {
                 key={e.version}
                 entry={e}
                 isDevKit
+                isCurrent={e.version === effectiveVer}
+                onSetCurrent={!isFormOpen ? () => setCurrent(e.version) : undefined}
                 onEdit={!isFormOpen ? () => startEdit(e) : undefined}
                 onDelete={!isFormOpen ? () => del(e.version) : undefined}
               />
@@ -359,7 +436,12 @@ export default function ChangelogEditorPanel() {
         </div>
         <div className="divide-y divide-[#30363d]">
           {staticEntries.map((e) => (
-            <EntryRow key={e.version} entry={e} isDevKit={false} />
+            <EntryRow
+              key={e.version}
+              entry={e}
+              isDevKit={false}
+              isCurrent={e.version === effectiveVer}
+            />
           ))}
         </div>
       </div>

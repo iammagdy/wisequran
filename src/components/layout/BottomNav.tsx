@@ -103,11 +103,8 @@ export default function BottomNav() {
   const basePaths: { path: string; key: typeof corePaths[number]["key"]; label?: string }[] =
     ramadanTab
       ? [
-          corePaths[0],
-          corePaths[1],
+          ...corePaths,
           { path: "/ramadan", key: "nav_settings" as const, label: "رمضان" },
-          corePaths[2],
-          corePaths[4],
         ]
       : corePaths;
 

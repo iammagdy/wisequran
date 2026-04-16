@@ -2,8 +2,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronDown, Star, Zap, CircleCheck as CheckCircle2, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { APP_VERSION, type ChangelogEntry } from "@/data/changelog";
-import { getMergedChangelog } from "@/lib/changelog-overrides";
+import { type ChangelogEntry } from "@/data/changelog";
+import { getMergedChangelog, getEffectiveVersion } from "@/lib/changelog-overrides";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChangelogModalProps {
@@ -148,11 +148,12 @@ export default function ChangelogModal({
   const isRTL = language === "ar";
 
   const mergedChangelog = getMergedChangelog();
+  const effectiveVersion = getEffectiveVersion();
   const displayEntries = showAll ? mergedChangelog : newEntries;
 
   const labelGotIt = language === "ar" ? "حسناً، شكراً! لن يظهر مجدداً" : "Got it, don't show again";
   const labelLater = language === "ar" ? "لاحقاً" : "Later";
-  const labelWhatsNew = language === "ar" ? `ما الجديد في الإصدار ${APP_VERSION}` : `What's new in ${APP_VERSION}`;
+  const labelWhatsNew = language === "ar" ? `ما الجديد في الإصدار ${effectiveVersion}` : `What's new in ${effectiveVersion}`;
   const labelShowAll = language === "ar" ? "عرض كل سجل التحديثات" : "Show full history";
 
   return (

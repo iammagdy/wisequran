@@ -23,8 +23,7 @@ import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl }
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-editions";
 import { toast } from "sonner";
-import { APP_VERSION } from "@/data/changelog";
-import { getMergedChangelog } from "@/lib/changelog-overrides";
+import { getMergedChangelog, getEffectiveVersion } from "@/lib/changelog-overrides";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { mobileAudioManager } from "@/lib/mobile-audio";
@@ -2239,7 +2238,7 @@ export default function SettingsPage() {
               className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors cursor-pointer mb-3">
               
               <Sparkles className="h-3 w-3" />
-              v{APP_VERSION}
+              v{getEffectiveVersion()}
             </button>
 
             <Separator className="my-3" />
