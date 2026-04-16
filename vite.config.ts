@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "prompt",
       injectRegister: "auto",
-      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg", "audio/adhan/*.mp3"],
+      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg", "audio/adhan/*.mp3", "*.jpg"],
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2,mp3}"],
         navigateFallbackDenylist: [/^\/~oauth/, /^\/auth/, /^\/api\//],

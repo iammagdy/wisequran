@@ -255,7 +255,7 @@ export async function verifyAndRepairDownloads(
       valid.push(audio.surahNumber);
       if (DEV) console.log(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(audio.data.byteLength)})`);
     } catch (e) {
-      if (DEV) console.error(`[verify] surah ${audio.surahNumber}: error during verification`, e);
+      console.error(`[verify] surah ${audio.surahNumber}: error during verification`, e);
       corrupted.push(audio.surahNumber);
       await deleteAudio(reciterId, audio.surahNumber).catch(() => {});
     }
