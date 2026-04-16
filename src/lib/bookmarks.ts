@@ -433,6 +433,30 @@ async function listActiveAnonymousRecords(): Promise<BookmarkRecord[]> {
 }
 
 /**
+ * Identity used to record that a user has already decided about a
+ * specific anonymous record. Including `updatedAt` means that if the
+ * user later deletes and re-creates (or edits) an anonymous bookmark
+ * at the same ayah, the new record will *not* be considered already
+ * resolved and the claim prompt will appear again.
+ */
+function claimIdentityFor(rec: BookmarkRecord): string {
+  return `${rec.surah}:${rec.ayah}:${rec.updatedAt}`;
+}
+
+/**
+ * A stable fingerprint for the entire pending claim set — used by the
+ * claim dialog to decide whether a "Decide later" dismissal should
+ * still suppress the prompt. When a new anonymous bookmark appears,
+ * the fingerprint changes and the dialog re-opens.
+ */
+export function fingerprintPendingClaims(records: BookmarkRecord[]): string {
+  return records
+    .map(claimIdentityFor)
+    .sort()
+    .join("|");
+}
+
+/**
  * Returns anonymous (device-scoped) bookmarks/notes on this device
  * that the given user has NOT yet decided about. A non-empty result
  * should trigger the "Add to account / Don't add / Decide later"
@@ -444,13 +468,15 @@ export async function listPendingAnonymousClaims(userId: string): Promise<Bookma
   if (!anon || anon === userOwnerKey) return [];
   const resolved = readResolvedClaims(userId);
   const rows = await listActiveAnonymousRecords();
-  return rows.filter((r) => !resolved.has(`${r.surah}:${r.ayah}`));
+  return rows.filter((r) => !resolved.has(claimIdentityFor(r)));
 }
 
 /**
  * Promotes every pending anonymous record into the signed-in user's
  * owner scope (LWW against whatever the user already has) and records
- * all current anonymous IDs as resolved so they don't re-prompt.
+ * each merged identity as resolved so identical records don't
+ * re-prompt. Later edits to the same ayah produce a new identity
+ * (different updatedAt) and will be offered again.
  * Returns the number of records merged (added or updated).
  */
 export async function mergeAnonymousBookmarksIntoUser(userId: string): Promise<number> {
@@ -459,39 +485,41 @@ export async function mergeAnonymousBookmarksIntoUser(userId: string): Promise<n
   if (!anon || anon === userOwnerKey) return 0;
 
   const pending = await listPendingAnonymousClaims(userId);
+  const resolved = readResolvedClaims(userId);
   let merged = 0;
   for (const rec of pending) {
     const existing = await getBookmark(userOwnerKey, rec.surah, rec.ayah);
-    if (existing && existing.updatedAt >= rec.updatedAt) continue;
-    const promoted: BookmarkRecord = {
-      ...rec,
-      id: bookmarkKey(userOwnerKey, rec.surah, rec.ayah),
-      ownerKey: userOwnerKey,
-    };
-    await putBookmark(promoted);
-    syncBookmarkUpsert(promoted);
-    merged++;
+    if (!existing || existing.updatedAt < rec.updatedAt) {
+      const promoted: BookmarkRecord = {
+        ...rec,
+        id: bookmarkKey(userOwnerKey, rec.surah, rec.ayah),
+        ownerKey: userOwnerKey,
+      };
+      await putBookmark(promoted);
+      syncBookmarkUpsert(promoted);
+      merged++;
+    }
+    // Record this exact identity as resolved regardless of LWW outcome
+    // — the user has now seen it and made a choice.
+    resolved.add(claimIdentityFor(rec));
   }
 
-  // Mark every currently-existing anon ID as resolved so none re-prompt.
-  const all = await listActiveAnonymousRecords();
-  const resolved = readResolvedClaims(userId);
-  for (const r of all) resolved.add(`${r.surah}:${r.ayah}`);
   writeResolvedClaims(userId, resolved);
   emitChange();
   return merged;
 }
 
 /**
- * Records every currently-pending anonymous bookmark as resolved
- * WITHOUT copying it into the signed-in account. The underlying
- * anonymous records remain on the device (they will still be visible
- * after sign-out) but the user will not be prompted about them again.
+ * Records every currently-pending anonymous bookmark identity as
+ * resolved WITHOUT copying it into the signed-in account. The
+ * underlying anonymous records remain on the device. If the user later
+ * edits or recreates a bookmark at the same location, it will produce
+ * a new identity and be offered again.
  */
 export async function discardAnonymousClaims(userId: string): Promise<void> {
-  const all = await listActiveAnonymousRecords();
+  const pending = await listPendingAnonymousClaims(userId);
   const resolved = readResolvedClaims(userId);
-  for (const r of all) resolved.add(`${r.surah}:${r.ayah}`);
+  for (const r of pending) resolved.add(claimIdentityFor(r));
   writeResolvedClaims(userId, resolved);
   emitChange();
 }
