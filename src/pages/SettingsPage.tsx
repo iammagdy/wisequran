@@ -92,6 +92,8 @@ export default function SettingsPage() {
     setFocusPreset,
     mushafFont,
     setMushafFont,
+    wbwEnabled,
+    setWbwEnabled,
   } = useReaderPersonalization();
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
   const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
@@ -1028,6 +1030,21 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <BookOpen className="h-4.5 w-4.5 text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium">{t("wbw_settings_label")}</p>
+                    <p className="text-[0.6875rem] text-muted-foreground">{t("wbw_settings_description")}</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={wbwEnabled}
+                  onCheckedChange={setWbwEnabled}
+                  data-testid="settings-wbw-toggle"
+                />
               </div>
             </div>
           </motion.div>

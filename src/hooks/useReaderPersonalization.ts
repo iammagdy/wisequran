@@ -37,6 +37,7 @@ export function useReaderPersonalization() {
   const [readerColorTheme, setReaderColorTheme] = useLocalStorage<ReaderColorTheme>("wise-reader-color-theme", "classic");
   const [focusPreset, setFocusPreset] = useLocalStorage<FocusPreset>("wise-focus-preset", "standard");
   const [mushafFont, setMushafFont] = useLocalStorage<MushafFont>("wise-mushaf-font", "uthmanic");
+  const [wbwEnabled, setWbwEnabled] = useLocalStorage<boolean>("wise-reader-wbw-enabled", false);
 
   return {
     lineSpacing,
@@ -47,6 +48,8 @@ export function useReaderPersonalization() {
     setFocusPreset,
     mushafFont,
     setMushafFont,
+    wbwEnabled,
+    setWbwEnabled,
     lineHeight: LINE_HEIGHT_MAP[lineSpacing],
     focusLineHeight: FOCUS_LINE_HEIGHT_MAP[lineSpacing],
     readerToneClass: getReaderToneClass(readerColorTheme),

@@ -33,6 +33,15 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
+            urlPattern: /\/data\/wbw\/.*\.json$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "offline-wbw-cache",
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: /^https?:\/\/.*\/audio\/adhan\/.*\.mp3$/i,
             handler: "CacheFirst",
             options: {

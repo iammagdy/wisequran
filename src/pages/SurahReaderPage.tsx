@@ -31,6 +31,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { getReciterById } from "@/lib/reciters";
 import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
 import { useReaderWakeLock } from "@/hooks/useReaderWakeLock";
+import { useWbwSurah } from "@/hooks/useWbwSurah";
+import { WbwAyahText } from "@/components/quran/WbwAyahText";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{id: string;}>();
@@ -72,7 +74,8 @@ export default function SurahReaderPage() {
   const [translationEdition] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
   const [focusModeActive, setFocusModeActive] = useState(false);
-  const { lineHeight, focusLineHeight, readerToneClass, focusPreset, mushafFontClass } = useReaderPersonalization();
+  const { lineHeight, focusLineHeight, readerToneClass, focusPreset, mushafFontClass, wbwEnabled, setWbwEnabled } = useReaderPersonalization();
+  const { data: wbwData, supported: wbwSupported } = useWbwSurah(surahNumber, wbwEnabled);
   const [showBismillahGreeting, setShowBismillahGreeting] = useState(false);
 
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
@@ -646,6 +649,46 @@ export default function SurahReaderPage() {
               </button>
             </div>
 
+            {/* Word-by-word toggle (per-reader; persisted globally) */}
+            <div className="mb-4" dir={isRTL ? "rtl" : "ltr"}>
+              <button
+                type="button"
+                onClick={() => setWbwEnabled(!wbwEnabled)}
+                data-testid="surah-reader-wbw-toggle"
+                aria-pressed={wbwEnabled}
+                className={cn(
+                  "w-full rounded-2xl border px-3 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between gap-3 min-h-[44px]",
+                  wbwEnabled
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border/40 bg-muted/30 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <span className="font-arabic text-sm">ك</span>
+                  <span>{t("wbw_toggle_label")}</span>
+                </span>
+                <span
+                  className={cn(
+                    "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors",
+                    wbwEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                  )}
+                  aria-hidden="true"
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 rounded-full bg-card shadow transition-transform",
+                      wbwEnabled ? (isRTL ? "-translate-x-4" : "translate-x-4") : "translate-x-0.5"
+                    )}
+                  />
+                </span>
+              </button>
+              {wbwEnabled && !wbwSupported && (
+                <p className="mt-1.5 text-[0.6875rem] text-muted-foreground text-center" data-testid="surah-reader-wbw-not-supported">
+                  {t("wbw_not_supported")}
+                </p>
+              )}
+            </div>
+
             {surahNumber !== 1 && surahNumber !== 9 &&
           <div className="ornamental-divider mb-8 px-4">
                 <p
@@ -674,7 +717,8 @@ export default function SurahReaderPage() {
             setAyahRef={setAyahRef}
             targetPage={mushafTargetPage}
             onPageChange={(page) => setCurrentPage(page)}
-            onSeekToAyah={() => {}} /> :
+            onSeekToAyah={() => {}}
+            wbwEnabled={wbwEnabled} /> :
 
           <div
                 ref={listRef}
@@ -759,7 +803,13 @@ export default function SurahReaderPage() {
                         <p
                       className={cn("font-arabic", readerToneClass)}
                       style={{ fontSize, lineHeight }}>
-                          {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}
+                          {(() => {
+                            const wbwWords = wbwEnabled ? wbwData?.ayahs[String(ayah.numberInSurah)] : undefined;
+                            if (wbwWords && wbwWords.length > 0) {
+                              return <WbwAyahText ayahNumber={ayah.numberInSurah} words={wbwWords} />;
+                            }
+                            return stripBismillah(ayah.text, surahNumber, ayah.numberInSurah);
+                          })()}
                         </p>
                         {translationEnabled && translationAyahs.length > 0 && (() => {
                           const tAyah = translationMap.get(ayah.numberInSurah);

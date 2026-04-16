@@ -85,6 +85,10 @@ interface Translations {
   focus_mode: string;
   mushaf_view: string;
   ayah_view: string;
+  wbw_toggle_label: string;
+  wbw_not_supported: string;
+  wbw_settings_label: string;
+  wbw_settings_description: string;
   tafsir_of_ayah: string;
   show_full_tafsir: string;
   search_tafsir: string;
@@ -630,6 +634,10 @@ const ar: Translations = {
   focus_mode: "وضع التركيز",
   mushaf_view: "عرض المصحف",
   ayah_view: "عرض الآيات",
+  wbw_toggle_label: "كلمة بكلمة",
+  wbw_not_supported: "بيانات الكلمة بكلمة غير متوفرة لهذه السورة بعد",
+  wbw_settings_label: "كلمة بكلمة",
+  wbw_settings_description: "اضغط على أي كلمة لمعرفة معناها وجذرها",
   tafsir_of_ayah: "تفسير الآية",
   show_full_tafsir: "← عرض تفسير السورة بالكامل",
   search_tafsir: "ابحث في التفسير...",
@@ -1144,6 +1152,10 @@ const en: Translations = {
   focus_mode: "Focus Mode",
   mushaf_view: "Mushaf View",
   ayah_view: "Verse View",
+  wbw_toggle_label: "Word-by-word",
+  wbw_not_supported: "Word-by-word data isn't available for this surah yet",
+  wbw_settings_label: "Word-by-word",
+  wbw_settings_description: "Tap any word to see its meaning and root",
   tafsir_of_ayah: "Tafsir of Verse",
   show_full_tafsir: "← Show full surah tafsir",
   search_tafsir: "Search tafsir...",

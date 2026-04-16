@@ -4,6 +4,8 @@ import useEmblaCarousel from "embla-carousel-react";
 import { type Ayah } from "@/lib/quran-api";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useWbwSurah } from "@/hooks/useWbwSurah";
+import { WbwAyahText } from "@/components/quran/WbwAyahText";
 
 interface MushafPageViewProps {
   ayahs: Ayah[];
@@ -23,6 +25,12 @@ interface MushafPageViewProps {
   targetPage?: number | null;
   onPageChange?: (pageNum: number) => void;
   onSeekToAyah?: (ayahNum: number) => void;
+  /**
+   * Word-by-word mode. When true, ayah text is rendered as tappable per-word spans
+   * (sourced from bundled WBW data). When false, the original Mushaf flow is used
+   * verbatim — no per-word DOM nodes.
+   */
+  wbwEnabled?: boolean;
 }
 
 export default function MushafPageView({
@@ -42,10 +50,12 @@ export default function MushafPageView({
   setAyahRef,
   targetPage,
   onPageChange,
-  onSeekToAyah
+  onSeekToAyah,
+  wbwEnabled = false
 }: MushafPageViewProps) {
   const { language } = useLanguage();
   const [selectedAyah, setSelectedAyah] = useState<number | null>(null);
+  const { data: wbwData } = useWbwSurah(surahNumber, wbwEnabled);
 
   const pages = useMemo(() => {
     const map = new Map<number, Ayah[]>();
@@ -156,7 +166,9 @@ export default function MushafPageView({
                 className={cn("font-arabic mushaf-no-select text-justify flex-1", mushafFontClass, readerToneClass)}
                 style={{ fontSize, lineHeight }}>
                 
-                  {pageAyahs.map((ayah) =>
+                  {pageAyahs.map((ayah) => {
+                    const wbwWords = wbwEnabled ? wbwData?.ayahs[String(ayah.numberInSurah)] : undefined;
+                    return (
                 <span
                   key={ayah.numberInSurah}
                   id={`ayah-${ayah.numberInSurah}`}
@@ -168,7 +180,11 @@ export default function MushafPageView({
                     playingAyah === ayah.numberInSurah && "bg-primary/15 rounded-sm"
                   )}>
                   
-                      {stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}
+                      {wbwWords && wbwWords.length > 0 ? (
+                        <WbwAyahText ayahNumber={ayah.numberInSurah} words={wbwWords} />
+                      ) : (
+                        <>{stripBismillah(ayah.text, surahNumber, ayah.numberInSurah)}{" "}</>
+                      )}
                       <button
                     aria-label={language === "ar" ? `الآية ${ayah.numberInSurah}` : `Ayah ${ayah.numberInSurah}`}
                     onClick={() => {
@@ -189,7 +205,8 @@ export default function MushafPageView({
                         ﴿{toArabicNumerals(ayah.numberInSurah)}﴾
                       </button>{" "}
                     </span>
-                )}
+                    );
+                  })}
                 </p>
 
                 {selectedAyah !== null &&
