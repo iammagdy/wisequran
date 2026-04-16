@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
+import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward, RefreshCcw } from "lucide-react";
 import { useAudioPlayerState, useAudioPlayerAyah } from "@/contexts/AudioPlayerContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
@@ -26,7 +26,12 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   const { t, language, isRTL } = useLanguage();
   const player = useAudioPlayerState();
   const { currentAyahInSurah: currentAyahInSurahFromTime } = useAudioPlayerAyah();
-  const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
+  const [defaultReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
+  // Session-local override: persists for this listening session only and
+  // does not overwrite the global default reciter set in Settings.
+  const [sessionReciterId, setSessionReciterId] = useState<string | null>(null);
+  const reciterId = sessionReciterId ?? defaultReciterId;
+  const isSessionOverride = sessionReciterId !== null && sessionReciterId !== defaultReciterId;
 
   const [speed, setSpeed] = useState<number>(1);
   const [repeatCount, setRepeatCount] = useState<number>(0);
@@ -74,10 +79,10 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   }, [translationAyahs]);
 
   const handlePlayPause = () => {
-    if (isThisSurah) {
+    if (isThisSurah && player.playingReciterId === reciterId) {
       player.togglePlayPause();
     } else {
-      player.play(surahNumber, surahName, ayahs);
+      player.play(surahNumber, surahName, ayahs, reciterId);
     }
   };
 
@@ -349,10 +354,45 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
             <span className="text-sm font-semibold">{t("reciter_label")}</span>
           </div>
           <div className="flex items-center gap-2">
+            {isSessionOverride && (
+              <span
+                className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: 'hsl(var(--primary) / 0.12)', color: 'hsl(var(--primary))' }}
+              >
+                {language === "ar" ? "هذه الجلسة" : "This session"}
+              </span>
+            )}
             <span className="text-sm text-muted-foreground">{reciterDisplayName(currentReciter)}</span>
             <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", showReciterPicker && "rotate-180")} />
           </div>
         </button>
+
+        {isSessionOverride && (
+          <div
+            className="px-4 py-2 flex items-center justify-between border-t text-xs"
+            style={{ borderColor: 'hsl(var(--border) / 0.4)', background: 'hsl(var(--muted) / 0.3)' }}
+          >
+            <span className="text-muted-foreground">
+              {language === "ar"
+                ? `الافتراضي: ${reciterDisplayName(getReciterById(defaultReciterId))}`
+                : `Default: ${reciterDisplayName(getReciterById(defaultReciterId))}`}
+            </span>
+            <button
+              data-testid="listening-reciter-reset-button"
+              onClick={() => {
+                setSessionReciterId(null);
+                if (isThisSurah) {
+                  player.play(surahNumber, surahName, ayahs, defaultReciterId);
+                }
+              }}
+              className="flex items-center gap-1 font-semibold hover:opacity-80 transition-opacity"
+              style={{ color: 'hsl(var(--primary))' }}
+            >
+              <RefreshCcw className="h-3 w-3" />
+              {language === "ar" ? "إعادة للافتراضي" : "Reset"}
+            </button>
+          </div>
+        )}
 
         <AnimatePresence>
           {showReciterPicker && (
@@ -370,9 +410,13 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
                   <button
                     key={r.id}
                     onClick={() => {
-                      setReciterId(r.id);
+                      // Session-local override only — does not change the
+                      // global default reciter saved in Settings.
+                      setSessionReciterId(r.id);
                       setShowReciterPicker(false);
-                      if (isThisSurah) player.stop();
+                      if (isThisSurah) {
+                        player.play(surahNumber, surahName, ayahs, r.id);
+                      }
                     }}
                     data-testid={`listening-reciter-option-${r.id}`}
                     className={cn(

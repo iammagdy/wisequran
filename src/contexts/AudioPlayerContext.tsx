@@ -29,7 +29,7 @@ interface AudioPlayerVolatileState {
 
 interface AudioPlayerActions {
   reciterId: string;
-  play: (surahNumber: number, surahName: string, ayahs?: Ayah[]) => void;
+  play: (surahNumber: number, surahName: string, ayahs?: Ayah[], reciterIdOverride?: string) => void;
   togglePlayPause: () => Promise<void>;
   seek: (time: number) => void;
   seekToAyah: (ayahNumber: number) => void;
@@ -239,11 +239,17 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const play = useCallback((surahNumber: number, surahName: string, ayahs?: Ayah[]) => {
+  const play = useCallback((surahNumber: number, surahName: string, ayahs?: Ayah[], reciterIdOverride?: string) => {
     stoppedRef.current = false;
-    const currentReciterId = reciterIdRef.current;
+    const currentReciterId = reciterIdOverride ?? reciterIdRef.current;
 
-    if (audioRef.current && surahNumberRef.current === surahNumber) {
+    // If already playing this surah with the same reciter, just resume.
+    // If reciter changed, fall through and reload audio with the new reciter.
+    if (
+      audioRef.current &&
+      surahNumberRef.current === surahNumber &&
+      activeReciterForRetryRef.current === currentReciterId
+    ) {
       audioRef.current.play().catch(() => {});
       return;
     }
@@ -254,6 +260,10 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     surahNumberRef.current = surahNumber;
     ayahsRef.current = ayahs || [];
     timestampsRef.current = [];
+    // Mark this reciter as the active one *synchronously* so that any
+    // subsequent rapid play() call for the same surah but a different reciter
+    // can be detected by the in-flight loadAndPlay below and bail out.
+    activeReciterForRetryRef.current = currentReciterId;
 
     let audio = audioRef.current;
     if (!audio) {
@@ -285,10 +295,13 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (surahNumberRef.current !== surahNumber || stoppedRef.current) return;
+      if (
+        surahNumberRef.current !== surahNumber ||
+        activeReciterForRetryRef.current !== currentReciterId ||
+        stoppedRef.current
+      ) return;
 
       activeSurahForRetryRef.current = surahNumber;
-      activeReciterForRetryRef.current = currentReciterId;
       sourceSetRef.current = false;
 
       let primaryUrl: string | null = null;
@@ -309,7 +322,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      if (stoppedRef.current) return;
+      if (
+        stoppedRef.current ||
+        activeReciterForRetryRef.current !== currentReciterId ||
+        surahNumberRef.current !== surahNumber
+      ) return;
 
       const allUrls = await getReciterAudioUrls(currentReciterId, surahNumber);
       if (!primaryUrl && !navigator.onLine) {
@@ -329,6 +346,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       fallbackUrlsRef.current = orderedUrls.slice(1);
       fallbackIndexRef.current = 0;
       sourceSetRef.current = true;
+
+      if (
+        activeReciterForRetryRef.current !== currentReciterId ||
+        surahNumberRef.current !== surahNumber
+      ) return;
 
       if (audioRef.current) {
         try {

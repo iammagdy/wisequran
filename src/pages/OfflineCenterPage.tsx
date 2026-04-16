@@ -7,8 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { formatBytes, downloadSurahAudio } from "@/lib/quran-audio";
 import { downloadAllSurahs, downloadSurah } from "@/lib/quran-api";
-import { clearAllAudio, deleteAudio, deleteSurah, getAllDownloadedAudio, getAllDownloadedSurahs, getStorageStats } from "@/lib/db";
-import { RECITERS, DEFAULT_RECITER } from "@/lib/reciters";
+import { deleteAudio, deleteSurah, getAllAudioEntries, getAllDownloadedSurahs, getStorageStats } from "@/lib/db";
+import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { SURAH_META } from "@/data/surah-meta";
 
@@ -19,7 +19,8 @@ export default function OfflineCenterPage() {
   const { language, isRTL } = useLanguage();
   const [reciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
-  const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
+  // Map of surahNumber → list of reciterIds that have audio downloaded for it.
+  const [audioByReciter, setAudioByReciter] = useState<Map<number, string[]>>(new Map());
   const [downloadingText, setDownloadingText] = useState(false);
   const [downloadingAudio, setDownloadingAudio] = useState(false);
   const [textProgress, setTextProgress] = useState(0);
@@ -35,15 +36,37 @@ export default function OfflineCenterPage() {
   }, [language, reciterId]);
 
   const refresh = useCallback(async () => {
-    const [surahs, audio, stats] = await Promise.all([
+    const [surahs, allAudio, stats] = await Promise.all([
       getAllDownloadedSurahs(),
-      getAllDownloadedAudio(reciterId),
+      getAllAudioEntries(),
       getStorageStats(),
     ]);
     setDownloadedSurahs(surahs);
-    setDownloadedAudio(audio);
+    const grouped = new Map<number, string[]>();
+    for (const entry of allAudio) {
+      const list = grouped.get(entry.surahNumber) ?? [];
+      if (!list.includes(entry.reciterId)) list.push(entry.reciterId);
+      grouped.set(entry.surahNumber, list);
+    }
+    setAudioByReciter(grouped);
     setStorageTotal(stats.total);
-  }, [reciterId]);
+  }, []);
+
+  // Flat list of surahs that have audio downloaded for the *current* reciter
+  // (used by the bulk audio buttons).
+  const downloadedAudio = useMemo(() => {
+    const out: number[] = [];
+    audioByReciter.forEach((reciters, surahNum) => {
+      if (reciters.includes(reciterId)) out.push(surahNum);
+    });
+    return out;
+  }, [audioByReciter, reciterId]);
+
+  const totalAudioDownloads = useMemo(() => {
+    let total = 0;
+    audioByReciter.forEach((reciters) => { total += reciters.length; });
+    return total;
+  }, [audioByReciter]);
 
   useEffect(() => {
     void refresh();
@@ -79,9 +102,12 @@ export default function OfflineCenterPage() {
   }, [reciterId, refresh]);
 
   const handleClearAudio = useCallback(async () => {
-    await clearAllAudio();
+    // Only clear audio for the *current* reciter — other reciters' downloads
+    // are preserved so users do not lose them by switching reciter.
+    const surahsForCurrent = downloadedAudio.slice();
+    await Promise.all(surahsForCurrent.map((n) => deleteAudio(reciterId, n)));
     await refresh();
-  }, [refresh]);
+  }, [downloadedAudio, reciterId, refresh]);
 
   const handleTextItem = useCallback(async (surahNumber: number, shouldDelete: boolean) => {
     setActiveItemAction(`text-${surahNumber}`);
@@ -111,15 +137,26 @@ export default function OfflineCenterPage() {
     }
   }, [reciterId, refresh]);
 
+  const handleDeleteReciterAudio = useCallback(async (surahNumber: number, targetReciterId: string) => {
+    setActiveItemAction(`audio-${surahNumber}-${targetReciterId}`);
+    try {
+      await deleteAudio(targetReciterId, surahNumber);
+      await refresh();
+    } finally {
+      setActiveItemAction(null);
+    }
+  }, [refresh]);
+
   const filteredSurahs = useMemo(() => {
     const query = search.trim().toLowerCase();
     return SURAH_META.filter((surah) => {
       const hasText = downloadedSurahs.includes(surah.number);
       const hasAudio = downloadedAudio.includes(surah.number);
+      const reciterCount = audioByReciter.get(surah.number)?.length ?? 0;
       const matchesFilter = filter === "all"
         ? true
         : filter === "downloaded"
-          ? hasText || hasAudio
+          ? hasText || reciterCount > 0
           : !hasText || !hasAudio;
       const matchesSearch = !query
         || surah.name.includes(search.trim())
@@ -127,7 +164,7 @@ export default function OfflineCenterPage() {
         || String(surah.number).includes(query);
       return matchesFilter && matchesSearch;
     });
-  }, [downloadedAudio, downloadedSurahs, filter, search]);
+  }, [audioByReciter, downloadedAudio, downloadedSurahs, filter, search]);
 
   return (
     <div className="px-4 pt-6 pb-24" dir={isRTL ? "rtl" : "ltr"}>
@@ -151,6 +188,13 @@ export default function OfflineCenterPage() {
         <div className="rounded-2xl glass-card p-4 border border-border/40" data-testid="offline-center-audio-count-card">
           <p className="text-xs text-muted-foreground mb-1">{language === "ar" ? "الصوت" : "Audio"}</p>
           <p className="text-xl font-bold text-foreground">{language === "ar" ? toArabicNumerals(downloadedAudio.length) : downloadedAudio.length} / 114</p>
+          {totalAudioDownloads > downloadedAudio.length && (
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {language === "ar"
+                ? `${toArabicNumerals(totalAudioDownloads)} ملف عبر القرّاء`
+                : `${totalAudioDownloads} files across reciters`}
+            </p>
+          )}
         </div>
       </div>
 
@@ -255,6 +299,7 @@ export default function OfflineCenterPage() {
           {filteredSurahs.map((surah) => {
             const hasText = downloadedSurahs.includes(surah.number);
             const hasAudio = downloadedAudio.includes(surah.number);
+            const surahReciters = audioByReciter.get(surah.number) ?? [];
             const textBusy = activeItemAction === `text-${surah.number}`;
             const audioBusy = activeItemAction === `audio-${surah.number}`;
 
@@ -270,6 +315,35 @@ export default function OfflineCenterPage() {
                     <span className={cn("rounded-full px-2 py-1 text-[11px] font-semibold", hasAudio ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{language === "ar" ? "صوت" : "Audio"}</span>
                   </div>
                 </div>
+                {surahReciters.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-1.5" data-testid={`offline-center-surah-reciters-${surah.number}`}>
+                    {surahReciters.map((rid) => {
+                      const reciter = getReciterById(rid);
+                      const label = language === "ar" ? reciter.name : (reciter.nameEn || reciter.name);
+                      const chipBusy = activeItemAction === `audio-${surah.number}-${rid}`;
+                      return (
+                        <span
+                          key={rid}
+                          data-testid={`offline-center-surah-reciter-chip-${surah.number}-${rid}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-0.5 text-[11px] font-semibold"
+                        >
+                          <Volume2 className="h-3 w-3" />
+                          <span className="truncate max-w-[10rem]">{label}</span>
+                          <button
+                            type="button"
+                            disabled={chipBusy}
+                            onClick={() => handleDeleteReciterAudio(surah.number, rid)}
+                            aria-label={language === "ar" ? `حذف صوت ${label}` : `Remove audio for ${label}`}
+                            data-testid={`offline-center-surah-reciter-remove-${surah.number}-${rid}`}
+                            className="ml-0.5 rounded-full p-0.5 hover:bg-primary/15 disabled:opacity-50 transition-colors"
+                          >
+                            {chipBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     data-testid={`offline-center-surah-text-button-${surah.number}`}
