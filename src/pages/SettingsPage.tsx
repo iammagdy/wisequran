@@ -88,6 +88,8 @@ export default function SettingsPage() {
     setReaderColorTheme,
     focusPreset,
     setFocusPreset,
+    mushafFont,
+    setMushafFont,
   } = useReaderPersonalization();
   const [downloadedSurahs, setDownloadedSurahs] = useState<number[]>([]);
   const [downloadedAudio, setDownloadedAudio] = useState<number[]>([]);
@@ -968,6 +970,37 @@ export default function SettingsPage() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center gap-3">
+                  <BookOpen className="h-4.5 w-4.5 text-primary" />
+                  <span className="text-sm font-medium">{language === "ar" ? "خط المصحف" : "Mushaf Font"}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: "uthmanic", label: language === "ar" ? "عثماني" : "Uthmanic", className: "font-mushaf-uthmanic" },
+                    { key: "indopak", label: language === "ar" ? "هندي/باكستاني" : "Indopak", className: "font-mushaf-indopak" },
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      data-testid={`settings-mushaf-font-${option.key}`}
+                      onClick={() => setMushafFont(option.key as typeof mushafFont)}
+                      className={cn(
+                        "rounded-xl py-2 text-sm font-medium transition-colors",
+                        mushafFont === option.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      <span className={cn("block text-base", option.className)}>﴿بِسْمِ اللَّهِ﴾</span>
+                      <span className="block text-[0.6875rem] mt-0.5 opacity-80">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-2 text-[0.6875rem] text-muted-foreground">
+                  {language === "ar"
+                    ? "يطبَّق على عرض المصحف. يمكنك التبديل في أي وقت."
+                    : "Used in the Mushaf page view. Switch any time."}
+                </p>
               </div>
 
               <div>
@@ -2223,6 +2256,33 @@ export default function SettingsPage() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <section>
+          <div className="section-title flex items-center gap-1.5">
+            <BookMarked className="h-3.5 w-3.5" />
+            {language === "ar" ? "الخصوصية والآداب" : "Privacy & Adab"}
+          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-2xl border border-primary/15 bg-card/60 p-5 shadow-sm space-y-3"
+          >
+            <p className="font-arabic text-center text-lg text-gradient" dir="rtl">
+              ﴿بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ﴾
+            </p>
+            <p className="text-sm leading-relaxed text-muted-foreground" dir={isRTL ? "rtl" : "ltr"}>
+              {language === "ar"
+                ? "هذا التطبيق لا يتتبع المستخدمين، ولا يعرض أي إعلانات، ولا يبيع بياناتك لأحد. تبقى قراءاتك ومحفوظاتك وملاحظاتك على جهازك أو في حسابك الشخصي إن اخترت تسجيل الدخول."
+                : "This app does not track users, does not show ads, and does not sell your data. Your reading, memorization, and notes stay on your device — or in your personal account if you choose to sign in."}
+            </p>
+            <p className="text-xs leading-relaxed text-muted-foreground/80" dir={isRTL ? "rtl" : "ltr"}>
+              {language === "ar"
+                ? "نسأل الله أن يجعل هذا العمل خالصًا لوجهه الكريم، وأن ينفع به القارئ والمطوّر والمسلمين أجمعين."
+                : "We pray that this work is sincere for the sake of Allah, and that it benefits the reader, the developer, and the believers."}
+            </p>
+          </motion.div>
+        </section>
 
         <section>
           <div className="section-title flex items-center gap-1.5">

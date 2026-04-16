@@ -3,6 +3,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 export type ReaderLineSpacing = "compact" | "balanced" | "relaxed";
 export type ReaderColorTheme = "classic" | "emerald" | "sepia";
 export type FocusPreset = "standard" | "calm";
+export type MushafFont = "uthmanic" | "indopak";
 
 const LINE_HEIGHT_MAP: Record<ReaderLineSpacing, number> = {
   compact: 2,
@@ -27,10 +28,15 @@ export function getReaderToneClass(theme: ReaderColorTheme) {
   }
 }
 
+export function getMushafFontClass(font: MushafFont) {
+  return font === "indopak" ? "font-mushaf-indopak" : "font-mushaf-uthmanic";
+}
+
 export function useReaderPersonalization() {
   const [lineSpacing, setLineSpacing] = useLocalStorage<ReaderLineSpacing>("wise-reader-line-spacing", "balanced");
   const [readerColorTheme, setReaderColorTheme] = useLocalStorage<ReaderColorTheme>("wise-reader-color-theme", "classic");
   const [focusPreset, setFocusPreset] = useLocalStorage<FocusPreset>("wise-focus-preset", "standard");
+  const [mushafFont, setMushafFont] = useLocalStorage<MushafFont>("wise-mushaf-font", "uthmanic");
 
   return {
     lineSpacing,
@@ -39,8 +45,11 @@ export function useReaderPersonalization() {
     setReaderColorTheme,
     focusPreset,
     setFocusPreset,
+    mushafFont,
+    setMushafFont,
     lineHeight: LINE_HEIGHT_MAP[lineSpacing],
     focusLineHeight: FOCUS_LINE_HEIGHT_MAP[lineSpacing],
     readerToneClass: getReaderToneClass(readerColorTheme),
+    mushafFontClass: getMushafFontClass(mushafFont),
   };
 }

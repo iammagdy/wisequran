@@ -150,6 +150,24 @@ html.ui-scale-xlarge { font-size: 20px; --scale-factor: 1.25; }
     font-family: 'Amiri', serif;
     line-height: 2;
   }
+
+  .font-mushaf-uthmanic {
+    font-family: 'Amiri', 'Scheherazade New', serif;
+    font-feature-settings: "calt" 1, "liga" 1;
+  }
+
+  .font-mushaf-indopak {
+    font-family: 'Scheherazade New', 'Amiri', serif;
+    font-feature-settings: "calt" 1, "liga" 1;
+  }
+
+  .mushaf-no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 /* Scrollbar styling (adapts to light/dark via CSS variables) */

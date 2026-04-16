@@ -10,6 +10,7 @@ interface MushafPageViewProps {
   fontSize: number;
   lineHeight: number;
   readerToneClass: string;
+  mushafFontClass?: string;
   surahNumber: number;
   highlightedAyah: number | null;
   playingAyah?: number | null;
@@ -27,6 +28,7 @@ export default function MushafPageView({
   fontSize,
   lineHeight,
   readerToneClass,
+  mushafFontClass = "font-mushaf-uthmanic",
   surahNumber,
   highlightedAyah,
   playingAyah,
@@ -147,7 +149,7 @@ export default function MushafPageView({
               }
 
                 <p
-                className={cn("font-arabic text-justify flex-1", readerToneClass)}
+                className={cn("font-arabic mushaf-no-select text-justify flex-1", mushafFontClass, readerToneClass)}
                 style={{ fontSize, lineHeight }}>
                 
                   {pageAyahs.map((ayah) =>

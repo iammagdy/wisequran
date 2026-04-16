@@ -52,7 +52,6 @@ export function useSleepModePlayer() {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fadeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionIdRef = useRef<string | null>(null);
-  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const isPlayingRef = useRef(false);
 
   const setPrefs = useCallback((updates: Partial<SleepModePrefs>) => {
@@ -63,32 +62,21 @@ export function useSleepModePlayer() {
     });
   }, []);
 
-  const acquireWakeLock = useCallback(async () => {
-    if ("wakeLock" in navigator) {
-      try {
-        wakeLockRef.current = await navigator.wakeLock.request("screen");
-      } catch {
-        // Not supported or denied — silently ignore
-      }
-    }
-  }, []);
-
-  const releaseWakeLock = useCallback(() => {
-    wakeLockRef.current?.release().catch(() => {});
-    wakeLockRef.current = null;
-  }, []);
+  // Sleep mode intentionally does NOT acquire a screen wake-lock: the user wants
+  // the screen to turn off while audio continues to play. The audio element keeps
+  // playing in the background via the OS media session, with no battery cost from
+  // a forced-on screen.
 
   const stopAll = useCallback(() => {
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
     if (quranAudioRef.current) { quranAudioRef.current.pause(); quranAudioRef.current.src = ""; quranAudioRef.current = null; }
-    releaseWakeLock();
     isPlayingRef.current = false;
     setIsPlaying(false);
     setIsLoading(false);
     setAudioCurrentTime(0);
     setAudioDuration(0);
-  }, [releaseWakeLock]);
+  }, []);
 
   const saveSession = useCallback(async (completed: boolean) => {
     if (!sessionIdRef.current) return;
@@ -172,7 +160,6 @@ export function useSleepModePlayer() {
       isPlayingRef.current = true;
       setIsPlaying(true);
 
-      await acquireWakeLock();
       await startSession(currentPrefs);
 
       let elapsed = 0;
@@ -196,21 +183,19 @@ export function useSleepModePlayer() {
       setIsLoading(false);
       stopAll();
     }
-  }, [stopAll, acquireWakeLock, startSession, startFadeOut, saveSession]);
+  }, [stopAll, startSession, startFadeOut, saveSession]);
 
   const pause = useCallback(() => {
     quranAudioRef.current?.pause();
     if (timerIntervalRef.current) { clearInterval(timerIntervalRef.current); timerIntervalRef.current = null; }
     if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
-    releaseWakeLock();
     isPlayingRef.current = false;
     setIsPlaying(false);
-  }, [releaseWakeLock]);
+  }, []);
 
   const resume = useCallback(async () => {
     if (!quranAudioRef.current) return;
     await quranAudioRef.current.play().catch(() => {});
-    await acquireWakeLock();
     isPlayingRef.current = true;
     setIsPlaying(true);
 
@@ -234,7 +219,7 @@ export function useSleepModePlayer() {
 
       return currentPrefs;
     });
-  }, [acquireWakeLock, remainingSeconds, startFadeOut, saveSession, stopAll]);
+  }, [remainingSeconds, startFadeOut, saveSession, stopAll]);
 
   const togglePlay = useCallback(async () => {
     if (isLoading) return;

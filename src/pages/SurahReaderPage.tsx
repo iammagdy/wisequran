@@ -27,6 +27,7 @@ import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getReciterById } from "@/lib/reciters";
 import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
+import { useReaderWakeLock } from "@/hooks/useReaderWakeLock";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{id: string;}>();
@@ -67,7 +68,23 @@ export default function SurahReaderPage() {
   const [translationEdition] = useLocalStorage<string>("wise-translation", DEFAULT_TRANSLATION);
   const [readerMode, setReaderMode] = useLocalStorage<"ayah" | "mushaf">("wise-reader-mode", "ayah");
   const [focusModeActive, setFocusModeActive] = useState(false);
-  const { lineHeight, focusLineHeight, readerToneClass, focusPreset } = useReaderPersonalization();
+  const { lineHeight, focusLineHeight, readerToneClass, focusPreset, mushafFontClass } = useReaderPersonalization();
+  useReaderWakeLock(!isListeningMode);
+  const [showBismillahGreeting, setShowBismillahGreeting] = useState(false);
+
+  useEffect(() => {
+    if (isListeningMode) return;
+    try {
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const last = localStorage.getItem("wise-bismillah-greeting-date");
+      if (last !== todayKey) {
+        localStorage.setItem("wise-bismillah-greeting-date", todayKey);
+        setShowBismillahGreeting(true);
+        const timer = setTimeout(() => setShowBismillahGreeting(false), 2400);
+        return () => clearTimeout(timer);
+      }
+    } catch { /* ignore */ }
+  }, [isListeningMode]);
 
   const [activeTab, setActiveTab] = useState<"text" | "tafsir">("text");
   const [focusedAyah, setFocusedAyah] = useState<number | null>(null);
@@ -318,6 +335,29 @@ export default function SurahReaderPage() {
 
   return (
     <div className={cn("min-h-screen overflow-x-hidden", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
+      <AnimatePresence>
+        {showBismillahGreeting && !isListeningMode && (
+          <motion.div
+            key="bismillah-greeting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-sm pointer-events-none"
+            aria-hidden="true"
+          >
+            <motion.p
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="font-arabic text-3xl sm:text-4xl text-gradient text-center px-6"
+            >
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="sticky top-0 z-10 glass-subtle border-b border-border/50">
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 py-3 pb-[5px] pt-[12px]">
@@ -599,6 +639,7 @@ export default function SurahReaderPage() {
             fontSize={fontSize}
             lineHeight={lineHeight}
             readerToneClass={readerToneClass}
+            mushafFontClass={mushafFontClass}
             surahNumber={surahNumber}
             highlightedAyah={highlightedAyah}
             playingAyah={null}
