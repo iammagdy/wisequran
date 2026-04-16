@@ -9,6 +9,7 @@ import AudioPanel from "@/components/devkit/AudioPanel";
 import NotificationsPanel from "@/components/devkit/NotificationsPanel";
 import ChangelogEditorPanel from "@/components/devkit/ChangelogEditorPanel";
 import FeatureFlagsPanel from "@/components/devkit/FeatureFlagsPanel";
+import BackupPanel from "@/components/devkit/BackupPanel";
 import { DK } from "@/components/devkit/devkit-utils";
 import { getSyncQueueCount } from "@/lib/db";
 import { APP_VERSION } from "@/data/changelog";
@@ -28,7 +29,8 @@ type PanelKey =
   | "audio"
   | "notifications"
   | "changelog"
-  | "featureflags";
+  | "featureflags"
+  | "backup";
 
 interface NavItem {
   key: PanelKey;
@@ -48,13 +50,14 @@ const NAV: NavItem[] = [
   { key: "notifications", label: "Notifications",    icon: "🔔", desc: "Permission, prayer and azkar alerts" },
   { key: "changelog",     label: "Changelog Editor", icon: "📝", desc: "Add, edit and delete in-app changelog entries" },
   { key: "featureflags",  label: "Feature Flags",    icon: "🚩", desc: "Toggle app features without code changes" },
+  { key: "backup",        label: "Backup & Restore",  icon: "💾", desc: "Export or import a combined DevKit config snapshot" },
 ];
 
 const SECTIONS: { label: string; keys: PanelKey[] }[] = [
   { label: "Monitoring", keys: ["status"] },
   { label: "Data",       keys: ["localstorage", "indexeddb", "syncqueue"] },
   { label: "Controls",   keys: ["controls", "userdata", "audio", "notifications"] },
-  { label: "Content",    keys: ["changelog", "featureflags"] },
+  { label: "Content",    keys: ["changelog", "featureflags", "backup"] },
 ];
 
 const navByKey = Object.fromEntries(NAV.map((n) => [n.key, n])) as Record<PanelKey, NavItem>;
@@ -377,6 +380,7 @@ function Panel({ id }: { id: PanelKey }) {
     case "notifications": return <NotificationsPanel />;
     case "changelog":     return <ChangelogEditorPanel />;
     case "featureflags":  return <FeatureFlagsPanel />;
+    case "backup":        return <BackupPanel />;
   }
 }
 
