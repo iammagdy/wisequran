@@ -202,8 +202,8 @@ function Sidebar({
               title={collapsed ? label : undefined}
               className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors font-mono text-xs ${
                 isActive
-                  ? "bg-[#388bfd]/15 text-[#79c0ff] border border-[#388bfd]/25"
-                  : `${DK.muted} hover:bg-[#21262d] hover:text-[#e6edf3]`
+                  ? DK.activeNav
+                  : `${DK.muted} ${DK.hoverNav}`
               } ${collapsed ? "justify-center" : ""}`}
             >
               <span className="text-sm shrink-0 relative">
