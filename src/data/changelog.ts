@@ -19,20 +19,14 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-04-16",
     ar: {
       improvements: [
-        "أداة DevKit أصبحت أقوى مع محرر كامل لملاحظات الإصدار — يمكن للمسؤول الآن كتابة وتعديل ومعاينة التحديثات بالعربية والإنجليزية قبل نشرها",
-        "لوحة Feature Flags جديدة — تبويب رمضان، وضع الصيانة، رسالة الصيانة، وزر التثبيت قابلون للتفعيل المباشر بدون نشر كود جديد",
-        "نسخ احتياطي واستعادة DevKit — تصدير الإعدادات الكاملة (الأعلام + سجل التغييرات + تجاوز الإصدار) كملف JSON لاستعادته على أي جهاز",
-        "معاينة ملاحظات الإصدار تدعم الآن التبديل الفوري بين AR وEN داخل المحرر مباشرة",
-        "عرض الفرق قبل/بعد عند استيراد نسخة احتياطية — شاهد ما الذي سيتغير بالضبط قبل التأكيد",
+        "تحسينات داخلية وصيانة مستمرة لضمان استقرار التطبيق وسلاسة أدائه",
+        "نحن نعمل دائماً خلف الكواليس لتجهيز ميزات قادمة وتحسين التجربة",
       ],
     },
     en: {
       improvements: [
-        "DevKit upgraded with a full changelog editor — admins can write, edit, and preview release notes in both Arabic and English before publishing",
-        "New Feature Flags panel — Ramadan tab, maintenance mode, maintenance message, and install prompt can all be toggled live without a code deploy",
-        "DevKit Backup & Restore — export the full admin config (flags + changelog + version override) as a JSON file and restore it on any device",
-        "Changelog preview now supports instant EN/AR language switching directly inside the editor",
-        "Before/after diff view when importing a DevKit backup — see exactly what will change before confirming",
+        "Internal improvements and ongoing maintenance to keep the app stable and running smoothly",
+        "Work is always happening behind the scenes to prepare upcoming features and refine your experience",
       ],
     },
   },
