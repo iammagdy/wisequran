@@ -4,6 +4,10 @@ import { getFeatureFlags, DEFAULT_FLAGS, FEATURE_FLAGS_KEY, type FeatureFlags } 
 import {
   getDevkitChangelog,
   setDevkitChangelog,
+  getEffectiveVersion,
+  setEffectiveVersion,
+  clearEffectiveVersionOverride,
+  DEVKIT_CURRENT_VERSION_KEY,
 } from "@/lib/changelog-overrides";
 import { type ChangelogEntry } from "@/data/changelog";
 
@@ -12,11 +16,13 @@ interface DevKitBackup {
   exportedAt: string;
   featureFlags: FeatureFlags;
   changelogEntries: ChangelogEntry[];
+  effectiveVersionOverride: string | null;
 }
 
 interface PendingBackupImport {
   featureFlags: FeatureFlags;
   changelogEntries: ChangelogEntry[];
+  effectiveVersionOverride: string | null;
 }
 
 /* ─── Helpers ─────────────────────────────────────────────────────────────── */
@@ -222,11 +228,13 @@ export default function BackupPanel() {
   };
 
   const handleExport = () => {
+    const versionOverride = localStorage.getItem(DEVKIT_CURRENT_VERSION_KEY);
     const backup: DevKitBackup = {
       _type: "devkit-backup",
       exportedAt: new Date().toISOString(),
       featureFlags: getFeatureFlags(),
       changelogEntries: getDevkitChangelog(),
+      effectiveVersionOverride: versionOverride,
     };
     downloadJson(backup, exportFilename("devkit-backup"));
     flash(`✓ Backup exported (flags + ${backup.changelogEntries.length} changelog entr${backup.changelogEntries.length === 1 ? "y" : "ies"})`);
@@ -279,7 +287,10 @@ export default function BackupPanel() {
             },
           })) as ChangelogEntry[];
         const mergedFlags: FeatureFlags = { ...DEFAULT_FLAGS, ...(parsed.featureFlags as object) };
-        setPendingImport({ featureFlags: mergedFlags, changelogEntries: validEntries });
+        const rawVersionOverride = parsed.effectiveVersionOverride;
+        const effectiveVersionOverride =
+          typeof rawVersionOverride === "string" ? rawVersionOverride : null;
+        setPendingImport({ featureFlags: mergedFlags, changelogEntries: validEntries, effectiveVersionOverride });
       } catch {
         flash("❌ Failed to parse JSON file");
       }
@@ -290,10 +301,15 @@ export default function BackupPanel() {
 
   const confirmImport = () => {
     if (!pendingImport) return;
-    const { featureFlags, changelogEntries } = pendingImport;
+    const { featureFlags, changelogEntries, effectiveVersionOverride } = pendingImport;
     localStorage.setItem(FEATURE_FLAGS_KEY, JSON.stringify(featureFlags));
     window.dispatchEvent(new CustomEvent("local-storage-sync", { detail: { key: FEATURE_FLAGS_KEY } }));
     setDevkitChangelog(changelogEntries);
+    if (effectiveVersionOverride !== null) {
+      setEffectiveVersion(effectiveVersionOverride);
+    } else {
+      clearEffectiveVersionOverride();
+    }
     setPendingImport(null);
     flash(`✓ Backup applied — flags + ${changelogEntries.length} changelog entr${changelogEntries.length === 1 ? "y" : "ies"} restored`);
   };
@@ -361,6 +377,16 @@ export default function BackupPanel() {
             <FlagsDiff incoming={pendingImport.featureFlags} current={currentFlags} />
           </div>
 
+          {/* Version override preview */}
+          <div className="space-y-1">
+            <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
+              Effective Version Override
+            </p>
+            <p className={`font-mono text-xs px-3 py-2 bg-[#0d1117] rounded ${pendingImport.effectiveVersionOverride ? DK.blue : DK.muted}`}>
+              {pendingImport.effectiveVersionOverride ?? "None (will clear override)"}
+            </p>
+          </div>
+
           {/* Changelog entries diff */}
           <div className="space-y-2">
             <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
@@ -370,7 +396,7 @@ export default function BackupPanel() {
           </div>
 
           <p className={`font-mono text-[11px] ${DK.muted}`}>
-            Applying will overwrite your current feature flags and replace all custom changelog entries.
+            Applying will overwrite your current feature flags, version override, and custom changelog entries.
           </p>
           <div className="flex gap-2">
             <button onClick={confirmImport} className={`${DK.btnBase} ${DK.btnGreen}`}>
@@ -388,6 +414,13 @@ export default function BackupPanel() {
         <p className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
           Current snapshot (what will be exported)
         </p>
+
+        <div className="space-y-1">
+          <p className={`font-mono text-[11px] ${DK.muted} mb-1`}>Effective Version Override</p>
+          <p className={`font-mono text-xs px-3 py-2 bg-[#0d1117] rounded ${localStorage.getItem(DEVKIT_CURRENT_VERSION_KEY) ? DK.blue : DK.muted}`}>
+            {localStorage.getItem(DEVKIT_CURRENT_VERSION_KEY) ?? `None (using APP_VERSION: ${getEffectiveVersion()})`}
+          </p>
+        </div>
 
         <div className="space-y-1">
           <p className={`font-mono text-[11px] ${DK.muted} mb-1`}>Feature Flags</p>
