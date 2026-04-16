@@ -91,8 +91,7 @@ function EntryForm({
             value={form.version}
             onChange={(e) => setForm({ ...form, version: e.target.value })}
             placeholder="e.g. 3.6.0"
-            disabled={isEditing}
-            className={`w-full font-mono text-xs px-3 py-2 rounded bg-[#0d1117] ${DK.text} border ${DK.border} outline-none focus:border-[#388bfd] disabled:opacity-40`}
+            className={`w-full font-mono text-xs px-3 py-2 rounded bg-[#0d1117] ${DK.text} border ${DK.border} outline-none focus:border-[#388bfd]`}
           />
         </div>
         <div>
