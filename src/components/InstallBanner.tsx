@@ -10,6 +10,48 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+// ─── Engagement tracking ──────────────────────────────────────────────────────
+// Show the install prompt only after the user has visited at least this many times.
+const MIN_SESSIONS = 3;
+const SESSIONS_KEY = "wise-install-sessions";
+// After dismissing, wait 7 days before showing again.
+const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000;
+const SNOOZED_UNTIL_KEY = "wise-install-snoozed-until";
+// Backwards compat: old banner used a permanent dismiss flag.
+const LEGACY_DISMISSED_KEY = "wise-install-dismissed";
+
+function isInstalled(): boolean {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  );
+}
+
+function isSnoozed(): boolean {
+  // Honour the old permanent-dismiss flag.
+  if (localStorage.getItem(LEGACY_DISMISSED_KEY)) return true;
+  const until = Number(localStorage.getItem(SNOOZED_UNTIL_KEY) ?? 0);
+  return Date.now() < until;
+}
+
+function recordSession(): number {
+  const prev = Number(localStorage.getItem(SESSIONS_KEY) ?? 0);
+  const next = prev + 1;
+  localStorage.setItem(SESSIONS_KEY, String(next));
+  return next;
+}
+
+function snooze() {
+  localStorage.setItem(SNOOZED_UNTIL_KEY, String(Date.now() + SNOOZE_MS));
+}
+
+function permanentlyDismiss() {
+  // Push snooze far into the future so the banner never reappears.
+  localStorage.setItem(SNOOZED_UNTIL_KEY, String(Date.now() + 365 * 24 * 60 * 60 * 1000));
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function InstallBanner() {
   const [show, setShow] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -18,35 +60,52 @@ export default function InstallBanner() {
   const { t, isRTL } = useLanguage();
 
   useEffect(() => {
-    if (window.matchMedia("(display-mode: standalone)").matches) return;
-    if ((navigator as any).standalone === true) return;
-    if (localStorage.getItem("wise-install-dismissed")) return;
+    if (isInstalled()) return;
+    if (isSnoozed()) return;
+
+    const sessionCount = recordSession();
+    const eligible = sessionCount >= MIN_SESSIONS;
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setTimeout(() => setShow(true), 2000);
+      // Only show the prompt automatically once the user is engaged enough.
+      if (eligible) {
+        setTimeout(() => setShow(true), 1500);
+      }
     };
 
     window.addEventListener("beforeinstallprompt", handler);
 
+    // For browsers that never fire beforeinstallprompt (iOS Safari, Firefox),
+    // still show the manual-instructions variant once the threshold is met.
+    if (eligible && browserType !== "chromium") {
+      setTimeout(() => setShow(true), 1500);
+    }
+
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const dismiss = useCallback(() => {
     setShow(false);
-    localStorage.setItem("wise-install-dismissed", "1");
+    snooze();
   }, []);
 
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") dismiss();
+    if (outcome === "accepted") {
+      permanentlyDismiss();
+    } else {
+      snooze();
+    }
+    setShow(false);
     setDeferredPrompt(null);
-  }, [deferredPrompt, dismiss]);
+  }, [deferredPrompt]);
 
   return (
     <AnimatePresence>
