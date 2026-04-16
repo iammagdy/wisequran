@@ -44,11 +44,7 @@ export default function QiblaPage() {
   const [isIOSCompass, setIsIOSCompass] = useState(false);
   const [compassAccuracy, setCompassAccuracy] = useState<AccuracyLevel>("medium");
   const [compassErrorKey, setCompassErrorKey] = useState<string | null>(null);
-  // iOS 13+ requires DeviceOrientationEvent.requestPermission() to be
-  // called from a user gesture. Calling it on mount either silently
-  // fails or returns "denied" on newer iOS versions. We render an
-  // explicit "Start Compass" button instead and attach listeners only
-  // after the user taps it and grants permission.
+  // iOS 13+ requires DeviceOrientationEvent.requestPermission() from a user gesture.
   const iosNeedsPermission = typeof (DeviceOrientationEvent as any).requestPermission === "function";
   const [compassStarted, setCompassStarted] = useState<boolean>(!iosNeedsPermission);
   const [isLocked, setIsLocked] = useState(false);
@@ -80,9 +76,7 @@ export default function QiblaPage() {
     : null;
   const activeHeading = isLocked ? lockedHeading : correctedHeading;
 
-  // Device orientation — only attach listeners once the user has started
-  // the compass (iOS) or immediately (other platforms). See notes on
-  // `compassStarted` above.
+  // Device orientation
   useEffect(() => {
     if (isLocked) return;
     if (!compassStarted) return;
@@ -154,9 +148,6 @@ export default function QiblaPage() {
     };
   }, [isLocked, compassStarted]);
 
-  // iOS: called only from a user tap — this is the specific requirement
-  // of `DeviceOrientationEvent.requestPermission()` that caused the
-  // previous auto-on-mount approach to silently fail.
   const handleStartCompass = useCallback(async () => {
     if (!iosNeedsPermission) {
       setCompassStarted(true);
@@ -508,9 +499,6 @@ export default function QiblaPage() {
           {/* 2D Compass Mode */}
           {mode === "2D" && (
             <>
-              {/* iOS permission gate — the compass can only be started
-                  from a user gesture, so render a clear CTA until the
-                  user taps it and grants orientation permission. */}
               {!compassStarted && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}

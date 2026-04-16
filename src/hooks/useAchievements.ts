@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { useStreak } from "./useStreak";
-import { useDailyReading } from "./useDailyReading";
 import { useHifz } from "./useHifz";
 import { useReadingStats } from "./useReadingStats";
 
@@ -59,14 +58,7 @@ export function useAchievements() {
   const [newUnlock, setNewUnlock] = useState<Achievement | null>(null);
 
   const { streak } = useStreak();
-  // useDailyReading is currently unused for progress but kept imported
-  // to preserve initialization side effects elsewhere in the app.
-  useDailyReading();
   const { stats: hifzStats } = useHifz();
-  // Reading stats come straight from the React-state hook that writes
-  // them, so unlocking runs synchronously with the ayah count update —
-  // no more "refresh the app to see the badge" lag from a stale
-  // localStorage read.
   const { totals } = useReadingStats();
   const totalAyahs = totals.totalAyahs;
   const memorizedCount = hifzStats.memorized;

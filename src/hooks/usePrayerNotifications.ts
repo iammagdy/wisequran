@@ -14,13 +14,10 @@ const PRAYER_NAMES: Record<string, string> = {
 
 const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
-// localStorage is the source of truth for "already notified today" so
-// refreshing the app or navigating inside the 2-minute notification
-// window cannot double-fire the same adhan.
 const NOTIFIED_STORAGE_KEY = "wise-prayer-notified";
 
 interface NotifiedState {
-  date: string; // yyyy-mm-dd (local)
+  date: string;
   ids: string[];
 }
 
@@ -53,8 +50,6 @@ function writeNotified(state: NotifiedState): void {
 export function usePrayerNotifications() {
   const [enabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const { location } = useLocation();
-  // Hydrated from localStorage so refresh inside the notification window
-  // does not re-fire the same prayer.
   const notifiedRef = useRef<Set<string>>(new Set());
   const lastDayRef = useRef<string>(todayKey());
 
@@ -62,7 +57,6 @@ export function usePrayerNotifications() {
     if (!enabled) return;
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
-    // Hydrate from persisted state, honoring date rollover.
     const initial = readNotified();
     const today = todayKey();
     if (initial.date !== today) {
