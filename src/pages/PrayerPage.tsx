@@ -2,6 +2,17 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
+import {
+  loadPrayerLog,
+  savePrayerLog,
+  setPrayerStatus,
+  getPrayerStreak,
+  syncPrayerStatus,
+  writeLegacyToday,
+  todayKey as logTodayKey,
+  type PrayerId,
+  type PrayerLog,
+} from "@/lib/prayer-log";
 import { Progress } from "@/components/ui/progress";
 import { cn, getDayName, getHijriDateLocalized, getGregorianDateLocalized, toArabicNumerals } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +30,6 @@ import {
 "@/lib/prayer-times";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { enqueuedSupabaseWrite } from "@/lib/syncQueue";
 import type { City } from "@/data/cities";
 import { useLocation } from "@/hooks/useLocation";
 
@@ -73,6 +83,7 @@ export default function PrayerPage() {
     date: getTodayKey(),
     completed: []
   });
+  const [prayerLog, setPrayerLog] = useState<PrayerLog>(() => loadPrayerLog());
   const [calcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [citySearchOpen, setCitySearchOpen] = useState(false);
@@ -127,28 +138,30 @@ export default function PrayerPage() {
   }, [data, setData]);
 
   const togglePrayer = useCallback((prayerId: string) => {
+    const today = getTodayKey();
     const isCompleting = !todayData.completed.includes(prayerId);
     const newCompleted = isCompleting
       ? [...todayData.completed, prayerId]
       : todayData.completed.filter((p) => p !== prayerId);
     setData({ ...todayData, completed: newCompleted });
 
-    if (user) {
-      const today = getTodayKey();
-      void enqueuedSupabaseWrite(
-        "user_prayer_history",
-        "upsert",
-        {
-          user_id: user.id,
-          date: today,
-          prayer_name: prayerId,
-          completed: isCompleting,
-          completed_at: isCompleting ? new Date().toISOString() : null,
-        },
-        { onConflict: "user_id,date,prayer_name" }
-      );
+    const nextLog = setPrayerStatus(prayerLog, today, prayerId as PrayerId, isCompleting);
+    setPrayerLog(nextLog);
+    savePrayerLog(nextLog);
+    writeLegacyToday(today, newCompleted as PrayerId[]);
+
+    syncPrayerStatus(user?.id, today, prayerId as PrayerId, isCompleting);
+  }, [todayData, setData, user, prayerLog]);
+
+  const todayLogKey = logTodayKey();
+  const streaksByPrayer = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const p of PRAYERS) {
+      out[p.id] = getPrayerStreak(prayerLog, p.id as PrayerId);
     }
-  }, [todayData, setData, user]);
+    return out;
+    // todayLogKey changes daily and prayerLog mutates on toggle — both trigger recompute
+  }, [prayerLog, todayLogKey]);
 
   const progress = todayData.completed.length / PRAYERS.length * 100;
 
@@ -363,12 +376,23 @@ export default function PrayerPage() {
               </div>
 
               <div className={cn("flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
-                <p className={cn(
-                  "font-bold text-sm",
-                  done ? "line-through text-muted-foreground" : isNext ? "text-primary" : "text-foreground"
-                )}>
-                  {t(prayer.id as any)}
-                </p>
+                <div className={cn("flex items-center gap-2", isRTL ? "justify-start flex-row-reverse" : "")}>
+                  <p className={cn(
+                    "font-bold text-sm",
+                    done ? "line-through text-muted-foreground" : isNext ? "text-primary" : "text-foreground"
+                  )}>
+                    {t(prayer.id as any)}
+                  </p>
+                  {streaksByPrayer[prayer.id] >= 2 && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-accent/12 border border-accent/25 px-1.5 py-0.5 text-[10px] font-bold text-accent leading-none"
+                      aria-label={`${t(prayer.id as any)} streak ${streaksByPrayer[prayer.id]} ${t("prayer_streak_days")}`}
+                    >
+                      <Flame className="h-2.5 w-2.5" />
+                      {language === "ar" ? toArabicNumerals(String(streaksByPrayer[prayer.id])) : streaksByPrayer[prayer.id]}
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatLocalizedTime(time, language)}
                 </p>

@@ -48,6 +48,7 @@ import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
 import { usePrayerReminders } from "@/hooks/usePrayerReminders";
+import { usePrayerCheckoffReminders } from "@/hooks/usePrayerCheckoffReminders";
 import { useGlobalAudioBootstrap } from "@/hooks/useGlobalAudioBootstrap";
 import { useFridayReminders } from "@/hooks/useFridayReminders";
 import { SyncQueueProvider } from "@/contexts/SyncQueueContext";
@@ -60,6 +61,7 @@ const AppContent = () => {
   useAzkarNotifications();
   useAdhan();
   usePrayerReminders();
+  usePrayerCheckoffReminders();
   useFridayReminders();
   const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (

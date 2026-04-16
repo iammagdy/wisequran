@@ -70,6 +70,7 @@ export default function SettingsPage() {
   const [calcMethod, setCalcMethod] = useLocalStorage<CalculationMethod>("wise-prayer-method", "egyptian");
   const [adhanSettings, setAdhanSettings] = useLocalStorage<AdhanSettings>(ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
+  const [checkoffReminderEnabled, setCheckoffReminderEnabled] = useLocalStorage<boolean>("wise-prayer-checkoff-reminders", false);
   const [azkarNotificationsEnabled, setAzkarNotificationsEnabled] = useLocalStorage<boolean>("wise-azkar-notifications", false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -1194,6 +1195,40 @@ export default function SettingsPage() {
               {notificationPermission === "denied" ?
               t("prayer_notifications_denied") :
               t("prayer_time_hint")}
+            </p>
+
+            <Separator className="my-4" />
+
+            {/* Check-off reminder */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {checkoffReminderEnabled ?
+                <Bell className="h-4.5 w-4.5 text-primary" /> :
+                <BellOff className="h-4.5 w-4.5 text-muted-foreground" />}
+                <span className="text-sm font-medium">{t("prayer_checkoff_reminder")}</span>
+              </div>
+              <Switch
+                checked={checkoffReminderEnabled}
+                onCheckedChange={async (checked) => {
+                  if (checked) {
+                    if (!("Notification" in window)) {
+                      toast.error(t("notifications_not_supported"));
+                      return;
+                    }
+                    const perm = await Notification.requestPermission();
+                    setNotificationPermission(perm);
+                    if (perm === "granted") {
+                      setCheckoffReminderEnabled(true);
+                    } else {
+                      toast.error(t("notifications_permission_denied"));
+                    }
+                  } else {
+                    setCheckoffReminderEnabled(false);
+                  }
+                }} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("prayer_checkoff_reminder_hint")}
             </p>
 
             <Separator className="my-4" />

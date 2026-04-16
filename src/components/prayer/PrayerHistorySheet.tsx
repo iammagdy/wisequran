@@ -5,10 +5,19 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { cn, toArabicNumerals } from "@/lib/utils";
+import { Flame } from "lucide-react";
+
+import { loadPrayerLog, getPrayerStreak, type PrayerId } from "@/lib/prayer-log";
 
 const PRAYERS = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 const PRAYER_NAMES_AR = { fajr: "ف", dhuhr: "ظ", asr: "ع", maghrib: "م", isha: "ع" };
 const PRAYER_NAMES_EN = { fajr: "F", dhuhr: "D", asr: "A", maghrib: "M", isha: "I" };
+const PRAYER_FULL_AR: Record<PrayerId, string> = {
+  fajr: "الفجر", dhuhr: "الظهر", asr: "العصر", maghrib: "المغرب", isha: "العشاء",
+};
+const PRAYER_FULL_EN: Record<PrayerId, string> = {
+  fajr: "Fajr", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha",
+};
 
 type DayHistory = Record<string, boolean>;
 
@@ -25,18 +34,13 @@ function getDateRange(days: number): string[] {
 
 function loadLocalHistory(): Record<string, DayHistory> {
   const result: Record<string, DayHistory> = {};
-  try {
-    const raw = localStorage.getItem("wise-prayer-today");
-    if (raw) {
-      const parsed = JSON.parse(raw) as { date: string; completed: string[] };
-      if (parsed.date) {
-        result[parsed.date] = {};
-        for (const p of PRAYERS) {
-          result[parsed.date][p] = parsed.completed.includes(p);
-        }
-      }
+  const log = loadPrayerLog();
+  for (const [date, day] of Object.entries(log)) {
+    result[date] = {};
+    for (const p of PRAYERS) {
+      if (day[p]) result[date][p] = true;
     }
-  } catch {}
+  }
   return result;
 }
 
@@ -79,6 +83,17 @@ export default function PrayerHistorySheet({ open, onClose }: PrayerHistorySheet
       setHistory(loadLocalHistory());
     }
   }, [open, user, dateRange]);
+
+  const perPrayerStreaks = useMemo(() => {
+    // Compute from local log so it works for signed-out users.
+    // For signed-in users, this still reflects the local mirror, which is up to date.
+    const log = loadPrayerLog();
+    const out: Record<PrayerId, number> = { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 };
+    for (const p of PRAYERS) out[p] = getPrayerStreak(log, p);
+    return out;
+  }, [history]);
+
+  const FULL_NAMES = language === "ar" ? PRAYER_FULL_AR : PRAYER_FULL_EN;
 
   const completionRate = useMemo(() => {
     let total = 0;
@@ -134,13 +149,36 @@ export default function PrayerHistorySheet({ open, onClose }: PrayerHistorySheet
                 </button>
               </div>
 
-              <div className="rounded-xl bg-primary/8 border border-primary/15 px-4 py-3 mb-1">
+              <div className="rounded-xl bg-primary/8 border border-primary/15 px-4 py-3 mb-2">
                 <p className="text-xs text-muted-foreground mb-0.5">
                   {isRTL ? "معدل الإنجاز (30 يوم)" : "Completion rate (30 days)"}
                 </p>
                 <p className="text-2xl font-bold text-primary">
                   {language === "ar" ? toArabicNumerals(String(completionRate)) : completionRate}%
                 </p>
+              </div>
+
+              <div className="grid grid-cols-5 gap-1.5 mb-1">
+                {PRAYERS.map((p) => {
+                  const v = perPrayerStreaks[p];
+                  return (
+                    <div
+                      key={p}
+                      className={cn(
+                        "rounded-lg border px-1 py-1.5 text-center",
+                        v > 0 ? "bg-accent/10 border-accent/25" : "bg-muted/40 border-border/40"
+                      )}
+                    >
+                      <p className="text-[9px] text-muted-foreground font-medium truncate">{FULL_NAMES[p]}</p>
+                      <div className="flex items-center justify-center gap-0.5 mt-0.5">
+                        {v > 0 && <Flame className="h-2.5 w-2.5 text-accent" />}
+                        <span className={cn("text-xs font-bold tabular-nums", v > 0 ? "text-accent" : "text-muted-foreground")}>
+                          {language === "ar" ? toArabicNumerals(String(v)) : v}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {!user && (

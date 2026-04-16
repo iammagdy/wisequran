@@ -33,7 +33,14 @@ const GROUPS: Group[] = [
   },
   {
     label: "Prayer",
-    keys: ["wise-prayer-today", "wise-prayer-method", "wise-prayer-notifications"],
+    keys: [
+      "wise-prayer-today",
+      "wise-prayer-log",
+      "wise-prayer-method",
+      "wise-prayer-notifications",
+      "wise-prayer-checkoff-reminders",
+      "wise-prayer-checkoff-reminders-fired",
+    ],
   },
   {
     label: "Wird & Ramadan",

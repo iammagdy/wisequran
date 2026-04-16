@@ -232,6 +232,9 @@ interface Translations {
   prayer_time_reminder_disabled: string;
   prayer_time_hint: string;
   prayer_notifications_denied: string;
+  prayer_checkoff_reminder: string;
+  prayer_checkoff_reminder_hint: string;
+  prayer_streak_days: string;
   notifications_not_supported: string;
   notifications_permission_denied: string;
   azkar_reminder: string;
@@ -766,6 +769,9 @@ const ar: Translations = {
   prayer_time_reminder_disabled: "تم إيقاف إشعارات الصلاة",
   prayer_time_hint: "ستصلك إشعارات عند دخول وقت كل صلاة",
   prayer_notifications_denied: "تم رفض إذن الإشعارات — يرجى تفعيلها من إعدادات المتصفح",
+  prayer_checkoff_reminder: "تذكير بتأكيد الصلاة",
+  prayer_checkoff_reminder_hint: "تذكير لطيف قبل انتهاء وقت كل صلاة إذا لم تُؤكَّد",
+  prayer_streak_days: "يوم",
   notifications_not_supported: "المتصفح لا يدعم الإشعارات",
   notifications_permission_denied: "تم رفض إذن الإشعارات، يرجى تفعيلها من إعدادات المتصفح",
   azkar_reminder: "تذكير بأذكار الصباح والمساء",
@@ -1277,6 +1283,9 @@ const en: Translations = {
   prayer_time_reminder_disabled: "Prayer time notifications disabled",
   prayer_time_hint: "You will be notified at each prayer time",
   prayer_notifications_denied: "Notification permission denied — please enable it in browser settings",
+  prayer_checkoff_reminder: "Check-off reminder",
+  prayer_checkoff_reminder_hint: "Gentle nudge before each prayer's window closes if you haven't marked it",
+  prayer_streak_days: "days",
   notifications_not_supported: "This browser does not support notifications",
   notifications_permission_denied: "Notification permission denied, please enable it in browser settings",
   azkar_reminder: "Morning & Evening Azkar Reminder",
