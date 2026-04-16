@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "./useLocalStorage";
 import { azkarData } from "@/data/azkar-data";
 
@@ -45,6 +45,18 @@ export function useAzkarCompletion() {
     }
     return { date: today, completed: legacyCompleted, dhikrCompleted: existingDhikr };
   }, [data.date, data.completed, data.dhikrCompleted, today]);
+
+  // Persist migrated shape once (when computed migration differs from stored data)
+  useEffect(() => {
+    if (
+      data.date !== todayData.date ||
+      (data.dhikrCompleted ?? []).length !== todayData.dhikrCompleted.length ||
+      (data.completed ?? []).length !== todayData.completed.length
+    ) {
+      setData(todayData);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [todayData.date, todayData.dhikrCompleted.length, todayData.completed.length]);
 
   const doneSet = useMemo(() => new Set(todayData.dhikrCompleted), [todayData.dhikrCompleted]);
 
