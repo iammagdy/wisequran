@@ -187,6 +187,12 @@ export default function SurahReaderPage() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (highlightClearTimerRef.current) clearTimeout(highlightClearTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (playingAyahInSurah && readerMode === "ayah") {
       navigateToAyah(playingAyahInSurah);
     }
