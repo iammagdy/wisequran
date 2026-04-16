@@ -50,17 +50,26 @@ export default function BookmarkClaimDialog() {
   // live pending set still matches it; it reopens only when a new/edited
   // anonymous bookmark changes the fingerprint.
   const deferredFpRef = useRef<string | null>(null);
+  // Remember the uid we last saw so we can clear its deferred-fingerprint
+  // sessionStorage entry on sign-out (or when the user changes), so a
+  // sign-out → sign-in cycle in the same tab yields a fresh prompt.
+  const lastUidRef = useRef<string | null>(null);
 
   const ar = language === "ar";
 
   useEffect(() => {
+    const prevUid = lastUidRef.current;
     if (!user) {
+      if (prevUid) clearDeferredFingerprint(prevUid);
+      lastUidRef.current = null;
       setPending([]);
       setOpen(false);
       deferredFpRef.current = null;
       return;
     }
     const uid = user.id;
+    if (prevUid && prevUid !== uid) clearDeferredFingerprint(prevUid);
+    lastUidRef.current = uid;
     deferredFpRef.current = readDeferredFingerprint(uid);
     let cancelled = false;
     const refresh = async () => {
