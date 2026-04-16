@@ -52,6 +52,9 @@ const AudioPlayerTimeContext = createContext<AudioPlayerTimeContextType>({
   duration: 0,
   currentAyahInSurah: null,
 });
+const AudioPlayerAyahContext = createContext<{ currentAyahInSurah: number | null }>({
+  currentAyahInSurah: null,
+});
 
 export function useAudioPlayerState() {
   const ctx = useContext(AudioPlayerStateContext);
@@ -61,6 +64,10 @@ export function useAudioPlayerState() {
 
 export function useAudioPlayerTime() {
   return useContext(AudioPlayerTimeContext);
+}
+
+export function useAudioPlayerAyah() {
+  return useContext(AudioPlayerAyahContext);
 }
 
 export function useAudioPlayer(): AudioPlayerContextType {
@@ -104,6 +111,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   const [stableState, setStableState] = useState<AudioPlayerStableState>(INITIAL_STABLE);
   const [volatileState, setVolatileState] = useState<AudioPlayerVolatileState>(INITIAL_VOLATILE);
+  const [ayahState, setAyahState] = useState<{ currentAyahInSurah: number | null }>({ currentAyahInSurah: null });
 
   useEffect(() => {
     reciterIdRef.current = reciterId;
@@ -176,10 +184,14 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         currentTime,
         currentAyahInSurah: ayahInSurah,
       }));
+      setAyahState((prev) =>
+        prev.currentAyahInSurah === ayahInSurah ? prev : { currentAyahInSurah: ayahInSurah }
+      );
     });
     audio.addEventListener("ended", () => {
       setStableState((s) => ({ ...s, playing: false }));
       setVolatileState((s) => ({ ...s, currentAyahInSurah: null }));
+      setAyahState({ currentAyahInSurah: null });
       onAyahEndedRef.current?.();
     });
     audio.addEventListener("error", () => {
@@ -239,6 +251,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
       playingReciterId: currentReciterId,
     }));
     setVolatileState(INITIAL_VOLATILE);
+    setAyahState({ currentAyahInSurah: null });
 
     const loadAndPlay = async () => {
       try {
@@ -339,6 +352,7 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
     ayahsRef.current = [];
     setStableState(INITIAL_STABLE);
     setVolatileState(INITIAL_VOLATILE);
+    setAyahState({ currentAyahInSurah: null });
   }, [cleanupBlobUrl]);
 
   const setPlaybackRate = useCallback((rate: number) => {
@@ -403,9 +417,11 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
 
   return (
     <AudioPlayerStateContext.Provider value={stableContextValue}>
-      <AudioPlayerTimeContext.Provider value={volatileState}>
-        {children}
-      </AudioPlayerTimeContext.Provider>
+      <AudioPlayerAyahContext.Provider value={ayahState}>
+        <AudioPlayerTimeContext.Provider value={volatileState}>
+          {children}
+        </AudioPlayerTimeContext.Provider>
+      </AudioPlayerAyahContext.Provider>
     </AudioPlayerStateContext.Provider>
   );
 }

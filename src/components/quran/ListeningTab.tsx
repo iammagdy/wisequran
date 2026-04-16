@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Loader as Loader2, ChevronDown, RotateCcw, Repeat1, Volume2, Timer, X, SkipBack, SkipForward } from "lucide-react";
-import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerAyah } from "@/contexts/AudioPlayerContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";
@@ -25,7 +25,7 @@ interface Props {
 export default function ListeningTab({ surahNumber, surahName, ayahs, translationAyahs = [] }: Props) {
   const { t, language, isRTL } = useLanguage();
   const player = useAudioPlayerState();
-  const { currentAyahInSurah: currentAyahInSurahFromTime } = useAudioPlayerTime();
+  const { currentAyahInSurah: currentAyahInSurahFromTime } = useAudioPlayerAyah();
   const [reciterId, setReciterId] = useLocalStorage<string>("wise-reciter", DEFAULT_RECITER);
 
   const [speed, setSpeed] = useState<number>(1);
