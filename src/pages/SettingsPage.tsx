@@ -46,12 +46,14 @@ import {
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
 import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
+import { getHijriOffsetDays, setHijriOffsetDays } from "@/hooks/useRamadan";
 import { useSyncQueueContext } from "@/contexts/SyncQueueContext";
 
 const loadDBModule = () => import("@/lib/settings-storage");
 
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
+  const [hijriOffset, setHijriOffset] = useState<number>(() => getHijriOffsetDays());
   const { t, language, setLanguage, isRTL } = useLanguage();
   const browserType = detectBrowser();
   const isIOS = browserType === "ios-safari";
@@ -940,6 +942,48 @@ export default function SettingsPage() {
                   </button>
                 )}
               </div>
+            </div>
+
+            <Separator className="my-4" />
+
+            {/* Hijri calendar adjustment (±2 days) */}
+            <div>
+              <div className="mb-3 flex items-center gap-3">
+                <Moon className="h-4.5 w-4.5 text-primary" />
+                <span className="text-sm font-medium">
+                  {language === "ar" ? "ضبط التقويم الهجري" : "Hijri adjustment"}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                {[-2, -1, 0, 1, 2].map((n) => {
+                  const active = hijriOffset === n;
+                  const label = n === 0
+                    ? (language === "ar" ? "افتراضي" : "Default")
+                    : (language === "ar" ? `${n > 0 ? "+" : ""}${toArabicNumerals(n)}` : `${n > 0 ? "+" : ""}${n}`);
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => {
+                        setHijriOffsetDays(n);
+                        setHijriOffset(n);
+                      }}
+                      className={cn(
+                        "flex-1 rounded-xl py-2 text-xs font-medium transition-colors min-h-[36px]",
+                        active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80",
+                      )}
+                      aria-pressed={active}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground/80">
+                {language === "ar"
+                  ? "يؤثر على اكتشاف رمضان والأذكار اليومية."
+                  : "Affects Ramadan and daily Azkar date detection."}
+              </p>
             </div>
 
             <Separator className="my-4" />

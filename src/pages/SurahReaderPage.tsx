@@ -48,7 +48,7 @@ export default function SurahReaderPage() {
   const [goToPageInput, setGoToPageInput] = useState("");
   const [goToPageOpen, setGoToPageOpen] = useState(false);
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
   const scrollToAyahRef = useRef<((ayahNum: number) => void) | null>(null);
   const currentVisibleAyahRef = useRef<number>(1);
   const highlightClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -759,11 +759,11 @@ export default function SurahReaderPage() {
             onSeekToAyah={() => {}}
             wbwEnabled={wbwEnabled} /> :
 
-          <div
-                ref={listRef}
+          <ol
+                ref={listRef as React.RefObject<HTMLOListElement>}
                 role="list"
                 aria-label={language === "ar" ? `آيات ${displaySurahName}` : `${displaySurahName} ayahs`}
-                style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
+                style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative", listStyle: "none", padding: 0, margin: 0 }}
                 dir={isRTL ? "rtl" : "ltr"}>
                 {rowVirtualizer.getVirtualItems().map((virtualItem) => {
               const ayah = ayahs[virtualItem.index];

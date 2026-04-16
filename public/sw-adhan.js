@@ -128,6 +128,23 @@
     } else if (data.type === "WISE_ADHAN_CANCEL") {
       cancelTimer();
       event.waitUntil(persistState(null));
+    } else if (data.type === "SCHEDULE_FRIDAY_REMINDER") {
+      const fireAt = Number(data.fireAt);
+      if (!Number.isFinite(fireAt) || fireAt <= Date.now()) return;
+      const title = String(data.title || "جمعة مباركة");
+      const body = String(data.body || "");
+      const tag = `wise-friday-reminder-${String(data.key || fireAt)}`;
+      const remaining = fireAt - Date.now();
+      // setTimeout in an SW is only reliable for the near term; if the
+      // user closes the tab more than ~12h before Friday, Chrome will
+      // throttle/evict this timer. That is acceptable — the in-tab
+      // interval in useFridayReminders.ts still covers the open case.
+      const delay = Math.min(remaining, 12 * 60 * 60 * 1000);
+      setTimeout(() => {
+        self.registration
+          .showNotification(title, { body, dir: "rtl", lang: "ar", tag, renotify: false })
+          .catch(() => {});
+      }, delay);
     }
   });
 

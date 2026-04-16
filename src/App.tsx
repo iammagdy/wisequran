@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { MotionConfig, useReducedMotion } from "framer-motion";
 import AppShell from "@/components/layout/AppShell";
 import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
@@ -63,9 +64,15 @@ const AppContent = () => {
   usePrayerReminders();
   usePrayerCheckoffReminders();
   useFridayReminders();
+  // When the OS requests reduced motion, flatten every framer-motion
+  // transition globally so route/page/spring animations stop before
+  // they ever run. Pairs with the CSS media query in index.css for
+  // non-framer animations/transitions.
+  const prefersReducedMotion = useReducedMotion();
   const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (
-    <>
+    <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
+      <>
       <Suspense fallback={
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
@@ -114,7 +121,8 @@ const AppContent = () => {
         onDismissTemporary={dismissTemporary}
         onDismissPermanent={dismissPermanent}
       />
-    </>
+      </>
+    </MotionConfig>
   );
 };
 
