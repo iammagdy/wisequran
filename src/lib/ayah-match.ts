@@ -3,19 +3,38 @@ const ARABIC_TATWEEL = /\u0640/g;
 const EXTRA_WHITESPACE = /\s+/g;
 const ZERO_WIDTH = /[\u200B-\u200D\uFEFF]/g;
 const LAM_ALEF = /[\uFEFB\uFEFC\uFEF7\uFEF8\uFEF5\uFEF6]/g;
+// All Alef variants collapse to plain ا (U+0627): أ (U+0623), إ (U+0625),
+// آ (U+0622), and ٱ (U+0671, Alef Wasla). Speech-to-text rarely produces
+// these variants even when the canonical text contains them, so matching
+// without collapsing them penalises perfectly-correct recitation.
+const ALEF_VARIANTS = /[\u0622\u0623\u0625\u0671]/g;
+// Lenient-only variants: ى (Alef Maqsura) ↔ ي (Ya) and final ة
+// (Taa Marbuta) ↔ ه (Ha). Only applied when the caller explicitly asks
+// for lenient matching — these can change meaning in non-Qur'anic text.
+const ALEF_MAQSURA = /\u0649/g;
+const TAA_MARBUTA = /\u0629/g;
 
-export function normalizeArabic(text: string): string {
-  return text
+/**
+ * Normalize Quranic text for comparison against a spoken transcript.
+ * Always strips diacritics/tatweel/zero-width marks and collapses Alef
+ * variants. When `lenient` is true, also folds ى → ي and ة → ه so that
+ * common transcriber/reciter choices don't register as mistakes.
+ */
+export function normalizeArabic(text: string, lenient = false): string {
+  let out = text
     .replace(ZERO_WIDTH, "")
     .replace(LAM_ALEF, "\u0644\u0627")
     .replace(ARABIC_DIACRITICS, "")
     .replace(ARABIC_TATWEEL, "")
-    .replace(EXTRA_WHITESPACE, " ")
-    .trim();
+    .replace(ALEF_VARIANTS, "\u0627");
+  if (lenient) {
+    out = out.replace(ALEF_MAQSURA, "\u064A").replace(TAA_MARBUTA, "\u0647");
+  }
+  return out.replace(EXTRA_WHITESPACE, " ").trim();
 }
 
-export function tokenize(text: string): string[] {
-  return normalizeArabic(text).split(" ").filter(Boolean);
+export function tokenize(text: string, lenient = false): string[] {
+  return normalizeArabic(text, lenient).split(" ").filter(Boolean);
 }
 
 function editDistance(a: string, b: string): number {
@@ -56,10 +75,11 @@ export interface WordDiff {
 
 export function scoreAyahMatch(
   expected: string,
-  spoken: string
+  spoken: string,
+  lenient = false,
 ): { score: number; wordDiffs: WordDiff[] } {
-  const expectedTokens = tokenize(expected);
-  const spokenTokens = tokenize(spoken);
+  const expectedTokens = tokenize(expected, lenient);
+  const spokenTokens = tokenize(spoken, lenient);
 
   if (expectedTokens.length === 0) return { score: 100, wordDiffs: [] };
   if (spokenTokens.length === 0) {
@@ -124,7 +144,8 @@ export function scoreAyah(
   spokenText: string,
   strictness: StrictnessLevel = "normal"
 ): AyahScoreResult {
-  const { score, wordDiffs } = scoreAyahMatch(expectedText, spokenText);
+  const lenient = strictness === "lenient";
+  const { score, wordDiffs } = scoreAyahMatch(expectedText, spokenText, lenient);
   return {
     ayahScore: score,
     isCorrect: score >= STRICTNESS_THRESHOLD[strictness],
@@ -152,18 +173,19 @@ export function scoreRangeRecitation(
     return { overallScore: 0, correctAyahs: 0, perAyah: [] };
   }
 
-  const spokenWords = tokenize(spokenTranscript);
+  const lenient = strictness === "lenient";
+  const spokenWords = tokenize(spokenTranscript, lenient);
   const perAyah: PerAyahScoreResult[] = [];
   let correctAyahs = 0;
   let pointer = 0;
 
   for (let i = 0; i < ayahs.length; i++) {
     const ayah = ayahs[i];
-    const ayahWords = tokenize(ayah.text);
+    const ayahWords = tokenize(ayah.text, lenient);
     const ayahWordCount = ayahWords.length;
 
     if (pointer >= spokenWords.length) {
-      const { wordDiffs } = scoreAyahMatch(ayah.text, "");
+      const { wordDiffs } = scoreAyahMatch(ayah.text, "", lenient);
       perAyah.push({ numberInSurah: ayah.numberInSurah, score: 0, isCorrect: false, wordDiffs });
       continue;
     }
@@ -181,7 +203,7 @@ export function scoreRangeRecitation(
     for (let ws = searchStart; ws <= maxWindowStart; ws++) {
       const we = Math.min(spokenWords.length, ws + windowSize + slack);
       const slice = spokenWords.slice(ws, we).join(" ");
-      const { score, wordDiffs } = scoreAyahMatch(ayah.text, slice);
+      const { score, wordDiffs } = scoreAyahMatch(ayah.text, slice, lenient);
       if (score > bestScore) {
         bestScore = score;
         bestWordDiffs = wordDiffs;
@@ -219,14 +241,15 @@ export function scoreCurrentAyah(
   pointer: number,
   strictness: StrictnessLevel
 ): { score: number; isCorrect: boolean; wordDiffs: WordDiff[]; wordsConsumed: number } {
-  const ayahWords = tokenize(ayahText);
+  const lenient = strictness === "lenient";
+  const ayahWords = tokenize(ayahText, lenient);
   const ayahWordCount = ayahWords.length;
 
   const remaining = spokenWords.slice(pointer);
   const windowSize = ayahWordCount + Math.ceil(ayahWordCount * 0.5);
   const slice = remaining.slice(0, windowSize).join(" ");
 
-  const { score, wordDiffs } = scoreAyahMatch(ayahText, slice);
+  const { score, wordDiffs } = scoreAyahMatch(ayahText, slice, lenient);
   const isCorrect = score >= STRICTNESS_THRESHOLD[strictness];
 
   return {

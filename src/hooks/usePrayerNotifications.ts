@@ -14,26 +14,72 @@ const PRAYER_NAMES: Record<string, string> = {
 
 const PRAYER_ORDER = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
 
+// localStorage is the source of truth for "already notified today" so
+// refreshing the app or navigating inside the 2-minute notification
+// window cannot double-fire the same adhan.
+const NOTIFIED_STORAGE_KEY = "wise-prayer-notified";
+
+interface NotifiedState {
+  date: string; // yyyy-mm-dd (local)
+  ids: string[];
+}
+
 function todayKey() {
   const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function readNotified(): NotifiedState {
+  try {
+    const raw = localStorage.getItem(NOTIFIED_STORAGE_KEY);
+    if (!raw) return { date: todayKey(), ids: [] };
+    const parsed = JSON.parse(raw) as Partial<NotifiedState>;
+    if (!parsed || typeof parsed.date !== "string" || !Array.isArray(parsed.ids)) {
+      return { date: todayKey(), ids: [] };
+    }
+    return { date: parsed.date, ids: parsed.ids.filter((x): x is string => typeof x === "string") };
+  } catch {
+    return { date: todayKey(), ids: [] };
+  }
+}
+
+function writeNotified(state: NotifiedState): void {
+  try { localStorage.setItem(NOTIFIED_STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
 }
 
 export function usePrayerNotifications() {
   const [enabled] = useLocalStorage<boolean>("wise-prayer-notifications", false);
   const { location } = useLocation();
+  // Hydrated from localStorage so refresh inside the notification window
+  // does not re-fire the same prayer.
   const notifiedRef = useRef<Set<string>>(new Set());
-  const lastDayRef = useRef(todayKey());
+  const lastDayRef = useRef<string>(todayKey());
 
   useEffect(() => {
     if (!enabled) return;
     if (!("Notification" in window) || Notification.permission !== "granted") return;
 
+    // Hydrate from persisted state, honoring date rollover.
+    const initial = readNotified();
+    const today = todayKey();
+    if (initial.date !== today) {
+      notifiedRef.current = new Set();
+      lastDayRef.current = today;
+      writeNotified({ date: today, ids: [] });
+    } else {
+      notifiedRef.current = new Set(initial.ids);
+      lastDayRef.current = initial.date;
+    }
+
     const check = () => {
       const today = todayKey();
       if (today !== lastDayRef.current) {
-        notifiedRef.current.clear();
+        notifiedRef.current = new Set();
         lastDayRef.current = today;
+        writeNotified({ date: today, ids: [] });
       }
 
       const now = new Date();
@@ -51,6 +97,7 @@ export function usePrayerNotifications() {
         const diff = currentMinutes - prayerMinutes;
         if (diff >= 0 && diff < 2 && !notifiedRef.current.has(id)) {
           notifiedRef.current.add(id);
+          writeNotified({ date: today, ids: Array.from(notifiedRef.current) });
           showAppNotification(`حان وقت صلاة ${PRAYER_NAMES[id]} 🕌`, {
             body: formatArabicTime(prayerTime),
             dir: "rtl",

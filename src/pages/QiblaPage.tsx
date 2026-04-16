@@ -44,6 +44,13 @@ export default function QiblaPage() {
   const [isIOSCompass, setIsIOSCompass] = useState(false);
   const [compassAccuracy, setCompassAccuracy] = useState<AccuracyLevel>("medium");
   const [compassErrorKey, setCompassErrorKey] = useState<string | null>(null);
+  // iOS 13+ requires DeviceOrientationEvent.requestPermission() to be
+  // called from a user gesture. Calling it on mount either silently
+  // fails or returns "denied" on newer iOS versions. We render an
+  // explicit "Start Compass" button instead and attach listeners only
+  // after the user taps it and grants permission.
+  const iosNeedsPermission = typeof (DeviceOrientationEvent as any).requestPermission === "function";
+  const [compassStarted, setCompassStarted] = useState<boolean>(!iosNeedsPermission);
   const [isLocked, setIsLocked] = useState(false);
   const [lockedHeading, setLockedHeading] = useState<number | null>(null);
   const [showCalibration, setShowCalibration] = useState(false);
@@ -73,9 +80,12 @@ export default function QiblaPage() {
     : null;
   const activeHeading = isLocked ? lockedHeading : correctedHeading;
 
-  // Device orientation
+  // Device orientation — only attach listeners once the user has started
+  // the compass (iOS) or immediately (other platforms). See notes on
+  // `compassStarted` above.
   useEffect(() => {
     if (isLocked) return;
+    if (!compassStarted) return;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
       // @ts-ignore – webkitCompassHeading is Safari/iOS specific and already True North
@@ -130,28 +140,10 @@ export default function QiblaPage() {
     // Prefer absolute event on Android (true magnetic heading) and fall back to relative
     const supportsAbsolute = "ondeviceorientationabsolute" in window;
 
-    const attachListeners = () => {
-      if (supportsAbsolute) {
-        window.addEventListener("deviceorientationabsolute" as any, handleOrientation, true);
-      }
-      window.addEventListener("deviceorientation", handleOrientation, true);
-    };
-
-    // iOS 13+ requires permission
-    if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
-      (DeviceOrientationEvent as any)
-        .requestPermission()
-        .then((response: string) => {
-          if (response === "granted") {
-            attachListeners();
-          } else {
-            setCompassErrorKey("allow_compass");
-          }
-        })
-        .catch(() => setCompassErrorKey("sensor_error"));
-    } else {
-      attachListeners();
+    if (supportsAbsolute) {
+      window.addEventListener("deviceorientationabsolute" as any, handleOrientation, true);
     }
+    window.addEventListener("deviceorientation", handleOrientation, true);
 
     return () => {
       if (supportsAbsolute) {
@@ -160,7 +152,28 @@ export default function QiblaPage() {
       window.removeEventListener("deviceorientation", handleOrientation, true);
       if (rafId.current) cancelAnimationFrame(rafId.current);
     };
-  }, [isLocked]);
+  }, [isLocked, compassStarted]);
+
+  // iOS: called only from a user tap — this is the specific requirement
+  // of `DeviceOrientationEvent.requestPermission()` that caused the
+  // previous auto-on-mount approach to silently fail.
+  const handleStartCompass = useCallback(async () => {
+    if (!iosNeedsPermission) {
+      setCompassStarted(true);
+      return;
+    }
+    try {
+      const response: string = await (DeviceOrientationEvent as any).requestPermission();
+      if (response === "granted") {
+        setCompassErrorKey(null);
+        setCompassStarted(true);
+      } else {
+        setCompassErrorKey("allow_compass");
+      }
+    } catch {
+      setCompassErrorKey("sensor_error");
+    }
+  }, [iosNeedsPermission]);
 
   // Check alignment and provide haptic feedback
   useEffect(() => {
@@ -495,6 +508,39 @@ export default function QiblaPage() {
           {/* 2D Compass Mode */}
           {mode === "2D" && (
             <>
+              {/* iOS permission gate — the compass can only be started
+                  from a user gesture, so render a clear CTA until the
+                  user taps it and grants orientation permission. */}
+              {!compassStarted && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full max-w-sm mb-6 rounded-2xl border border-border/60 bg-card p-6 text-center shadow-soft"
+                >
+                  <Compass className="h-10 w-10 text-primary mx-auto mb-3" />
+                  <h3 className="text-base font-bold mb-1">
+                    {language === "ar" ? "تشغيل البوصلة" : "Start Compass"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {language === "ar"
+                      ? "يتطلب iOS منح الإذن لاستخدام مستشعر الاتجاه. اضغط للمتابعة."
+                      : "iOS requires permission to use the orientation sensor. Tap to continue."}
+                  </p>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={handleStartCompass}
+                    className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft"
+                  >
+                    {language === "ar" ? "تشغيل البوصلة" : "Start Compass"}
+                  </motion.button>
+                  {compassErrorKey && (
+                    <p className="mt-3 text-xs text-destructive">
+                      {t(compassErrorKey)}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
               {/* Accuracy Indicator */}
           <div className="flex items-center justify-center gap-4 mb-4 w-full">
             <div className="flex items-center gap-2">
