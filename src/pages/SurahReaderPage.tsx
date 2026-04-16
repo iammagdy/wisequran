@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones } from "lucide-react";
@@ -41,7 +42,8 @@ export default function SurahReaderPage() {
   const [goToPageInput, setGoToPageInput] = useState("");
   const [goToPageOpen, setGoToPageOpen] = useState(false);
   const [mushafTargetPage, setMushafTargetPage] = useState<number | null>(null);
-  const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const listRef = useRef<HTMLDivElement>(null);
+  const scrollToAyahRef = useRef<((ayahNum: number) => void) | null>(null);
   const audioPlayer = useAudioPlayer();
   const playingAyahInSurah = audioPlayer.surahNumber === surahNumber ? audioPlayer.currentAyahInSurah : null;
 
@@ -156,60 +158,22 @@ export default function SurahReaderPage() {
 
   useEffect(() => {
     if (!loading && ayahs.length > 0 && targetAyah) {
-      const el = document.getElementById(`ayah-${targetAyah}`);
-      if (el) {
-        setTimeout(() => {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-          setHighlightedAyah(targetAyah);
-          setTimeout(() => setHighlightedAyah(null), 2000);
-        }, 300);
-      }
+      setTimeout(() => {
+        scrollToAyahRef.current?.(targetAyah);
+        setHighlightedAyah(targetAyah);
+        setTimeout(() => setHighlightedAyah(null), 2000);
+      }, 300);
     }
   }, [loading, ayahs.length, targetAyah]);
 
   useEffect(() => {
     if (playingAyahInSurah && readerMode === "ayah") {
-      const el = document.getElementById(`ayah-${playingAyahInSurah}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
+      scrollToAyahRef.current?.(playingAyahInSurah);
     }
   }, [playingAyahInSurah, readerMode]);
 
-  useEffect(() => {
-    if (loading || ayahs.length === 0 || !ayahs[0]?.page) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const ayahNum = Number(entry.target.getAttribute("data-ayah"));
-            const ayah = ayahs.find((a) => a.numberInSurah === ayahNum);
-            if (ayah?.page) setCurrentPage(ayah.page);
-            if (ayahNum) {
-              setLastRead({ surah: surahNumber, ayah: ayahNum, mode: isListeningMode ? "listening" : "reading" });
-              if (isListeningMode) {
-                setLastListening({ surah: surahNumber, ayah: ayahNum });
-              } else {
-                setLastReading({ surah: surahNumber, ayah: ayahNum });
-              }
-            }
-            break;
-          }
-        }
-      },
-      { rootMargin: "-40% 0px -40% 0px", threshold: 0 }
-    );
-
-    ayahRefs.current.forEach((el) => observer.observe(el));
-    if (ayahs[0]?.page) setCurrentPage(ayahs[0].page);
-
-    return () => observer.disconnect();
-  }, [isListeningMode, loading, ayahs, setLastListening, setLastRead, setLastReading, surahNumber]);
-
   const setAyahRef = useCallback((el: HTMLDivElement | null, num: number) => {
-    if (el) ayahRefs.current.set(num, el);else
-    ayahRefs.current.delete(num);
+    void el; void num;
   }, []);
 
   useEffect(() => {
@@ -264,6 +228,44 @@ export default function SurahReaderPage() {
   };
 
   const currentReciterName = (() => { const r = getReciterById(audioPlayer.reciterId); return language === "en" && r.nameEn ? r.nameEn : r.name; })();
+
+  const parentOffsetRef = useRef(0);
+  useLayoutEffect(() => {
+    parentOffsetRef.current = listRef.current?.offsetTop ?? 0;
+  });
+
+  const rowVirtualizer = useWindowVirtualizer({
+    count: ayahs.length,
+    estimateSize: () => 170,
+    overscan: 5,
+    scrollMargin: parentOffsetRef.current,
+  });
+
+  useEffect(() => {
+    scrollToAyahRef.current = (ayahNum: number) => {
+      const idx = ayahs.findIndex((a) => a.numberInSurah === ayahNum);
+      if (idx >= 0) {
+        rowVirtualizer.scrollToIndex(idx, { align: "center", behavior: "smooth" });
+      }
+    };
+  });
+
+  useEffect(() => {
+    if (loading || ayahs.length === 0) return;
+    const range = rowVirtualizer.range;
+    if (!range) return;
+    const midIdx = Math.floor((range.startIndex + range.endIndex) / 2);
+    const midAyah = ayahs[midIdx];
+    if (!midAyah) return;
+    if (midAyah.page) setCurrentPage(midAyah.page);
+    const ayahNum = midAyah.numberInSurah;
+    setLastRead({ surah: surahNumber, ayah: ayahNum, mode: isListeningMode ? "listening" : "reading" });
+    if (isListeningMode) {
+      setLastListening({ surah: surahNumber, ayah: ayahNum });
+    } else {
+      setLastReading({ surah: surahNumber, ayah: ayahNum });
+    }
+  }, [rowVirtualizer.range, loading, ayahs, surahNumber, isListeningMode, setLastRead, setLastListening, setLastReading]);
 
   return (
     <div className={cn("min-h-screen overflow-x-hidden", isListeningMode ? "pb-surah-listening" : "pb-surah-reader")}>
@@ -326,8 +328,7 @@ export default function SurahReaderPage() {
                         } else {
                           const targetAyahOnPage = ayahs.find((a) => a.page === pageNum);
                           if (targetAyahOnPage) {
-                            const el = document.getElementById(`ayah-${targetAyahOnPage.numberInSurah}`);
-                            el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            scrollToAyahRef.current?.(targetAyahOnPage.numberInSurah);
                           }
                         }
                         setGoToPageInput("");
@@ -560,11 +561,27 @@ export default function SurahReaderPage() {
             onPageChange={(page) => setCurrentPage(page)}
             onSeekToAyah={() => {}} /> :
 
-          <div className="space-y-3" dir={isRTL ? "rtl" : "ltr"}>
-                {ayahs.map((ayah, i) => {
+          <div
+                ref={listRef}
+                style={{ height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
+                dir={isRTL ? "rtl" : "ltr"}>
+                {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+              const ayah = ayahs[virtualItem.index];
+              const i = virtualItem.index;
               const showPageSep = i > 0 && ayah.page && ayahs[i - 1]?.page && ayah.page !== ayahs[i - 1].page;
               return (
-                <div key={ayah.number}>
+                <div
+                      key={ayah.number}
+                      data-index={virtualItem.index}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    transform: `translateY(${virtualItem.start - rowVirtualizer.options.scrollMargin}px)`,
+                    paddingBottom: "12px",
+                  }}>
                       {showPageSep &&
                   <div className="flex items-center gap-3 py-2 text-muted-foreground">
                           <div className="h-px flex-1 bg-border" />
@@ -572,15 +589,12 @@ export default function SurahReaderPage() {
                           <div className="h-px flex-1 bg-border" />
                         </div>
                   }
-                      <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: Math.min(i * 0.02, 1) }}
+                      <div
                     id={`ayah-${ayah.numberInSurah}`}
                     data-ayah={ayah.numberInSurah}
-                    ref={(el) => setAyahRef(el, ayah.numberInSurah)}
-                    className={cn("group relative rounded-2xl bg-card p-5 shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] pl-[10px] pr-[10px]",
-                    highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow"
+                    className={cn("group relative rounded-2xl bg-card shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] pl-[10px] pr-[10px]",
+                    highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
+                    playingAyahInSurah === ayah.numberInSurah && "ring-1 ring-primary/30"
                     )}>
                         <div className="mb-3 flex items-center justify-between">
                           <div className="flex items-center gap-1">
@@ -628,7 +642,7 @@ export default function SurahReaderPage() {
                             </p>
                           );
                         })()}
-                      </motion.div>
+                      </div>
                     </div>);
             })}
               </div>
@@ -795,12 +809,9 @@ export default function SurahReaderPage() {
         translationAyahs={translationAyahs}
         language={language}
         onScrollToAyah={(numberInSurah) => {
-          const el = document.getElementById(`ayah-${numberInSurah}`);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-            setHighlightedAyah(numberInSurah);
-            setTimeout(() => setHighlightedAyah(null), 2000);
-          }
+          scrollToAyahRef.current?.(numberInSurah);
+          setHighlightedAyah(numberInSurah);
+          setTimeout(() => setHighlightedAyah(null), 2000);
         }}
       />
     </div>);

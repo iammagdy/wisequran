@@ -9,6 +9,7 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 - **Package Manager:** pnpm
 - **Styling:** Tailwind CSS + Radix UI (shadcn/ui pattern)
 - **State:** TanStack Query + React Context + IndexedDB (offline-first)
+- **Virtualization:** @tanstack/react-virtual (useWindowVirtualizer for Surah Reader ayah list)
 - **Backend/Cloud Sync:** Supabase (optional, app works without it)
 - **PWA:** Vite PWA Plugin + Workbox
 
