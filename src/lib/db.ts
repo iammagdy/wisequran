@@ -112,24 +112,37 @@ function openDatabase() {
       // succeeds. The post-boot migration in `bookmarks.ts` rehydrates
       // these rows under the current anonymous owner.
       if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
-        // Best-effort copy of the v6 rows to LS before we drop the old
-        // store. Whatever happens, we MUST delete + recreate the store
-        // here so the v7 schema (owner index) is present — any data
-        // we failed to copy is gone, but the app won't be left with a
-        // half-migrated, queryable-broken bookmarks store.
+        // Copy-then-delete: we must have the rows durably in LS
+        // before we drop the v6 store. If reading the old rows fails
+        // we throw to abort the whole upgrade transaction, which
+        // leaves the DB at v6 so the next app load can retry the
+        // migration without any data loss in between.
+        const oldStore = transaction.objectStore("bookmarks");
+        let rows: Array<Record<string, unknown>> = [];
         try {
-          const oldStore = transaction.objectStore("bookmarks");
-          const rows = (await oldStore.getAll()) as Array<Record<string, unknown>>;
-          if (Array.isArray(rows) && rows.length > 0) {
-            localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
-          }
-        } catch {
-          // Reading the old rows failed — we still have to move to v7
-          // schema below, so log via LS for post-boot visibility.
+          rows = (await oldStore.getAll()) as Array<Record<string, unknown>>;
+        } catch (err) {
           try {
             localStorage.setItem("wise-bookmarks-v6-migration-error", String(Date.now()));
           } catch {
             /* ignore */
+          }
+          // Abort the upgrade — any stores we created earlier in this
+          // callback are rolled back together with us. The user keeps
+          // their v6 bookmarks intact and we try again next session.
+          throw err;
+        }
+        if (rows.length > 0) {
+          try {
+            localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
+          } catch (err) {
+            // Persisting to LS failed (quota?) — same story, abort.
+            try {
+              localStorage.setItem("wise-bookmarks-v6-migration-error", String(Date.now()));
+            } catch {
+              /* ignore */
+            }
+            throw err;
           }
         }
         db.deleteObjectStore("bookmarks");

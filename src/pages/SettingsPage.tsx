@@ -2375,7 +2375,7 @@ export default function SettingsPage() {
             <input
               ref={backupImportRef}
               type="file"
-              accept=".json,application/json"
+              accept=".json,.wqb,application/json,application/octet-stream"
               className="hidden"
               onChange={(e) => void handleImportBackup(e)}
             />
@@ -2383,7 +2383,15 @@ export default function SettingsPage() {
         </section>
 
         {/* Restore confirmation dialog */}
-        <AlertDialog open={!!pendingBackup} onOpenChange={(open) => { if (!open) setPendingBackup(null); }}>
+        <AlertDialog
+          open={!!pendingBackup || !!pendingBackupFile}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingBackup(null);
+              setPendingBackupFile(null);
+            }
+          }}
+        >
           <AlertDialogContent dir={isRTL ? "rtl" : "ltr"}>
             <AlertDialogHeader>
               <AlertDialogTitle>
