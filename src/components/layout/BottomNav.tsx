@@ -2,6 +2,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSyncQueue } from "@/hooks/useSyncQueue";
+import { isSupabaseConfigured } from "@/lib/supabase";
 
 function QuranIcon({ active }: { active: boolean }) {
   return (
@@ -80,6 +82,8 @@ const basePaths = [
 export default function BottomNav() {
   const location = useLocation();
   const { t } = useLanguage();
+  const { pendingCount } = useSyncQueue();
+  const showSyncBadge = isSupabaseConfigured && pendingCount > 0;
 
   return (
     <nav className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
@@ -127,6 +131,12 @@ export default function BottomNav() {
                     >
                       <IconComponent active={isActive} />
                     </div>
+                  )}
+                  {path === "/settings" && showSyncBadge && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 border border-background animate-pulse z-20"
+                    />
                   )}
                 </motion.div>
 
