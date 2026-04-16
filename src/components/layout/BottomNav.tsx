@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSyncQueueContext } from "@/contexts/SyncQueueContext";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 function QuranIcon({ active }: { active: boolean }) {
   return (
@@ -64,15 +65,25 @@ function SettingsIcon({ active }: { active: boolean }) {
   );
 }
 
-const iconMap = {
+function RamadanIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" className="icon-responsive" fill="none" stroke="currentColor" strokeWidth={active ? 1.75 : 1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z" />
+      <path d="M19 3l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" />
+    </svg>
+  );
+}
+
+const BASE_ICON_MAP = {
   "/": QuranIcon,
   "/azkar": AzkarIcon,
   "/prayer": MosqueIcon,
   "/tasbeeh": TasbeehIcon,
   "/settings": SettingsIcon,
+  "/ramadan": RamadanIcon,
 } as const;
 
-const basePaths = [
+const corePaths = [
   { path: "/", key: "nav_quran" as const },
   { path: "/azkar", key: "nav_azkar" as const },
   { path: "/prayer", key: "nav_prayer" as const },
@@ -86,15 +97,27 @@ export default function BottomNav() {
   const [, startTransition] = useTransition();
   const { t } = useLanguage();
   const { pendingCount } = useSyncQueueContext();
+  const { ramadanTab } = useFeatureFlags();
   const showSyncBadge = isSupabaseConfigured && pendingCount > 0;
+
+  const basePaths: { path: string; key: typeof corePaths[number]["key"]; label?: string }[] =
+    ramadanTab
+      ? [
+          corePaths[0],
+          corePaths[1],
+          { path: "/ramadan", key: "nav_settings" as const, label: "رمضان" },
+          corePaths[2],
+          corePaths[4],
+        ]
+      : corePaths;
 
   return (
     <nav className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg">
       <div className="glass-card rounded-[2rem] px-2 py-2 overflow-hidden border border-white/10 shadow-2xl">
         <div className="flex items-center justify-around" style={{ height: 'calc(var(--nav-height) * 0.85)' }}>
-          {basePaths.map(({ path, key }) => {
+          {basePaths.map(({ path, key, label }) => {
             const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
-            const IconComponent = iconMap[path as keyof typeof iconMap];
+            const IconComponent = BASE_ICON_MAP[path as keyof typeof BASE_ICON_MAP];
             return (
               <NavLink
                 key={path}
@@ -158,7 +181,7 @@ export default function BottomNav() {
                     isActive ? "text-primary" : "text-muted-foreground/50"
                   )}
                 >
-                  {t(key)}
+                  {label ?? t(key)}
                 </motion.span>
               </NavLink>
             );

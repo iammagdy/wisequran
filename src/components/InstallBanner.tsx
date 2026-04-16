@@ -4,6 +4,7 @@ import { X, Download, Share, MoveVertical as MoreVertical, Menu } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -54,6 +55,7 @@ function dismissForever() {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function InstallBanner() {
+  const { installPromptEnabled } = useFeatureFlags();
   const [show, setShow] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const browserType = detectBrowser();
@@ -61,6 +63,7 @@ export default function InstallBanner() {
   const { t, isRTL } = useLanguage();
 
   useEffect(() => {
+    if (!installPromptEnabled) { setShow(false); return; }
     if (isInstalled()) return;
     if (isSnoozed()) return;
 
@@ -96,7 +99,7 @@ export default function InstallBanner() {
       window.removeEventListener("beforeinstallprompt", handler);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [installPromptEnabled]);
 
   const dismiss = useCallback(() => {
     setShow(false);

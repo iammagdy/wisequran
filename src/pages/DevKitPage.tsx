@@ -7,6 +7,8 @@ import AppControlsPanel from "@/components/devkit/AppControlsPanel";
 import UserDataPanel from "@/components/devkit/UserDataPanel";
 import AudioPanel from "@/components/devkit/AudioPanel";
 import NotificationsPanel from "@/components/devkit/NotificationsPanel";
+import ChangelogEditorPanel from "@/components/devkit/ChangelogEditorPanel";
+import FeatureFlagsPanel from "@/components/devkit/FeatureFlagsPanel";
 import { DK } from "@/components/devkit/devkit-utils";
 import { getSyncQueueCount } from "@/lib/db";
 import { APP_VERSION } from "@/data/changelog";
@@ -24,18 +26,38 @@ type PanelKey =
   | "controls"
   | "userdata"
   | "audio"
-  | "notifications";
+  | "notifications"
+  | "changelog"
+  | "featureflags";
 
-const NAV: { key: PanelKey; label: string; icon: string }[] = [
-  { key: "status",        label: "App Status",    icon: "◉" },
-  { key: "localstorage",  label: "LocalStorage",  icon: "🗄" },
-  { key: "indexeddb",     label: "IndexedDB",     icon: "💾" },
-  { key: "syncqueue",     label: "Sync Queue",    icon: "⇅" },
-  { key: "controls",      label: "App Controls",  icon: "⚙" },
-  { key: "userdata",      label: "User Data",     icon: "👤" },
-  { key: "audio",         label: "Audio Player",  icon: "♫" },
-  { key: "notifications", label: "Notifications", icon: "🔔" },
+interface NavItem {
+  key: PanelKey;
+  label: string;
+  icon: string;
+  desc: string;
+}
+
+const NAV: NavItem[] = [
+  { key: "status",        label: "App Status",       icon: "◉",  desc: "Runtime environment, network & service worker state" },
+  { key: "localstorage",  label: "LocalStorage",     icon: "🗄", desc: "Browse and live-edit wise-* keys" },
+  { key: "indexeddb",     label: "IndexedDB",        icon: "💾", desc: "IDB stores, audio cache, byte usage" },
+  { key: "syncqueue",     label: "Sync Queue",       icon: "⇅",  desc: "Pending server sync operations" },
+  { key: "controls",      label: "App Controls",     icon: "⚙",  desc: "Theme, language, resets, backup & restore" },
+  { key: "userdata",      label: "User Data",        icon: "👤", desc: "Auth session and user account records" },
+  { key: "audio",         label: "Audio Player",     icon: "♫",  desc: "Player state, reciter and surah cache" },
+  { key: "notifications", label: "Notifications",    icon: "🔔", desc: "Permission, prayer and azkar alerts" },
+  { key: "changelog",     label: "Changelog Editor", icon: "📝", desc: "Add, edit and delete in-app changelog entries" },
+  { key: "featureflags",  label: "Feature Flags",    icon: "🚩", desc: "Toggle app features without code changes" },
 ];
+
+const SECTIONS: { label: string; keys: PanelKey[] }[] = [
+  { label: "Monitoring", keys: ["status"] },
+  { label: "Data",       keys: ["localstorage", "indexeddb", "syncqueue"] },
+  { label: "Controls",   keys: ["controls", "userdata", "audio", "notifications"] },
+  { label: "Content",    keys: ["changelog", "featureflags"] },
+];
+
+const navByKey = Object.fromEntries(NAV.map((n) => [n.key, n])) as Record<PanelKey, NavItem>;
 
 /* ─── Lock Screen ─────────────────────────────────────────────────────────── */
 
@@ -67,48 +89,33 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
       className={`min-h-screen ${DK.bg} ${DK.ltr} flex items-center justify-center p-4`}
     >
       <div className="w-full max-w-sm space-y-5">
-        {/* Branding block */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#161b22] border border-[#30363d] shadow-xl shadow-black/60">
             <span className="text-3xl leading-none select-none">⚙</span>
           </div>
           <div>
-            <h1 className={`font-mono text-xl font-bold ${DK.text} tracking-tight`}>
-              DevKit
-            </h1>
-            <p className={`font-mono text-xs ${DK.muted} mt-0.5`}>
-              wise-quran · v{APP_VERSION}
-            </p>
+            <h1 className={`font-mono text-xl font-bold ${DK.text} tracking-tight`}>DevKit</h1>
+            <p className={`font-mono text-xs ${DK.muted} mt-0.5`}>wise-quran · v{APP_VERSION}</p>
           </div>
-          <div
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#161b22] border ${DK.border}`}
-          >
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#161b22] border ${DK.border}`}>
             <span className={`text-[10px] font-mono ${DK.muted}`}>Admin:</span>
             <span className={`text-[10px] font-mono ${DK.blue}`}>{ADMIN_EMAIL}</span>
           </div>
         </div>
 
-        {/* PIN card */}
         <div className={`rounded-xl p-6 ${DK.card} shadow-xl shadow-black/50 space-y-4`}>
           <div className="space-y-0.5">
-            <p className={`font-mono text-sm font-semibold ${DK.text}`}>
-              Enter PIN to continue
-            </p>
+            <p className={`font-mono text-sm font-semibold ${DK.text}`}>Enter PIN to continue</p>
             <p className={`font-mono text-[11px] ${DK.muted}`}>
               Session-locked — closes when the tab is closed
             </p>
           </div>
 
           <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              attempt();
-            }}
+            onSubmit={(e) => { e.preventDefault(); attempt(); }}
             className="space-y-3"
           >
-            <div
-              className={`transition-transform duration-100 ${shake ? "[transform:translateX(6px)]" : ""}`}
-            >
+            <div className={`transition-transform duration-100 ${shake ? "[transform:translateX(6px)]" : ""}`}>
               <input
                 ref={inputRef}
                 type="password"
@@ -122,13 +129,11 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
                 } outline-none transition-colors text-center tracking-[0.3em] placeholder:tracking-normal placeholder:text-[#6e7681]`}
               />
             </div>
-
             {error && (
               <p className={`font-mono text-xs ${DK.red} text-center`}>
                 Incorrect PIN — please try again
               </p>
             )}
-
             <button
               type="submit"
               disabled={value.length === 0}
@@ -139,7 +144,6 @@ function PinGate({ onUnlock }: { onUnlock: () => void }) {
           </form>
         </div>
 
-        {/* Footer note */}
         <p className={`font-mono text-[10px] ${DK.subtle} text-center`}>
           Developer Control Panel · Internal use only
         </p>
@@ -165,6 +169,8 @@ function SidebarNav({
   syncQueueCount: number;
   isMobile?: boolean;
 }) {
+  const showLabel = !collapsed || isMobile;
+
   return (
     <>
       {/* Header */}
@@ -172,12 +178,10 @@ function SidebarNav({
         <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0d1117] border border-[#30363d] shrink-0">
           <span className="text-sm leading-none select-none">⚙</span>
         </div>
-        {(!collapsed || isMobile) && (
+        {showLabel && (
           <div className="flex-1 min-w-0">
             <p className={`font-mono text-sm font-bold ${DK.text} leading-tight`}>DevKit</p>
-            <p className={`font-mono text-[10px] ${DK.muted} leading-tight truncate`}>
-              wise-quran
-            </p>
+            <p className={`font-mono text-[10px] ${DK.muted} leading-tight truncate`}>wise-quran</p>
           </div>
         )}
         {!collapsed && !isMobile && (
@@ -191,44 +195,56 @@ function SidebarNav({
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
-        {NAV.map(({ key, label, icon }) => {
-          const badge = key === "syncqueue" && syncQueueCount > 0 ? syncQueueCount : 0;
-          const isActive = active === key;
-          const showLabel = !collapsed || isMobile;
-          return (
-            <button
-              key={key}
-              onClick={() => onSelect(key)}
-              title={collapsed && !isMobile ? label : undefined}
-              className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors font-mono text-xs ${
-                isActive
-                  ? DK.activeNav
-                  : `${DK.muted} ${DK.hoverNav}`
-              } ${!showLabel ? "justify-center" : ""}`}
-            >
-              <span className="text-sm shrink-0 relative">
-                {icon}
-                {badge > 0 && !showLabel && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[#f85149] text-white font-mono text-[8px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                )}
-              </span>
-              {showLabel && (
-                <>
-                  <span className="flex-1 truncate">{label}</span>
-                  {badge > 0 && (
-                    <span className="shrink-0 bg-[#f85149] text-white font-mono text-[10px] leading-none rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-                      {badge > 99 ? "99+" : badge}
+      {/* Sectioned navigation */}
+      <nav className="flex-1 px-2 py-2 overflow-y-auto">
+        {SECTIONS.map((section) => (
+          <div key={section.label} className="mb-1">
+            {showLabel && (
+              <p className={`font-mono text-[9px] uppercase tracking-widest ${DK.subtle} px-2.5 pt-3 pb-1 select-none`}>
+                {section.label}
+              </p>
+            )}
+            {!showLabel && (
+              <div className={`my-1 mx-1 h-px bg-[#30363d]`} />
+            )}
+            <div className="space-y-0.5">
+              {section.keys.map((key) => {
+                const item = navByKey[key];
+                const badge = key === "syncqueue" && syncQueueCount > 0 ? syncQueueCount : 0;
+                const isActive = active === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => onSelect(key)}
+                    title={!showLabel ? item.label : undefined}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors font-mono text-xs ${
+                      isActive ? DK.activeNav : `${DK.muted} ${DK.hoverNav}`
+                    } ${!showLabel ? "justify-center" : ""}`}
+                  >
+                    <span className="text-sm shrink-0 relative">
+                      {item.icon}
+                      {badge > 0 && !showLabel && (
+                        <span className="absolute -top-1.5 -right-1.5 bg-[#f85149] text-white font-mono text-[8px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
+                          {badge > 99 ? "99+" : badge}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </>
-              )}
-            </button>
-          );
-        })}
+                    {showLabel && (
+                      <>
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {badge > 0 && (
+                          <span className="shrink-0 bg-[#f85149] text-white font-mono text-[10px] leading-none rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                            {badge > 99 ? "99+" : badge}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}
@@ -243,15 +259,12 @@ function SidebarNav({
           </button>
         )}
         <button
-          onClick={() => {
-            sessionStorage.removeItem(SESSION_KEY);
-            window.location.reload();
-          }}
+          onClick={() => { sessionStorage.removeItem(SESSION_KEY); window.location.reload(); }}
           title="Lock DevKit"
           className={`w-full ${DK.btnBase} ${DK.btnGray} flex items-center justify-center gap-1.5 py-1.5`}
         >
           <span>🔒</span>
-          {(!collapsed || isMobile) && <span>Lock</span>}
+          {showLabel && <span>Lock</span>}
         </button>
       </div>
     </>
@@ -305,21 +318,15 @@ function MobileDrawer({
 }) {
   useEffect(() => {
     if (!open) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
 
-  const handleSelect = (k: PanelKey) => {
-    onSelect(k);
-    onClose();
-  };
+  const handleSelect = (k: PanelKey) => { onSelect(k); onClose(); };
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         className={`sm:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
@@ -327,8 +334,6 @@ function MobileDrawer({
         }`}
         aria-hidden="true"
       />
-
-      {/* Drawer panel */}
       <div
         className={`sm:hidden fixed top-0 left-0 z-50 h-full w-64 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-transform duration-200 ${
           open ? "translate-x-0" : "-translate-x-full"
@@ -337,8 +342,7 @@ function MobileDrawer({
         aria-modal="true"
         aria-label="DevKit navigation"
       >
-        {/* Close button row */}
-        <div className={`flex justify-end px-3 pt-2`}>
+        <div className="flex justify-end px-3 pt-2">
           <button
             onClick={onClose}
             aria-label="Close menu"
@@ -371,6 +375,8 @@ function Panel({ id }: { id: PanelKey }) {
     case "userdata":      return <UserDataPanel />;
     case "audio":         return <AudioPanel />;
     case "notifications": return <NotificationsPanel />;
+    case "changelog":     return <ChangelogEditorPanel />;
+    case "featureflags":  return <FeatureFlagsPanel />;
   }
 }
 
@@ -389,6 +395,7 @@ export default function DevKitPage() {
     sessionStorage.setItem(ACTIVE_PANEL_KEY, key);
     setActive(key);
   };
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [syncQueueCount, setSyncQueueCount] = useState(0);
@@ -398,9 +405,7 @@ export default function DevKitPage() {
       try {
         const count = await getSyncQueueCount();
         setSyncQueueCount(count);
-      } catch {
-        // ignore
-      }
+      } catch { /* ignore */ }
     };
     if (unlocked) {
       void poll();
@@ -413,13 +418,10 @@ export default function DevKitPage() {
     return <PinGate onUnlock={() => setUnlocked(true)} />;
   }
 
-  const nav = NAV.find((n) => n.key === active)!;
+  const nav = navByKey[active];
 
   return (
-    <div
-      dir="ltr"
-      className={`min-h-screen ${DK.bg} ${DK.ltr} flex`}
-    >
+    <div dir="ltr" className={`min-h-screen ${DK.bg} ${DK.ltr} flex`}>
       {/* Desktop sidebar */}
       <Sidebar
         active={active}
@@ -443,7 +445,6 @@ export default function DevKitPage() {
         <div
           className={`sticky top-0 z-10 flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 border-b ${DK.border} bg-[#161b22]/95 backdrop-blur min-h-[52px]`}
         >
-          {/* Hamburger – mobile only */}
           <button
             onClick={() => setMobileDrawerOpen(true)}
             aria-label="Open navigation menu"
@@ -455,9 +456,14 @@ export default function DevKitPage() {
           <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0d1117] border border-[#30363d] shrink-0">
             <span className="text-sm leading-none select-none">{nav.icon}</span>
           </div>
-          <h2 className={`font-mono text-sm font-semibold ${DK.text} truncate`}>
-            {nav.label}
-          </h2>
+          <div className="flex flex-col min-w-0">
+            <h2 className={`font-mono text-sm font-semibold ${DK.text} truncate leading-tight`}>
+              {nav.label}
+            </h2>
+            <p className={`hidden sm:block font-mono text-[10px] ${DK.subtle} leading-tight truncate`}>
+              {nav.desc}
+            </p>
+          </div>
           {active === "syncqueue" && syncQueueCount > 0 && (
             <span className="shrink-0 bg-[#f85149] text-white font-mono text-[11px] rounded-full px-2 py-0.5 font-semibold leading-none">
               {syncQueueCount} pending
@@ -467,9 +473,7 @@ export default function DevKitPage() {
             <span className={`hidden sm:inline font-mono text-[10px] ${DK.subtle}`}>
               auto-refresh 5s
             </span>
-            <span
-              className={`font-mono text-[10px] ${DK.muted} px-2 py-0.5 rounded bg-[#21262d] border ${DK.border}`}
-            >
+            <span className={`font-mono text-[10px] ${DK.muted} px-2 py-0.5 rounded bg-[#21262d] border ${DK.border}`}>
               v{APP_VERSION}
             </span>
           </div>
@@ -484,11 +488,9 @@ export default function DevKitPage() {
 
         {/* Footer bar */}
         <div className={`border-t ${DK.border} px-3 sm:px-6 py-2 flex items-center gap-4`}>
-          <span className={`font-mono text-[10px] ${DK.subtle}`}>
-            DevKit · Internal use only
-          </span>
+          <span className={`font-mono text-[10px] ${DK.subtle}`}>DevKit · Internal use only</span>
           <span className={`hidden sm:inline font-mono text-[10px] ${DK.subtle}`}>
-            Admin: <span className={`${DK.muted}`}>{ADMIN_EMAIL}</span>
+            Admin: <span className={DK.muted}>{ADMIN_EMAIL}</span>
           </span>
         </div>
       </main>

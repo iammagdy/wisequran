@@ -2,7 +2,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ChevronDown, Star, Zap, CircleCheck as CheckCircle2, X } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { APP_VERSION, changelog, type ChangelogEntry } from "@/data/changelog";
+import { APP_VERSION, type ChangelogEntry } from "@/data/changelog";
+import { getMergedChangelog } from "@/lib/changelog-overrides";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ChangelogModalProps {
@@ -146,7 +147,8 @@ export default function ChangelogModal({
   const { language } = useLanguage();
   const isRTL = language === "ar";
 
-  const displayEntries = showAll ? changelog : newEntries;
+  const mergedChangelog = getMergedChangelog();
+  const displayEntries = showAll ? mergedChangelog : newEntries;
 
   const labelGotIt = language === "ar" ? "حسناً، شكراً! لن يظهر مجدداً" : "Got it, don't show again";
   const labelLater = language === "ar" ? "لاحقاً" : "Later";
@@ -214,7 +216,7 @@ export default function ChangelogModal({
                 />
               ))}
 
-              {!showAll && changelog.length > newEntries.length && (
+              {!showAll && mergedChangelog.length > newEntries.length && (
                 <motion.button
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

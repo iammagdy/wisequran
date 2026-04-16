@@ -23,7 +23,8 @@ import { RECITERS, DEFAULT_RECITER, getReciterAyahAudioUrl, getReciterAudioUrl }
 import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-editions";
 import { toast } from "sonner";
-import { APP_VERSION, changelog } from "@/data/changelog";
+import { APP_VERSION } from "@/data/changelog";
+import { getMergedChangelog } from "@/lib/changelog-overrides";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { mobileAudioManager } from "@/lib/mobile-audio";
@@ -2316,7 +2317,7 @@ export default function SettingsPage() {
             </SheetHeader>
             <ScrollArea className="h-full px-5 pb-8">
               <div className="space-y-8 pb-6" dir={language === "ar" ? "rtl" : "ltr"}>
-                {changelog.map((entry, entryIdx) => {
+                {getMergedChangelog().map((entry, entryIdx) => {
                   const cats = language === "en" ? entry.en : entry.ar;
                   const categoryOrder = ["features", "improvements", "fixes"] as const;
                   const categoryConfig = {

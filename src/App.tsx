@@ -8,6 +8,7 @@ import { AudioPlayerProvider } from "@/contexts/AudioPlayerContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import InstallBanner from "@/components/InstallBanner";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 import ChangelogModal from "@/components/ChangelogModal";
 import UpdateNotification from "@/components/UpdateNotification";
 import SplashScreen from "@/components/SplashScreen";
@@ -96,6 +97,7 @@ const AppContent = () => {
                 </Routes>
               </AppShell>
               <InstallBanner />
+              <MaintenanceBanner />
               <UpdateNotification />
             </>
           }
