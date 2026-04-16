@@ -267,8 +267,6 @@ export default function QiblaPage() {
     };
   }, [mode, language]);
 
-  const compassError = compassErrorKey ? t(compassErrorKey) : null;
-  const error = locationError || compassError;
 
   return (
     <div className="px-4 pt-6 pb-24 flex flex-col items-center fixed inset-0 overflow-y-auto touch-manipulation overscroll-none" dir={isRTL ? "rtl" : "ltr"}>
@@ -295,14 +293,14 @@ export default function QiblaPage() {
         </motion.button>
       </div>
 
-      {error ? (
+      {locationError ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="rounded-2xl bg-destructive/10 p-8 text-center w-full"
         >
           <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
-          <p className="text-destructive text-sm mb-4">{error}</p>
+          <p className="text-destructive text-sm mb-4">{locationError}</p>
           <button
             onClick={refreshLocation}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
