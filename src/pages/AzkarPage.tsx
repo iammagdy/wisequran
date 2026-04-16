@@ -55,15 +55,19 @@ function DhikrCounter({
   onComplete,
   isFavorite,
   onToggleFavorite,
+  alreadyDone,
+  onReset,
 }: {
   dhikr: Dhikr;
   fontSize: number;
   onComplete: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  alreadyDone: boolean;
+  onReset: () => void;
 }) {
   const { language, t } = useLanguage();
-  const [remaining, setRemaining] = useState(dhikr.count);
+  const [remaining, setRemaining] = useState(alreadyDone ? 0 : dhikr.count);
   const done = remaining === 0;
 
   const handleTap = () => {
@@ -73,6 +77,11 @@ function DhikrCounter({
       setRemaining(next);
       if (next === 0) onComplete();
     }
+  };
+
+  const handleReset = () => {
+    setRemaining(dhikr.count);
+    onReset();
   };
 
   return (
@@ -130,8 +139,9 @@ function DhikrCounter({
       <div className="flex items-center gap-2 mt-2">
         <motion.button
           whileTap={{ scale: 0.9 }}
-          onClick={() => setRemaining(dhikr.count)}
+          onClick={handleReset}
           className="rounded-xl p-2.5 text-muted-foreground hover:bg-muted transition-colors flex-shrink-0"
+          aria-label={t("reset") ?? "Reset"}
         >
           <RotateCcw className="h-4 w-4" />
         </motion.button>
@@ -169,17 +179,21 @@ function DhikrCounter({
 function CategoryCard({
   cat,
   isCategoryDone,
+  categoryProgress,
   isRTL,
   language,
   onClick,
 }: {
   cat: AzkarCategory;
   isCategoryDone: (id: string) => boolean;
+  categoryProgress: (id: string) => { done: number; total: number };
   isRTL: boolean;
   language: string;
   onClick: () => void;
 }) {
   const done = isCategoryDone(cat.id);
+  const progress = categoryProgress(cat.id);
+  const hasProgress = progress.done > 0 && !done;
   return (
     <motion.button
       initial={{ opacity: 0, y: 6 }}
@@ -208,11 +222,19 @@ function CategoryCard({
       </p>
       <span className={cn(
         "text-[10px] rounded-full px-1.5 py-0.5 font-medium w-fit",
-        done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+        done
+          ? "bg-primary/15 text-primary"
+          : hasProgress
+            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+            : "bg-muted text-muted-foreground"
       )}>
-        {language === "en"
-          ? `${cat.items.length}`
-          : toArabicNumerals(cat.items.length)}
+        {hasProgress
+          ? language === "en"
+            ? `${progress.done}/${progress.total}`
+            : `${toArabicNumerals(progress.done)}/${toArabicNumerals(progress.total)}`
+          : language === "en"
+            ? `${cat.items.length}`
+            : toArabicNumerals(cat.items.length)}
       </span>
     </motion.button>
   );
@@ -228,7 +250,7 @@ export default function AzkarPage() {
   const [expandedSections, setExpandedSections] = useLocalStorage<string[]>("wise-azkar-expanded-sections", ["daily"]);
   const [searchQuery, setSearchQuery] = useState("");
   const { markActive } = useStreak();
-  const { isCategoryDone } = useAzkarCompletion();
+  const { isCategoryDone, categoryProgress, isDhikrDone, markDhikrDone, resetDhikr } = useAzkarCompletion();
 
   const expandedSet = useMemo(() => new Set(expandedSections), [expandedSections]);
 
@@ -249,8 +271,8 @@ export default function AzkarPage() {
   };
 
   const favoriteDhikrItems = azkarData
-    .flatMap((cat) => cat.items)
-    .filter((d) => favoriteAzkar.includes(d.id));
+    .flatMap((cat) => cat.items.map((d) => ({ dhikr: d, categoryId: cat.id })))
+    .filter((entry) => favoriteAzkar.includes(entry.dhikr.id));
 
   const filteredSections = useMemo(() => {
     if (!searchQuery.trim()) return null;
@@ -346,14 +368,16 @@ export default function AzkarPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {favoriteDhikrItems.map((dhikr) => (
+                    {favoriteDhikrItems.map(({ dhikr, categoryId }) => (
                       <DhikrCounter
-                        key={dhikr.id}
+                        key={`${categoryId}:${dhikr.id}`}
                         dhikr={dhikr}
                         fontSize={fontSize}
-                        onComplete={() => markActive()}
+                        onComplete={() => { markDhikrDone(categoryId, dhikr.id); markActive(); }}
                         isFavorite={true}
                         onToggleFavorite={() => toggleFavorite(dhikr.id)}
+                        alreadyDone={isDhikrDone(categoryId, dhikr.id)}
+                        onReset={() => resetDhikr(categoryId, dhikr.id)}
                       />
                     ))}
                   </div>
@@ -374,6 +398,7 @@ export default function AzkarPage() {
                             key={cat.id}
                             cat={cat}
                             isCategoryDone={isCategoryDone}
+                            categoryProgress={categoryProgress}
                             isRTL={isRTL}
                             language={language}
                             onClick={() => setSelectedCategory(cat)}
@@ -453,6 +478,7 @@ export default function AzkarPage() {
                                   key={cat.id}
                                   cat={cat}
                                   isCategoryDone={isCategoryDone}
+                                  categoryProgress={categoryProgress}
                                   isRTL={isRTL}
                                   language={language}
                                   onClick={() => setSelectedCategory(cat)}
@@ -506,9 +532,11 @@ export default function AzkarPage() {
                   <DhikrCounter
                     dhikr={dhikr}
                     fontSize={fontSize}
-                    onComplete={() => markActive()}
+                    onComplete={() => { markDhikrDone(selectedCategory.id, dhikr.id); markActive(); }}
                     isFavorite={favoriteAzkar.includes(dhikr.id)}
                     onToggleFavorite={() => toggleFavorite(dhikr.id)}
+                    alreadyDone={isDhikrDone(selectedCategory.id, dhikr.id)}
+                    onReset={() => resetDhikr(selectedCategory.id, dhikr.id)}
                   />
                 </motion.div>
               ))}
