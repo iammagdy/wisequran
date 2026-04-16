@@ -1,9 +1,32 @@
-import { getDB, addToSyncQueue, recalculateAudioBytes } from "@/lib/db";
+import { getDB, addToSyncQueue, recalculateAudioBytes, saveAudio } from "@/lib/db";
 import type { SyncQueueEntry } from "@/lib/db";
 
 const WISE_LS_PREFIX = "wise-";
 const BACKUP_VERSION = 2;
 const SUPPORTED_VERSIONS = [1, 2] as const;
+// base64 inflates bytes by ~4/3; applied to audio size estimates.
+const BASE64_OVERHEAD = 4 / 3;
+
+function bufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, Math.min(i + chunk, bytes.length))),
+    );
+  }
+  return btoa(binary);
+}
+
+function base64ToBuffer(b64: string): ArrayBuffer {
+  const binary = atob(b64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
 
 interface AzkarItem {
   id: string;
@@ -29,6 +52,14 @@ interface TafsirEntry {
   ayahs: { numberInSurah: number; text: string }[];
 }
 
+interface AudioEntry {
+  id: string;
+  reciterId: string;
+  surahNumber: number;
+  // base64-encoded ArrayBuffer; decoded by restoreBackup.
+  data: string;
+}
+
 export interface BackupData {
   version: number;
   exportedAt: string;
@@ -39,16 +70,84 @@ export interface BackupData {
     surahCount: number;
     audioCount: number;
     tafsirCount: number;
-    // v2+ optional offline text content. Audio is intentionally
-    // excluded: ArrayBuffers can run into hundreds of MB and do not
-    // round-trip through JSON without ballooning.
+    // v2+ optional offline content. Audio blobs are base64-encoded
+    // inline; large, but the only format that round-trips through
+    // JSON without adding a ZIP dependency. Users can choose to
+    // exclude audio via the export options.
     surahs?: SurahEntry[];
     tafsir?: TafsirEntry[];
+    audio?: AudioEntry[];
   };
 }
 
 export interface ExportOptions {
   includeOfflineContent?: boolean;
+  includeAudio?: boolean;
+}
+
+export interface BackupSizeEstimate {
+  totalBytes: number;
+  localStorageBytes: number;
+  surahsBytes: number;
+  tafsirBytes: number;
+  audioBytes: number;
+  azkarBytes: number;
+}
+
+/**
+ * Estimates the on-disk size of a backup before export so the UI can
+ * warn the user about large archives (especially when audio is
+ * included). Does not serialize; counts bytes using IDB metadata and
+ * LS string lengths.
+ */
+export async function estimateBackupSize(options: ExportOptions = {}): Promise<BackupSizeEstimate> {
+  let lsBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(WISE_LS_PREFIX)) continue;
+    const value = localStorage.getItem(key) ?? "";
+    lsBytes += key.length + value.length;
+  }
+
+  const db = await getDB();
+  const azkar = await db.getAll("azkar");
+  const azkarBytes = new Blob([JSON.stringify(azkar)]).size;
+
+  let surahsBytes = 0;
+  let tafsirBytes = 0;
+  let audioBytes = 0;
+
+  if (options.includeOfflineContent) {
+    const surahs = await db.getAll("surahs");
+    surahsBytes = new Blob([JSON.stringify(surahs)]).size;
+    const tafsir = await db.getAll("tafsir");
+    tafsirBytes = new Blob([JSON.stringify(tafsir)]).size;
+  }
+
+  if (options.includeAudio) {
+    const audioKeys = (await db.getAllKeys("audio")) as string[];
+    // Pull each row lazily — byteLength is on the wrapped object, but
+    // getAllKeys doesn't give us sizes. Fall back to the LS tracker
+    // for an O(1) estimate when available.
+    const tracked = parseInt(localStorage.getItem("wise-audio-bytes-total") ?? "0", 10) || 0;
+    if (tracked > 0) {
+      audioBytes = Math.round(tracked * BASE64_OVERHEAD);
+    } else {
+      for (const key of audioKeys) {
+        const row = await db.get("audio", key);
+        if (row?.data) audioBytes += Math.round(row.data.byteLength * BASE64_OVERHEAD);
+      }
+    }
+  }
+
+  return {
+    totalBytes: lsBytes + azkarBytes + surahsBytes + tafsirBytes + audioBytes,
+    localStorageBytes: lsBytes,
+    surahsBytes,
+    tafsirBytes,
+    audioBytes,
+    azkarBytes,
+  };
 }
 
 export async function exportBackup(options: ExportOptions = {}): Promise<BackupData> {
@@ -85,6 +184,16 @@ export async function exportBackup(options: ExportOptions = {}): Promise<BackupD
     idb.tafsir = await db.getAll("tafsir");
   }
 
+  if (options.includeAudio) {
+    const rows = await db.getAll("audio");
+    idb.audio = rows.map((r) => ({
+      id: r.id,
+      reciterId: r.reciterId,
+      surahNumber: r.surahNumber,
+      data: bufferToBase64(r.data),
+    }));
+  }
+
   return {
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
@@ -111,6 +220,7 @@ export interface RestoreResult {
   syncQueueRestored: number;
   surahsRestored: number;
   tafsirRestored: number;
+  audioRestored: number;
 }
 
 function isAzkarEntry(value: unknown): value is AzkarEntry {
@@ -133,6 +243,17 @@ function isTafsirEntry(value: unknown): value is TafsirEntry {
     typeof v.editionId === "string" &&
     typeof v.surahNumber === "number" &&
     Array.isArray(v.ayahs)
+  );
+}
+
+function isAudioEntry(value: unknown): value is AudioEntry {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === "string" &&
+    typeof v.reciterId === "string" &&
+    typeof v.surahNumber === "number" &&
+    typeof v.data === "string"
   );
 }
 
@@ -204,12 +325,34 @@ export async function restoreBackup(data: BackupData): Promise<RestoreResult> {
     }
   }
 
+  let audioRestored = 0;
+  if (Array.isArray(data.idb?.audio)) {
+    await db.clear("audio");
+    for (const entry of data.idb.audio) {
+      if (!isAudioEntry(entry)) continue;
+      try {
+        const buffer = base64ToBuffer(entry.data);
+        await saveAudio(entry.reciterId, entry.surahNumber, buffer);
+        audioRestored++;
+      } catch {
+        // Skip malformed audio entries; keep restoring the rest.
+      }
+    }
+  }
+
   // The audio byte tracker lives in LS and may have been overwritten
   // by the restored snapshot. Recompute from the actual audio store
   // so storage stats stay accurate.
   await recalculateAudioBytes();
 
-  return { lsKeysRestored, azkarRestored, syncQueueRestored, surahsRestored, tafsirRestored };
+  return {
+    lsKeysRestored,
+    azkarRestored,
+    syncQueueRestored,
+    surahsRestored,
+    tafsirRestored,
+    audioRestored,
+  };
 }
 
 function validateBackupData(raw: unknown): raw is BackupData {

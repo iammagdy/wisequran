@@ -245,29 +245,51 @@ export async function clearAllLocalBookmarks(): Promise<void> {
  * array (`{surah, ayah}[]`) to the IDB store, under the **current
  * anonymous device** owner. Safe to call repeatedly; gated by a flag.
  */
+interface LegacyBookmarkInput {
+  surah: number;
+  ayah: number;
+  ayahText?: string;
+  surahName?: string;
+  note?: string;
+  bookmarked?: boolean;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 async function importBookmarkPairs(
   ownerKey: string,
-  pairs: Array<{ surah: number; ayah: number }>,
+  rows: LegacyBookmarkInput[],
   baseTimestamp: number,
 ): Promise<boolean> {
   let imported = false;
-  for (let i = 0; i < pairs.length; i++) {
-    const { surah, ayah } = pairs[i];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const surah = Number(row?.surah);
+    const ayah = Number(row?.ayah);
     if (!Number.isFinite(surah) || !Number.isFinite(ayah) || surah < 1 || ayah < 1) continue;
     const existing = await getBookmark(ownerKey, surah, ayah);
     if (existing) continue;
-    const ts = baseTimestamp - (pairs.length - i);
+    const fallbackTs = baseTimestamp - (rows.length - i);
+    const createdAt = Number.isFinite(row.createdAt) ? (row.createdAt as number) : fallbackTs;
+    const updatedAt = Number.isFinite(row.updatedAt) ? (row.updatedAt as number) : fallbackTs;
+    // Preserve any v6-only content (ayahText, note, …) rather than
+    // re-hydrating an empty stub. A row with only a note and no
+    // bookmark flag is still a valid record.
+    const note = typeof row.note === "string" ? row.note : "";
+    const bookmarkedExplicit = typeof row.bookmarked === "boolean" ? row.bookmarked : undefined;
+    const bookmarked = bookmarkedExplicit ?? (note ? false : true);
+    if (!bookmarked && !note) continue;
     const record: BookmarkRecord = {
       id: bookmarkKey(ownerKey, surah, ayah),
       ownerKey,
       surah,
       ayah,
-      ayahText: "",
-      surahName: "",
-      note: "",
-      bookmarked: true,
-      createdAt: ts,
-      updatedAt: ts,
+      ayahText: typeof row.ayahText === "string" ? row.ayahText : "",
+      surahName: typeof row.surahName === "string" ? row.surahName : "",
+      note,
+      bookmarked,
+      createdAt,
+      updatedAt,
     };
     await putBookmark(record);
     syncBookmarkUpsert(record);
@@ -283,15 +305,18 @@ export async function migrateLegacyBookmarks(): Promise<void> {
 
     // v6 → v7 IDB-rescued rows (see openDatabase upgrade callback).
     // Consumed once, regardless of the LS-legacy migration flag.
+    // Rows are the full v6 shape (surah, ayah, ayahText, note, …) —
+    // `importBookmarkPairs` preserves every field it knows about.
     const v6Raw = localStorage.getItem(V6_BOOKMARKS_BACKUP_LS_KEY);
     if (v6Raw) {
       try {
         const parsed = JSON.parse(v6Raw) as unknown;
         if (Array.isArray(parsed)) {
-          const pairs = parsed
-            .map((e) => ({ surah: Number((e as { surah?: unknown })?.surah), ayah: Number((e as { ayah?: unknown })?.ayah) }))
-            .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah));
-          const imported = await importBookmarkPairs(ownerKey, pairs, Date.now());
+          const imported = await importBookmarkPairs(
+            ownerKey,
+            parsed as LegacyBookmarkInput[],
+            Date.now(),
+          );
           if (imported) emitChange();
         }
       } catch {
@@ -305,10 +330,7 @@ export async function migrateLegacyBookmarks(): Promise<void> {
     if (raw) {
       const parsed = JSON.parse(raw) as unknown;
       if (Array.isArray(parsed)) {
-        const pairs = parsed
-          .map((e) => ({ surah: Number((e as { surah?: unknown })?.surah), ayah: Number((e as { ayah?: unknown })?.ayah) }))
-          .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah));
-        await importBookmarkPairs(ownerKey, pairs, Date.now());
+        await importBookmarkPairs(ownerKey, parsed as LegacyBookmarkInput[], Date.now());
       }
     }
     localStorage.setItem(MIGRATION_FLAG, "1");

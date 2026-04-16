@@ -260,7 +260,12 @@ export default function QuranPage() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         whileTap={{ scale: 0.99 }}
-        onClick={() => navigate(`/surah/${lastRead.surah}${lastRead.mode === "listening" ? "?mode=listening" : ""}`)}
+        onClick={() => {
+          const params = new URLSearchParams();
+          if (lastRead.mode === "listening") params.set("mode", "listening");
+          params.set("ayah", String(lastRead.ayah));
+          navigate(`/surah/${lastRead.surah}?${params.toString()}`);
+        }}
         data-testid="quran-home-featured-resume-card"
         className={cn(
           "flex w-full items-center rounded-[2rem] glass-card py-5 px-6 shadow-2xl border border-white/10 hover-lift gap-4 mb-4 relative overflow-hidden group",

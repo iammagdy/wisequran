@@ -84,7 +84,10 @@ export const V6_BOOKMARKS_BACKUP_LS_KEY = "wise-bookmarks-v6-backup";
 
 function openDatabase() {
   return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion, _newVersion, transaction) {
+    // NOTE: `idb` awaits the returned promise while keeping the upgrade
+    // transaction open, so we can safely read the old `bookmarks` store
+    // before deleting it. This is what makes the v6→v7 migration lossless.
+    async upgrade(db, oldVersion, _newVersion, transaction) {
       if (!db.objectStoreNames.contains("surahs")) {
         db.createObjectStore("surahs", { keyPath: "number" });
       }
@@ -103,35 +106,32 @@ function openDatabase() {
       if (!db.objectStoreNames.contains("syncQueue")) {
         db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
       }
-      // v6 → v7: reshape bookmarks to be owner-scoped. Salvage the
-      // (surah, ayah) pairs from any v6 rows into localStorage so the
-      // post-boot migration in `bookmarks.ts` can re-import them under
-      // the current anonymous owner — no data is silently lost.
+      // v6 → v7: reshape bookmarks to be owner-scoped. Copy the FULL v6
+      // rows (surah, ayah, ayahText, note, timestamps, …) into
+      // localStorage first; only delete the old store after the copy
+      // succeeds. The post-boot migration in `bookmarks.ts` rehydrates
+      // these rows under the current anonymous owner.
       if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
+        let copied = false;
         try {
           const oldStore = transaction.objectStore("bookmarks");
-          const req = oldStore.getAll() as unknown as IDBRequest<Array<{ surah?: unknown; ayah?: unknown }>>;
-          req.onsuccess = () => {
-            try {
-              const rows = req.result ?? [];
-              const pairs = rows
-                .map((r) => ({ surah: Number(r?.surah), ayah: Number(r?.ayah) }))
-                .filter((p) => Number.isFinite(p.surah) && Number.isFinite(p.ayah) && p.surah >= 1 && p.ayah >= 1);
-              if (pairs.length > 0) {
-                localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(pairs));
-              }
-            } catch {
-              /* ignore */
-            }
-          };
+          const rows = (await oldStore.getAll()) as Array<Record<string, unknown>>;
+          if (Array.isArray(rows) && rows.length > 0) {
+            localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
+          }
+          copied = true;
         } catch {
-          /* ignore */
+          // If we couldn't read the old store we leave it in place so
+          // the user still has the data on disk. A subsequent app load
+          // can retry the migration.
         }
-        db.deleteObjectStore("bookmarks");
-        try {
-          localStorage.removeItem("wise-bookmarks-migrated-v1");
-        } catch {
-          /* ignore */
+        if (copied) {
+          db.deleteObjectStore("bookmarks");
+          try {
+            localStorage.removeItem("wise-bookmarks-migrated-v1");
+          } catch {
+            /* ignore */
+          }
         }
       }
       if (!db.objectStoreNames.contains("bookmarks")) {

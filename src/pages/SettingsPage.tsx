@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Loader as Loader2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, CircleCheck as CheckCircle, RotateCcw, Star, Clock, Pause, MoveVertical as MoreVertical, Menu, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff, ArchiveRestore, ArchiveX } from "lucide-react";
-import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup } from "@/lib/backup";
+import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup, estimateBackupSize, type BackupSizeEstimate } from "@/lib/backup";
 import { clearAllLocalBookmarks } from "@/lib/bookmarks";
 import { useAuth } from "@/contexts/AuthContext";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
@@ -127,6 +127,8 @@ export default function SettingsPage() {
   const [previewingAdhan, setPreviewingAdhan] = useState<string | null>(null);
   const [adhanPreviewLoading, setAdhanPreviewLoading] = useState<string | null>(null);
   const [backupBusy, setBackupBusy] = useState(false);
+  const [backupSizeEstimate, setBackupSizeEstimate] = useState<BackupSizeEstimate | null>(null);
+  const [backupSizeLoading, setBackupSizeLoading] = useState(false);
   const [pendingBackup, setPendingBackup] = useState<import("@/lib/backup").BackupData | null>(null);
   const backupImportRef = useRef<HTMLInputElement>(null);
 
@@ -478,10 +480,10 @@ export default function SettingsPage() {
     toast.success(t("settings_toast_tafsir_cleared"));
   };
 
-  const handleExportBackup = async (includeOfflineContent = false) => {
+  const handleExportBackup = async (includeOfflineContent = false, includeAudio = false) => {
     setBackupBusy(true);
     try {
-      const data = await exportBackup({ includeOfflineContent });
+      const data = await exportBackup({ includeOfflineContent, includeAudio });
       downloadBackupFile(data);
       toast.success(language === "ar" ? "تم تصدير النسخة الاحتياطية" : "Backup exported successfully");
     } catch {
@@ -490,6 +492,25 @@ export default function SettingsPage() {
       setBackupBusy(false);
     }
   };
+
+  // Estimates the "include everything" archive size so the user knows
+  // what they're downloading before they click export. Refreshed when
+  // the Backup & Restore card becomes visible.
+  const refreshBackupEstimate = useCallback(async () => {
+    setBackupSizeLoading(true);
+    try {
+      const est = await estimateBackupSize({ includeOfflineContent: true, includeAudio: true });
+      setBackupSizeEstimate(est);
+    } catch {
+      setBackupSizeEstimate(null);
+    } finally {
+      setBackupSizeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshBackupEstimate();
+  }, [refreshBackupEstimate]);
 
   const handleImportBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2248,8 +2269,8 @@ export default function SettingsPage() {
 
             <p className="text-xs text-muted-foreground">
               {isRTL
-                ? "احفظ تقدمك (الحفظ، القراءة، الأذكار، الأوراد، قائمة المزامنة) في ملف JSON للاستعادة على أي جهاز. الملفات الصوتية ونص القرآن المحملان لا يُضمَّنان ويمكن إعادة تحميلهما."
-                : "Save your progress (hifz, reading, azkar, wird, pending sync) to a JSON file and restore it on any device. Downloaded audio and Quran text are not included — they can be re-downloaded."}
+                ? "احفظ تقدمك (الحفظ، القراءة، الأذكار، الأوراد، قائمة المزامنة) في ملف JSON للاستعادة على أي جهاز. يمكن أيضًا تضمين نص القرآن والتفاسير والملفات الصوتية المحملة."
+                : "Save your progress (hifz, reading, azkar, wird, pending sync) to a JSON file and restore it on any device. Downloaded Quran text, tafsir, and audio can optionally be included."}
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -2275,14 +2296,57 @@ export default function SettingsPage() {
             </div>
 
             <button
-              onClick={() => void handleExportBackup(true)}
+              onClick={() => void handleExportBackup(true, false)}
               disabled={backupBusy}
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/5 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50">
               <Download className="h-3.5 w-3.5" />
-              {isRTL
-                ? "تصدير شامل (يضم نص القرآن والتفاسير المخزَّنة)"
-                : "Export including offline Quran text & tafsir"}
+              <span>
+                {isRTL
+                  ? "تصدير شامل (نص القرآن والتفاسير)"
+                  : "Export with offline Quran text & tafsir"}
+                {backupSizeEstimate ? (
+                  <span className="ms-1 opacity-70">
+                    ≈ {formatBytes(
+                      backupSizeEstimate.localStorageBytes +
+                        backupSizeEstimate.azkarBytes +
+                        backupSizeEstimate.surahsBytes +
+                        backupSizeEstimate.tafsirBytes,
+                    )}
+                  </span>
+                ) : null}
+              </span>
             </button>
+
+            <button
+              onClick={() => void handleExportBackup(true, true)}
+              disabled={backupBusy || (backupSizeEstimate?.audioBytes ?? 0) === 0}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-50">
+              <Download className="h-3.5 w-3.5" />
+              <span>
+                {isRTL
+                  ? "تصدير كامل (يضم الصوتيات المحمَّلة)"
+                  : "Full export with downloaded audio"}
+                {backupSizeEstimate ? (
+                  <span className="ms-1 opacity-70">
+                    ≈ {formatBytes(backupSizeEstimate.totalBytes)}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+
+            {backupSizeEstimate && backupSizeEstimate.audioBytes > 50 * 1024 * 1024 ? (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                {isRTL
+                  ? "تنبيه: تضمين الصوتيات ينتج ملفًا كبيرًا قد لا يستورده بعض الأجهزة ذات الذاكرة المحدودة."
+                  : "Heads-up: including audio produces a large file that may be hard to import on low-memory devices."}
+              </p>
+            ) : null}
+
+            {backupSizeLoading ? (
+              <p className="text-[11px] text-muted-foreground">
+                {isRTL ? "جار حساب الحجم…" : "Estimating size…"}
+              </p>
+            ) : null}
 
             <input
               ref={backupImportRef}
