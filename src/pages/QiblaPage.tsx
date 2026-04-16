@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLocation, calculateDistance, getMagneticDeclination } from "@/hooks/useLocation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { toast } from "sonner";
 
 // Kaaba coordinates
 const KAABA_LAT = 21.4225;
@@ -49,7 +50,6 @@ export default function QiblaPage() {
   const [isAligned, setIsAligned] = useState(false);
   const [mode, setMode] = useState<"2D" | "3D">("2D");
   const [cameraReady, setCameraReady] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lastVibration = useRef(0);
   const smoothedHeading = useRef<number | null>(null);
@@ -240,14 +240,15 @@ export default function QiblaPage() {
           videoRef.current.srcObject = mediaStream;
           stream = mediaStream;
           setCameraReady(true);
-          setCameraError(null);
         }
       } catch (err) {
         console.error("Camera error:", err);
-        setCameraError(
+        setMode("2D");
+        setCameraReady(false);
+        toast.message(
           language === "ar"
-            ? "يرجى السماح بالوصول إلى الكاميرا"
-            : "Please allow camera access"
+            ? "تعذّر الوصول إلى الكاميرا — تم التبديل إلى البوصلة 2D"
+            : "Camera unavailable — switched to 2D compass"
         );
       }
     };
@@ -338,21 +339,11 @@ export default function QiblaPage() {
           {/* 3D AR Mode */}
           {mode === "3D" && qiblaBearing !== null && (
             <AnimatePresence mode="wait">
-              {cameraError ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="rounded-2xl bg-destructive/10 p-8 text-center w-full"
-                >
-                  <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
-                  <p className="text-destructive text-sm">{cameraError}</p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="relative w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden shadow-elevated bg-black"
-                >
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative w-full max-w-md aspect-[3/4] rounded-3xl overflow-hidden shadow-elevated bg-black"
+              >
                   <video
                     ref={videoRef}
                     autoPlay
@@ -497,8 +488,7 @@ export default function QiblaPage() {
                       </div>
                     </>
                   )}
-                </motion.div>
-              )}
+              </motion.div>
             </AnimatePresence>
           )}
 

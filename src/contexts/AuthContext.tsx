@@ -14,12 +14,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+// Auth debug logs are dev-only. In production builds (import.meta.env.DEV === false),
+// this constant is statically false and the entire console.log call below is removed
+// by the bundler's dead-code elimination, so no `[Auth Debug]` lines reach the
+// production browser console. Real failures still flow through `console.error`.
 const DEBUG_AUTH = import.meta.env.DEV;
 
-function logAuthDebug(message: string, data?: unknown) {
-  if (DEBUG_AUTH) {
-    console.log(`[Auth Debug] ${message}`, data ?? '');
-  }
+function logAuthDebug(message: string, data?: unknown): void {
+  if (!DEBUG_AUTH) return;
+  console.log(`[Auth Debug] ${message}`, data ?? '');
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

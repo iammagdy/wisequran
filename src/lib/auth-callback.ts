@@ -1,11 +1,13 @@
 import { supabase } from "./supabase";
 
+// Dev-only debug logger. `import.meta.env.DEV` is a Vite build-time constant,
+// so in production builds the body below is dead-code-eliminated and no
+// `[Auth Callback Debug]` messages appear in the user's console.
 const DEBUG_AUTH = import.meta.env.DEV;
 
-function logAuthDebug(message: string, data?: unknown) {
-  if (DEBUG_AUTH) {
-    console.log(`[Auth Callback Debug] ${message}`, data ?? '');
-  }
+function logAuthDebug(message: string, data?: unknown): void {
+  if (!DEBUG_AUTH) return;
+  console.log(`[Auth Callback Debug] ${message}`, data ?? '');
 }
 
 export async function handleAuthCallback() {
