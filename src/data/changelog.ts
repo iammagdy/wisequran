@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.4.0";
+export const APP_VERSION = "3.5.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,30 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.5.0",
+    date: "2026-04-16",
+    ar: {
+      improvements: [
+        "تصفّح القرآن والتفسير أصبح أسرع وأسلس — الصفحات الطويلة مثل سورة البقرة تُعرض بدون أي تعثّر",
+        "لا تضيع بياناتك عند انقطاع الإنترنت — تُحفظ تلقائياً وتُزامَن بهدوء عند العودة للإنترنت",
+        "الانتقال إلى آية بعيدة يُضيء الآية المقصودة بتأثير خفيف حتى تعرف دائماً أين وصلت",
+        "مشغّل الصوت أكثر توفيراً للبطارية — أداؤه نفسه، لكنه يستهلك طاقة أقل في الخلفية",
+        "اختصارات الشاشة الرئيسية محسّنة مع لقطات شاشة واضحة عند تثبيت التطبيق",
+        "نحن نعمل باستمرار على تحسين هذا التطبيق وصيانته — التحديثات والإصلاحات لا تتوقف أبداً",
+      ],
+    },
+    en: {
+      improvements: [
+        "Browsing the Quran and Tafsir is now much faster — long surahs like Al-Baqarah scroll without any slowdown",
+        "Your data is never lost offline — it saves automatically and syncs quietly when your connection returns",
+        "Jumping to a faraway ayah now highlights it with a gentle glow so you always know exactly where you are",
+        "The audio player is easier on your battery — same smooth experience, less power used in the background",
+        "Improved home screen shortcuts and a better install experience with clear screenshots",
+        "We are always working on this app, fixing and improving it — updates never stop",
+      ],
+    },
+  },
   {
     version: "3.4.0",
     date: "2026-03-27",
