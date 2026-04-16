@@ -342,9 +342,13 @@ export default function SettingsPage() {
       e.preventDefault();
       setDeferredPrompt(e);
     };
+    const installedHandler = () => setIsInstalled(true);
     window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', () => setIsInstalled(true));
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
   }, [isStandalone]);
 
   const handleInstall = async () => {

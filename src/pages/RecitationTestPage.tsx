@@ -152,6 +152,7 @@ export default function RecitationTestPage() {
 
   // Refs
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const lastTranscriptRef = useRef("");
   const silentAudioRef = useRef<HTMLAudioElement | null>(null);
   const currentAyahRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -174,6 +175,19 @@ export default function RecitationTestPage() {
   const recitationHistory = useRecitationHistory();
   const meta = SURAH_META[surahNumber - 1];
   const isListening = speech.status === "listening";
+
+  const trackTimer = useCallback((id: ReturnType<typeof setTimeout>) => {
+    pendingTimersRef.current.push(id);
+    return id;
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      pendingTimersRef.current.forEach(clearTimeout);
+      pendingTimersRef.current = [];
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     setAyahFrom(1);
@@ -235,13 +249,13 @@ export default function RecitationTestPage() {
     currentAyahIndexRef.current = nextIdx;
     lastTranscriptRef.current = "";
     // Scroll the new current card into view
-    setTimeout(() => {
+    trackTimer(setTimeout(() => {
       const el = currentAyahRefs.current[nextIdx];
       if (el && verseListRef.current) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-    }, 100);
-  }, [finalizeResults]);
+    }, 100));
+  }, [finalizeResults, trackTimer]);
 
   // ── Core evaluation (called on silence or word-count trigger) ──────
   const runEvaluation = useCallback((transcript: string, forceAdvance: boolean) => {
@@ -274,7 +288,7 @@ export default function RecitationTestPage() {
       setAyahStates(updated);
       ayahStatesRef.current = updated;
 
-      setTimeout(() => {
+      trackTimer(setTimeout(() => {
         setIsEvaluating(false);
         advanceToNext(updated, idx + 1);
         // Reset after advance
@@ -282,18 +296,18 @@ export default function RecitationTestPage() {
         speech.reset();
         // If there are more verses, restart mic after short pause
         if (idx + 1 < updated.length) {
-          setTimeout(() => {
+          trackTimer(setTimeout(() => {
             if (!silentAudioRef.current) {
               silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
             }
             silentAudioRef.current.play().catch(() => {});
             speech.start();
-          }, 400);
+          }, 400));
         }
-      }, 800);
+      }, 800));
     }
     // If score is low but not forcing: do nothing, keep listening
-  }, [advanceToNext, speech]);
+  }, [advanceToNext, speech, trackTimer]);
 
   // ── Watch transcript for real-time pass detection + silence timer ──
   useEffect(() => {
@@ -411,20 +425,20 @@ export default function RecitationTestPage() {
     setAyahStates(updated);
     ayahStatesRef.current = updated;
 
-    setTimeout(() => {
+    trackTimer(setTimeout(() => {
       advanceToNext(updated, idx + 1);
       if (idx + 1 < updated.length) {
-        setTimeout(() => {
+        trackTimer(setTimeout(() => {
           lastTranscriptRef.current = "";
           if (!silentAudioRef.current) {
             silentAudioRef.current = new Audio("data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDA=");
           }
           silentAudioRef.current.play().catch(() => {});
           speech.start();
-        }, 350);
+        }, 350));
       }
-    }, 200);
-  }, [advanceToNext, speech]);
+    }, 200));
+  }, [advanceToNext, speech, trackTimer]);
 
   // ── Reset ──────────────────────────────────────────────────────────
   const handleTryAgain = useCallback(() => {

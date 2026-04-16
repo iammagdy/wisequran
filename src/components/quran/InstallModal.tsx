@@ -44,7 +44,7 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
             {/* Taller aspect ratio and object-contain to ensure full phone screen visibility */}
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-muted/20 shadow-inner w-full aspect-[4/5] relative">
               <img
-                src="/ios_install_guide.png"
+                src="/ios_install_guide.jpg"
                 alt="iOS Install Guide"
                 className="absolute inset-0 w-full h-full object-contain p-2"
               />
@@ -88,7 +88,7 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
             {/* Taller aspect ratio and object-contain to ensure full phone screen visibility */}
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-muted/20 shadow-inner w-full aspect-[4/5] relative">
               <img
-                src="/android_install_guide.png"
+                src="/android_install_guide.jpg"
                 alt="Android Install Guide"
                 className="absolute inset-0 w-full h-full object-contain p-2"
               />
