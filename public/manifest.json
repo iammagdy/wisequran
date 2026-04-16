@@ -37,5 +37,89 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "القرآن الكريم",
+      "short_name": "القرآن",
+      "description": "تصفح وقرا القرآن الكريم",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "الصلوات",
+      "short_name": "الصلوات",
+      "description": "مواقيت الصلاة وتتبع الأداء",
+      "url": "/prayer",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "الأذكار",
+      "short_name": "الأذكار",
+      "description": "أذكار الصباح والمساء والأدعية",
+      "url": "/azkar",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "التسبيح",
+      "short_name": "التسبيح",
+      "description": "عداد التسبيح الرقمي",
+      "url": "/tasbeeh",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/quran-home.png",
+      "sizes": "500x715",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الصفحة الرئيسية للقرآن الكريم"
+    },
+    {
+      "src": "/screenshots/surah-reader.png",
+      "sizes": "500x715",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "قراءة السور القرآنية"
+    },
+    {
+      "src": "/screenshots/azkar.png",
+      "sizes": "500x715",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الأذكار والأدعية"
+    },
+    {
+      "src": "/screenshots/settings.png",
+      "sizes": "500x715",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "الإعدادات والتخصيص"
+    }
   ]
 }
