@@ -54,8 +54,8 @@ const slideVariants = {
 
 const transition = {
   type: "spring" as const,
-  stiffness: 380,
-  damping: 38,
+  stiffness: 520,
+  damping: 42,
   mass: 0.8,
 };
 

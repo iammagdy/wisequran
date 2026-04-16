@@ -52,7 +52,11 @@ const AppContent = () => {
   const { showChangelog, newEntries, dismissTemporary, dismissPermanent } = usePostUpdateChangelog();
   return (
     <>
-      <Suspense fallback={null}>
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+        </div>
+      }>
       <Routes>
         <Route path="/signin" element={<SignInPage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
