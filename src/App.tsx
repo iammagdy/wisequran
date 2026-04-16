@@ -19,6 +19,8 @@ const prefetchTopTabs = () => {
   import("@/pages/PrayerPage");
   import("@/pages/AzkarPage");
   import("@/pages/TasbeehPage");
+  // Settings is accessed frequently but is a large chunk — prefetch while idle
+  import("@/pages/SettingsPage");
 };
 
 const QuranPage = lazy(() => import("@/pages/QuranPage"));

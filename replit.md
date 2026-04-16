@@ -35,6 +35,14 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 5. Sleep Mode with gradual audio fade-out and nature sounds
 6. Ramadan tracker, Azkar collections, stats dashboard
 
+## Performance Notes
+
+- **SettingsPage chunk** is prefetched during idle time after app startup (alongside main tabs)
+- **Audio byte tracking**: `db.ts` maintains `wise-audio-bytes-total` in localStorage (updated by `saveAudio`/`deleteAudio`/`clearAllAudio`). `getStorageStats()` reads this O(1) instead of loading all audio ArrayBuffers from IDB.
+- **`getAllDownloadedAudio()`** uses key-only IDB scan (`getAllKeys`) to avoid loading ArrayBuffers.
+- **AudioPlayerContext** is split into 3 separate contexts to minimize re-renders; `timeupdate` is suppressed when the page is hidden.
+- **Developer control panel** at `/devkit` (PIN: "devkit") — session-locked, standalone route outside AppShell.
+
 ## Development
 
 ```bash

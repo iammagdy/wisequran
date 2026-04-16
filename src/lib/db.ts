@@ -118,9 +118,32 @@ export async function deleteSurah(number: number) {
   await db.delete("surahs", number);
 }
 
+// ── Audio byte tracking ────────────────────────────────────────────────────
+// Store the running total in localStorage so getStorageStats() never has to
+// load audio ArrayBuffers just to count bytes.
+const AUDIO_BYTES_LS_KEY = "wise-audio-bytes-total";
+
+function getTrackedAudioBytes(): number {
+  return parseInt(localStorage.getItem(AUDIO_BYTES_LS_KEY) ?? "0", 10) || 0;
+}
+function addTrackedAudioBytes(n: number) {
+  localStorage.setItem(AUDIO_BYTES_LS_KEY, String(getTrackedAudioBytes() + n));
+}
+function subtractTrackedAudioBytes(n: number) {
+  localStorage.setItem(AUDIO_BYTES_LS_KEY, String(Math.max(0, getTrackedAudioBytes() - n)));
+}
+function resetTrackedAudioBytes() {
+  localStorage.removeItem(AUDIO_BYTES_LS_KEY);
+}
+
 export async function saveAudio(reciterId: string, surahNumber: number, data: ArrayBuffer) {
   const db = await getDB();
-  await db.put("audio", { id: audioKey(reciterId, surahNumber), reciterId, surahNumber, data });
+  const key = audioKey(reciterId, surahNumber);
+  // If overwriting, subtract old size first
+  const existing = await db.get("audio", key);
+  if (existing) subtractTrackedAudioBytes(existing.data.byteLength);
+  await db.put("audio", { id: key, reciterId, surahNumber, data });
+  addTrackedAudioBytes(data.byteLength);
 }
 
 export async function getAudio(reciterId: string, surahNumber: number) {
@@ -130,13 +153,24 @@ export async function getAudio(reciterId: string, surahNumber: number) {
 
 export async function deleteAudio(reciterId: string, surahNumber: number) {
   const db = await getDB();
-  await db.delete("audio", audioKey(reciterId, surahNumber));
+  const key = audioKey(reciterId, surahNumber);
+  const existing = await db.get("audio", key);
+  if (existing) subtractTrackedAudioBytes(existing.data.byteLength);
+  await db.delete("audio", key);
 }
 
+/**
+ * Returns downloaded surah numbers for a given reciter using key-only scan
+ * (never loads ArrayBuffer data — fast O(n) over keys, not values).
+ */
 export async function getAllDownloadedAudio(reciterId: string): Promise<number[]> {
   const db = await getDB();
-  const all = await db.getAll("audio");
-  return all.filter((a) => a.reciterId === reciterId).map((a) => a.surahNumber);
+  const prefix = reciterId + "-";
+  const allKeys = (await db.getAllKeys("audio")) as string[];
+  return allKeys
+    .filter((k) => k.startsWith(prefix))
+    .map((k) => parseInt(k.slice(prefix.length), 10))
+    .filter((n) => !isNaN(n));
 }
 
 export async function getAllAudioEntries() {
@@ -147,6 +181,7 @@ export async function getAllAudioEntries() {
 export async function clearAllAudio() {
   const db = await getDB();
   await db.clear("audio");
+  resetTrackedAudioBytes();
 }
 
 export async function clearAllData() {
@@ -154,6 +189,7 @@ export async function clearAllData() {
   await db.clear("surahs");
   await db.clear("azkar");
   await db.clear("audio");
+  resetTrackedAudioBytes();
 }
 
 export async function clearSurahsStore() {
@@ -246,7 +282,14 @@ export async function checkStorageQuota(): Promise<{
   }
 }
 
-/** Calculate storage usage breakdown in bytes */
+/**
+ * Calculate storage usage breakdown.
+ *
+ * Fast path: audio bytes are read from the localStorage tracker
+ * (updated by saveAudio/deleteAudio/clearAllAudio) so we never
+ * have to load audio ArrayBuffers just to count bytes.
+ * Surah and tafsir text sizes are computed from their (small) JSON.
+ */
 export async function getStorageStats(): Promise<{
   quranText: number;
   audio: number;
@@ -258,21 +301,24 @@ export async function getStorageStats(): Promise<{
 }> {
   const db = await getDB();
 
-  // Quran text
+  // Use key-only queries where possible — no data loaded
+  const [surahKeys, audioKeys, tafsirKeys] = await Promise.all([
+    db.getAllKeys("surahs"),
+    db.getAllKeys("audio"),
+    db.getAllKeys("tafsir"),
+  ]);
+
+  // Surah text: read data only for text size (small JSON, no ArrayBuffers)
   const allSurahs = await db.getAll("surahs");
   let quranText = 0;
   for (const s of allSurahs) {
     quranText += new Blob([JSON.stringify(s)]).size;
   }
 
-  // Audio
-  const allAudio = await db.getAll("audio");
-  let audio = 0;
-  for (const a of allAudio) {
-    audio += a.data.byteLength;
-  }
+  // Audio: read from localStorage tracker — O(1), no IDB data read
+  const audio = getTrackedAudioBytes();
 
-  // Tafsir
+  // Tafsir: small JSON, read for size
   const allTafsir = await db.getAll("tafsir");
   let tafsir = 0;
   for (const t of allTafsir) {
@@ -284,9 +330,9 @@ export async function getStorageStats(): Promise<{
     audio,
     tafsir,
     total: quranText + audio + tafsir,
-    audioCount: allAudio.length,
-    surahCount: allSurahs.length,
-    tafsirCount: allTafsir.length,
+    audioCount: audioKeys.length,
+    surahCount: surahKeys.length,
+    tafsirCount: tafsirKeys.length,
   };
 }
 
