@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { DK } from "./devkit-utils";
+import { DK, downloadJson, exportFilename } from "./devkit-utils";
 
 interface LSEntry {
   key: string;
@@ -158,6 +158,15 @@ export default function LocalStoragePanel() {
     load();
   };
 
+  const exportData = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      count: entries.length,
+      keys: entries.map((e) => ({ key: e.key, value: parseValue(e.raw) })),
+    };
+    downloadJson(payload, exportFilename("localstorage"));
+  };
+
   const addKey = () => {
     if (!newKey.trim()) return;
     const k = newKey.startsWith("wise-") ? newKey.trim() : `wise-${newKey.trim()}`;
@@ -182,6 +191,13 @@ export default function LocalStoragePanel() {
           </span>
           <div className="flex gap-2">
             <button onClick={load} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
+            <button
+              onClick={exportData}
+              disabled={entries.length === 0}
+              className={`${DK.btnBase} ${DK.btnGray}`}
+            >
+              Export JSON ↓
+            </button>
             <button onClick={nukeAll} className={`${DK.btnBase} ${DK.btnRed}`}>
               Nuke all wise-*
             </button>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getAllSyncQueueEntries, type SyncQueueEntry } from "@/lib/db";
 import { flushSyncQueue } from "@/lib/syncQueue";
 import { getDB } from "@/lib/db";
-import { DK, formatTs, jsonPreview } from "./devkit-utils";
+import { DK, formatTs, jsonPreview, downloadJson, exportFilename } from "./devkit-utils";
 
 export default function SyncQueuePanel() {
   const [entries, setEntries] = useState<SyncQueueEntry[]>([]);
@@ -43,6 +43,17 @@ export default function SyncQueuePanel() {
     } catch {}
   };
 
+  const exportData = () => {
+    downloadJson(
+      {
+        exportedAt: new Date().toISOString(),
+        count: entries.length,
+        entries,
+      },
+      exportFilename("syncqueue"),
+    );
+  };
+
   const deleteEntry = async (id: number) => {
     if (!confirm(`Delete entry #${id}?`)) return;
     try {
@@ -68,6 +79,13 @@ export default function SyncQueuePanel() {
           </div>
           <div className="flex gap-2">
             <button onClick={() => void load()} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
+            <button
+              onClick={exportData}
+              disabled={entries.length === 0}
+              className={`${DK.btnBase} ${DK.btnGray}`}
+            >
+              Export JSON ↓
+            </button>
             <button
               onClick={() => void flush()}
               disabled={flushing || entries.length === 0 || !navigator.onLine}

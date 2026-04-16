@@ -20,6 +20,24 @@ export function jsonPreview(value: unknown, maxLen = 120): string {
   }
 }
 
+/** Download any object as a pretty-printed JSON file. */
+export function downloadJson(data: unknown, filename: string): void {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Build a timestamped export filename, e.g. wise-localstorage-2026-04-16.json */
+export function exportFilename(prefix: string): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `wise-${prefix}-${date}.json`;
+}
+
 export const DK = {
   bg: "bg-[#0d1117]",
   sidebar: "bg-[#161b22]",

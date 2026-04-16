@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getDB, clearAllData, clearAllTafsir, clearAllAudio, clearSurahsStore, clearAzkarStore, getAllSyncQueueEntries } from "@/lib/db";
-import { DK, formatBytes } from "./devkit-utils";
+import { DK, formatBytes, downloadJson, exportFilename } from "./devkit-utils";
 
 interface StoreStats {
   surahs: number;
@@ -82,6 +82,17 @@ export default function IndexedDBPanel() {
     return () => clearInterval(id);
   }, []);
 
+  const exportData = () => {
+    downloadJson(
+      {
+        exportedAt: new Date().toISOString(),
+        stats,
+        audioFiles: audioEntries,
+      },
+      exportFilename("indexeddb-stats"),
+    );
+  };
+
   const act = async (fn: () => Promise<void>, label: string) => {
     if (!confirm(`${label}?`)) return;
     setLoading(true);
@@ -145,6 +156,13 @@ export default function IndexedDBPanel() {
           <span className={`font-mono text-xs uppercase tracking-widest ${DK.muted}`}>Stores</span>
           <div className="flex gap-2">
             <button onClick={() => void load()} className={`${DK.btnBase} ${DK.btnGray}`}>↻</button>
+            <button
+              onClick={exportData}
+              disabled={!stats}
+              className={`${DK.btnBase} ${DK.btnGray}`}
+            >
+              Export JSON ↓
+            </button>
             <button
               onClick={() => act(async () => {
                 await clearAllData();
