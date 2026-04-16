@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useSyncQueue } from "@/hooks/useSyncQueue";
+import { useSyncQueueContext } from "@/contexts/SyncQueueContext";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
 function QuranIcon({ active }: { active: boolean }) {
@@ -82,7 +82,7 @@ const basePaths = [
 export default function BottomNav() {
   const location = useLocation();
   const { t } = useLanguage();
-  const { pendingCount } = useSyncQueue();
+  const { pendingCount } = useSyncQueueContext();
   const showSyncBadge = isSupabaseConfigured && pendingCount > 0;
 
   return (

@@ -44,7 +44,7 @@ import {
 import FadeSection from "@/components/layout/FadeSection";
 import InstallModal from "@/components/quran/InstallModal";
 import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
-import { useSyncQueue } from "@/hooks/useSyncQueue";
+import { useSyncQueueContext } from "@/contexts/SyncQueueContext";
 
 const loadDBModule = () => import("@/lib/settings-storage");
 
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   const isIOS = browserType === "ios-safari";
   const installInstructions = getInstallInstructions(browserType, language);
   const { user, signOut } = useAuth();
-  const { pendingCount, flushing, flush } = useSyncQueue();
+  const { pendingCount, flushing, flush } = useSyncQueueContext();
   const navigate = useNavigate();
   const [showChangelog, setShowChangelog] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
