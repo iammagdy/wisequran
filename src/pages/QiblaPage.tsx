@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Navigation, MapPin, CircleAlert as AlertCircle, RefreshCw, Lock, Clock as Unlock, Info, Smartphone, Compass, Camera, CircleCheck as CheckCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Navigation, MapPin, RefreshCw, Lock, Info, Smartphone, Compass, Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLocation, calculateDistance, getMagneticDeclination } from "@/hooks/useLocation";

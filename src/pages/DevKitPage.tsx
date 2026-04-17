@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import AppStatusPanel from "@/components/devkit/AppStatusPanel";
+import VitalsPanel from "@/components/devkit/VitalsPanel";
 import LocalStoragePanel from "@/components/devkit/LocalStoragePanel";
 import IndexedDBPanel from "@/components/devkit/IndexedDBPanel";
 import SyncQueuePanel from "@/components/devkit/SyncQueuePanel";
@@ -21,6 +22,7 @@ const ADMIN_EMAIL = "Magdy.saber@outlook.com";
 
 type PanelKey =
   | "status"
+  | "vitals"
   | "localstorage"
   | "indexeddb"
   | "syncqueue"
@@ -41,6 +43,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { key: "status",        label: "App Status",       icon: "◉",  desc: "Runtime environment, network & service worker state" },
+  { key: "vitals",        label: "Web Vitals",       icon: "📊", desc: "Real-user LCP, CLS, INP and TTFB for the current session" },
   { key: "localstorage",  label: "LocalStorage",     icon: "🗄", desc: "Browse and live-edit wise-* keys" },
   { key: "indexeddb",     label: "IndexedDB",        icon: "💾", desc: "IDB stores, audio cache, byte usage" },
   { key: "syncqueue",     label: "Sync Queue",       icon: "⇅",  desc: "Pending server sync operations" },
@@ -54,7 +57,7 @@ const NAV: NavItem[] = [
 ];
 
 const SECTIONS: { label: string; keys: PanelKey[] }[] = [
-  { label: "Monitoring", keys: ["status"] },
+  { label: "Monitoring", keys: ["status", "vitals"] },
   { label: "Data",       keys: ["localstorage", "indexeddb", "syncqueue"] },
   { label: "Controls",   keys: ["controls", "userdata", "audio", "notifications"] },
   { label: "Content",    keys: ["changelog", "featureflags", "backup"] },
@@ -371,6 +374,7 @@ function MobileDrawer({
 function Panel({ id }: { id: PanelKey }) {
   switch (id) {
     case "status":        return <AppStatusPanel />;
+    case "vitals":        return <VitalsPanel />;
     case "localstorage":  return <LocalStoragePanel />;
     case "indexeddb":     return <IndexedDBPanel />;
     case "syncqueue":     return <SyncQueuePanel />;

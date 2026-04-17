@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft, ArrowRight, BookOpen, CircleCheck as CheckCircle2, Circle, Loader as Loader2,
-  RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp,
-  Headphones, BookOpenCheck,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Circle, RotateCcw, Check, Clock, Sparkles, Flame, Target, ChevronDown, ChevronUp, Headphones, BookOpenCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SURAH_META } from "@/data/surah-meta";
 import { useHifz, type HifzStatus } from "@/hooks/useHifz";

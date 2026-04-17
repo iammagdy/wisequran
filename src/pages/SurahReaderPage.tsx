@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } fr
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Loader as Loader2, Search, Maximize2, Headphones, MoreVertical, NotebookPen } from "lucide-react";
+import { ArrowRight, Bookmark, BookmarkCheck, Star, BookOpen, Search, Maximize2, Headphones, MoreVertical, NotebookPen } from "lucide-react";
 import { ShareAyahCard } from "@/components/quran/ShareAyahCard";
 import AyahActionsSheet from "@/components/quran/AyahActionsSheet";
 import { useBookmarks } from "@/hooks/useBookmarks";

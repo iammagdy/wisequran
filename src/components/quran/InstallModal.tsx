@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Smartphone, Share, MoreVertical, Monitor, Download, Check, X, Chrome, LucideIcon } from "lucide-react";
+import { Smartphone, Share, MoreVertical, Chrome, LucideIcon } from "lucide-react";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -43,11 +43,17 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
           <TabsContent value="ios" className="focus-visible:outline-none flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pb-6 space-y-5">
             {/* Taller aspect ratio and object-contain to ensure full phone screen visibility */}
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-muted/20 shadow-inner w-full aspect-[4/5] relative">
-              <img
-                src="/ios_install_guide.jpg"
-                alt="iOS Install Guide"
-                className="absolute inset-0 w-full h-full object-contain p-2"
-              />
+              {/* Phase D: serve AVIF / WebP first, fall back to the
+                  original JPG so older browsers still see the asset. */}
+              <picture>
+                <source srcSet="/ios_install_guide.avif" type="image/avif" />
+                <source srcSet="/ios_install_guide.webp" type="image/webp" />
+                <img
+                  src="/ios_install_guide.jpg"
+                  alt="iOS Install Guide"
+                  className="absolute inset-0 w-full h-full object-contain p-2"
+                />
+              </picture>
             </div>
 
             <div className="space-y-3" dir={isRTL ? "rtl" : "ltr"}>
@@ -87,11 +93,15 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
           <TabsContent value="android" className="focus-visible:outline-none flex flex-col flex-1 min-h-0 overflow-y-auto px-6 pb-6 space-y-5">
             {/* Taller aspect ratio and object-contain to ensure full phone screen visibility */}
             <div className="rounded-2xl overflow-hidden border border-white/10 bg-muted/20 shadow-inner w-full aspect-[4/5] relative">
-              <img
-                src="/android_install_guide.jpg"
-                alt="Android Install Guide"
-                className="absolute inset-0 w-full h-full object-contain p-2"
-              />
+              <picture>
+                <source srcSet="/android_install_guide.avif" type="image/avif" />
+                <source srcSet="/android_install_guide.webp" type="image/webp" />
+                <img
+                  src="/android_install_guide.jpg"
+                  alt="Android Install Guide"
+                  className="absolute inset-0 w-full h-full object-contain p-2"
+                />
+              </picture>
             </div>
 
             <div className="space-y-3" dir={isRTL ? "rtl" : "ltr"}>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import SurahOfflineButton from "@/components/quran/SurahOfflineButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";

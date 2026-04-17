@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, Download, Loader as Loader2, WifiOff, Check, X, Timer, Repeat } from "lucide-react";
+import { Play, Pause, Download, WifiOff, Check, X, Timer, Repeat } from "lucide-react";
 import { downloadSurahForOffline, isSurahFullyOffline, formatBytes } from "@/lib/offline-surah";
 import { DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";

@@ -1,5 +1,5 @@
 import { useRef, useCallback } from "react";
-import { Share2, Download } from "lucide-react";
+import { Share2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface ShareAyahCardProps {

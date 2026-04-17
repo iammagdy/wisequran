@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Bell, CheckCircle2, ClipboardList, Mic, RefreshCw, Smartphone, Volume2, Wifi } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, ClipboardList, Mic, Smartphone, Volume2, Wifi } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";

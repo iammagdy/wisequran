@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Play, Pause, Loader as Loader2, SkipBack, SkipForward, Check, Copy } from "lucide-react";
+import { X, Play, Pause, SkipBack, SkipForward, Check, Copy } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";

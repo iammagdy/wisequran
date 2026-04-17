@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CircleCheck as CheckCircle2, Circle as XCircle, RotateCcw, Trophy, CircleAlert as AlertCircle, ChevronDown, ChevronUp, SkipForward } from "lucide-react";
+import { RotateCcw, Trophy, ChevronDown, ChevronUp, SkipForward } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import type { StrictnessLevel, PerAyahScoreResult, WordDiff } from "@/lib/ayah-match";

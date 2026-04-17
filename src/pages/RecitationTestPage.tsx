@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  ArrowLeft, ArrowRight, TriangleAlert as AlertTriangle,
-  History, ChevronDown, ChevronUp, TrendingUp,
-  Check, X, SkipForward, Mic, Square,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, History, ChevronDown, ChevronUp, TrendingUp, Check, X, SkipForward, Mic, Square } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SURAH_META } from "@/data/surah-meta";
