@@ -29,6 +29,9 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   const [cached, setCached] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [dlProgress, setDlProgress] = useState(0);
+  // Held in a ref so the cancel handler can reach the controller
+  // without triggering re-renders on every progress tick.
+  const dlAbortRef = useRef<AbortController | null>(null);
 
   const [timerActive, setTimerActive] = useState(false);
   const [timerRemaining, setTimerRemaining] = useState(0);
@@ -75,10 +78,12 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   };
 
   const handleDownload = async () => {
+    const controller = new AbortController();
+    dlAbortRef.current = controller;
     setDownloading(true);
     setDlProgress(0);
     try {
-      const size = await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress);
+      const size = await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress, controller.signal);
       const check = await getAudio(player.reciterId, surahNumber);
       if (check && audioByteLength(check.data) > 1024) {
         setCached(true);
@@ -87,10 +92,30 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         toast.error(language === "en" ? "Failed to save audio — try again" : "فشل حفظ الصوت — حاول مرة أخرى");
       }
     } catch (e) {
-      toast.error(language === "en" ? (e instanceof Error ? e.message : "Failed to download audio") : (e instanceof Error ? e.message : "فشل تحميل الصوت"));
+      // AbortError is the user's own cancel — show a quieter toast and
+      // skip the generic "failed" message. Partial IDB rows are
+      // already cleaned up inside `downloadSurahAudio`.
+      if (e instanceof DOMException && e.name === "AbortError") {
+        toast(language === "en" ? "Download cancelled" : "تم إلغاء التحميل");
+      } else {
+        toast.error(language === "en" ? (e instanceof Error ? e.message : "Failed to download audio") : (e instanceof Error ? e.message : "فشل تحميل الصوت"));
+      }
+    } finally {
+      dlAbortRef.current = null;
+      setDownloading(false);
     }
-    setDownloading(false);
   };
+
+  const handleCancelDownload = () => {
+    dlAbortRef.current?.abort();
+  };
+
+  // Abort any in-flight download when the bar unmounts (route change,
+  // modal close, etc.) so background fetches don't keep eating data
+  // and partial rows get cleaned up immediately.
+  useEffect(() => {
+    return () => { dlAbortRef.current?.abort(); };
+  }, []);
 
   const startTimer = (minutes: number) => {
     const secs = minutes * 60;
@@ -251,9 +276,17 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 </motion.button>
               )}
               {downloading && (
-                <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-[0.625rem] text-muted-foreground">
+                <span className="flex items-center gap-1 rounded-full bg-muted pl-3 pr-1 py-1 text-[0.625rem] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  {language === "ar" ? toArabicNumerals(`${dlProgress}%`) : `${dlProgress}%`}
+                  <span>{language === "ar" ? toArabicNumerals(`${dlProgress}%`) : `${dlProgress}%`}</span>
+                  <button
+                    type="button"
+                    onClick={handleCancelDownload}
+                    aria-label={language === "ar" ? "إلغاء التحميل" : "Cancel download"}
+                    className="ml-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </span>
               )}
               {cached && !downloading && (

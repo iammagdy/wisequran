@@ -133,10 +133,32 @@ export async function fetchAudioFromUrl(
  * Download surah audio trying multiple URLs with comprehensive verification.
  * Returns the size in bytes of the downloaded audio.
  */
+/** ~4 MB — chosen to be larger than typical TCP receive bursts so the
+ * IDB write rate stays well under one transaction per second, while
+ * still bounding the in-flight Blob to a small fraction of the full
+ * file. */
+const STREAM_FLUSH_BYTES = 4 * 1024 * 1024;
+
+/**
+ * Stream-download a surah recitation directly into IndexedDB.
+ *
+ * Unlike a buffer-then-save approach, this version periodically calls
+ * `saveAudio` with the *growing* Blob as new network chunks arrive.
+ * Combined with lazy Blob composition, that means:
+ *  - Peak JS-heap pressure stays in the single-digit MB range even
+ *    for ~80 MB recitations (Al-Baqarah).
+ *  - If the user closes the tab mid-download, IDB already holds the
+ *    bytes received so far (a final integrity check on the next visit
+ *    can keep or drop them).
+ *  - Aborting via `signal` cancels the in-flight fetch *and* deletes
+ *    any partial row, so cancelled downloads never leave half-written
+ *    audio behind.
+ */
 export async function downloadSurahAudio(
   reciterId: string,
   surahNumber: number,
-  onProgress?: (pct: number) => void
+  onProgress?: (pct: number) => void,
+  signal?: AbortSignal,
 ): Promise<number> {
   const storageCheck = await checkStorageQuota();
 
@@ -144,41 +166,37 @@ export async function downloadSurahAudio(
     throw new Error("مساحة التخزين ممتلئة تقريباً. يرجى حذف بعض البيانات أولاً");
   }
 
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
   const urls = await getReciterAudioUrls(reciterId, surahNumber);
   let lastError: Error | null = null;
 
   for (let i = 0; i < urls.length; i++) {
+    if (signal?.aborted) {
+      await deleteAudio(reciterId, surahNumber).catch(() => {});
+      throw new DOMException("Aborted", "AbortError");
+    }
     try {
       logger.debug(`[audio-dl] trying source ${i + 1}/${urls.length}: ${urls[i].substring(0, 80)}...`);
-      const blob = await fetchAudioFromUrl(urls[i], onProgress);
+      const blob = await streamAudioToIdb(
+        urls[i],
+        reciterId,
+        surahNumber,
+        storageCheck,
+        onProgress,
+        signal,
+      );
       const blobSize = blob.size;
 
       if (blobSize < MIN_AUDIO_SIZE) {
         logger.warn(`[audio-dl] source ${i + 1} too small (${blobSize}B), skipping`);
+        await deleteAudio(reciterId, surahNumber).catch(() => {});
         continue;
       }
 
-      // Validate magic bytes against the head of the Blob — only the
-      // first 50 bytes are read into RAM, so this is cheap regardless
-      // of total file size.
-      if (!(await isValidAudioBlob(blob))) {
-        logger.warn(`[audio-dl] source ${i + 1} not valid audio (${blobSize}B), skipping`);
-        continue;
-      }
-
-      if (!storageCheck.hasEnoughSpace(blobSize)) {
-        throw new Error("مساحة التخزين غير كافية لحفظ هذا الملف");
-      }
-
-      try {
-        await saveAudio(reciterId, surahNumber, blob);
-      } catch (e: unknown) {
-        if (e instanceof Error && e.name === 'QuotaExceededError') {
-          throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
-        }
-        throw e;
-      }
-
+      // Final magic-byte check on the persisted row.
       const verified = await getAudio(reciterId, surahNumber);
       const verifiedSize = audioByteLength(verified?.data);
       if (!verified || verifiedSize < MIN_AUDIO_SIZE) {
@@ -192,24 +210,130 @@ export async function downloadSurahAudio(
         throw new Error("الملف المحفوظ تالف أو غير صالح");
       }
 
-      if (verifiedBlob.size < MIN_AUDIO_SIZE) {
-        await deleteAudio(reciterId, surahNumber);
-        throw new Error("فشل إنشاء ملف صوتي قابل للتشغيل");
-      }
-
       onProgress?.(100);
-      logger.debug(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(blobSize)})`);
+      logger.debug(`[audio-dl] ✓ streamed surah ${surahNumber} (${formatBytes(blobSize)})`);
       return blobSize;
     } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
+      const err = e instanceof Error ? e : new Error(String(e));
+      // Propagate aborts immediately — don't try the next mirror.
+      if (err.name === "AbortError") {
+        await deleteAudio(reciterId, surahNumber).catch(() => {});
+        throw err;
+      }
+      lastError = err;
       logger.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
       onProgress?.(0);
-
       await deleteAudio(reciterId, surahNumber).catch(() => {});
     }
   }
 
   throw new Error(`فشل تحميل الصوت من جميع المصادر: ${lastError?.message ?? "خطأ غير معروف"}`);
+}
+
+/**
+ * Inner streaming loop. Fetches `url`, validates the first chunk's
+ * magic bytes, and incrementally `saveAudio`s the growing Blob to
+ * IDB. Returns the final accumulated Blob.
+ */
+async function streamAudioToIdb(
+  url: string,
+  reciterId: string,
+  surahNumber: number,
+  storageCheck: { hasEnoughSpace: (bytes: number) => boolean },
+  onProgress: ((pct: number) => void) | undefined,
+  signal: AbortSignal | undefined,
+): Promise<Blob> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90_000);
+  const onExternalAbort = () => controller.abort();
+  signal?.addEventListener("abort", onExternalAbort);
+
+  try {
+    const res = await fetch(url, { signal: controller.signal, mode: "cors" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const contentType = res.headers.get("Content-Type") || "audio/mpeg";
+    if (contentType.includes("text/html")) {
+      throw new Error("Server returned HTML instead of audio");
+    }
+    const blobType = contentType.startsWith("audio/") ? contentType : "audio/mpeg";
+    const contentLength = Number(res.headers.get("Content-Length") || 0);
+    const reader = res.body?.getReader();
+
+    let blob = new Blob([], { type: blobType });
+    let received = 0;
+    let bytesSinceFlush = 0;
+    let validated = false;
+
+    const flush = async () => {
+      try {
+        await saveAudio(reciterId, surahNumber, blob);
+        bytesSinceFlush = 0;
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "QuotaExceededError") {
+          throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
+        }
+        throw e;
+      }
+    };
+
+    if (reader) {
+      try {
+        while (true) {
+          if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+          const { done, value } = await reader.read();
+          if (done) break;
+          blob = new Blob([blob, value], { type: blobType });
+          received += value.length;
+          bytesSinceFlush += value.length;
+
+          // Cheap up-front validation on the first chunk to bail out
+          // of HTML 404 pages before we waste the whole download.
+          if (!validated && blob.size >= 4) {
+            validated = true;
+            if (!(await isValidAudioBlob(blob))) {
+              throw new Error("Source did not return audio data");
+            }
+          }
+
+          // Storage-quota guard recomputed against accumulated size.
+          if (!storageCheck.hasEnoughSpace(received)) {
+            throw new Error("مساحة التخزين غير كافية لحفظ هذا الملف");
+          }
+
+          if (contentLength > 0) {
+            onProgress?.(Math.round((received / contentLength) * 100));
+          }
+
+          if (bytesSinceFlush >= STREAM_FLUSH_BYTES) await flush();
+        }
+      } catch (err) {
+        try { await reader.cancel(); } catch { /* ignore */ }
+        throw err;
+      }
+    } else {
+      // No streaming reader — fall back to a single Blob fetch but
+      // still go through `saveAudio` so the storage path stays
+      // identical.
+      const fallback = await res.blob();
+      blob = fallback.type ? fallback : new Blob([fallback], { type: blobType });
+      received = blob.size;
+      validated = await isValidAudioBlob(blob);
+      if (!validated) throw new Error("Source did not return audio data");
+      if (!storageCheck.hasEnoughSpace(received)) {
+        throw new Error("مساحة التخزين غير كافية لحفظ هذا الملف");
+      }
+      onProgress?.(100);
+    }
+
+    // Final flush: persist whatever we accumulated since the last
+    // periodic write.
+    await flush();
+    return blob;
+  } finally {
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onExternalAbort);
+  }
 }
 
 /**
