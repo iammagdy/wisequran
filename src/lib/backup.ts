@@ -186,12 +186,20 @@ export async function exportBackup(options: ExportOptions = {}): Promise<BackupD
 
   if (options.includeAudio) {
     const rows = await db.getAll("audio");
-    idb.audio = rows.map((r) => ({
-      id: r.id,
-      reciterId: r.reciterId,
-      surahNumber: r.surahNumber,
-      data: bufferToBase64(r.data),
-    }));
+    // Audio rows are now Blob-backed (v8 schema). `bufferToBase64`
+    // expects an ArrayBuffer, so we materialize each Blob into one
+    // here. Legacy ArrayBuffer rows pass through `audioToBlob` as a
+    // zero-copy wrap, then `arrayBuffer()` returns the original.
+    // Only the JSON export path needs this — the binary `.wqb` path
+    // streams Blobs directly without ever touching base64.
+    idb.audio = await Promise.all(
+      rows.map(async (r) => ({
+        id: r.id,
+        reciterId: r.reciterId,
+        surahNumber: r.surahNumber,
+        data: bufferToBase64(await audioToBlob(r.data).arrayBuffer()),
+      })),
+    );
   }
 
   return {
