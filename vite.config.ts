@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
+import imageVariants from "./scripts/vite-image-variants-plugin.mjs";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
@@ -12,6 +13,11 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [
+    // Phase D: emit AVIF/WebP siblings for static raster assets in
+    // `public/` at build start so the install modal (and any future
+    // <picture> consumer) can serve modern formats with PNG/JPG
+    // fallbacks. Re-runs are no-ops once outputs are up-to-date.
+    imageVariants(),
     react(),
     VitePWA({
       // Phase C: switched from generateSW to injectManifest so the

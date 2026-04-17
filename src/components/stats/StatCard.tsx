@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import {  } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
