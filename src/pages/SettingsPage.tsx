@@ -51,6 +51,115 @@ import { useSyncQueueContext } from "@/contexts/SyncQueueContext";
 
 const loadDBModule = () => import("@/lib/settings-storage");
 
+/**
+ * Phase C — Device storage row.
+ *
+ * Surfaces `navigator.storage.estimate()` (used / quota) and offers a
+ * one-tap `navigator.storage.persist()` opt-in. Persisted storage is
+ * less likely to be evicted by the OS under disk pressure, which
+ * matters once a user has downloaded a few hundred MB of recitations.
+ *
+ * Both APIs are best-effort: on browsers that don't expose
+ * `navigator.storage` (notably some older WebViews) the row hides
+ * itself silently rather than showing a confusing empty state.
+ */
+function DeviceStorageRow() {
+  const { language } = useLanguage();
+  const supported =
+    typeof navigator !== "undefined" &&
+    !!navigator.storage &&
+    typeof navigator.storage.estimate === "function";
+
+  const [estimate, setEstimate] = useState<{ usage: number; quota: number } | null>(null);
+  const [persisted, setPersisted] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(async () => {
+    if (!supported) return;
+    try {
+      const e = await navigator.storage.estimate();
+      setEstimate({ usage: e.usage ?? 0, quota: e.quota ?? 0 });
+    } catch {
+      /* ignore */
+    }
+    if (navigator.storage.persisted) {
+      try {
+        setPersisted(await navigator.storage.persisted());
+      } catch {
+        setPersisted(null);
+      }
+    }
+  }, [supported]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  const requestPersist = useCallback(async () => {
+    if (!supported || !navigator.storage.persist) return;
+    setBusy(true);
+    try {
+      const granted = await navigator.storage.persist();
+      setPersisted(granted);
+      toast[granted ? "success" : "info"](
+        granted
+          ? language === "ar"
+            ? "تم تفعيل التخزين الدائم"
+            : "Persistent storage enabled"
+          : language === "ar"
+            ? "لم يمنح المتصفح التخزين الدائم"
+            : "Browser declined persistent storage",
+      );
+    } finally {
+      setBusy(false);
+      void refresh();
+    }
+  }, [supported, language, refresh]);
+
+  if (!supported || !estimate) return null;
+
+  const used = estimate.usage;
+  const quota = estimate.quota;
+  const pct = quota > 0 ? Math.min(100, (used / quota) * 100) : 0;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium">
+          {language === "ar" ? "مساحة الجهاز" : "Device storage"}
+        </span>
+        <span className="text-xs text-muted-foreground tabular-nums">
+          {formatBytes(used)} / {quota > 0 ? formatBytes(quota) : "—"}
+        </span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-gradient-to-l from-primary to-primary/70 transition-all"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      {persisted === true ? (
+        <p className="flex items-center gap-1.5 text-[0.6875rem] text-primary">
+          <CheckCircle className="h-3 w-3" />
+          {language === "ar"
+            ? "التخزين الدائم مفعّل — لن يحذف المتصفح ملفاتك تلقائياً"
+            : "Persistent storage on — your downloads won't be auto-evicted"}
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={requestPersist}
+          disabled={busy}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 py-2 text-xs font-medium text-primary transition hover:bg-primary/10 disabled:opacity-50"
+        >
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HardDrive className="h-3.5 w-3.5" />}
+          {language === "ar" ? "تفعيل التخزين الدائم" : "Enable persistent storage"}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { theme, toggleTheme, uiScale, setUIScale } = useTheme();
   const [hijriOffset, setHijriOffset] = useState<number>(() => getHijriOffsetDays());
@@ -2265,6 +2374,18 @@ export default function SettingsPage() {
                 {storageStats.total === 0 &&
               <p className="text-center text-xs text-muted-foreground py-2">{t("storage_empty")}</p>
               }
+
+                <Separator />
+
+                {/* Phase C: device storage estimate + persist toggle.
+                    `navigator.storage.estimate()` reports the OS-level
+                    quota for our origin so users can see how close they
+                    are to eviction; `persist()` asks the OS to mark the
+                    site's storage as durable so the IDB rows holding
+                    downloaded surahs aren't reclaimed under disk
+                    pressure. Both are best-effort and silently no-op
+                    on browsers that don't expose the Storage API. */}
+                <DeviceStorageRow />
               </> :
             null}
           </motion.div>

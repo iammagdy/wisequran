@@ -73,6 +73,48 @@ function isFridayNow() {
   return new Date().getDay() === 5;
 }
 
+/**
+ * Phase C: register Periodic Background Sync where the browser supports
+ * it. The SW responds to the `wise-reminders` tag by re-rehydrating the
+ * adhan timer and broadcasting `WISE_REARM_REMINDERS` back to clients,
+ * which causes the hook below to call `scheduleFridayReminderInSW()`
+ * with a fresh `fireAt`. This guards against multi-day closed-tab
+ * windows where the SW's `setTimeout` could otherwise be evicted.
+ *
+ * On unsupported browsers (Safari, Firefox, and Chromium without the
+ * site permission) the call returns false and the existing in-tab
+ * `setInterval` keeps doing the work whenever the app is open.
+ */
+async function registerReminderPeriodicSync(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
+  try {
+    const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
+      periodicSync?: { register: (tag: string, opts?: { minInterval: number }) => Promise<void> };
+    };
+    if (!reg.periodicSync) return false;
+    // Permissions API gate — periodic-sync requires an explicit grant
+    // and silently rejects without it.
+    const perms = (navigator as Navigator & {
+      permissions?: { query: (d: { name: string }) => Promise<PermissionStatus> };
+    }).permissions;
+    if (perms) {
+      try {
+        const status = await perms.query({ name: "periodic-background-sync" });
+        if (status.state !== "granted") return false;
+      } catch {
+        return false;
+      }
+    }
+    await reg.periodicSync.register("wise-reminders", {
+      minInterval: 12 * 60 * 60 * 1000, // ~twice a day; browser may throttle.
+    });
+    return true;
+  } catch (err) {
+    logger.debug("[friday] periodic-sync register skipped:", err);
+    return false;
+  }
+}
+
 export function useFridayReminders() {
   useEffect(() => {
     const checkReminder = () => {
@@ -103,8 +145,30 @@ export function useFridayReminders() {
     // even if the PWA tab is closed by Friday morning.
     if (localStorage.getItem(ENABLED_KEY) === "true") {
       void scheduleFridayReminderInSW();
+      void registerReminderPeriodicSync();
     }
     const interval = window.setInterval(checkReminder, 60_000);
-    return () => window.clearInterval(interval);
+
+    // SW periodic-sync wakeup: clear the cached "already scheduled"
+    // marker so the next post resends a fresh `fireAt` to the SW.
+    const handleSwMessage = (ev: MessageEvent) => {
+      const data = ev.data as { type?: string } | null;
+      if (data?.type === "WISE_REARM_REMINDERS") {
+        if (localStorage.getItem(ENABLED_KEY) === "true") {
+          localStorage.removeItem(SW_SCHEDULED_KEY);
+          void scheduleFridayReminderInSW();
+        }
+      }
+    };
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.addEventListener("message", handleSwMessage);
+    }
+
+    return () => {
+      window.clearInterval(interval);
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+      }
+    };
   }, []);
 }

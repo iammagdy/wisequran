@@ -60,8 +60,35 @@ async function persistToQueue(
   try {
     await addToSyncQueue({ table, operation, payload, onConflict, timestamp: Date.now() });
     notifyQueueChanged();
+    // Phase C: ask the SW to fire `sync` when connectivity returns,
+    // so the queue drains even if the tab is closed at the time the
+    // network comes back. Silently no-ops on browsers without
+    // Background Sync — `useSyncQueue.ts` still flushes on the
+    // existing online/visibility events as a fallback.
+    void registerBackgroundSync();
   } catch (queueErr) {
     logger.warn("[syncQueue] Failed to persist entry:", queueErr);
+  }
+}
+
+/**
+ * Best-effort Background Sync registration. Returns true when the
+ * browser accepted the registration (Chromium, Edge, Samsung Internet
+ * with the PWA installed); false otherwise — Safari and Firefox both
+ * fall into the false branch and the regular online/visibility-event
+ * flush in `useSyncQueue.ts` does the work.
+ */
+export async function registerBackgroundSync(): Promise<boolean> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
+  try {
+    const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
+      sync?: { register: (tag: string) => Promise<void> };
+    };
+    if (!reg.sync) return false;
+    await reg.sync.register("wise-sync-queue");
+    return true;
+  } catch {
+    return false;
   }
 }
 

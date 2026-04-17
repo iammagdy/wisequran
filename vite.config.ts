@@ -14,128 +14,30 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     VitePWA({
+      // Phase C: switched from generateSW to injectManifest so the
+      // adhan + Friday reminder scheduler, Background Sync, and
+      // Periodic Background Sync hooks live in a first-class TS
+      // source file (`src/sw.ts`) instead of being grafted onto the
+      // generated SW via `importScripts`.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       registerType: "prompt",
       injectRegister: "auto",
-      // Note: assets listed here are *referenced* by the SW so they can be
-      // fetched on demand, but they are NOT all forcibly precached. The
-      // workbox.globPatterns below decides what's actually precached on
-      // install. We deliberately keep audio out of precache (it's huge
-      // and is persisted into IDB by `src/lib/quran-audio.ts`).
       includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
-      workbox: {
-        // Trim precache: drop `mp3` (audio is on the IDB path) and `jpg`
-        // (install-guide screenshots are large and on-demand). Audio
-        // adhan files still resolve at runtime via the CacheFirst
-        // strategy below the first time the user plays one.
+      injectManifest: {
+        // Same precache budget as before: app shell + entry/vendor
+        // chunks. Audio stays out of precache (it's persisted into
+        // IDB by `src/lib/quran-audio.ts`); install-guide screenshots
+        // and lazy route chunks are fetched on demand.
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        // Keep precache lean: only the app shell + entry/vendor chunks.
-        // Lazy-loaded route chunks (`*Page-<hash>.js`) and the recharts
-        // chunk (only needed by /stats) are fetched on demand and cached
-        // at runtime by the navigation handler. Skipping them keeps
-        // cold-install precache under 2 MB.
         globIgnores: [
           "**/audio/**",
           "**/screenshots/**",
           "**/assets/*Page-*.js",
           "**/assets/charts-vendor-*.js",
         ],
-        // Hard cap on any single precached file so we can't accidentally
-        // pull a giant asset back into the precache through a loose
-        // globPattern in the future.
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/auth/, /^\/api\//],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        // Pulls our SW-side adhan scheduler into the generated SW so
-        // it can fire prayer notifications even when the page is
-        // backgrounded. See `public/sw-adhan.js` for the protocol.
-        importScripts: ["/sw-adhan.js"],
-        runtimeCaching: [
-          {
-            urlPattern: /\/data\/tafsir\/.*\.json$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "offline-tafsir-cache",
-              expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /\/data\/wbw\/.*\.json$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "offline-wbw-cache",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https?:\/\/.*\/audio\/adhan\/.*\.mp3$/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "local-adhan-audio-cache",
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/api\.alquran\.cloud\/v1\/.*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "quran-api-cache",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/api\.quran\.com\/api\/v4\/.*/i,
-            handler: "StaleWhileRevalidate",
-            options: {
-              cacheName: "quran-foundation-api-cache",
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/download\.quranicaudio\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "quranic-audio-cache",
-              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/.*\.mp3quran\.net\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "mp3quran-audio-cache",
-              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/cdn\.islamic\.network\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "adhan-audio-cache",
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/assets\.mixkit\.co\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "chime-audio-cache",
-              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          // Google Fonts runtime caches removed: fonts are now self-hosted
-          // via @fontsource and bundled into the app's own static assets,
-          // so no third-party request is made.
-        ],
       },
       manifest: false,
       devOptions: {

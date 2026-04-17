@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Headphones, GraduationCap, Mic, ArrowLeft, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, Flame, ChartBar as BarChart3, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
+import SurahOfflineButton from "@/components/quran/SurahOfflineButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useBookmarks } from "@/hooks/useBookmarks";
 import { useDailyReading } from "@/hooks/useDailyReading";
@@ -503,14 +504,26 @@ export default function QuranPage() {
                   <div key={i} className="h-[68px] rounded-xl shimmer" />
                 ))
               : filteredSurahs.map((surah, i) => (
-                  <motion.button
+                  // Refactored from `<motion.button>` to a div+role="button"
+                  // so we can host the nested SurahOfflineButton (a real
+                  // <button>) inside the card without violating HTML's
+                  // "no nested interactive elements" rule.
+                  <motion.div
                     key={surah.number}
+                    role="button"
+                    tabIndex={0}
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: Math.min(i * 0.012, 0.35) }}
                     onClick={() => handleSurahSelect(surah.number)}
-                    className="flex w-full items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-sm hover:shadow-xl transition-all active:scale-[0.99] group border border-white/5 hover:border-primary/20 relative overflow-hidden">
-                    
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSurahSelect(surah.number);
+                      }
+                    }}
+                    className="flex w-full cursor-pointer items-center gap-4 rounded-2xl glass-card px-5 py-4 shadow-sm hover:shadow-xl transition-all active:scale-[0.99] group border border-white/5 hover:border-primary/20 relative overflow-hidden">
+
                     <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                     <div className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/10 group-hover:bg-primary/10 group-hover:border-primary/20 transition-all shadow-inner font-serif font-bold text-foreground/80 group-hover:text-primary">
@@ -537,10 +550,12 @@ export default function QuranPage() {
                       </p>
                     </div>
 
+                    <SurahOfflineButton surahNumber={surah.number} />
+
                     <div className="relative z-10 shrink-0 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0">
                       <ChevronRight className="h-5 w-5 text-primary/40" />
                     </div>
-                  </motion.button>
+                  </motion.div>
                 ))}
           </motion.div>
         )}
