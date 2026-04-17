@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.5.0";
+export const APP_VERSION = "3.6.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,26 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.6.0",
+    date: "2026-04-17",
+    ar: {
+      improvements: [
+        "تحسينات في الأداء خلف الكواليس لتجربة أسرع وأخف",
+        "صور دليل التثبيت ولقطات الشاشة أصبحت أصغر حجماً وأوضح، فيُفتح التطبيق ويُثبَّت بشكل أسرع",
+        "تنظيف داخلي للكود لتقليل حجم التطبيق وتسريع التحميل",
+        "نحن نعمل باستمرار على تحسين هذا التطبيق وصيانته — التحديثات والإصلاحات لا تتوقف أبداً",
+      ],
+    },
+    en: {
+      improvements: [
+        "Behind-the-scenes performance tuning for a faster, lighter experience",
+        "Install guide images and PWA screenshots are now smaller and sharper, so installing the app is quicker",
+        "Internal cleanup to reduce the app size and speed up loading",
+        "We are always working on this app, fixing and improving it — updates never stop",
+      ],
+    },
+  },
   {
     version: "3.5.0",
     date: "2026-04-16",
