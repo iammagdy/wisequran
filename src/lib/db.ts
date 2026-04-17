@@ -347,6 +347,18 @@ export async function clearAllTafsir() {
   await db.clear("tafsir");
 }
 
+/**
+ * Targeted deletion helper used by the Phase C "Download for offline"
+ * orchestrator to roll back a freshly-warmed tafsir entry when the
+ * user cancels mid-download. Best-effort — failures are swallowed
+ * since they only affect cache hygiene, not correctness. (For surah
+ * text the existing `deleteSurah(number)` above is reused.)
+ */
+export async function deleteTafsir(editionId: string, surahNumber: number): Promise<void> {
+  const db = await getDB();
+  await db.delete("tafsir", tafsirKey(editionId, surahNumber));
+}
+
 export async function addToSyncQueue(entry: Omit<SyncQueueEntry, "id">): Promise<void> {
   const db = await getDB();
   await db.add("syncQueue", entry as SyncQueueEntry);

@@ -1,7 +1,14 @@
 import { downloadSurahAudio, formatBytes } from "./quran-audio";
 import { fetchSurahAyahs } from "./quran-api";
 import { isOfflineTafsirEdition, loadOfflineTafsirSurah } from "./offline-tafsir";
-import { getSurah, getAudio, getTafsir, audioByteLength } from "./db";
+import {
+  getSurah,
+  getAudio,
+  getTafsir,
+  audioByteLength,
+  deleteSurah,
+  deleteTafsir,
+} from "./db";
 import { logger } from "./logger";
 
 /**
@@ -54,6 +61,26 @@ export async function downloadSurahForOffline(args: {
     onProgress?.(unifiedPct);
   };
 
+  // Track which entries we *freshly* cached during this run so an
+  // AbortError can roll them back. We only delete entries that
+  // weren't already in IDB before this download — otherwise a cancel
+  // would delete cached data the user already had.
+  const hadTextBefore = !!(await getSurah(surahNumber));
+  const hadTafsirBefore = isOfflineTafsirEdition(tafsirId)
+    ? !!(await getTafsir(tafsirId, surahNumber))
+    : true;
+  let freshlyCachedText = false;
+  let freshlyCachedTafsir = false;
+
+  const rollback = async () => {
+    if (freshlyCachedText && !hadTextBefore) {
+      try { await deleteSurah(surahNumber); } catch { /* ignore */ }
+    }
+    if (freshlyCachedTafsir && !hadTafsirBefore && isOfflineTafsirEdition(tafsirId)) {
+      try { await deleteTafsir(tafsirId, surahNumber); } catch { /* ignore */ }
+    }
+  };
+
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
   // 1) Mushaf text (cached on success by fetchSurahAyahs).
@@ -61,12 +88,19 @@ export async function downloadSurahForOffline(args: {
   try {
     await fetchSurahAyahs(surahNumber, signal);
     textCached = true;
+    if (!hadTextBefore) freshlyCachedText = true;
   } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") throw err;
+    if (err instanceof Error && err.name === "AbortError") {
+      await rollback();
+      throw err;
+    }
     logger.warn(`[offline-surah] text fetch failed for surah ${surahNumber}:`, err);
   }
   report(TEXT_WEIGHT);
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (signal?.aborted) {
+    await rollback();
+    throw new DOMException("Aborted", "AbortError");
+  }
 
   // 2) Tafsir — only the bundled offline editions can be reliably
   // cached without per-request auth. For everything else we silently
@@ -76,16 +110,20 @@ export async function downloadSurahForOffline(args: {
     try {
       await loadOfflineTafsirSurah(tafsirId, surahNumber);
       tafsirCached = true;
+      if (!hadTafsirBefore) freshlyCachedTafsir = true;
     } catch (err) {
       logger.warn(`[offline-surah] tafsir fetch failed for ${tafsirId}/${surahNumber}:`, err);
     }
   }
   report(TEXT_WEIGHT + TAFSIR_WEIGHT);
-  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  if (signal?.aborted) {
+    await rollback();
+    throw new DOMException("Aborted", "AbortError");
+  }
 
   // 3) Audio — biggest payload by orders of magnitude. The streaming
   // download already saves to IDB incrementally so cancellation cleans
-  // up partial rows.
+  // up partial audio rows.
   let audioBytes = 0;
   try {
     audioBytes = await downloadSurahAudio(
@@ -95,10 +133,15 @@ export async function downloadSurahForOffline(args: {
       signal,
     );
   } catch (err) {
-    if (err instanceof Error && err.name === "AbortError") throw err;
-    // Surface the audio failure to the caller — text/tafsir alone is
-    // not what the user asked for. The mushaf and tafsir we just
-    // warmed stay cached as a best-effort partial result.
+    if (err instanceof Error && err.name === "AbortError") {
+      // Roll back any text/tafsir we warmed in this run so the user
+      // doesn't end up with a partially-cached surah after cancel.
+      await rollback();
+      throw err;
+    }
+    // Surface the non-abort audio failure but still roll back fresh
+    // partial caches so a retry starts from a clean slate.
+    await rollback();
     throw err;
   }
 

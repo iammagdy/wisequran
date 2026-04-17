@@ -5,6 +5,7 @@ import { claimBookmarksForUser, releaseBookmarksForUser } from "@/lib/bookmarks"
 import { handleAuthCallback, validateAndPersistSession } from "@/lib/auth-callback";
 import { logger } from "@/lib/logger";
 import { setActiveHijriUser } from "@/hooks/useRamadan";
+import { persistSwAuth, clearSwAuth } from "@/lib/syncQueue";
 
 interface AuthContextValue {
   user: User | null;
@@ -55,6 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         const uid = session?.user?.id ?? null;
         setActiveHijriUser(uid);
+        // Phase C: prime the SW auth blob from the rehydrated session.
+        if (session?.access_token) {
+          void persistSwAuth({
+            accessToken: session.access_token,
+            expiresAtSeconds: session.expires_at ?? null,
+          });
+        } else {
+          void clearSwAuth();
+        }
         if (uid) {
           void claimBookmarksForUser(uid).catch(() => {});
         } else {
@@ -82,6 +92,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       const uid = session?.user?.id ?? null;
       setActiveHijriUser(uid);
+      // Phase C: keep the SW's auth blob in sync so background-sync
+      // queue flushes (when the tab is closed) can authenticate.
+      if (session?.access_token) {
+        void persistSwAuth({
+          accessToken: session.access_token,
+          expiresAtSeconds: session.expires_at ?? null,
+        });
+      } else {
+        void clearSwAuth();
+      }
       if (uid) {
         void claimBookmarksForUser(uid).catch(() => {});
       } else {

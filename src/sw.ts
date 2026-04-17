@@ -252,29 +252,102 @@ function scheduleAdhanFromState(state: AdhanState | null): void {
   }, remaining);
 }
 
+// ─── Friday reminder persistence ─────────────────────────────────────────────
+// Mirrors the adhan persistence so the SW can re-arm the next Friday
+// notification after a process restart or a multi-day closed-tab window
+// without needing an open client to re-post SCHEDULE_FRIDAY_REMINDER.
+
+const FRIDAY_STATE_CACHE = "wise-friday-schedule-v1";
+const FRIDAY_STATE_REQUEST = new Request("/__wise_friday_state__");
+
+interface FridayState {
+  fireAt: number;
+  key: string;
+  title: string;
+  body: string;
+}
+
+async function persistFridayState(state: FridayState | null): Promise<void> {
+  try {
+    const cache = await caches.open(FRIDAY_STATE_CACHE);
+    if (!state) {
+      await cache.delete(FRIDAY_STATE_REQUEST);
+      return;
+    }
+    await cache.put(
+      FRIDAY_STATE_REQUEST,
+      new Response(JSON.stringify(state), {
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+async function readFridayState(): Promise<FridayState | null> {
+  try {
+    const cache = await caches.open(FRIDAY_STATE_CACHE);
+    const res = await cache.match(FRIDAY_STATE_REQUEST);
+    if (!res) return null;
+    return (await res.json()) as FridayState;
+  } catch {
+    return null;
+  }
+}
+
+function scheduleFridayFromState(state: FridayState | null): void {
+  if (self._fridayTimerId) {
+    clearTimeout(self._fridayTimerId);
+    self._fridayTimerId = null;
+  }
+  if (!state || typeof state.fireAt !== "number") return;
+  const tag = `wise-friday-reminder-${state.key}`;
+  const tick = (): void => {
+    const remaining = state.fireAt - Date.now();
+    if (remaining <= 0) {
+      self._fridayTimerId = null;
+      self.registration
+        .showNotification(state.title, {
+          body: state.body,
+          dir: "rtl",
+          lang: "ar",
+          tag,
+          renotify: false,
+        })
+        .catch(() => {});
+      // Done — clear persisted state so we don't re-fire after restart.
+      void persistFridayState(null);
+      return;
+    }
+    const delay = remaining > MAX_SCHEDULE_MS ? MAX_SCHEDULE_MS : remaining;
+    self._fridayTimerId = setTimeout(tick, delay);
+  };
+  tick();
+}
+
 // ─── Periodic Background Sync — re-arm reminders ─────────────────────────────
 //
 // On browsers that grant the `periodicsync` capability (currently Chrome
 // when the PWA is installed and the site permission is granted), this
-// fires roughly daily. We use it to:
-//   - Re-rehydrate the persisted adhan state so a multi-day-closed-tab
-//     window doesn't lose the next prayer notification.
-//   - Broadcast a wake-up to any open clients so they can recompute the
-//     next Friday reminder and re-arm the SW timer with a fresh `fireAt`.
-//
-// On unsupported browsers this listener simply never runs; the existing
-// in-tab `setInterval` paths in `useAdhan` and `useFridayReminders`
-// continue to handle scheduling whenever the app is open.
+// fires roughly daily. We use it to re-rehydrate both the adhan and
+// Friday reminders directly from persisted SW state — no open client
+// required — so multi-day closed-tab windows don't drop notifications.
+// We additionally broadcast a wake-up to any open clients so the page
+// can refresh its own scheduling against the latest wall clock.
 async function rearmReminders(): Promise<void> {
-  // Re-rehydrate persisted adhan timer if the SW has been restarted.
   try {
     const state = await readAdhanState();
     if (state) scheduleAdhanFromState(state);
   } catch {
     /* ignore */
   }
-  // Ask any open clients to recompute reminders against the current
-  // wall clock and re-post SCHEDULE_* messages with fresh `fireAt`.
+  try {
+    const f = await readFridayState();
+    if (f) scheduleFridayFromState(f);
+  } catch {
+    /* ignore */
+  }
   try {
     const clients = await self.clients.matchAll({ includeUncontrolled: true });
     for (const c of clients) c.postMessage({ type: "WISE_REARM_REMINDERS" });
@@ -297,39 +370,188 @@ self.addEventListener("periodicsync", (event) => {
 // fires `sync` once connectivity returns — even if the tab was closed
 // at the time.
 //
-// The Supabase JS SDK can't run in the SW (no auth session is mounted
-// here), so the actual flush happens in the page via `flushSyncQueue()`.
-// Closed-tab strategy:
-//   1. Try to find any open client (uncontrolled + window types).
-//   2. If found → broadcast WISE_FLUSH_QUEUE and resolve. The page
-//      drains the queue authoritatively and acks via Supabase.
-//   3. If none found → throw, which keeps the sync registration alive.
-//      The browser will re-fire the `sync` event the next time the
-//      user opens the PWA (or, on Chromium installed PWAs that grant
-//      `clientsClaim`-eligible wakeups, when network conditions change
-//      again). This is conservative but never silently drops writes.
+// We drain the queue directly from the SW by replaying each entry as a
+// PostgREST `POST` against the Supabase REST endpoint. The page
+// persists the current Supabase URL, anon key, and access token to a
+// dedicated Cache entry on every auth state change (see
+// `persistSwAuth()` in `src/lib/syncQueue.ts`); the SW reads that
+// blob, opens the same IDB the page uses (`wise-quran-db` / `syncQueue`
+// store), and replays each row.
 //
-// Browsers without Background Sync support never reach this handler;
-// `useSyncQueue.ts`'s online/visibility-event flush keeps doing the
-// work the next time the user opens the app.
-async function notifyClientsToFlush(): Promise<void> {
-  const clients = await self.clients.matchAll({
-    includeUncontrolled: true,
-    type: "window",
-  });
-  if (clients.length === 0) {
-    // Throwing makes the browser keep our sync registration so it can
-    // be retried when a client is alive.
-    throw new Error("wise-sync-queue: no open clients to drain queue");
+// On any failure path (no auth blob, expired token, network error) we
+// throw so the browser keeps the registration alive and retries later.
+// Live clients are *also* notified, so a flush triggered by the
+// returning network reflects in the open UI immediately.
+
+const SW_AUTH_CACHE = "wise-sw-auth-v1";
+const SW_AUTH_REQUEST = new Request("/__wise_sw_auth__");
+
+interface SwAuthBlob {
+  url: string;
+  anonKey: string;
+  accessToken: string;
+  expiresAt: number; // unix ms
+}
+
+async function readSwAuth(): Promise<SwAuthBlob | null> {
+  try {
+    const cache = await caches.open(SW_AUTH_CACHE);
+    const res = await cache.match(SW_AUTH_REQUEST);
+    if (!res) return null;
+    return (await res.json()) as SwAuthBlob;
+  } catch {
+    return null;
   }
-  for (const c of clients) c.postMessage({ type: "WISE_FLUSH_QUEUE" });
+}
+
+interface QueueRow {
+  id: number;
+  table: string;
+  operation: "upsert" | "insert";
+  payload: Record<string, unknown>;
+  onConflict?: string;
+}
+
+// Open the same IDB the page uses. We read the existing version so we
+// don't accidentally trigger a downgrade or rerun upgrades from here.
+function openQueueDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("wise-quran-db");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    // Do nothing on upgradeneeded — the page owns the schema. If we
+    // ever land here it means the SW raced the page on first install;
+    // resolve with whatever we got and the next page-side open will
+    // upgrade properly.
+    req.onupgradeneeded = () => { /* no-op */ };
+  });
+}
+
+function getAllQueueRows(db: IDBDatabase): Promise<QueueRow[]> {
+  return new Promise((resolve, reject) => {
+    if (!db.objectStoreNames.contains("syncQueue")) {
+      resolve([]);
+      return;
+    }
+    const tx = db.transaction("syncQueue", "readonly");
+    const store = tx.objectStore("syncQueue");
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result as QueueRow[]);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function deleteQueueRow(db: IDBDatabase, id: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("syncQueue", "readwrite");
+    tx.objectStore("syncQueue").delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function isRetriableStatus(status: number): boolean {
+  return status === 0 || status === 408 || status === 429 || status >= 500;
+}
+
+async function flushQueueViaRest(): Promise<{ flushed: number; remaining: number }> {
+  const auth = await readSwAuth();
+  if (!auth) throw new Error("wise-sync-queue: no SW auth blob persisted");
+  if (Date.now() > auth.expiresAt) {
+    throw new Error("wise-sync-queue: stored access token is expired");
+  }
+
+  const db = await openQueueDb();
+  let rows: QueueRow[];
+  try {
+    rows = await getAllQueueRows(db);
+  } finally {
+    db.close();
+  }
+  if (rows.length === 0) return { flushed: 0, remaining: 0 };
+
+  let flushed = 0;
+  let remaining = rows.length;
+  let sawRetriable = false;
+
+  for (const row of rows) {
+    const url = new URL(`${auth.url}/rest/v1/${row.table}`);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      apikey: auth.anonKey,
+      Authorization: `Bearer ${auth.accessToken}`,
+      Prefer: "return=minimal",
+    };
+    if (row.operation === "upsert") {
+      headers.Prefer = "resolution=merge-duplicates,return=minimal";
+      if (row.onConflict) url.searchParams.set("on_conflict", row.onConflict);
+    }
+    let res: Response;
+    try {
+      res = await fetch(url.toString(), {
+        method: "POST",
+        headers,
+        body: JSON.stringify(row.payload),
+      });
+    } catch {
+      // Network blip — leave the row, mark for retry.
+      sawRetriable = true;
+      continue;
+    }
+
+    if (res.ok) {
+      const handle = await openQueueDb();
+      try { await deleteQueueRow(handle, row.id); } finally { handle.close(); }
+      flushed++;
+      remaining--;
+    } else if (res.status === 401 || res.status === 403) {
+      // Auth lapsed — abort the whole batch and keep the rows; the
+      // page will refresh tokens next time it opens.
+      throw new Error(`wise-sync-queue: auth rejected (${res.status})`);
+    } else if (isRetriableStatus(res.status)) {
+      sawRetriable = true;
+      // leave row in place
+    } else {
+      // Permanent (4xx) — drop to avoid an indefinitely stuck queue.
+      const handle = await openQueueDb();
+      try { await deleteQueueRow(handle, row.id); } finally { handle.close(); }
+      remaining--;
+    }
+  }
+
+  if (sawRetriable) throw new Error("wise-sync-queue: retriable failures, retry later");
+  return { flushed, remaining };
+}
+
+async function notifyClientsFlushed(): Promise<void> {
+  try {
+    const clients = await self.clients.matchAll({
+      includeUncontrolled: true,
+      type: "window",
+    });
+    for (const c of clients) c.postMessage({ type: "WISE_FLUSH_QUEUE" });
+  } catch {
+    /* ignore */
+  }
 }
 
 self.addEventListener("sync", (event) => {
   const e = event as ExtendableEvent & { tag: string };
-  if (e.tag === "wise-sync-queue") {
-    e.waitUntil(notifyClientsToFlush());
-  }
+  if (e.tag !== "wise-sync-queue") return;
+  e.waitUntil(
+    (async () => {
+      // Always try the SW-native flush first so closed-tab connectivity
+      // returns drain the queue without waiting for the user to open
+      // the app.
+      try {
+        await flushQueueViaRest();
+      } finally {
+        // Whether or not we drained anything, notify any open clients
+        // so the live UI re-counts the queue.
+        await notifyClientsFlushed();
+      }
+    })(),
+  );
 });
 
 // ─── Message handler (adhan + Friday — unchanged protocol) ───────────────────
@@ -351,37 +573,34 @@ self.addEventListener("message", (event) => {
   } else if (data.type === "SCHEDULE_FRIDAY_REMINDER") {
     const fireAt = Number(data.fireAt);
     if (!Number.isFinite(fireAt) || fireAt <= Date.now()) return;
-    const title = String(data.title || "جمعة مباركة");
-    const body = String(data.body || "");
-    const tag = `wise-friday-reminder-${String(data.key || fireAt)}`;
-
-    const scheduleFriday = (): void => {
-      const remaining = fireAt - Date.now();
-      if (remaining <= 0) {
-        self._fridayTimerId = null;
-        self.registration
-          .showNotification(title, { body, dir: "rtl", lang: "ar", tag, renotify: false })
-          .catch(() => {});
-        return;
-      }
-      const delay = remaining > MAX_SCHEDULE_MS ? MAX_SCHEDULE_MS : remaining;
-      self._fridayTimerId = setTimeout(scheduleFriday, delay);
+    const state: FridayState = {
+      fireAt,
+      key: String(data.key || fireAt),
+      title: String(data.title || "جمعة مباركة"),
+      body: String(data.body || ""),
     };
-    if (self._fridayTimerId) clearTimeout(self._fridayTimerId);
-    scheduleFriday();
+    // Persist before scheduling so a SW restart in the next ms can
+    // still re-arm via `activate` / `periodicsync`.
+    event.waitUntil(persistFridayState(state).then(() => scheduleFridayFromState(state)));
   } else if (data.type === "CANCEL_FRIDAY_REMINDER") {
     if (self._fridayTimerId) {
       clearTimeout(self._fridayTimerId);
       self._fridayTimerId = null;
     }
+    event.waitUntil(persistFridayState(null));
   } else if (data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-// ─── Activate: rehydrate any pending adhan ───────────────────────────────────
+// ─── Activate: rehydrate any pending adhan + Friday reminder ────────────────
 self.addEventListener("activate", (event) => {
-  event.waitUntil(readAdhanState().then((s) => scheduleAdhanFromState(s)));
+  event.waitUntil(
+    Promise.all([
+      readAdhanState().then((s) => scheduleAdhanFromState(s)),
+      readFridayState().then((s) => scheduleFridayFromState(s)),
+    ]),
+  );
 });
 
 // ─── Notification click — focus or open the app ──────────────────────────────

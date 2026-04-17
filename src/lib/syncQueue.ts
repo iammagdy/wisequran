@@ -71,6 +71,66 @@ async function persistToQueue(
   }
 }
 
+// ─── Service-worker auth handoff (Phase C closed-tab flush) ─────────────────
+//
+// The SW drains the offline write queue directly via PostgREST when
+// connectivity returns while the tab is closed. To do that it needs
+// the Supabase URL, anon key, and current user access token. We
+// persist these in a Cache entry the SW can read; the page calls
+// `persistSwAuth(session)` on every auth state change, and
+// `clearSwAuth()` on sign-out. Failures are best-effort: if the SW
+// can't read the blob it simply throws and the existing page-side
+// flush keeps doing its job.
+const SW_AUTH_CACHE = "wise-sw-auth-v1";
+const SW_AUTH_REQUEST_URL = "/__wise_sw_auth__";
+
+interface SwAuthBlob {
+  url: string;
+  anonKey: string;
+  accessToken: string;
+  /** Unix ms when the access token expires (best-effort upper bound). */
+  expiresAt: number;
+}
+
+export async function persistSwAuth(args: {
+  accessToken: string | null | undefined;
+  expiresAtSeconds?: number | null;
+}): Promise<void> {
+  if (typeof caches === "undefined") return;
+  const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
+  const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
+  if (!url || !anonKey || !args.accessToken) {
+    await clearSwAuth();
+    return;
+  }
+  const expiresAt =
+    typeof args.expiresAtSeconds === "number" && Number.isFinite(args.expiresAtSeconds)
+      ? args.expiresAtSeconds * 1000
+      : Date.now() + 60 * 60 * 1000; // assume 1h if Supabase didn't tell us
+  const blob: SwAuthBlob = { url, anonKey, accessToken: args.accessToken, expiresAt };
+  try {
+    const cache = await caches.open(SW_AUTH_CACHE);
+    await cache.put(
+      SW_AUTH_REQUEST_URL,
+      new Response(JSON.stringify(blob), {
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+  } catch {
+    /* best-effort */
+  }
+}
+
+export async function clearSwAuth(): Promise<void> {
+  if (typeof caches === "undefined") return;
+  try {
+    const cache = await caches.open(SW_AUTH_CACHE);
+    await cache.delete(SW_AUTH_REQUEST_URL);
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * Best-effort Background Sync registration. Returns true when the
  * browser accepted the registration (Chromium, Edge, Samsung Internet
