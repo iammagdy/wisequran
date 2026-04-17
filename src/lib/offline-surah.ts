@@ -8,6 +8,7 @@ import {
   audioByteLength,
   deleteSurah,
   deleteTafsir,
+  saveTafsir,
 } from "./db";
 import { logger } from "./logger";
 
@@ -83,7 +84,10 @@ export async function downloadSurahForOffline(args: {
 
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
-  // 1) Mushaf text (cached on success by fetchSurahAyahs).
+  // 1) Mushaf text — required. We must not claim "saved offline" if the
+  // user can't read the surah; surface the failure to the caller. The
+  // existing `fetchSurahAyahs` writes to IDB on success, so on success
+  // we mark `freshlyCachedText` for rollback bookkeeping.
   let textCached = false;
   try {
     await fetchSurahAyahs(surahNumber, signal);
@@ -94,7 +98,10 @@ export async function downloadSurahForOffline(args: {
       await rollback();
       throw err;
     }
-    logger.warn(`[offline-surah] text fetch failed for surah ${surahNumber}:`, err);
+    await rollback();
+    throw new Error(
+      `Failed to download surah ${surahNumber} text: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
   report(TEXT_WEIGHT);
   if (signal?.aborted) {
@@ -102,17 +109,28 @@ export async function downloadSurahForOffline(args: {
     throw new DOMException("Aborted", "AbortError");
   }
 
-  // 2) Tafsir — only the bundled offline editions can be reliably
-  // cached without per-request auth. For everything else we silently
-  // skip rather than half-warm a cache the user can't read offline.
+  // 2) Tafsir — required when the user picked one of the bundled
+  // offline editions. We `await saveTafsir` ourselves (rather than
+  // relying on `loadOfflineTafsirSurah`'s fire-and-forget persistence)
+  // so cancel rollback can't race a still-in-flight write. For
+  // API-only editions we skip silently — they aren't part of the
+  // "fully offline" contract.
   let tafsirCached = false;
   if (isOfflineTafsirEdition(tafsirId)) {
     try {
-      await loadOfflineTafsirSurah(tafsirId, surahNumber);
+      const ayahs = await loadOfflineTafsirSurah(tafsirId, surahNumber);
+      await saveTafsir(tafsirId, surahNumber, ayahs);
       tafsirCached = true;
       if (!hadTafsirBefore) freshlyCachedTafsir = true;
     } catch (err) {
-      logger.warn(`[offline-surah] tafsir fetch failed for ${tafsirId}/${surahNumber}:`, err);
+      if (err instanceof Error && err.name === "AbortError") {
+        await rollback();
+        throw err;
+      }
+      await rollback();
+      throw new Error(
+        `Failed to download tafsir for surah ${surahNumber}: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
   report(TEXT_WEIGHT + TAFSIR_WEIGHT);

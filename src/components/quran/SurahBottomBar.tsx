@@ -101,6 +101,21 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         signal: controller.signal,
         onProgress: setDlProgress,
       });
+      // Verify all parts actually landed in IDB before claiming
+      // success — guards against quota eviction between save and
+      // read, and matches the surah-list button's contract.
+      const verified = await isSurahFullyOffline({
+        surahNumber,
+        reciterId: player.reciterId,
+        tafsirId,
+      });
+      if (!verified) {
+        throw new Error(
+          language === "en"
+            ? "Surah did not fully save offline"
+            : "لم يكتمل حفظ السورة بالكامل",
+        );
+      }
       setCached(true);
       toast.success(
         language === "en"

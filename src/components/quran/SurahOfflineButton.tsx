@@ -101,6 +101,18 @@ export default function SurahOfflineButton({
         signal: ctrl.signal,
         onProgress: setPct,
       });
+      // Verify everything actually landed in IDB before showing
+      // success — the orchestrator already throws on hard failures,
+      // but a post-hoc check guards against partial state slipping
+      // through (e.g. quota eviction between save and read).
+      const verified = await isSurahFullyOffline({ surahNumber, reciterId, tafsirId });
+      if (!verified) {
+        throw new Error(
+          language === "ar"
+            ? "لم يكتمل حفظ السورة بالكامل"
+            : "Surah did not fully save offline",
+        );
+      }
       setState("done");
       setPct(100);
       toast.success(
