@@ -1,6 +1,6 @@
 import { downloadSurahAudio, formatBytes } from "./quran-audio";
 import { fetchSurahAyahs } from "./quran-api";
-import { isOfflineTafsirEdition, loadOfflineTafsirSurah } from "./offline-tafsir";
+import { fetchTafsir } from "./tafsir-api";
 import {
   getSurah,
   getAudio,
@@ -67,9 +67,7 @@ export async function downloadSurahForOffline(args: {
   // weren't already in IDB before this download — otherwise a cancel
   // would delete cached data the user already had.
   const hadTextBefore = !!(await getSurah(surahNumber));
-  const hadTafsirBefore = isOfflineTafsirEdition(tafsirId)
-    ? !!(await getTafsir(tafsirId, surahNumber))
-    : true;
+  const hadTafsirBefore = !!(await getTafsir(tafsirId, surahNumber));
   let freshlyCachedText = false;
   let freshlyCachedTafsir = false;
 
@@ -77,7 +75,7 @@ export async function downloadSurahForOffline(args: {
     if (freshlyCachedText && !hadTextBefore) {
       try { await deleteSurah(surahNumber); } catch { /* ignore */ }
     }
-    if (freshlyCachedTafsir && !hadTafsirBefore && isOfflineTafsirEdition(tafsirId)) {
+    if (freshlyCachedTafsir && !hadTafsirBefore) {
       try { await deleteTafsir(tafsirId, surahNumber); } catch { /* ignore */ }
     }
   };
@@ -109,29 +107,28 @@ export async function downloadSurahForOffline(args: {
     throw new DOMException("Aborted", "AbortError");
   }
 
-  // 2) Tafsir — required when the user picked one of the bundled
-  // offline editions. We `await saveTafsir` ourselves (rather than
-  // relying on `loadOfflineTafsirSurah`'s fire-and-forget persistence)
-  // so cancel rollback can't race a still-in-flight write. For
-  // API-only editions we skip silently — they aren't part of the
-  // "fully offline" contract.
+  // 2) Tafsir — required for the user's selected edition regardless of
+  // whether it's bundled-offline or API-only. `fetchTafsir` already
+  // handles both cases (loads from bundled JSON or hits the API and
+  // writes to IDB). We await it + an explicit `saveTafsir` so that
+  // (a) bundled editions (whose `loadOfflineTafsirSurah` writes are
+  // fire-and-forget) get a deterministic write barrier here, and
+  // (b) cancel rollback can never race a still-in-flight persistence.
   let tafsirCached = false;
-  if (isOfflineTafsirEdition(tafsirId)) {
-    try {
-      const ayahs = await loadOfflineTafsirSurah(tafsirId, surahNumber);
-      await saveTafsir(tafsirId, surahNumber, ayahs);
-      tafsirCached = true;
-      if (!hadTafsirBefore) freshlyCachedTafsir = true;
-    } catch (err) {
-      if (err instanceof Error && err.name === "AbortError") {
-        await rollback();
-        throw err;
-      }
+  try {
+    const ayahs = await fetchTafsir(surahNumber, tafsirId, signal);
+    await saveTafsir(tafsirId, surahNumber, ayahs);
+    tafsirCached = true;
+    if (!hadTafsirBefore) freshlyCachedTafsir = true;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
       await rollback();
-      throw new Error(
-        `Failed to download tafsir for surah ${surahNumber}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      throw err;
     }
+    await rollback();
+    throw new Error(
+      `Failed to download tafsir for surah ${surahNumber}: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
   report(TEXT_WEIGHT + TAFSIR_WEIGHT);
   if (signal?.aborted) {
@@ -204,13 +201,11 @@ export async function isSurahFullyOffline(args: {
     const [text, audio, tafsirRow] = await Promise.all([
       getSurah(surahNumber),
       getAudio(reciterId, surahNumber),
-      isOfflineTafsirEdition(tafsirId) ? getTafsir(tafsirId, surahNumber) : Promise.resolve(null),
+      getTafsir(tafsirId, surahNumber),
     ]);
     const hasText = !!(text && text.ayahs && text.ayahs.length > 0);
     const hasAudio = !!(audio && audioByteLength(audio.data) > 10_000);
-    const hasTafsir = isOfflineTafsirEdition(tafsirId)
-      ? !!(tafsirRow && Array.isArray(tafsirRow.ayahs) && tafsirRow.ayahs.length > 0)
-      : true; // can't pre-cache API-only tafsirs, so don't gate on them.
+    const hasTafsir = !!(tafsirRow && Array.isArray(tafsirRow.ayahs) && tafsirRow.ayahs.length > 0);
     return hasText && hasAudio && hasTafsir;
   } catch {
     return false;
