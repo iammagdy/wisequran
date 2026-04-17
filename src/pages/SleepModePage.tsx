@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, Volume2, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Pause, X, Volume2, Clock, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { MoonAnimation } from "@/components/sleep/MoonAnimation";
 import { StarField } from "@/components/sleep/StarField";

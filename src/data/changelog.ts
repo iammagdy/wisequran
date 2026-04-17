@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.1";
+export const APP_VERSION = "3.6.2";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,22 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.6.2",
+    date: "2026-04-17",
+    ar: {
+      fixes: [
+        "إصلاح مشاكل كانت تُسبّب توقّف بعض الشاشات عند فتحها (تسجيل الدخول، وضع النوم، وقارئ السورة)",
+        "إصلاح فتح روابط التطبيق مباشرة من المتصفح (مثل /devkit و/sleep و/signin) بدون الحاجة للمرور بالصفحة الرئيسية",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed crashes on the sign-in, sleep mode, and surah reader pages caused by missing icon imports",
+        "Fixed direct URL access to internal pages (/devkit, /sleep, /signin, etc.) — no more 404 from refresh or shared links",
+      ],
+    },
+  },
   {
     version: "3.6.1",
     date: "2026-04-17",
