@@ -28,7 +28,17 @@ export default defineConfig(({ mode }) => ({
         // adhan files still resolve at runtime via the CacheFirst
         // strategy below the first time the user plays one.
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        globIgnores: ["**/audio/**", "**/screenshots/**"],
+        // Keep precache lean: only the app shell + entry/vendor chunks.
+        // Lazy-loaded route chunks (`*Page-<hash>.js`) and the recharts
+        // chunk (only needed by /stats) are fetched on demand and cached
+        // at runtime by the navigation handler. Skipping them keeps
+        // cold-install precache under 2 MB.
+        globIgnores: [
+          "**/audio/**",
+          "**/screenshots/**",
+          "**/assets/*Page-*.js",
+          "**/assets/charts-vendor-*.js",
+        ],
         // Hard cap on any single precached file so we can't accidentally
         // pull a giant asset back into the precache through a loose
         // globPattern in the future.
