@@ -11,9 +11,15 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:bundle": "node scripts/check-bundle-budget.mjs",
     "generate:shortcut-icons": "node scripts/generate-shortcut-icons.mjs"
   },
   "dependencies": {
+    "@fontsource/amiri": "^5.2.8",
+    "@fontsource/bodoni-moda": "^5.2.7",
+    "@fontsource/jost": "^5.2.8",
+    "@fontsource/noto-sans-arabic": "^5.2.10",
+    "@fontsource/scheherazade-new": "^5.2.8",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",

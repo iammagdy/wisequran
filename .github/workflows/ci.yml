@@ -1,4 +1,4 @@
-name: Lockfile consistency
+name: CI
 
 on:
   pull_request:
@@ -34,3 +34,33 @@ jobs:
             echo "::error::Run 'pnpm install' locally and commit the updated pnpm-lock.yaml."
             exit 1
           fi
+
+  bundle-budget:
+    name: Bundle size budget
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Check bundle size budgets
+        run: pnpm run check:bundle

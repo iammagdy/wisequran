@@ -16,9 +16,23 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "prompt",
       injectRegister: "auto",
-      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg", "audio/adhan/*.mp3", "*.jpg"],
+      // Note: assets listed here are *referenced* by the SW so they can be
+      // fetched on demand, but they are NOT all forcibly precached. The
+      // workbox.globPatterns below decides what's actually precached on
+      // install. We deliberately keep audio out of precache (it's huge
+      // and is persisted into IDB by `src/lib/quran-audio.ts`).
+      includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,jpg,svg,woff2,mp3}"],
+        // Trim precache: drop `mp3` (audio is on the IDB path) and `jpg`
+        // (install-guide screenshots are large and on-demand). Audio
+        // adhan files still resolve at runtime via the CacheFirst
+        // strategy below the first time the user plays one.
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globIgnores: ["**/audio/**", "**/screenshots/**"],
+        // Hard cap on any single precached file so we can't accidentally
+        // pull a giant asset back into the precache through a loose
+        // globPattern in the future.
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/~oauth/, /^\/auth/, /^\/api\//],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
@@ -108,24 +122,9 @@ export default defineConfig(({ mode }) => ({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-cache",
-              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "google-fonts-webfonts",
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
+          // Google Fonts runtime caches removed: fonts are now self-hosted
+          // via @fontsource and bundled into the app's own static assets,
+          // so no third-party request is made.
         ],
       },
       manifest: false,
