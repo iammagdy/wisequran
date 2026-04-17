@@ -20,16 +20,24 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const SOURCE_EXTS = new Set([".jpg", ".jpeg", ".png"]);
-const SKIP_DIRS = new Set(["icons", "audio", "data"]);
+const SKIP_DIRS = new Set(["audio", "data"]);
+// Inside `public/icons/` only PWA shortcut icons get modern variants.
+// Favicons / app icons are referenced by exact PNG filename in
+// `<link rel="icon">` and the manifest `icons[]` array, where browsers
+// don't accept AVIF/WebP, so they must remain PNG-only.
+const ICON_VARIANTS_PREFIX = "shortcut-";
 
-async function* walk(dir) {
+async function* walk(dir, { rootBasename } = {}) {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (SKIP_DIRS.has(entry.name)) continue;
-      yield* walk(full);
+      yield* walk(full, { rootBasename: rootBasename ?? entry.name });
     } else {
+      if (rootBasename === "icons" && !entry.name.startsWith(ICON_VARIANTS_PREFIX)) {
+        continue;
+      }
       yield full;
     }
   }
