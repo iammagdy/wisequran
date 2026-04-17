@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
+import { registerReminderPeriodicSync } from "@/hooks/useFridayReminders";
 import App from "./App.tsx";
 import { logger } from "./lib/logger";
 
@@ -53,5 +54,13 @@ registerSW({
     logger.debug("[sw] ready to work offline");
   }
 });
+
+// Phase C: register the periodic-sync `wise-reminders` tag at boot
+// (independent of any single feature toggle) so the SW gets daily
+// wakeups to re-rehydrate adhan AND Friday timers from its persisted
+// state. The function self-gates on the Permissions API and silently
+// no-ops on browsers that don't support periodic background sync, so
+// it's safe to call unconditionally here.
+void registerReminderPeriodicSync();
 
 createRoot(document.getElementById("root")!).render(<App />);

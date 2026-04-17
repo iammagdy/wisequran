@@ -85,7 +85,7 @@ function isFridayNow() {
  * site permission) the call returns false and the existing in-tab
  * `setInterval` keeps doing the work whenever the app is open.
  */
-async function registerReminderPeriodicSync(): Promise<boolean> {
+export async function registerReminderPeriodicSync(): Promise<boolean> {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
   try {
     const reg = (await navigator.serviceWorker.ready) as ServiceWorkerRegistration & {
