@@ -42,9 +42,29 @@ describe("downloadSurahAudio", () => {
     const mockBuffer = new Uint8Array(10240);
     mockBuffer.set(validAudioHeader);
 
+    // fetchAudioFromUrl is now Blob-based. The validator slices the
+    // first 50 bytes off the Blob and reads them as an ArrayBuffer.
+    // jsdom's Blob doesn't fully implement `slice().arrayBuffer()`,
+    // so we provide a minimal hand-rolled stand-in that mimics what
+    // the production code expects from a real Blob.
+    const makeBlobLike = (bytes: Uint8Array): Blob => {
+      const blob = {
+        size: bytes.byteLength,
+        type: "audio/mpeg",
+        slice(start = 0, end: number = bytes.byteLength) {
+          return makeBlobLike(bytes.slice(start, end));
+        },
+        arrayBuffer: () => Promise.resolve(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)),
+      };
+      Object.setPrototypeOf(blob, Blob.prototype);
+      return blob as unknown as Blob;
+    };
+    const audioBlob = makeBlobLike(mockBuffer);
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      headers: new Headers({ "Content-Length": "10240" }),
+      headers: new Headers({ "Content-Type": "audio/mpeg" }),
+      body: undefined,
+      blob: () => Promise.resolve(audioBlob),
       arrayBuffer: () => Promise.resolve(mockBuffer.buffer),
     } as any);
 

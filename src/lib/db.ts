@@ -44,7 +44,12 @@ interface WiseQuranDB extends DBSchema {
       id: string;
       reciterId: string;
       surahNumber: number;
-      data: ArrayBuffer;
+      // Stored as Blob since v8 — Blob payloads in IDB are kept off-
+      // the JS heap by the browser, which is essential for the
+      // streaming download path (Phase B). Legacy v7 rows may still
+      // be ArrayBuffer until the v8 upgrade rewrites them; readers
+      // should go through `audioByteLength()` / `audioToBlob()`.
+      data: Blob | ArrayBuffer;
     };
   };
   tafsir: {
@@ -68,7 +73,29 @@ interface WiseQuranDB extends DBSchema {
 }
 
 const DB_NAME = "wise-quran-db";
-const DB_VERSION = 7;
+const DB_VERSION = 8;
+
+/**
+ * Returns the byte size of an audio payload, regardless of whether it is
+ * still a legacy ArrayBuffer (v7) or a Blob (v8+). All call sites that
+ * need a size should go through this helper rather than touching
+ * `.byteLength` / `.size` directly.
+ */
+export function audioByteLength(data: Blob | ArrayBuffer | undefined | null): number {
+  if (!data) return 0;
+  if (data instanceof Blob) return data.size;
+  return data.byteLength;
+}
+
+/**
+ * Wraps an audio payload as a Blob if it isn't already. Cheap when the
+ * input is already a Blob (returned as-is). When given an ArrayBuffer
+ * it constructs a single-chunk Blob — the underlying bytes are NOT
+ * copied by the browser, only referenced.
+ */
+export function audioToBlob(data: Blob | ArrayBuffer, mime = "audio/mpeg"): Blob {
+  return data instanceof Blob ? data : new Blob([data], { type: mime });
+}
 
 function audioKey(reciterId: string, surahNumber: number): string {
   return `${reciterId}-${surahNumber}`;
@@ -157,6 +184,24 @@ function openDatabase() {
         bookmarksStore.createIndex("by-updated", "updatedAt");
         bookmarksStore.createIndex("by-owner", "ownerKey");
       }
+      // v7 → v8: rewrite legacy ArrayBuffer audio rows as Blobs so Phase
+      // B's streaming download path is consistent with what's already
+      // stored. We do this lazily by reading and rewriting each row in
+      // the upgrade transaction. If a row is already a Blob (from a
+      // future-rolled-back DB) we leave it alone. Bytes are NOT copied
+      // by `new Blob([buf])` — the browser keeps a reference.
+      if (oldVersion < 8 && db.objectStoreNames.contains("audio")) {
+        const store = transaction.objectStore("audio");
+        for await (const cursor of store.iterate()) {
+          const row = cursor.value as { id: string; reciterId: string; surahNumber: number; data: Blob | ArrayBuffer };
+          if (row?.data && !(row.data instanceof Blob)) {
+            await cursor.update({
+              ...row,
+              data: new Blob([row.data], { type: "audio/mpeg" }),
+            });
+          }
+        }
+      }
     },
   });
 }
@@ -210,14 +255,19 @@ function resetTrackedAudioBytes() {
   localStorage.removeItem(AUDIO_BYTES_LS_KEY);
 }
 
-export async function saveAudio(reciterId: string, surahNumber: number, data: ArrayBuffer) {
+export async function saveAudio(reciterId: string, surahNumber: number, data: Blob | ArrayBuffer) {
   const db = await getDB();
   const key = audioKey(reciterId, surahNumber);
+  // Always store as Blob (v8+). Wrapping an ArrayBuffer is cheap — the
+  // browser keeps a reference, no copy. Storing a Blob keeps the
+  // payload off the JS heap, which is what enables the streaming
+  // download path in `quran-audio.ts` to stay flat in RAM.
+  const blob = audioToBlob(data);
   // If overwriting, subtract old size first
   const existing = await db.get("audio", key);
-  if (existing) subtractTrackedAudioBytes(existing.data.byteLength);
-  await db.put("audio", { id: key, reciterId, surahNumber, data });
-  addTrackedAudioBytes(data.byteLength);
+  if (existing) subtractTrackedAudioBytes(audioByteLength(existing.data));
+  await db.put("audio", { id: key, reciterId, surahNumber, data: blob });
+  addTrackedAudioBytes(blob.size);
 }
 
 export async function getAudio(reciterId: string, surahNumber: number) {
@@ -229,7 +279,7 @@ export async function deleteAudio(reciterId: string, surahNumber: number) {
   const db = await getDB();
   const key = audioKey(reciterId, surahNumber);
   const existing = await db.get("audio", key);
-  if (existing) subtractTrackedAudioBytes(existing.data.byteLength);
+  if (existing) subtractTrackedAudioBytes(audioByteLength(existing.data));
   await db.delete("audio", key);
 }
 
@@ -268,7 +318,7 @@ export async function recalculateAudioBytes(): Promise<number> {
   const all = await db.getAll("audio");
   let total = 0;
   for (const row of all) {
-    total += row.data?.byteLength ?? 0;
+    total += audioByteLength(row.data);
   }
   localStorage.setItem(AUDIO_BYTES_LS_KEY, String(total));
   return total;
@@ -493,7 +543,7 @@ export async function verifyAudioExists(reciterId: string, surahNumber: number):
   try {
     const db = await getDB();
     const entry = await db.get("audio", audioKey(reciterId, surahNumber));
-    return !!(entry && entry.data && entry.data.byteLength > 0);
+    return !!(entry && audioByteLength(entry.data) > 0);
   } catch {
     return false;
   }
@@ -528,7 +578,7 @@ export async function verifyAllAudio(reciterId: string): Promise<{
   const deletePromises: Promise<void>[] = [];
   
   for (const entry of reciterAudio) {
-    if (entry.data && entry.data.byteLength > 0) {
+    if (audioByteLength(entry.data) > 0) {
       valid.push(entry.surahNumber);
     } else {
       broken.push(entry.surahNumber);

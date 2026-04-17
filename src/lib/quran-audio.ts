@@ -1,8 +1,9 @@
-import { saveAudio, getAudio, deleteAudio, checkStorageQuota, getAllAudioEntries } from "./db";
+import { saveAudio, getAudio, deleteAudio, checkStorageQuota, getAllAudioEntries, audioByteLength, audioToBlob } from "./db";
 import { getReciterAudioUrls, getReciterAudioUrl } from "./reciters";
 import { logger } from "./logger";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
+const MAGIC_PROBE_SIZE = 50;
 
 /**
  * Validate that a buffer contains actual MP3/audio data by checking magic bytes.
@@ -13,9 +14,20 @@ export function isValidAudioFile(buffer: ArrayBuffer): boolean {
   if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) return true;
   if (bytes[0] === 0xFF && (bytes[1] & 0xE0) === 0xE0) return true;
   if (bytes[0] === 0x4F && bytes[1] === 0x67 && bytes[2] === 0x67 && bytes[3] === 0x53) return true;
-  const textStart = new TextDecoder().decode(bytes.slice(0, 50)).trim().toLowerCase();
+  const textStart = new TextDecoder().decode(bytes.slice(0, MAGIC_PROBE_SIZE)).trim().toLowerCase();
   if (textStart.startsWith("<!doctype") || textStart.startsWith("<html") || textStart.startsWith("<head")) return false;
   return true;
+}
+
+/**
+ * Blob-aware variant of {@link isValidAudioFile}. Slices only the first
+ * 50 bytes off the Blob (cheap — does not materialize the whole payload
+ * in RAM) and runs the magic-byte check on those.
+ */
+export async function isValidAudioBlob(blob: Blob): Promise<boolean> {
+  if (blob.size < 4) return false;
+  const head = await blob.slice(0, MAGIC_PROBE_SIZE).arrayBuffer();
+  return isValidAudioFile(head);
 }
 
 /**
@@ -27,7 +39,9 @@ export async function resolveAudioSource(
 ): Promise<{ url: string; cached: boolean } | null> {
   const cached = await getAudio(reciterId, surahNumber);
   if (cached) {
-    const blob = new Blob([cached.data], { type: "audio/mpeg" });
+    // `cached.data` is a Blob since v8 of the IDB schema, but legacy
+    // ArrayBuffer rows are normalized by `audioToBlob` (no copy).
+    const blob = audioToBlob(cached.data);
     return { url: URL.createObjectURL(blob), cached: true };
   }
 
@@ -40,15 +54,28 @@ export async function resolveAudioSource(
 }
 
 /**
- * Fetch audio from a URL. Simple approach: plain fetch + arrayBuffer.
- * Reports progress only if Content-Length is available.
+ * Fetch audio from a URL and return a `Blob`.
+ *
+ * The streaming path appends each network chunk into a growing `Blob`
+ * (`new Blob([prev, chunk])`). Modern browsers implement that
+ * composition lazily — they keep a reference to the previous Blob's
+ * bytes rather than copying them — so peak JS-heap RAM during the
+ * download stays in the single-digit-MB range even for ~80 MB
+ * recitations like Al-Baqarah. Without this, the previous
+ * `Uint8Array[]` + final merge would briefly hold ~2× the file size
+ * in heap.
+ *
+ * Progress is reported when `Content-Length` is present.
  */
 export async function fetchAudioFromUrl(
   url: string,
-  onProgress?: (pct: number) => void
-): Promise<ArrayBuffer> {
+  onProgress?: (pct: number) => void,
+  externalSignal?: AbortSignal,
+): Promise<Blob> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 90_000);
+  const onExternalAbort = () => controller.abort();
+  externalSignal?.addEventListener("abort", onExternalAbort);
 
   try {
     const res = await fetch(url, { signal: controller.signal, mode: "cors" });
@@ -56,43 +83,49 @@ export async function fetchAudioFromUrl(
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const contentType = res.headers.get("Content-Type") || "";
+    const contentType = res.headers.get("Content-Type") || "audio/mpeg";
     if (contentType.includes("text/html")) {
       throw new Error("Server returned HTML instead of audio");
     }
+    const blobType = contentType.startsWith("audio/") ? contentType : "audio/mpeg";
 
     const contentLength = Number(res.headers.get("Content-Length") || 0);
     const reader = res.body?.getReader();
 
-    // Try streaming for progress reporting
+    // Streaming path with progress.
     if (reader && contentLength > 0) {
-      const chunks: Uint8Array[] = [];
+      let blob = new Blob([], { type: blobType });
       let received = 0;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-        onProgress?.(Math.round((received / contentLength) * 100));
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          // Compose lazily — browser keeps refs, no byte copy.
+          blob = new Blob([blob, value], { type: blobType });
+          received += value.length;
+          onProgress?.(Math.round((received / contentLength) * 100));
+        }
+      } catch (err) {
+        // On cancel/abort, release the in-flight reader so the
+        // underlying connection can shut down cleanly.
+        try { await reader.cancel(); } catch { /* ignore */ }
+        throw err;
       }
-
-      const merged = new Uint8Array(received);
-      let offset = 0;
-      for (const chunk of chunks) {
-        merged.set(chunk, offset);
-        offset += chunk.length;
-      }
-      return merged.buffer;
+      return blob;
     }
 
-    // Fallback: no streaming, just get the whole buffer
-    const buf = await res.arrayBuffer();
+    // Fallback: no Content-Length / no streaming reader available.
+    // `res.blob()` is just as memory-friendly as the streaming path
+    // and still avoids a second buffer allocation.
+    const blob = await res.blob();
     onProgress?.(100);
-    return buf;
+    return blob.type ? blob : new Blob([blob], { type: blobType });
   } catch (e) {
     clearTimeout(timeoutId);
     throw e;
+  } finally {
+    externalSignal?.removeEventListener("abort", onExternalAbort);
   }
 }
 
@@ -117,24 +150,28 @@ export async function downloadSurahAudio(
   for (let i = 0; i < urls.length; i++) {
     try {
       logger.debug(`[audio-dl] trying source ${i + 1}/${urls.length}: ${urls[i].substring(0, 80)}...`);
-      const buf = await fetchAudioFromUrl(urls[i], onProgress);
+      const blob = await fetchAudioFromUrl(urls[i], onProgress);
+      const blobSize = blob.size;
 
-      if (buf.byteLength < MIN_AUDIO_SIZE) {
-        logger.warn(`[audio-dl] source ${i + 1} too small (${buf.byteLength}B), skipping`);
+      if (blobSize < MIN_AUDIO_SIZE) {
+        logger.warn(`[audio-dl] source ${i + 1} too small (${blobSize}B), skipping`);
         continue;
       }
 
-      if (!isValidAudioFile(buf)) {
-        logger.warn(`[audio-dl] source ${i + 1} not valid audio (${buf.byteLength}B), skipping`);
+      // Validate magic bytes against the head of the Blob — only the
+      // first 50 bytes are read into RAM, so this is cheap regardless
+      // of total file size.
+      if (!(await isValidAudioBlob(blob))) {
+        logger.warn(`[audio-dl] source ${i + 1} not valid audio (${blobSize}B), skipping`);
         continue;
       }
 
-      if (!storageCheck.hasEnoughSpace(buf.byteLength)) {
+      if (!storageCheck.hasEnoughSpace(blobSize)) {
         throw new Error("مساحة التخزين غير كافية لحفظ هذا الملف");
       }
 
       try {
-        await saveAudio(reciterId, surahNumber, buf);
+        await saveAudio(reciterId, surahNumber, blob);
       } catch (e: unknown) {
         if (e instanceof Error && e.name === 'QuotaExceededError') {
           throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
@@ -143,25 +180,26 @@ export async function downloadSurahAudio(
       }
 
       const verified = await getAudio(reciterId, surahNumber);
-      if (!verified || verified.data.byteLength < MIN_AUDIO_SIZE) {
+      const verifiedSize = audioByteLength(verified?.data);
+      if (!verified || verifiedSize < MIN_AUDIO_SIZE) {
         await deleteAudio(reciterId, surahNumber);
         throw new Error("فشل التحقق من حفظ الصوت في التخزين المحلي");
       }
 
-      if (!isValidAudioFile(verified.data)) {
+      const verifiedBlob = audioToBlob(verified.data);
+      if (!(await isValidAudioBlob(verifiedBlob))) {
         await deleteAudio(reciterId, surahNumber);
         throw new Error("الملف المحفوظ تالف أو غير صالح");
       }
 
-      const blobTest = new Blob([verified.data], { type: "audio/mpeg" });
-      if (blobTest.size < MIN_AUDIO_SIZE) {
+      if (verifiedBlob.size < MIN_AUDIO_SIZE) {
         await deleteAudio(reciterId, surahNumber);
         throw new Error("فشل إنشاء ملف صوتي قابل للتشغيل");
       }
 
       onProgress?.(100);
-      logger.debug(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
-      return buf.byteLength;
+      logger.debug(`[audio-dl] ✓ verified and saved surah ${surahNumber} (${formatBytes(blobSize)})`);
+      return blobSize;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       logger.warn(`[audio-dl] source ${i + 1} failed:`, lastError.message);
@@ -192,12 +230,15 @@ export async function cachePlayingAudio(
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("text/html")) return;
 
-    const buf = await res.arrayBuffer();
-    if (buf.byteLength < MIN_AUDIO_SIZE) return;
-    if (!isValidAudioFile(buf)) return;
+    // Pull the response straight into a Blob — `res.blob()` streams
+    // and stays off the JS heap, so even Al-Baqarah-sized recitations
+    // don't spike memory during background auto-caching.
+    const blob = await res.blob();
+    if (blob.size < MIN_AUDIO_SIZE) return;
+    if (!(await isValidAudioBlob(blob))) return;
 
-    await saveAudio(reciterId, surahNumber, buf);
-    logger.debug(`[auto-cache] cached surah ${surahNumber} (${formatBytes(buf.byteLength)})`);
+    await saveAudio(reciterId, surahNumber, blob);
+    logger.debug(`[auto-cache] cached surah ${surahNumber} (${formatBytes(blob.size)})`);
   } catch {
     // Silent fail — caching is best-effort
   }
@@ -226,33 +267,34 @@ export async function verifyAndRepairDownloads(
     onProgress?.(i + 1, reciterAudio.length, audio.surahNumber);
 
     try {
-      if (audio.data.byteLength < MIN_AUDIO_SIZE) {
-        logger.warn(`[verify] surah ${audio.surahNumber}: too small (${audio.data.byteLength}B)`);
+      const size = audioByteLength(audio.data);
+      if (size < MIN_AUDIO_SIZE) {
+        logger.warn(`[verify] surah ${audio.surahNumber}: too small (${size}B)`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
       }
 
-      if (!isValidAudioFile(audio.data)) {
+      const blob = audioToBlob(audio.data);
+      if (!(await isValidAudioBlob(blob))) {
         logger.warn(`[verify] surah ${audio.surahNumber}: invalid audio format`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
       }
 
-      const blobTest = new Blob([audio.data], { type: "audio/mpeg" });
-      if (blobTest.size < MIN_AUDIO_SIZE) {
+      if (blob.size < MIN_AUDIO_SIZE) {
         logger.warn(`[verify] surah ${audio.surahNumber}: blob creation failed`);
         corrupted.push(audio.surahNumber);
         await deleteAudio(reciterId, audio.surahNumber);
         continue;
       }
 
-      const url = URL.createObjectURL(blobTest);
+      const url = URL.createObjectURL(blob);
       URL.revokeObjectURL(url);
 
       valid.push(audio.surahNumber);
-      logger.debug(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(audio.data.byteLength)})`);
+      logger.debug(`[verify] surah ${audio.surahNumber}: ✓ valid (${formatBytes(size)})`);
     } catch (e) {
       console.error(`[verify] surah ${audio.surahNumber}: error during verification`, e);
       corrupted.push(audio.surahNumber);

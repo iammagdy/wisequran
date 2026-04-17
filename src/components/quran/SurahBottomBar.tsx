@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Download, Loader as Loader2, WifiOff, Check, X, Timer, Repeat } from "lucide-react";
 import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
-import { getAudio } from "@/lib/db";
+import { getAudio, audioByteLength } from "@/lib/db";
 import { toast } from "sonner";
 import { cn, toArabicNumerals, formatTime } from "@/lib/utils";
 import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
@@ -80,7 +80,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     try {
       const size = await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress);
       const check = await getAudio(player.reciterId, surahNumber);
-      if (check && check.data.byteLength > 1024) {
+      if (check && audioByteLength(check.data) > 1024) {
         setCached(true);
         toast.success(language === "en" ? `Audio downloaded (${formatBytes(size)})` : `تم تحميل الصوت (${formatBytes(size)})`);
       } else {

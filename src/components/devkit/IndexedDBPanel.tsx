@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDB, clearAllData, clearAllTafsir, clearAllAudio, clearSurahsStore, clearAzkarStore, getAllSyncQueueEntries } from "@/lib/db";
+import { getDB, clearAllData, clearAllTafsir, clearAllAudio, clearSurahsStore, clearAzkarStore, getAllSyncQueueEntries, audioByteLength } from "@/lib/db";
 import { DK, formatBytes, downloadJson, exportFilename } from "./devkit-utils";
 
 interface StoreStats {
@@ -53,8 +53,9 @@ export default function IndexedDBPanel() {
       let audioBytes = 0;
       const ae: AudioEntry[] = [];
       for (const a of audio) {
-        audioBytes += a.data.byteLength;
-        ae.push({ id: a.id, reciterId: a.reciterId, surahNumber: a.surahNumber, bytes: a.data.byteLength });
+        const size = audioByteLength(a.data);
+        audioBytes += size;
+        ae.push({ id: a.id, reciterId: a.reciterId, surahNumber: a.surahNumber, bytes: size });
       }
       ae.sort((a, b) => a.surahNumber - b.surahNumber);
 

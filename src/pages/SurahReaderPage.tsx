@@ -33,6 +33,7 @@ import { useReaderPersonalization } from "@/hooks/useReaderPersonalization";
 import { useReaderWakeLock } from "@/hooks/useReaderWakeLock";
 import { useWbwSurah } from "@/hooks/useWbwSurah";
 import { WbwAyahText } from "@/components/quran/WbwAyahText";
+import { logger } from "@/lib/logger";
 
 export default function SurahReaderPage() {
   const { id } = useParams<{id: string;}>();
@@ -115,6 +116,34 @@ export default function SurahReaderPage() {
   const { addToHistory } = useReadingHistory();
   const hasTracked = useRef(false);
 
+  // Phase B perf marker — fires on the layout commit immediately
+  // following the first time `ayahs` becomes non-empty for this
+  // surah. Logs the elapsed time via the dev-gated logger so it's
+  // a no-op in production. Reading PerformanceMeasure here gives us
+  // a stable number we can compare across builds.
+  const perfLoggedRef = useRef(false);
+  useLayoutEffect(() => {
+    if (perfLoggedRef.current || ayahs.length === 0) return;
+    perfLoggedRef.current = true;
+    try {
+      performance.mark(`reader-mount-end-${surahNumber}`);
+      const measure = performance.measure(
+        `reader-mount-${surahNumber}`,
+        `reader-mount-start-${surahNumber}`,
+        `reader-mount-end-${surahNumber}`,
+      );
+      logger.debug(
+        `[perf] reader surah=${surahNumber} ayahs=${ayahs.length} mount=${measure.duration.toFixed(1)}ms`,
+      );
+    } catch { /* marks may be missing on hot reload */ }
+  }, [ayahs, surahNumber]);
+
+  // Reset the perf-logged guard whenever the surah changes so each
+  // navigation gets its own measurement.
+  useEffect(() => {
+    perfLoggedRef.current = false;
+  }, [surahNumber]);
+
   const isFavorite = favorites.includes(surahNumber);
   const effectiveTafsirEdition = language === "en" && tafsirEdition.startsWith("ar.")
     ? ENGLISH_TAFSIR_ID
@@ -151,6 +180,11 @@ export default function SurahReaderPage() {
     setTafsirAyahs([]);
     setTafsirSearch("");
     setTranslationAyahs([]);
+    // Phase B perf marker — captures the time from "user landed on
+    // the reader route" through "ayah data committed to React state".
+    // The companion measurement runs in a layout effect below so we
+    // also include the first paint of the windowed list.
+    try { performance.mark(`reader-mount-start-${surahNumber}`); } catch { /* noop */ }
     const controller = new AbortController();
     Promise.all([fetchSurahAyahs(surahNumber, controller.signal), fetchSurahList()]).
     then(([ayahData, surahList]) => {

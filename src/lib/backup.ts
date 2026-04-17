@@ -1,4 +1,4 @@
-import { getDB, addToSyncQueue, recalculateAudioBytes, saveAudio } from "@/lib/db";
+import { getDB, addToSyncQueue, recalculateAudioBytes, saveAudio, audioByteLength, audioToBlob } from "@/lib/db";
 import type { SyncQueueEntry } from "@/lib/db";
 
 const WISE_LS_PREFIX = "wise-";
@@ -135,7 +135,7 @@ export async function estimateBackupSize(options: ExportOptions = {}): Promise<B
     } else {
       for (const key of audioKeys) {
         const row = await db.get("audio", key);
-        if (row?.data) audioBytes += Math.round(row.data.byteLength * BASE64_OVERHEAD);
+        if (row?.data) audioBytes += Math.round(audioByteLength(row.data) * BASE64_OVERHEAD);
       }
     }
   }
@@ -476,17 +476,22 @@ export async function exportBackupBinary(options: ExportOptions = {}): Promise<B
     idb.tafsir = await db.getAll("tafsir");
   }
 
-  const audioBuffers: ArrayBuffer[] = [];
+  // Collect each row's audio as a Blob so the final concatenation
+  // happens lazily — `new Blob([header, ...blobs])` keeps references
+  // to each part rather than copying the bytes into a contiguous JS
+  // buffer. This keeps export memory flat even with many GB of audio.
+  const audioBlobs: Blob[] = [];
   if (options.includeAudio) {
     const rows = await db.getAll("audio");
     for (const r of rows) {
+      const size = audioByteLength(r.data);
       idb.audioManifest.push({
         id: r.id,
         reciterId: r.reciterId,
         surahNumber: r.surahNumber,
-        length: r.data.byteLength,
+        length: size,
       });
-      audioBuffers.push(r.data);
+      audioBlobs.push(audioToBlob(r.data));
     }
   }
 
@@ -499,7 +504,7 @@ export async function exportBackupBinary(options: ExportOptions = {}): Promise<B
   };
 
   const headerBytes = new TextEncoder().encode(JSON.stringify(header));
-  const parts: BlobPart[] = [BINARY_MAGIC, u32ToBytes(headerBytes.byteLength), headerBytes, ...audioBuffers];
+  const parts: BlobPart[] = [BINARY_MAGIC, u32ToBytes(headerBytes.byteLength), headerBytes, ...audioBlobs];
   return new Blob(parts, { type: "application/octet-stream" });
 }
 
@@ -563,8 +568,12 @@ async function restoreBinaryBackup(file: File | Blob, header: BinaryBackupHeader
         continue;
       }
       try {
-        const buf = await file.slice(cursor, cursor + entry.length).arrayBuffer();
-        await saveAudio(entry.reciterId, entry.surahNumber, buf);
+        // `file.slice(...)` returns a Blob view backed by the original
+        // file — no bytes are read into JS memory until consumed. We
+        // hand that Blob straight to `saveAudio`, which stores it in
+        // IDB without ever materialising the full payload on the heap.
+        const slice = file.slice(cursor, cursor + entry.length, "audio/mpeg");
+        await saveAudio(entry.reciterId, entry.surahNumber, slice);
         audioRestored++;
       } catch {
         // Skip this entry but keep streaming subsequent ones.

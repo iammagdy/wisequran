@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAudioPlayerState, useAudioPlayerTime, useAudioPlayerAyah } from "@/contexts/AudioPlayerContext";
-import { getAllAudioEntries } from "@/lib/db";
+import { getAllAudioEntries, audioByteLength } from "@/lib/db";
 import { DK, formatBytes } from "./devkit-utils";
 
 function Row({ label, value, accent }: { label: string; value: string; accent?: string }) {
@@ -21,7 +21,7 @@ export default function AudioPanel() {
   const loadAudio = async () => {
     const all = await getAllAudioEntries();
     setAudioEntries(
-      all.map((a) => ({ id: a.id, surahNumber: a.surahNumber, reciterId: a.reciterId, bytes: a.data.byteLength }))
+      all.map((a) => ({ id: a.id, surahNumber: a.surahNumber, reciterId: a.reciterId, bytes: audioByteLength(a.data) }))
         .sort((a, b) => a.surahNumber - b.surahNumber)
     );
   };

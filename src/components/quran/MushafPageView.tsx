@@ -78,7 +78,34 @@ export default function MushafPageView({
 
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // Seed `currentSlide` from the initial `targetPage` / `highlightedAyah`
+  // so that direct navigation to a page deep in the Mushaf doesn't
+  // briefly render slide 0 before Embla scrolls into place. The window
+  // is then centered on the right slide from the very first paint.
+  const [currentSlide, setCurrentSlide] = useState(() => {
+    if (targetPage) {
+      const idx = pages.findIndex(([pageNum]) => pageNum === targetPage);
+      if (idx >= 0) return idx;
+    }
+    if (highlightedAyah) {
+      const idx = pages.findIndex(([, pageAyahs]) =>
+        pageAyahs.some((a) => a.numberInSurah === highlightedAyah),
+      );
+      if (idx >= 0) return idx;
+    }
+    return 0;
+  });
+
+  /**
+   * How many pages on either side of the active slide we render fully.
+   * Off-window slides become lightweight placeholder divs that preserve
+   * Embla's layout (same flex basis + min-height) so dragging still
+   * lands on the correct snap, but they emit zero ayah DOM nodes —
+   * crucial for long surahs like Al-Baqarah where rendering all ~48
+   * pages up front blew through 200+ ms of main-thread work on first
+   * mount.
+   */
+  const SLIDE_WINDOW = 1;
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -146,7 +173,25 @@ export default function MushafPageView({
       {/* Carousel */}
       <div ref={emblaRef} className="overflow-hidden rounded-2xl touch-pan-y">
         <div className="flex">
-          {pages.map(([pageNum, pageAyahs]) =>
+          {pages.map(([pageNum, pageAyahs], slideIdx) => {
+          const inWindow = Math.abs(slideIdx - currentSlide) <= SLIDE_WINDOW;
+          if (!inWindow) {
+            // Placeholder: same slot dimensions, zero ayah DOM. Embla
+            // measures `basis-full` so the snap math is unchanged.
+            return (
+              <div
+                key={pageNum}
+                className="min-w-0 shrink-0 grow-0 basis-full px-0.5"
+                aria-hidden
+              >
+                <div
+                  className="rounded-2xl border border-border bg-card p-5 shadow-sm min-h-[60vh]"
+                  data-testid={`mushaf-page-${pageNum}-placeholder`}
+                />
+              </div>
+            );
+          }
+          return (
           <div
             key={pageNum}
             className="min-w-0 shrink-0 grow-0 basis-full px-0.5">
@@ -260,7 +305,8 @@ export default function MushafPageView({
               }
               </div>
             </div>
-          )}
+          );
+          })}
         </div>
       </div>
 
