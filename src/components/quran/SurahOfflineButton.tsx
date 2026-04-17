@@ -42,10 +42,16 @@ export default function SurahOfflineButton({
 
   // Lightweight presence check on mount and whenever the user changes
   // their reciter/tafsir (those affect what counts as "fully offline").
+  // Must reset to "idle" when the new selection is *not* fully cached,
+  // otherwise the button would stay stuck on "done" after switching to
+  // a reciter the user hasn't downloaded yet.
   useEffect(() => {
     let cancelled = false;
     void isSurahFullyOffline({ surahNumber, reciterId, tafsirId }).then((ok) => {
-      if (!cancelled && ok) setState("done");
+      if (cancelled) return;
+      // Don't clobber an in-flight download with a stale presence check.
+      setState((prev) => (prev === "downloading" ? prev : ok ? "done" : "idle"));
+      if (!ok) setPct(0);
     });
     return () => {
       cancelled = true;

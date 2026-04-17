@@ -295,14 +295,33 @@ self.addEventListener("periodicsync", (event) => {
 // Page registers `wise-sync-queue` whenever a write fell back to IDB
 // (see `enqueuedSupabaseWrite` in `src/lib/syncQueue.ts`). The browser
 // fires `sync` once connectivity returns — even if the tab was closed
-// at the time. We can't use the Supabase JS SDK from the SW (no auth
-// session here), so we wake any open clients which then call
-// `flushSyncQueue()` themselves. Browsers that support background
-// sync will launch a hidden client if none is open yet (Chrome does
-// this for installed PWAs); browsers without support fall back to the
-// existing online/visibility-event flush in `useSyncQueue.ts`.
+// at the time.
+//
+// The Supabase JS SDK can't run in the SW (no auth session is mounted
+// here), so the actual flush happens in the page via `flushSyncQueue()`.
+// Closed-tab strategy:
+//   1. Try to find any open client (uncontrolled + window types).
+//   2. If found → broadcast WISE_FLUSH_QUEUE and resolve. The page
+//      drains the queue authoritatively and acks via Supabase.
+//   3. If none found → throw, which keeps the sync registration alive.
+//      The browser will re-fire the `sync` event the next time the
+//      user opens the PWA (or, on Chromium installed PWAs that grant
+//      `clientsClaim`-eligible wakeups, when network conditions change
+//      again). This is conservative but never silently drops writes.
+//
+// Browsers without Background Sync support never reach this handler;
+// `useSyncQueue.ts`'s online/visibility-event flush keeps doing the
+// work the next time the user opens the app.
 async function notifyClientsToFlush(): Promise<void> {
-  const clients = await self.clients.matchAll({ includeUncontrolled: true });
+  const clients = await self.clients.matchAll({
+    includeUncontrolled: true,
+    type: "window",
+  });
+  if (clients.length === 0) {
+    // Throwing makes the browser keep our sync registration so it can
+    // be retried when a client is alive.
+    throw new Error("wise-sync-queue: no open clients to drain queue");
+  }
   for (const c of clients) c.postMessage({ type: "WISE_FLUSH_QUEUE" });
 }
 

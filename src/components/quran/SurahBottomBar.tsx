@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Download, Loader as Loader2, WifiOff, Check, X, Timer, Repeat } from "lucide-react";
-import { downloadSurahAudio, formatBytes } from "@/lib/quran-audio";
-import { getAudio, audioByteLength } from "@/lib/db";
+import { downloadSurahForOffline, isSurahFullyOffline, formatBytes } from "@/lib/offline-surah";
+import { DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import { cn, toArabicNumerals, formatTime } from "@/lib/utils";
 import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
@@ -39,10 +39,18 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [loopEnabled, setLoopEnabled] = useLocalStorage<boolean>(`wise-loop-${surahNumber}`, false);
+  const [tafsirId] = useLocalStorage<string>("wise-tafsir", DEFAULT_TAFSIR);
 
+  // Reflect "fully offline" status (audio + text + bundled tafsir for the
+  // current reciter/tafsir picks). Re-runs when the user switches reciter
+  // or tafsir so the badge doesn't lie about a different bundle.
   useEffect(() => {
-    getAudio(player.reciterId, surahNumber).then((r) => setCached(!!r));
-  }, [surahNumber, player.reciterId]);
+    let cancelled = false;
+    void isSurahFullyOffline({ surahNumber, reciterId: player.reciterId, tafsirId }).then((ok) => {
+      if (!cancelled) setCached(ok);
+    });
+    return () => { cancelled = true; };
+  }, [surahNumber, player.reciterId, tafsirId]);
 
   useEffect(() => {
     if (!timerActive) return;
@@ -83,22 +91,30 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
     setDownloading(true);
     setDlProgress(0);
     try {
-      const size = await downloadSurahAudio(player.reciterId, surahNumber, setDlProgress, controller.signal);
-      const check = await getAudio(player.reciterId, surahNumber);
-      if (check && audioByteLength(check.data) > 1024) {
-        setCached(true);
-        toast.success(language === "en" ? `Audio downloaded (${formatBytes(size)})` : `تم تحميل الصوت (${formatBytes(size)})`);
-      } else {
-        toast.error(language === "en" ? "Failed to save audio — try again" : "فشل حفظ الصوت — حاول مرة أخرى");
-      }
+      // Phase C: unified one-tap offline (audio + mushaf text + bundled
+      // tafsir) instead of audio-only — keeps reader and surah-list
+      // entry points behaviorally consistent.
+      const result = await downloadSurahForOffline({
+        surahNumber,
+        reciterId: player.reciterId,
+        tafsirId,
+        signal: controller.signal,
+        onProgress: setDlProgress,
+      });
+      setCached(true);
+      toast.success(
+        language === "en"
+          ? `Saved offline (${formatBytes(result.totalBytes)})`
+          : `تم الحفظ بدون اتصال (${formatBytes(result.totalBytes)})`,
+      );
     } catch (e) {
       // AbortError is the user's own cancel — show a quieter toast and
       // skip the generic "failed" message. Partial IDB rows are
-      // already cleaned up inside `downloadSurahAudio`.
-      if (e instanceof DOMException && e.name === "AbortError") {
+      // already cleaned up inside the orchestrator.
+      if (e instanceof Error && e.name === "AbortError") {
         toast(language === "en" ? "Download cancelled" : "تم إلغاء التحميل");
       } else {
-        toast.error(language === "en" ? (e instanceof Error ? e.message : "Failed to download audio") : (e instanceof Error ? e.message : "فشل تحميل الصوت"));
+        toast.error(language === "en" ? (e instanceof Error ? e.message : "Download failed") : (e instanceof Error ? e.message : "فشل التحميل"));
       }
     } finally {
       dlAbortRef.current = null;
