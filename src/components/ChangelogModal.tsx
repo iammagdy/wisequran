@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, ChevronDown, Star, Zap, X } from "lucide-react";
+import { Sparkles, ChevronDown, Star, Zap, X, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { type ChangelogEntry } from "@/data/changelog";

@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.0";
+export const APP_VERSION = "3.6.1";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.6.1",
+    date: "2026-04-17",
+    ar: {
+      fixes: [
+        "إصلاح مشكلة كانت تُظهر شاشة بيضاء فارغة عند فتح التطبيق لأول مرة من المتصفح",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed a blank white screen that appeared on the very first visit from a fresh browser",
+      ],
+    },
+  },
   {
     version: "3.6.0",
     date: "2026-04-17",
