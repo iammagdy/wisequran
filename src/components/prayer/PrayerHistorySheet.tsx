@@ -205,7 +205,7 @@ export default function PrayerHistorySheet({ open, onClose }: PrayerHistorySheet
                 </div>
               ) : (
                 <>
-                  <div className={`grid gap-1 mb-2 text-[10px] text-muted-foreground font-medium ${isRTL ? "text-right" : "text-left"}`}
+                  <div className={`grid gap-1 mb-2 text-[10px] text-muted-foreground font-medium ${isRTL ? "text-end" : "text-start"}`}
                     style={{ gridTemplateColumns: "auto repeat(5, 1fr)" }}
                   >
                     <span />

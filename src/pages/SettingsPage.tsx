@@ -717,7 +717,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="px-4 pt-6 pl-[5px] pb-[20px]" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="px-4 pt-6 ps-[5px] pb-[20px]" dir={isRTL ? "rtl" : "ltr"}>
       <div className="flex items-center gap-2 mb-1">
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -983,7 +983,7 @@ export default function SettingsPage() {
                       }>
                         {translationId === t.id && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                       </div>
-                      <span className="flex-1 text-right">{t.name}</span>
+                      <span className="flex-1 text-end">{t.name}</span>
                       <span className="text-xs text-muted-foreground">{t.language}</span>
                     </button>
                     )}

@@ -109,7 +109,7 @@ export default function TafsirSheet({
             {ayahText && (
               <div className="rounded-2xl bg-muted/40 p-4 border border-border/40">
                 <p
-                  className="font-arabic text-foreground leading-[2] text-right"
+                  className="font-arabic text-foreground leading-[2] text-end"
                   style={{ fontSize: 22 }}
                   dir="rtl"
                 >
@@ -129,7 +129,7 @@ export default function TafsirSheet({
             ) : tafsirText ? (
               <div className="rounded-2xl bg-card p-4 border border-border shadow-sm">
                 <p
-                  className="font-arabic text-foreground/90 leading-[2.2] text-right"
+                  className="font-arabic text-foreground/90 leading-[2.2] text-end"
                   style={{ fontSize: 18 }}
                   dir="rtl"
                 >

@@ -125,6 +125,8 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                   <img
                     src="/icons/icon-192.png"
                     alt="Wise Quran"
+                    width={76}
+                    height={76}
                     className="w-[76px] h-[76px] object-contain"
                   />
                 </div>

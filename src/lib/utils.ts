@@ -29,6 +29,32 @@ export function toArabicNumerals(str: string | number): string {
   return String(str).replace(/[0-9]/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]);
 }
 
+/**
+ * Format a number for the active UI language.
+ * - Localizes digits to Arabic-Indic when language === "ar".
+ * - Optionally appends a percent sign (uses U+066A in Arabic).
+ * - Optionally uses thousands grouping via toLocaleString.
+ */
+export function formatNumber(
+  value: number,
+  language: string = "en",
+  options: { percent?: boolean; grouping?: boolean; decimals?: number } = {}
+): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return language === "ar" ? "٠" : "0";
+  }
+  const { percent = false, grouping = false, decimals } = options;
+  const num =
+    typeof decimals === "number" ? Number(value).toFixed(decimals) : String(value);
+  const base = grouping
+    ? Number(num).toLocaleString(language === "ar" ? "ar-EG" : "en-US")
+    : language === "ar"
+      ? toArabicNumerals(num)
+      : num;
+  if (!percent) return base;
+  return language === "ar" ? `${base}٪` : `${base}%`;
+}
+
 /** 
  * Centralized time formatter (mm:ss or hh:mm:ss) 
  * Automatically localizes digits if lang is 'ar'

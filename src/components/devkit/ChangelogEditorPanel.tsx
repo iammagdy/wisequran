@@ -102,7 +102,7 @@ function EntryPreviewModal({
         >
           <div className="relative px-6 pt-5 pb-3 border-b border-border/40 flex items-center gap-3">
             <span className="font-semibold text-sm text-foreground/80">{labelPreview}</span>
-            <div className="flex items-center gap-1 ml-2 rounded-lg bg-muted/40 p-0.5">
+            <div className="flex items-center gap-1 ms-2 rounded-lg bg-muted/40 p-0.5">
               <button
                 onClick={() => setPreviewLang("en")}
                 className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all ${
@@ -279,7 +279,7 @@ function EntryRow({
         <span className={`font-mono text-[11px] ${DK.muted} w-24 shrink-0`}>{entry.date}</span>
         <span className={`font-mono text-[11px] ${DK.muted} flex-1`}>{total} items</span>
         {isCurrent && (
-          <span className={`font-mono text-[10px] ${DK.yellow} shrink-0 mr-1`} title="This is the effective current version">
+          <span className={`font-mono text-[10px] ${DK.yellow} shrink-0 me-1`} title="This is the effective current version">
             ★ current
           </span>
         )}
@@ -325,7 +325,7 @@ function EntryRow({
             <span className={`font-mono text-[10px] ${DK.subtle} shrink-0`}>built-in</span>
           )}
         </div>
-        <span className={`font-mono text-[10px] ${DK.muted} ml-1`}>{expanded ? "▲" : "▼"}</span>
+        <span className={`font-mono text-[10px] ${DK.muted} ms-1`}>{expanded ? "▲" : "▼"}</span>
       </div>
 
       {expanded && (
@@ -342,7 +342,7 @@ function EntryRow({
                   {items.map((item, i) => (
                     <li
                       key={i}
-                      className={`font-mono text-xs ${DK.text} pl-2 border-l-2 border-[#388bfd]/40`}
+                      className={`font-mono text-xs ${DK.text} ps-2 border-l-2 border-[#388bfd]/40`}
                     >
                       {item}
                     </li>
@@ -519,7 +519,7 @@ export default function ChangelogEditorPanel() {
           <p className={`font-mono text-sm font-bold ${isVersionOverridden ? DK.yellow : DK.text}`}>
             v{effectiveVer}
             {isVersionOverridden && (
-              <span className={`ml-2 font-mono text-[10px] ${DK.muted}`}>
+              <span className={`ms-2 font-mono text-[10px] ${DK.muted}`}>
                 (static: v{APP_VERSION})
               </span>
             )}

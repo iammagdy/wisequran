@@ -158,7 +158,7 @@ export default function SurahReaderPage() {
   // wraps strangely under English UI.
   const tafsirIsArabic = effectiveTafsirEdition.startsWith("ar.");
   const tafsirDir: "rtl" | "ltr" = tafsirIsArabic ? "rtl" : "ltr";
-  const tafsirAlignClass = tafsirIsArabic ? "text-right" : "text-left";
+  const tafsirAlignClass = tafsirIsArabic ? "text-end" : "text-start";
 
   const tafsirMap = useMemo(() => new Map(tafsirAyahs.map(a => [a.numberInSurah, a])), [tafsirAyahs]);
   const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
@@ -489,7 +489,7 @@ export default function SurahReaderPage() {
                   >
                     {language === "ar" ? `صفحة ${toArabicNumerals(currentPage)}` : `${t("page")} ${currentPage}`}
                     {minPage && maxPage && minPage !== maxPage &&
-                      <span className="text-primary/60 mr-1 tabular-nums">
+                      <span className="text-primary/60 me-1 tabular-nums">
                         {language === "ar" ? `(${toArabicNumerals(minPage)}–${toArabicNumerals(maxPage)})` : `(${minPage}–${maxPage})`}
                       </span>
                       }
@@ -502,7 +502,7 @@ export default function SurahReaderPage() {
                         e.preventDefault();
                         const pageNum = Number(goToPageInput);
                         if (!pageNum || pageNum < 1 || pageNum > 604) {
-                          toast({ title: t("invalid_page"), description: language === "ar" ? "أدخل رقمًا بين ١ و ٦٠٤" : "Enter a number between 1 and 604" });
+                          toast({ title: t("invalid_page"), description: t("page_range_hint").replace("{min}", language === "ar" ? toArabicNumerals(1) : "1").replace("{max}", language === "ar" ? toArabicNumerals(604) : "604") });
                           return;
                         }
                         const surahPages = ayahs.filter((a) => a.page).map((a) => a.page!);
@@ -839,7 +839,7 @@ export default function SurahReaderPage() {
                         ? `${displaySurahName} الآية ${toArabicNumerals(ayah.numberInSurah)}`
                         : `${displaySurahName}, ayah ${ayah.numberInSurah}`
                     }
-                    className={cn("group relative rounded-2xl bg-card shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] pl-[10px] pr-[10px]",
+                    className={cn("group relative rounded-2xl bg-card shadow-soft border border-border/50 transition-all duration-300 pt-[5px] pb-[5px] ps-[10px] pe-[10px]",
                     highlightedAyah === ayah.numberInSurah && "ring-2 ring-primary/50 bg-primary/5 shadow-glow",
                     playingAyahInSurah === ayah.numberInSurah && "ring-1 ring-primary/30"
                     )}>
@@ -994,7 +994,7 @@ export default function SurahReaderPage() {
                   <Select
                 value=""
                 onValueChange={(val) => tafsirScrollToAyahRef.current?.(Number(val))}>
-                    <SelectTrigger className="w-40 shrink-0 text-right">
+                    <SelectTrigger className="w-40 shrink-0 text-end">
                       <SelectValue placeholder={language === "ar" ? "انتقل إلى آية..." : t("jump_to_ayah")} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1011,7 +1011,7 @@ export default function SurahReaderPage() {
                   placeholder={t("search")}
                   value={tafsirSearch}
                   onChange={(e) => setTafsirSearch(e.target.value)}
-                  className="pr-10 text-right"
+                  className="pe-10 text-end"
                   dir={isRTL ? "rtl" : "ltr"} />
                   </div>
                 </div>

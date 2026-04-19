@@ -292,7 +292,7 @@ export default function AppControlsPanel() {
             </div>
             <button
               onClick={() => void clearCaches()}
-              className={`${DK.btnBase} ${DK.btnRed} shrink-0 ml-4`}
+              className={`${DK.btnBase} ${DK.btnRed} shrink-0 ms-4`}
             >
               Clear
             </button>
@@ -307,7 +307,7 @@ export default function AppControlsPanel() {
             <button
               onClick={() => void handleRecalcAudio()}
               disabled={recalcBusy}
-              className={`${DK.btnBase} ${DK.btnGray} shrink-0 ml-4`}
+              className={`${DK.btnBase} ${DK.btnGray} shrink-0 ms-4`}
             >
               {recalcBusy ? "…" : "Recalculate"}
             </button>

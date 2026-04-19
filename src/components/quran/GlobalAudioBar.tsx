@@ -131,7 +131,7 @@ export default function GlobalAudioBar() {
                   </div>
 
                   {/* Info Group */}
-                  <div className={cn("flex-1 min-w-0 flex flex-col justify-center", isRTL ? "text-right" : "text-left")}>
+                  <div className={cn("flex-1 min-w-0 flex flex-col justify-center", isRTL ? "text-end" : "text-start")}>
                     <div className={cn("flex items-center gap-2 mb-0.5", isRTL ? "flex-row" : "flex-row")}>
                       <h3 className="font-serif text-base font-bold text-foreground leading-none tracking-tight truncate">
                         {surahName}

@@ -79,12 +79,12 @@ export default function VitalsPanel() {
           <div className="overflow-x-auto">
             <table className="w-full font-mono text-[11px]">
               <thead>
-                <tr className={`text-left ${DK.subtle}`}>
-                  <th className="py-1 pr-3">Time</th>
-                  <th className="py-1 pr-3">Metric</th>
-                  <th className="py-1 pr-3">Value</th>
-                  <th className="py-1 pr-3">Rating</th>
-                  <th className="py-1 pr-3">Path</th>
+                <tr className={`text-start ${DK.subtle}`}>
+                  <th className="py-1 pe-3">Time</th>
+                  <th className="py-1 pe-3">Metric</th>
+                  <th className="py-1 pe-3">Value</th>
+                  <th className="py-1 pe-3">Rating</th>
+                  <th className="py-1 pe-3">Path</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,15 +93,15 @@ export default function VitalsPanel() {
                   .reverse()
                   .map((s, i) => (
                     <tr key={`${s.id}-${i}`} className={`border-t ${DK.border}`}>
-                      <td className={`py-1 pr-3 ${DK.muted}`}>
+                      <td className={`py-1 pe-3 ${DK.muted}`}>
                         {new Date(s.ts).toLocaleTimeString()}
                       </td>
-                      <td className={`py-1 pr-3 ${DK.text}`}>{s.name}</td>
-                      <td className={`py-1 pr-3 ${DK.text}`}>
+                      <td className={`py-1 pe-3 ${DK.text}`}>{s.name}</td>
+                      <td className={`py-1 pe-3 ${DK.text}`}>
                         {formatVitalValue(s.name, s.value)}
                       </td>
-                      <td className={`py-1 pr-3 ${ratingColor(s.rating)}`}>{s.rating}</td>
-                      <td className={`py-1 pr-3 ${DK.muted} truncate max-w-[160px]`}>
+                      <td className={`py-1 pe-3 ${ratingColor(s.rating)}`}>{s.rating}</td>
+                      <td className={`py-1 pe-3 ${DK.muted} truncate max-w-[160px]`}>
                         {s.path}
                       </td>
                     </tr>

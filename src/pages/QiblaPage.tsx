@@ -293,7 +293,16 @@ export default function QiblaPage() {
         </motion.button>
       </div>
 
-      {locationError ? (
+      {!location && locationLoading && !locationError ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="rounded-2xl bg-card border border-border/50 p-8 text-center w-full flex flex-col items-center gap-3 shadow-soft"
+        >
+          <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">{t("qibla_locating_caption")}</p>
+        </motion.div>
+      ) : locationError ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -53,7 +53,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </p>
           </div>
           {this.state.error && (
-            <pre className="text-xs text-destructive bg-destructive/10 rounded-lg p-4 max-w-sm overflow-auto text-left">
+            <pre className="text-xs text-destructive bg-destructive/10 rounded-lg p-4 max-w-sm overflow-auto text-start">
               {this.state.error.message}
             </pre>
           )}

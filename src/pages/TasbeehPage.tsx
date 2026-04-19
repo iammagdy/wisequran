@@ -165,7 +165,7 @@ export default function TasbeehPage() {
           >
             {isRTL ? <ArrowRight className="h-5 w-5" /> : <ArrowLeft className="h-5 w-5" />}
           </motion.button>
-          <h1 className="flex-1 text-2xl font-bold text-foreground heading-decorated text-center pr-9">{t("tasbeeh_title")}</h1>
+          <h1 className="flex-1 text-2xl font-bold text-foreground heading-decorated text-center pe-9">{t("tasbeeh_title")}</h1>
         </div>
 
         {/* Today total badge */}

@@ -131,7 +131,7 @@ export default function BookmarksPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/surah/${b.surah}?ayah=${b.ayah}`)}
-                className={cn("block w-full", isRTL ? "text-right" : "text-left")}
+                className={cn("block w-full", isRTL ? "text-end" : "text-start")}
                 data-testid={`bookmark-open-${b.surah}-${b.ayah}`}
               >
                 <div className="flex items-center justify-between gap-2 mb-2">

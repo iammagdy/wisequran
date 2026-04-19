@@ -51,6 +51,8 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
                 <img
                   src="/ios_install_guide.jpg"
                   alt="iOS Install Guide"
+                  width={800}
+                  height={1000}
                   className="absolute inset-0 w-full h-full object-contain p-2"
                 />
               </picture>
@@ -99,6 +101,8 @@ export default function InstallModal({ open, onOpenChange }: InstallModalProps) 
                 <img
                   src="/android_install_guide.jpg"
                   alt="Android Install Guide"
+                  width={800}
+                  height={1000}
                   className="absolute inset-0 w-full h-full object-contain p-2"
                 />
               </picture>

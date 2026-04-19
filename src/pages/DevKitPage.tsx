@@ -223,7 +223,7 @@ function SidebarNav({
                     key={key}
                     onClick={() => onSelect(key)}
                     title={!showLabel ? item.label : undefined}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-left transition-colors font-mono text-xs ${
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-start transition-colors font-mono text-xs ${
                       isActive ? DK.activeNav : `${DK.muted} ${DK.hoverNav}`
                     } ${!showLabel ? "justify-center" : ""}`}
                   >

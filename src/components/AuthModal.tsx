@@ -162,7 +162,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder={isRTL ? "البريد الإلكتروني" : "Email address"}
-                        className={`w-full rounded-xl bg-muted border border-border px-4 py-3 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pr-10 text-right" : "pl-10"}`}
+                        className={`w-full rounded-xl bg-muted border border-border px-4 py-3 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pe-10 text-end" : "ps-10"}`}
                         autoComplete="email"
                       />
                     </div>
@@ -174,7 +174,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder={isRTL ? "كلمة المرور" : "Password"}
-                        className={`w-full rounded-xl bg-muted border border-border px-4 py-3 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pr-10 pl-10 text-right" : "pl-10 pr-10"}`}
+                        className={`w-full rounded-xl bg-muted border border-border px-4 py-3 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pe-10 ps-10 text-end" : "ps-10 pe-10"}`}
                         autoComplete={tab === "signin" ? "current-password" : "new-password"}
                       />
                       <button

@@ -278,10 +278,9 @@ export default function PrayerPage() {
         className="rounded-2xl glass-card border-border/40 shadow-soft px-4 py-3 mb-3">
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground font-medium">
-            {language === "ar"
-              ? toArabicNumerals(`${todayData.completed.length}/${PRAYERS.length}`)
-              : `${todayData.completed.length}/${PRAYERS.length}`}
-            {" "}{t("complete_prayers")}
+            {t("prayers_completion_summary")
+              .replace("{done}", language === "ar" ? toArabicNumerals(todayData.completed.length) : String(todayData.completed.length))
+              .replace("{total}", language === "ar" ? toArabicNumerals(PRAYERS.length) : String(PRAYERS.length))}
           </span>
           <span className="text-xs font-bold text-primary">{Math.round(progress)}%</span>
         </div>
@@ -297,7 +296,7 @@ export default function PrayerPage() {
         onClick={() => navigate("/qibla")}
         className={cn(
           "w-full rounded-2xl glass-card border-gold/25 shadow-soft flex items-center gap-3 px-4 py-3 mb-4 gradient-gold-card hover-lift",
-          isRTL ? "text-right" : "text-left"
+          isRTL ? "text-end" : "text-start"
         )}>
         <div className="rounded-xl bg-gold/15 border border-gold/20 p-2.5 shrink-0">
           <Compass className="h-5 w-5 text-gold" />
@@ -318,7 +317,7 @@ export default function PrayerPage() {
         data-testid="prayer-friday-mode-button"
         className={cn(
           "w-full rounded-2xl glass-card border-primary/20 shadow-soft flex items-center gap-3 px-4 py-3 mb-4 hover-lift",
-          isRTL ? "text-right" : "text-left"
+          isRTL ? "text-end" : "text-start"
         )}
       >
         <div className="rounded-xl bg-primary/10 border border-primary/20 p-2.5 shrink-0">
@@ -375,7 +374,7 @@ export default function PrayerPage() {
                 }
               </div>
 
-              <div className={cn("flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
+              <div className={cn("flex-1 min-w-0", isRTL ? "text-end" : "text-start")}>
                 <div className={cn("flex items-center gap-2", isRTL ? "justify-start flex-row-reverse" : "")}>
                   <p className={cn(
                     "font-bold text-sm",

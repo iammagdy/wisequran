@@ -210,7 +210,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
                           <p
                             className={cn(
                               "font-arabic leading-[1.8] transition-all text-foreground",
-                              isRTL ? "text-right" : "text-left",
+                              isRTL ? "text-end" : "text-start",
                               isCurrentAyah ? "text-2xl font-bold" : "text-xl opacity-80"
                             )}
                           >

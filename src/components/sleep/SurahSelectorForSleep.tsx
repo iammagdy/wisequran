@@ -36,7 +36,7 @@ export function SurahSelectorForSleep({ selected, language, onChange }: SurahSel
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={language === "ar" ? "ابحث عن سورة..." : "Search surah..."}
-            className="w-full bg-white/8 border border-white/15 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-amber-400/40"
+            className="w-full bg-white/8 border border-white/15 rounded-xl ps-9 pe-3 py-2 text-sm text-white placeholder-white/30 outline-none focus:border-amber-400/40"
             dir={language === "ar" ? "rtl" : "ltr"}
           />
         </div>

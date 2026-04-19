@@ -122,7 +122,7 @@ function DhikrCounter({
       </div>
 
       <p
-        className="font-arabic leading-loose text-right text-foreground mb-3"
+        className="font-arabic leading-loose text-end text-foreground mb-3"
         style={{ fontSize: fontSize * 0.85 }}
         dir="rtl"
       >
@@ -133,7 +133,7 @@ function DhikrCounter({
         <p className="text-xs text-muted-foreground mb-4 leading-relaxed">{dhikr.translation}</p>
       )}
       {dhikr.source && (
-        <p className="text-[11px] text-muted-foreground/50 mb-3 text-right" dir="rtl">{dhikr.source}</p>
+        <p className="text-[11px] text-muted-foreground/50 mb-3 text-end" dir="rtl">{dhikr.source}</p>
       )}
 
       <div className="flex items-center gap-2 mt-2">
@@ -217,7 +217,7 @@ function CategoryCard({
         </div>
       )}
 
-      <p className="font-bold text-xs leading-snug text-foreground mb-1.5 pr-5">
+      <p className="font-bold text-xs leading-snug text-foreground mb-1.5 pe-5">
         {language === "ar" ? cat.nameAr : cat.name}
       </p>
       <span className={cn(
@@ -340,7 +340,7 @@ export default function AzkarPage() {
                   placeholder={t("azkar_search")}
                   className={cn(
                     "w-full h-10 rounded-xl glass-card text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all shadow-soft",
-                    isRTL ? "pr-9 pl-9 text-right" : "pl-9 pr-9"
+                    isRTL ? "pe-9 ps-9 text-end" : "ps-9 pe-9"
                   )}
                   dir={isRTL ? "rtl" : "ltr"}
                 />

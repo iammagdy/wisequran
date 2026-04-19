@@ -872,7 +872,7 @@ export default function RecitationTestPage() {
                                 isCorrect ? "text-emerald-500" : isSkipped ? "text-muted-foreground" : "text-destructive"
                               )}>
                                 {isSkipped
-                                  ? (language === "ar" ? "تخطي" : "Skipped")
+                                  ? t("recitation_skipped")
                                   : `${language === "ar" ? `${toArabicNumerals(state.score)}٪` : `${state.score}%`}`}
                               </span>
                             </div>
@@ -932,7 +932,7 @@ export default function RecitationTestPage() {
                               <div className="flex items-center justify-center gap-2 text-primary">
                                 <div className="h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                                 <p className="text-xs font-medium">
-                                  {language === "ar" ? "جاري التقييم..." : "Evaluating..."}
+                                  {t("recitation_evaluating")}
                                 </p>
                               </div>
                             )}
@@ -1025,7 +1025,7 @@ export default function RecitationTestPage() {
                 className="flex items-center gap-1.5 rounded-2xl border border-border/50 bg-muted/60 px-4 py-2.5 text-xs text-muted-foreground font-semibold hover:bg-muted transition-colors disabled:opacity-40 flex-1 justify-center"
               >
                 <SkipForward className="h-3.5 w-3.5" />
-                {language === "ar" ? "تخطي" : "Skip"}
+                {t("recitation_skip")}
               </motion.button>
 
               <motion.button
@@ -1067,7 +1067,7 @@ export default function RecitationTestPage() {
 
             <p className="text-center text-[0.6rem] text-muted-foreground mt-1">
               {isEvaluating
-                ? (language === "ar" ? "جاري التقييم..." : "Evaluating...")
+                ? t("recitation_evaluating")
                 : isListening
                 ? (language === "ar" ? "استمع • صمت ٣٫٢ ثانية = انتهاء الآية" : "Listening • 3.2s silence = verse done")
                 : (language === "ar" ? "اضغط المايك لبدء التلاوة من الذاكرة" : "Tap mic to start reciting from memory")}

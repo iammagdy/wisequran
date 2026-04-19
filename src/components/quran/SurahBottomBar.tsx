@@ -299,7 +299,7 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                 </motion.button>
               )}
               {downloading && (
-                <span className="flex items-center gap-1 rounded-full bg-muted pl-3 pr-1 py-1 text-[0.625rem] text-muted-foreground">
+                <span className="flex items-center gap-1 rounded-full bg-muted ps-3 pe-1 py-1 text-[0.625rem] text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   <span>{language === "ar" ? toArabicNumerals(`${dlProgress}%`) : `${dlProgress}%`}</span>
                   <button

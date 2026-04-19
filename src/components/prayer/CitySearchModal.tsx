@@ -77,7 +77,7 @@ export default function CitySearchModal({ open, onClose, onSelectCity, onUseGPS 
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={isRTL ? "ابحث عن مدينة..." : "Search for a city..."}
-                  className={`w-full rounded-xl bg-muted border border-border px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pr-10 text-right" : "pl-10"}`}
+                  className={`w-full rounded-xl bg-muted border border-border px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors ${isRTL ? "pe-10 text-end" : "ps-10"}`}
                 />
               </div>
 
@@ -102,10 +102,10 @@ export default function CitySearchModal({ open, onClose, onSelectCity, onUseGPS 
                 <button
                   key={`${city.name}-${city.country}`}
                   onClick={() => handleSelect(city)}
-                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-muted transition-colors text-left"
+                  className="w-full flex items-center gap-3 rounded-xl px-3 py-3 hover:bg-muted transition-colors text-start"
                 >
                   <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className={isRTL ? "text-end" : "text-start"}>
                     <p className="text-sm font-medium text-foreground">
                       {isRTL ? city.nameAr : city.name}
                     </p>

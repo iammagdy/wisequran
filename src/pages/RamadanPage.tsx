@@ -146,7 +146,7 @@ export default function RamadanPage() {
 
                     <button
                       onClick={() => toggleChecklistItem(item.id)}
-                      className={cn("w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 pb-[5px] pt-[5px]", isRTL ? "text-right" : "text-left",
+                      className={cn("w-full flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 pb-[5px] pt-[5px]", isRTL ? "text-end" : "text-start",
 
                       done ?
                       "glass-card bg-primary/10 border-primary/30" :

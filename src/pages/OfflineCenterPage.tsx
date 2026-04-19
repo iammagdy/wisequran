@@ -295,7 +295,7 @@ export default function OfflineCenterPage() {
           </div>
         </div>
 
-        <div className="space-y-2 max-h-[28rem] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[28rem] overflow-y-auto pe-1">
           {filteredSurahs.map((surah) => {
             const hasText = downloadedSurahs.includes(surah.number);
             const hasAudio = downloadedAudio.includes(surah.number);
@@ -335,7 +335,7 @@ export default function OfflineCenterPage() {
                             onClick={() => handleDeleteReciterAudio(surah.number, rid)}
                             aria-label={language === "ar" ? `حذف صوت ${label}` : `Remove audio for ${label}`}
                             data-testid={`offline-center-surah-reciter-remove-${surah.number}-${rid}`}
-                            className="ml-0.5 rounded-full p-0.5 hover:bg-primary/15 disabled:opacity-50 transition-colors"
+                            className="ms-0.5 rounded-full p-0.5 hover:bg-primary/15 disabled:opacity-50 transition-colors"
                           >
                             {chipBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                           </button>

@@ -260,7 +260,7 @@ export default function SleepModePage() {
                           <button
                             key={r.id}
                             onClick={() => setPrefs({ reciterId: r.id })}
-                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-left border transition-all ${
+                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-start border transition-all ${
                               prefs.reciterId === r.id
                                 ? "bg-amber-400/15 border-amber-400/35 text-amber-100"
                                 : "bg-white/4 border-white/8 text-white/60 hover:bg-white/8"

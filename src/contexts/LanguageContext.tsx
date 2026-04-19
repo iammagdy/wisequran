@@ -154,6 +154,13 @@ interface Translations {
   days_streak: string;
   prayers_complete: string;
   complete_prayers: string;
+  prayers_completion_summary: string;
+  recitation_evaluating: string;
+  recitation_skipped: string;
+  recitation_skip: string;
+  qibla_locating_caption: string;
+  sync_indicator_label: string;
+  page_range_hint: string;
 
   // Tasbeeh
   tasbeeh_title: string;
@@ -716,6 +723,13 @@ const ar: Translations = {
   days_streak: "أيام",
   prayers_complete: "ما شاء الله! 🎉",
   complete_prayers: "أكمل صلواتك",
+  prayers_completion_summary: "{done}/{total} أكمل صلواتك",
+  recitation_evaluating: "جاري التقييم...",
+  recitation_skipped: "تخطي",
+  recitation_skip: "تخطي",
+  qibla_locating_caption: "جارٍ تحديد الموقع...",
+  sync_indicator_label: "مزامنة الإعدادات معلقة",
+  page_range_hint: "أدخل رقمًا بين {min} و {max}",
 
   tasbeeh_title: "التسبيح",
   set_target: "تحديد العدد المستهدف",
@@ -1248,6 +1262,13 @@ const en: Translations = {
   days_streak: "days",
   prayers_complete: "MashaAllah! 🎉",
   complete_prayers: "Complete your prayers",
+  prayers_completion_summary: "{done}/{total} prayers complete",
+  recitation_evaluating: "Evaluating...",
+  recitation_skipped: "Skipped",
+  recitation_skip: "Skip",
+  qibla_locating_caption: "Detecting your location...",
+  sync_indicator_label: "Settings sync pending",
+  page_range_hint: "Enter a number between {min} and {max}",
 
   tasbeeh_title: "Dhikr Counter",
   set_target: "Set target",

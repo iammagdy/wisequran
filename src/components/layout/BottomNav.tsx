@@ -180,10 +180,13 @@ export default function BottomNav() {
                     </div>
                   )}
                   {path === "/settings" && showSyncBadge && (
-                    <span
-                      aria-hidden="true"
-                      className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 border border-background animate-pulse z-20"
-                    />
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="absolute -top-0.5 -end-0.5 h-2 w-2 rounded-full bg-amber-500 border border-background animate-pulse z-20"
+                      />
+                      <span className="sr-only">{t("sync_indicator_label")}</span>
+                    </>
                   )}
                 </motion.div>
 

@@ -62,5 +62,5 @@ export const DK = {
     "bg-[#388bfd]/15 text-[#79c0ff] border border-[#388bfd]/25",
   hoverNav:
     "hover:bg-[#21262d] hover:text-[#e6edf3]",
-  ltr: "text-left",
+  ltr: "text-start",
 };

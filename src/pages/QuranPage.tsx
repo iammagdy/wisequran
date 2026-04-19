@@ -297,7 +297,7 @@ export default function QuranPage() {
         data-testid="quran-home-featured-resume-card"
         className={cn(
           "flex w-full items-center rounded-[2rem] glass-card py-5 px-6 shadow-2xl border border-white/10 hover-lift gap-4 mb-4 relative overflow-hidden group",
-          isRTL ? "text-right" : "text-left"
+          isRTL ? "text-end" : "text-start"
         )}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -562,7 +562,7 @@ export default function QuranPage() {
                       {language === "en" ? surah.number : toArabicNumerals(surah.number)}
                     </div>
 
-                    <div className={cn("relative z-10 flex-1 min-w-0", isRTL ? "text-right" : "text-left")}>
+                    <div className={cn("relative z-10 flex-1 min-w-0", isRTL ? "text-end" : "text-start")}>
                       <div className="flex items-center gap-2 mb-0.5">
                         <p className="font-arabic text-lg font-bold group-hover:text-primary transition-colors leading-tight">
                           {language === "ar" ? surah.name : surah.englishName}

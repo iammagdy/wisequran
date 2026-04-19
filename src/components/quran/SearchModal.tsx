@@ -221,7 +221,7 @@ export function SearchModal({ open, onClose, ayahs, surahNumber, translationAyah
                       {match.ayah.numberInSurah}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-arabic text-base leading-loose text-right" dir="rtl">
+                      <p className="font-arabic text-base leading-loose text-end" dir="rtl">
                         <HighlightText text={text} highlight={query} />
                       </p>
                       {match.translation && (

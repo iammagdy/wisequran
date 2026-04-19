@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.7.0";
+export const APP_VERSION = "3.8.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,34 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.8.0",
+    date: "2026-04-19",
+    ar: {
+      improvements: [
+        "تنسيق صفحة القبلة أصبح يُظهر رسالة لطيفة مع مؤشر تحميل أثناء تحديد موقعك بدلاً من شاشة فارغة",
+        "شاشة الترحيب وصور دليل التثبيت أصبحت تحجز مساحتها مسبقاً، فلن تقفز العناصر أثناء التحميل",
+        "نقطة المزامنة في شريط التنقل السفلي أصبح يقرؤها قارئ الشاشة بوضوح، مع موضع أنيق بالعربية والإنجليزية",
+        "صفحة اختبار التلاوة أصبحت بالكامل بلغة التطبيق المختارة (تخطي، جاري التقييم، نتيجة الآية)",
+        "صفحة الصلاة تعرض ملخص الصلوات المكتملة بصياغة طبيعية بدل المسافة الزائدة بين الرقم والنص",
+        "تنبيه «أدخل رقمًا بين ١ و ٦٠٤» في القارئ أصبح يستخدم الترجمة المركزية بأرقام عربية صحيحة",
+        "حلّت أدوات Tailwind المنطقية (ms/me/ps/pe وtext-start/end) محل ml/mr/pl/pr وtext-left/right في كل صفحات وعناصر التطبيق، فيعرض التخطيط بشكل صحيح في الاتجاهين",
+        "أضفنا أداة formatNumber موحّدة و«حارس» بسيط للتأكد من أن كل نص جديد ثنائي اللغة قبل الإطلاق",
+      ],
+    },
+    en: {
+      improvements: [
+        "The Qibla screen now shows a friendly spinner and copy while we detect your location, instead of a blank panel",
+        "The splash screen and install-guide images now reserve their space ahead of time, so nothing jumps as the page loads",
+        "The settings sync dot in the bottom tab bar is now announced by screen readers and sits cleanly in both Arabic and English layouts",
+        "The recitation test fully follows your selected language (Skip, Evaluating, per-ayah result label)",
+        "The prayer page renders the daily completion summary as a single, natural sentence — no more stray space between the number and the label",
+        "The Surah reader's “Enter a number between 1 and 604” toast now uses a central translation with correct Arabic-Indic digits",
+        "Swept the app over to logical Tailwind utilities (ms/me/ps/pe and text-start/end) so layouts mirror correctly in RTL without per-component overrides",
+        "Added a shared formatNumber helper and a soft bilingual-coverage check that flags new untranslated strings during development",
+      ],
+    },
+  },
   {
     version: "3.7.0",
     date: "2026-04-19",
