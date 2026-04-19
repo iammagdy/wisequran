@@ -19,15 +19,13 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-04-19",
     ar: {
       fixes: [
-        "إصلاح الشاشة البيضاء التي كانت تظهر أحياناً عند فتح التطبيق — التطبيق الآن يفتح مباشرةً على الصفحة الرئيسية كما يجب",
-        "تعمل جميع الصفحات بشكل سليم: القراءة، الحفظ، الأذكار، الصلوات، القبلة، رمضان، الإعدادات، ومشغّل الصوت",
+        "إصلاح الشاشة البيضاء التي كانت تظهر أحياناً عند فتح التطبيق — كل الصفحات تفتح الآن بشكل سليم",
         "فتح روابط التطبيق مباشرةً من المتصفح أصبح يعمل بدون أي خطأ",
       ],
     },
     en: {
       fixes: [
-        "Fixed the blank white screen that sometimes appeared when opening the app — it now goes straight to the home page as it should",
-        "All pages work smoothly again: reading, hifz, azkar, prayers, qibla, Ramadan, settings, and the audio player",
+        "Fixed the blank white screen that sometimes appeared when opening the app — every page now opens normally",
         "Opening app links directly from the browser now works without any errors",
       ],
     },
