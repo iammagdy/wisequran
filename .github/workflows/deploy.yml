@@ -28,6 +28,20 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Pre-deploy gate #1: catch missing imports (e.g. lucide-react icons)
+      # that TypeScript and `vite build` happily ignore but blow up at runtime.
+      - name: Lint check (no-undef)
+        run: pnpm run check:no-undef
+
+      # Pre-deploy gate #2: refuse to build if any required VITE_* secret is
+      # missing or empty. Without this, Vite silently inlines empty strings,
+      # the Supabase client crashes at module init, and prod renders blank.
+      - name: Verify required build-time env vars
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: pnpm run check:build-env
+
       - name: Build project
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -38,6 +52,15 @@ jobs:
         run: |
           echo "Listing contents of dist directory:"
           ls -la ./dist/
+
+      # Pre-deploy gate #3: serve the built dist/ in a headless browser and
+      # confirm the React root actually renders. Catches the "blank page" class
+      # of regression that a successful `vite build` cannot detect on its own.
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Smoke-test built app
+        run: pnpm run check:smoke
 
       - name: Sync files via SFTP to Hostinger
         uses: appleboy/scp-action@v0.1.7

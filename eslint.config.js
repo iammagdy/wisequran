@@ -11,7 +11,18 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.serviceworker,
+        React: "readonly",
+        BlobPart: "readonly",
+        ExtendableEvent: "readonly",
+        NotificationOptions: "readonly",
+        NotificationPermission: "readonly",
+        ServiceWorkerGlobalScope: "readonly",
+        SpeechRecognition: "readonly",
+        WindowClient: "readonly",
+      },
     },
     plugins: {
       "react-hooks": reactHooks,
@@ -29,6 +40,14 @@ export default tseslint.config(
           ignoreRestSiblings: true,
         },
       ],
+    },
+  },
+  {
+    files: ["**/*.test.{ts,tsx}", "**/__tests__/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
     },
   },
 );
