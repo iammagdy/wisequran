@@ -23,9 +23,12 @@ const REPLACEMENTS = [
 // Conditional replacements: skipped on lines that look like an RTL ternary
 // (e.g. `isRTL ? "left-3" : "right-3"`), because converting both branches
 // to start-/end- would no-op the conditional and break RTL mirroring.
+// Note: we deliberately exclude fractional values (e.g. `left-1/2`, `right-1/3`)
+// because those are geometric anchors (compass markers, centered overlays paired
+// with `-translate-x-1/2`) and must not flip with text direction.
 const CONDITIONAL_REPLACEMENTS = [
-  [/(\b|-)left-(?=[\d\[]|auto\b|full\b|px\b)/g, "$1start-"],
-  [/(\b|-)right-(?=[\d\[]|auto\b|full\b|px\b)/g, "$1end-"],
+  [/(\b|-)left-(?=(?:\d+(?![\d/])|\[|auto\b|full\b|px\b))/g, "$1start-"],
+  [/(\b|-)right-(?=(?:\d+(?![\d/])|\[|auto\b|full\b|px\b))/g, "$1end-"],
 ];
 
 const RTL_GUARD = /\bisRTL\b|\bisRtl\b|language\s*===?\s*["']ar["']/;
