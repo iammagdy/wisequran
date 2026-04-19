@@ -70,5 +70,3 @@ void registerReminderPeriodicSync();
 initWebVitals();
 
 createRoot(document.getElementById("root")!).render(<App />);
-// @ts-expect-error inline diag
-if (typeof window.__BOOT_OK === "function") window.__BOOT_OK();

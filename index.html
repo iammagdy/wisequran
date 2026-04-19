@@ -27,18 +27,6 @@
 </head>
   <body>
     <div id="root"></div>
-    <div id="boot-diag" style="position:fixed;inset:0;padding:16px;font:14px monospace;color:#222;background:#fff;z-index:99999;white-space:pre-wrap;overflow:auto;direction:ltr;text-align:left">BOOT DIAG…</div>
-    <script>
-      (function(){
-        var el=document.getElementById('boot-diag');
-        function w(s){ if(el){ el.textContent += "\n"+s; } }
-        w("[diag] inline @ "+new Date().toISOString());
-        window.addEventListener('error', function(e){ w("[error] "+(e.message||e.type)+" @ "+(e.filename||'?')+":"+e.lineno); });
-        window.addEventListener('unhandledrejection', function(e){ w("[unhandled] "+(e.reason && (e.reason.stack||e.reason.message||String(e.reason)))); });
-        window.__BOOT_OK = function(){ if(el){el.remove();} };
-        setTimeout(function(){ w("[diag] +5s; root has "+(document.getElementById('root').children.length)+" children"); }, 5000);
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

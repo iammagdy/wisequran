@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.3";
+export const APP_VERSION = "3.6.4";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.6.4",
+    date: "2026-04-19",
+    ar: {
+      fixes: [
+        "إصلاح السبب الجذري للشاشة البيضاء في الإنتاج: عميل Supabase كان يفشل عند الإقلاع عندما لا تكون متغيّرات البيئة معرّفة وقت البناء (تستبدلها Vite بسلسلة فارغة بدلاً من undefined، فتجاوز الاحتياط ?? وأطلق خطأ \"supabaseUrl is required\")",
+      ],
+    },
+    en: {
+      fixes: [
+        "Root-cause fix for production blank screen: the Supabase client was crashing at module init when env vars were missing at build time (Vite substitutes them as empty strings, not undefined, which bypassed the ?? fallback and threw \"supabaseUrl is required\")",
+      ],
+    },
+  },
   {
     version: "3.6.3",
     date: "2026-04-17",
