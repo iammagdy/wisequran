@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.2";
+export const APP_VERSION = "3.6.3";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.6.3",
+    date: "2026-04-17",
+    ar: {
+      fixes: [
+        "إصلاح شامل لحالات توقّف التطبيق التي كانت تظهر كشاشة بيضاء في الإعدادات، الحفظ، الأذكار، رمضان، القبلة، اختبار التلاوة، ومشغّل الصوت",
+      ],
+    },
+    en: {
+      fixes: [
+        "Comprehensive fix for blank-screen crashes that could appear on Settings, Hifz, Azkar, Ramadan, Qibla, recitation test, and the audio player",
+      ],
+    },
+  },
   {
     version: "3.6.2",
     date: "2026-04-17",

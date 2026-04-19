@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun, Trash2, Download, Check, ChevronDown, ChevronUp, Volume2, Target, Type, Palette, Info, Bell, BellOff, Mic, BookOpen, Smartphone, Share, RotateCcw, Clock, Pause, HardDrive, FileText, Music, BookMarked, Mail, Github, Globe, Sparkles, RefreshCw, Play, Square, User, LogOut, LogIn, ArrowLeft, ArrowRight, CloudOff, ArchiveRestore, ArchiveX } from "lucide-react";
+import { ArchiveRestore, ArchiveX, ArrowLeft, ArrowRight, Bell, BellOff, BookMarked, BookOpen, Check, CheckCircle, ChevronDown, ChevronUp, Clock, CloudOff, Download, FileText, Github, Globe, HardDrive, Info, Loader2, LogIn, LogOut, Mail, Mic, Moon, MoreVertical, Music, Palette, Pause, Play, RefreshCw, RotateCcw, Share, Smartphone, Sparkles, Square, Sun, Target, Trash2, Type, User, Volume2 } from "lucide-react";
 import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup, estimateBackupSize, exportBackupBinary, downloadBackupBlob, restoreBackupFromFile, type BackupSizeEstimate } from "@/lib/backup";
 import { clearAllLocalBookmarks } from "@/lib/bookmarks";
 import { useAuth } from "@/contexts/AuthContext";

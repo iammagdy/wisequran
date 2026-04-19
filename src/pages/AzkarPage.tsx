@@ -5,7 +5,7 @@ import { azkarData, azkarSections, type AzkarCategory, type Dhikr } from "@/data
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useStreak } from "@/hooks/useStreak";
 import { useAzkarCompletion } from "@/hooks/useAzkarCompletion";
-import { ArrowLeft, ArrowRight, RotateCcw, Heart, ChevronDown, Search, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Heart, RotateCcw, Search, X } from "lucide-react";
 import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 

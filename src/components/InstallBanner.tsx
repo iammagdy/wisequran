@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Share, Menu } from "lucide-react";
+import { Download, Menu, MoreVertical, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
 import { useLanguage } from "@/contexts/LanguageContext";

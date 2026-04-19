@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trophy, Lock } from "lucide-react";
+import { CheckCircle, Lock, Trophy, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAchievements, type Achievement } from "@/hooks/useAchievements";
 import { Progress } from "@/components/ui/progress";

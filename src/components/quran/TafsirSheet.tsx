@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BookOpen, WifiOff } from "lucide-react";
+import { BookOpen, Loader2, WifiOff } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { fetchTafsir, type TafsirAyah } from "@/lib/tafsir-api";

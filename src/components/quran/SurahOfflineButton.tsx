@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Check, X } from "lucide-react";
+import { Check, Download, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
