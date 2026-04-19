@@ -30,7 +30,7 @@ export function SurahSelectorForSleep({ selected, language, onChange }: SurahSel
     <div className="space-y-2">
       {showAll && (
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/40" />
           <input
             type="text"
             value={query}

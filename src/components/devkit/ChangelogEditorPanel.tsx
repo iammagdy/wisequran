@@ -233,7 +233,7 @@ function EntryForm({
         <button onClick={onCancel} className={`${DK.btnBase} ${DK.btnGray}`}>
           Cancel
         </button>
-        <p className={`font-mono text-[11px] ${DK.muted} ml-auto`}>
+        <p className={`font-mono text-[11px] ${DK.muted} ms-auto`}>
           Appears in-app after next reload
         </p>
       </div>
@@ -659,7 +659,7 @@ export default function ChangelogEditorPanel() {
             <span className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
               DevKit entries
             </span>
-            <span className={`font-mono text-xs ${DK.green} ml-auto`}>
+            <span className={`font-mono text-xs ${DK.green} ms-auto`}>
               {entries.length} custom
             </span>
           </div>
@@ -685,7 +685,7 @@ export default function ChangelogEditorPanel() {
           <span className={`font-mono text-[11px] uppercase tracking-widest ${DK.muted}`}>
             Built-in entries
           </span>
-          <span className={`font-mono text-xs ${DK.subtle} ml-auto`}>
+          <span className={`font-mono text-xs ${DK.subtle} ms-auto`}>
             {staticEntries.length} read-only
           </span>
         </div>

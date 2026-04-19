@@ -230,7 +230,7 @@ function SidebarNav({
                     <span className="text-sm shrink-0 relative">
                       {item.icon}
                       {badge > 0 && !showLabel && (
-                        <span className="absolute -top-1.5 -right-1.5 bg-[#f85149] text-white font-mono text-[8px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
+                        <span className="absolute -top-1.5 -end-1.5 bg-[#f85149] text-white font-mono text-[8px] leading-none rounded-full px-1 py-0.5 min-w-[14px] text-center">
                           {badge > 99 ? "99+" : badge}
                         </span>
                       )}
@@ -341,7 +341,7 @@ function MobileDrawer({
         aria-hidden="true"
       />
       <div
-        className={`sm:hidden fixed top-0 left-0 z-50 h-full w-64 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-transform duration-200 ${
+        className={`sm:hidden fixed top-0 start-0 z-50 h-full w-64 flex flex-col ${DK.sidebar} border-r ${DK.border} overflow-y-auto transition-transform duration-200 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
         role="dialog"
@@ -477,7 +477,7 @@ export default function DevKitPage() {
               {syncQueueCount} pending
             </span>
           )}
-          <div className="ml-auto flex items-center gap-1.5 sm:gap-2.5">
+          <div className="ms-auto flex items-center gap-1.5 sm:gap-2.5">
             <span className={`hidden sm:inline font-mono text-[10px] ${DK.subtle}`}>
               auto-refresh 5s
             </span>

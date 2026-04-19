@@ -85,7 +85,7 @@ export default function FocusMode({
       {/* Always-visible close hint — stays visible even when controls auto-hide */}
       <button
         onClick={onClose}
-        className="absolute top-4 left-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center"
+        className="absolute top-4 start-4 z-20 rounded-full bg-foreground/10 backdrop-blur-sm p-2 opacity-40 hover:opacity-100 transition-opacity min-h-[44px] min-w-[44px] flex items-center justify-center"
         aria-label={t("close_focus")}
       >
         <X className="h-4 w-4 text-foreground" />

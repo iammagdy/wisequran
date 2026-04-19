@@ -133,11 +133,11 @@ export default function InstallBanner() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 60 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-20 left-3 right-3 z-50 rounded-xl border border-border bg-card p-4 shadow-lg"
+          className="fixed bottom-20 start-3 end-3 z-50 rounded-xl border border-border bg-card p-4 shadow-lg"
         >
           <button
             onClick={dismiss}
-            className="absolute top-3 left-3 rounded-full p-2 bg-muted/80 hover:bg-muted text-foreground transition-colors shadow-sm border border-border/50"
+            className="absolute top-3 start-3 rounded-full p-2 bg-muted/80 hover:bg-muted text-foreground transition-colors shadow-sm border border-border/50"
             aria-label={t("close")}
           >
             <X className="h-5 w-5" />

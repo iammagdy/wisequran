@@ -249,7 +249,7 @@ export default function NowPlayingScreen({ open, onOpenChange }: NowPlayingScree
                     }}
                   >
                     <motion.div
-                      className="absolute inset-y-0 left-0 rounded-full"
+                      className="absolute inset-y-0 start-0 rounded-full"
                       style={{
                         width: `${progressPercent}%`,
                         background: 'linear-gradient(to right, hsl(var(--primary) / 0.4), hsl(var(--primary)))',

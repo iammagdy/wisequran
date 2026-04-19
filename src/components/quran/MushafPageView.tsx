@@ -315,7 +315,7 @@ export default function MushafPageView({
       <button
         aria-label={language === "ar" ? "الصفحة السابقة" : "Previous page"}
         onClick={() => emblaApi?.scrollPrev()}
-        className="absolute left-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
+        className="absolute start-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
         
           <ChevronLeft className="h-5 w-5 text-foreground" />
         </button>
@@ -324,7 +324,7 @@ export default function MushafPageView({
       <button
         aria-label={language === "ar" ? "الصفحة التالية" : "Next page"}
         onClick={() => emblaApi?.scrollNext()}
-        className="absolute right-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
+        className="absolute end-1 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-md border border-border backdrop-blur-sm hover:bg-muted transition-colors hidden sm:flex">
         
           <ChevronRight className="h-5 w-5 text-foreground" />
         </button>

@@ -843,8 +843,8 @@ export default function SettingsPage() {
               className="relative group cursor-pointer overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background/40 to-background/60 p-4 shadow-sm transition-all"
             >
               {/* Premium Gradient Glow */}
-              <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition-opacity group-hover:opacity-60" />
-              <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gold/10 blur-3xl transition-opacity group-hover:opacity-40" />
+              <div className="absolute -top-10 -end-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition-opacity group-hover:opacity-60" />
+              <div className="absolute -bottom-10 -start-10 h-32 w-32 rounded-full bg-gold/10 blur-3xl transition-opacity group-hover:opacity-40" />
 
               <div className="relative z-10 flex items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20">

@@ -983,7 +983,7 @@ export default function SurahReaderPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <BookOpen className="h-4 w-4 text-primary" />
                   <h2 className="font-arabic text-base font-bold text-foreground">{t("tafsir_tab")} {t("surah")}</h2>
-                  <span className="text-xs text-muted-foreground mr-auto">{editionName}</span>
+                  <span className="text-xs text-muted-foreground me-auto">{editionName}</span>
                 </div>
                 {language === "en" && tafsirEdition.startsWith("ar.") && (
                   <p className="text-xs text-primary/70 -mt-2 mb-2">{t("tafsir_english_note")}</p>
@@ -1006,7 +1006,7 @@ export default function SurahReaderPage() {
                     </SelectContent>
                   </Select>
                   <div className="relative flex-1">
-                    <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Search className="absolute end-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                   placeholder={t("search")}
                   value={tafsirSearch}

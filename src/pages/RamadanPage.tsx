@@ -89,14 +89,14 @@ export default function RamadanPage() {
       <div className="relative overflow-hidden bg-gradient-to-b from-amber-600/20 via-amber-500/10 to-transparent px-4 pb-[10px] pt-[25px]">
         {/* Decorative elements */}
         <div className="absolute inset-0 pointer-events-none select-none">
-          <span className="absolute top-4 right-6 text-3xl animate-float opacity-60">🏮</span>
-          <span className="absolute top-8 left-8 text-2xl animate-float opacity-50" style={{ animationDelay: "1s" }}>✨</span>
-          <span className="absolute top-3 left-1/2 text-4xl animate-float opacity-40" style={{ animationDelay: "0.5s" }}>🌙</span>
-          <span className="absolute top-16 right-1/3 text-xl animate-float opacity-30" style={{ animationDelay: "1.5s" }}>🏮</span>
+          <span className="absolute top-4 end-6 text-3xl animate-float opacity-60">🏮</span>
+          <span className="absolute top-8 start-8 text-2xl animate-float opacity-50" style={{ animationDelay: "1s" }}>✨</span>
+          <span className="absolute top-3 start-1/2 text-4xl animate-float opacity-40" style={{ animationDelay: "0.5s" }}>🌙</span>
+          <span className="absolute top-16 end-1/3 text-xl animate-float opacity-30" style={{ animationDelay: "1.5s" }}>🏮</span>
         </div>
 
         <div className="relative text-center space-y-2">
-          <div className="absolute top-0 left-0">
+          <div className="absolute top-0 start-0">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => navigate(-1)}

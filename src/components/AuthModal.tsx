@@ -89,7 +89,7 @@ export default function AuthModal({ open, onClose }: AuthModalProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl bg-card border-t border-border shadow-2xl"
+            className="fixed bottom-0 start-0 end-0 z-50 rounded-t-3xl bg-card border-t border-border shadow-2xl"
             dir={isRTL ? "rtl" : "ltr"}
           >
             <div className="w-10 h-1 bg-border rounded-full mx-auto mt-3 mb-1" />

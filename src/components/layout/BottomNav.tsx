@@ -111,7 +111,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Primary"
-      className="fixed left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg"
+      className="fixed start-1/2 -translate-x-1/2 z-50 w-[95%] max-w-lg"
       style={{
         // Lift the floating dock above the iOS home indicator. The
         // `0.75rem`/`1.5rem` base corresponds to the previous

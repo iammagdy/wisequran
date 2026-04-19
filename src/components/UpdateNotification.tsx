@@ -30,7 +30,7 @@ export default function UpdateNotification() {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-20 left-4 right-4 z-50 rounded-xl border-2 border-primary/20 bg-card p-4 shadow-lg"
+          className="fixed bottom-20 start-4 end-4 z-50 rounded-xl border-2 border-primary/20 bg-card p-4 shadow-lg"
         >
           {isUpdating ? (
             <div className="space-y-3 text-center">

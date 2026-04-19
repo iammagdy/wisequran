@@ -104,7 +104,7 @@ function EditRow({
                 >
                   Cancel
                 </button>
-                <span className={`font-mono text-xs ${DK.muted} ml-auto`}>blur or Ctrl+Enter to save</span>
+                <span className={`font-mono text-xs ${DK.muted} ms-auto`}>blur or Ctrl+Enter to save</span>
               </div>
             </>
           ) : (

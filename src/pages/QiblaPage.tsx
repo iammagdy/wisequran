@@ -461,7 +461,7 @@ export default function QiblaPage() {
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
-                            className="absolute top-5 left-1/2 -translate-x-1/2"
+                            className="absolute top-5 start-1/2 -translate-x-1/2"
                           >
                             <div className="flex items-center gap-2 bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg">
                               <CheckCircle className="h-4 w-4" />
@@ -475,7 +475,7 @@ export default function QiblaPage() {
 
                       {/* Instruction text */}
                       {!isAligned && (
-                        <div className="absolute top-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <div className="absolute top-5 start-1/2 -translate-x-1/2 whitespace-nowrap">
                           <div className="bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full">
                             {language === "ar" ? "وجّه الهاتف نحو الأفق" : "Point phone toward horizon"}
                           </div>
@@ -483,7 +483,7 @@ export default function QiblaPage() {
                       )}
 
                       {/* Bottom info bar */}
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                      <div className="absolute bottom-4 start-4 end-4 flex items-center justify-between">
                         <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
                           <p className="text-white text-xs font-medium tabular-nums">
                             {language === "ar" ? `القبلة ${Math.round(qiblaBearing)}°` : `Qibla ${Math.round(qiblaBearing)}°`}
@@ -598,16 +598,16 @@ export default function QiblaPage() {
                 }}
               >
                 {/* N/S/E/W labels */}
-                <span className="absolute top-2 left-1/2 -translate-x-1/2 text-sm font-bold text-red-500">N</span>
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-sm font-bold text-muted-foreground">S</span>
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">E</span>
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">W</span>
+                <span className="absolute top-2 start-1/2 -translate-x-1/2 text-sm font-bold text-red-500">N</span>
+                <span className="absolute bottom-2 start-1/2 -translate-x-1/2 text-sm font-bold text-muted-foreground">S</span>
+                <span className="absolute end-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">E</span>
+                <span className="absolute start-2 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground">W</span>
 
                 {/* Tick marks */}
                 {Array.from({ length: 36 }).map((_, i) => (
                   <div
                     key={i}
-                    className="absolute left-1/2 top-0 origin-[center_128px]"
+                    className="absolute start-1/2 top-0 origin-[center_128px]"
                     style={{ transform: `translateX(-50%) rotate(${i * 10}deg)` }}
                   >
                     <div className={cn(
@@ -629,7 +629,7 @@ export default function QiblaPage() {
                 }}
               >
                 {/* Needle pointing up */}
-                <div className="absolute left-1/2 top-8 -translate-x-1/2 flex flex-col items-center">
+                <div className="absolute start-1/2 top-8 -translate-x-1/2 flex flex-col items-center">
                   <div className={cn(
                     "w-1 h-24 rounded-full transition-colors duration-300",
                     isAligned
@@ -638,7 +638,7 @@ export default function QiblaPage() {
                   )} />
                 </div>
                 {/* Kaaba icon at top */}
-                <div className="absolute left-1/2 top-3 -translate-x-1/2">
+                <div className="absolute start-1/2 top-3 -translate-x-1/2">
                   <motion.div
                     animate={isAligned ? { scale: [1, 1.1, 1] } : {}}
                     transition={{ repeat: isAligned ? Infinity : 0, duration: 1 }}

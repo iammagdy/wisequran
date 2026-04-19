@@ -81,7 +81,7 @@ export default function GlobalAudioBar() {
                 }}
               >
                 <motion.div
-                  className="absolute inset-y-0 left-0"
+                  className="absolute inset-y-0 start-0"
                   style={{
                     width: `${pct}%`,
                     background: 'linear-gradient(90deg, hsl(var(--primary) / 0.5), hsl(var(--primary)))',

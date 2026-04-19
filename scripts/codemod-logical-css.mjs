@@ -8,16 +8,27 @@ import { join } from "node:path";
 const ROOTS = ["src/pages", "src/components"];
 const SKIP_DIRS = new Set(["ui"]);
 
+// Standard replacements: safe to apply unconditionally. Tailwind tokens only.
 const REPLACEMENTS = [
   // margins / padding (with optional negative prefix and tailwind responsive prefixes)
-  [/(\b|-)ml-(?=[\d\[])/g, "$1ms-"],
-  [/(\b|-)mr-(?=[\d\[])/g, "$1me-"],
-  [/(\b|-)pl-(?=[\d\[])/g, "$1ps-"],
-  [/(\b|-)pr-(?=[\d\[])/g, "$1pe-"],
+  [/(\b|-)ml-(?=[\d\[]|auto\b)/g, "$1ms-"],
+  [/(\b|-)mr-(?=[\d\[]|auto\b)/g, "$1me-"],
+  [/(\b|-)pl-(?=[\d\[]|auto\b)/g, "$1ps-"],
+  [/(\b|-)pr-(?=[\d\[]|auto\b)/g, "$1pe-"],
   // text alignment
   [/\btext-left\b/g, "text-start"],
   [/\btext-right\b/g, "text-end"],
 ];
+
+// Conditional replacements: skipped on lines that look like an RTL ternary
+// (e.g. `isRTL ? "left-3" : "right-3"`), because converting both branches
+// to start-/end- would no-op the conditional and break RTL mirroring.
+const CONDITIONAL_REPLACEMENTS = [
+  [/(\b|-)left-(?=[\d\[]|auto\b|full\b|px\b)/g, "$1start-"],
+  [/(\b|-)right-(?=[\d\[]|auto\b|full\b|px\b)/g, "$1end-"],
+];
+
+const RTL_GUARD = /\bisRTL\b|\bisRtl\b|language\s*===?\s*["']ar["']/;
 
 function walk(dir, out = []) {
   for (const name of readdirSync(dir)) {
@@ -42,6 +53,16 @@ for (const root of ROOTS) {
     const src = readFileSync(file, "utf8");
     let next = src;
     for (const [re, to] of REPLACEMENTS) next = next.replace(re, to);
+    // Apply conditional replacements line-by-line, skipping RTL ternaries.
+    next = next
+      .split("\n")
+      .map((line) => {
+        if (RTL_GUARD.test(line)) return line;
+        let out = line;
+        for (const [re, to] of CONDITIONAL_REPLACEMENTS) out = out.replace(re, to);
+        return out;
+      })
+      .join("\n");
     if (next !== src) {
       writeFileSync(file, next);
       changed++;
