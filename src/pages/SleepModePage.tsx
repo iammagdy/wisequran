@@ -184,8 +184,8 @@ export default function SleepModePage() {
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {[
               { id: "timer" as SettingsPanel, icon: <Clock className="h-3.5 w-3.5" />, label: language === "ar" ? `${toArabicNumerals(prefs.timerMinutes)} د` : `${prefs.timerMinutes}m` },
-              { id: "surah" as SettingsPanel, icon: null, label: selectedSurah ? (language === "ar" ? selectedSurah.name : selectedSurah.englishName) : "Surah" },
-              { id: "reciter" as SettingsPanel, icon: null, label: selectedReciter ? (language === "ar" ? selectedReciter.name : selectedReciter.nameEn) : "Reciter" },
+              { id: "surah" as SettingsPanel, icon: null, label: selectedSurah ? (language === "ar" ? selectedSurah.name : selectedSurah.englishName) : t("sleep_label_surah") },
+              { id: "reciter" as SettingsPanel, icon: null, label: selectedReciter ? (language === "ar" ? selectedReciter.name : selectedReciter.nameEn) : t("sleep_label_reciter") },
               { id: "volume" as SettingsPanel, icon: <Volume2 className="h-3.5 w-3.5" />, label: language === "ar" ? "الصوت" : "Volume" },
             ].map(({ id, icon, label }) => (
               <button

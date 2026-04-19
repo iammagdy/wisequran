@@ -73,7 +73,7 @@ export default function AyahActionsSheet({
     await onSaveNote(draft.trim());
     setEditingNote(false);
     if (draft.trim()) {
-      toast({ title: language === "ar" ? "تم حفظ الملاحظة" : "Note saved" });
+      toast({ title: t("note_saved") });
     }
   };
 

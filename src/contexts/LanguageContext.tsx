@@ -554,6 +554,23 @@ interface Translations {
 
   // DailyAyah toast
   could_not_play_audio: string;
+
+  // Wave 2 — note + offline-download toasts
+  note_saved: string;
+  download_saved_offline: string;
+  download_did_not_complete: string;
+  download_failed_generic: string;
+  download_cancelled: string;
+  cancel_download_aria: string;
+
+  // Wave 2 — sleep-mode placeholders
+  sleep_label_surah: string;
+  sleep_label_reciter: string;
+
+  // Wave 2 — home empty-state CTAs
+  home_empty_wird_cta: string;
+  home_empty_streak_cta: string;
+  home_empty_bookmarks_cta: string;
 }
 
 const ar: Translations = {
@@ -1072,6 +1089,20 @@ const ar: Translations = {
   settings_toast_recitation_failed: "فشل تحميل التلاوة",
 
   could_not_play_audio: "تعذر تشغيل الصوت",
+
+  note_saved: "تم حفظ الملاحظة",
+  download_saved_offline: "تم الحفظ بدون اتصال",
+  download_did_not_complete: "لم يكتمل حفظ السورة بالكامل",
+  download_failed_generic: "فشل التحميل",
+  download_cancelled: "تم إلغاء التحميل",
+  cancel_download_aria: "إلغاء التحميل",
+
+  sleep_label_surah: "السورة",
+  sleep_label_reciter: "القارئ",
+
+  home_empty_wird_cta: "ابدأ وردك",
+  home_empty_streak_cta: "ابدأ سلسلتك",
+  home_empty_bookmarks_cta: "أضف علامة",
 };
 
 const en: Translations = {
@@ -1590,6 +1621,20 @@ const en: Translations = {
   settings_toast_recitation_failed: "Failed to download recitation",
 
   could_not_play_audio: "Could not play audio",
+
+  note_saved: "Note saved",
+  download_saved_offline: "Saved offline",
+  download_did_not_complete: "Surah did not fully save offline",
+  download_failed_generic: "Download failed",
+  download_cancelled: "Download cancelled",
+  cancel_download_aria: "Cancel download",
+
+  sleep_label_surah: "Surah",
+  sleep_label_reciter: "Reciter",
+
+  home_empty_wird_cta: "Start your wird",
+  home_empty_streak_cta: "Begin a streak",
+  home_empty_bookmarks_cta: "Add a bookmark",
 };
 
 interface LanguageContextValue {

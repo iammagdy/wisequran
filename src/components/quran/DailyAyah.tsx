@@ -91,14 +91,27 @@ export function DailyAyah() {
   }, [language]);
 
   if (loading) {
+    // Skeleton mirrors the real card so the layout doesn't jump on
+    // first paint: same outer paddings, same header row height, three
+    // ayah-text lines, and a footer row matching the share/audio strip.
     return (
-      <div className="mb-5 rounded-2xl gradient-hero p-5 shadow-elevated ornamental-corner">
-        <div className="flex items-center gap-2 mb-3">
-          <Skeleton className="h-5 w-5 rounded-full" />
-          <Skeleton className="h-4 w-20" />
+      <div className="w-full rounded-2xl gradient-hero pb-[2px] pe-[20px] pt-[5px] mb-[5px] shadow-elevated border border-primary/10 ornamental-corner">
+        <div className="flex items-center gap-2 ms-[15px] mb-[5px] pb-[5px] pt-[5px]">
+          <Skeleton className="h-7 w-7 rounded-full" />
+          <Skeleton className="h-3 w-20" />
         </div>
-        <Skeleton className="h-20 w-full mb-3 rounded-xl" />
-        <Skeleton className="h-3 w-28 mr-auto" />
+        <div className="space-y-2 mb-[5px]">
+          <Skeleton className="h-5 w-full rounded" />
+          <Skeleton className="h-5 w-11/12 rounded" />
+          <Skeleton className="h-5 w-3/4 rounded" />
+        </div>
+        <div className="flex items-center justify-between ms-[10px] pb-[6px]">
+          <Skeleton className="h-3 w-32" />
+          <div className="flex items-center gap-1">
+            <Skeleton className="h-6 w-6 rounded-lg" />
+            <Skeleton className="h-6 w-6 rounded-lg" />
+          </div>
+        </div>
       </div>);
 
   }
@@ -111,7 +124,7 @@ export function DailyAyah() {
       animate={{ opacity: 1, y: 0 }}
       whileTap={{ scale: 0.99 }}
       onClick={() => navigate(`/surah/${data.surah}?ayah=${data.ayah}`)}
-      className="w-full rounded-2xl gradient-hero p-5 text-right shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group cursor-pointer mb-[5px] pr-[20px] pt-[5px] pb-[2px]"
+      className="w-full rounded-2xl gradient-hero p-5 text-start shadow-elevated border border-primary/10 ornamental-corner relative overflow-hidden group cursor-pointer mb-[5px] pe-[20px] pt-[5px] pb-[2px]"
       dir={language === "ar" ? "rtl" : "ltr"}>
       
       {/* Decorative background pattern */}
@@ -129,7 +142,7 @@ export function DailyAyah() {
       </div>
 
       <div className="relative z-10">
-        <div className="flex items-center gap-2 mr-[15px] mb-[5px] pb-[5px] pt-[5px]">
+        <div className="flex items-center gap-2 ms-[15px] mb-[5px] pb-[5px] pt-[5px]">
           <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary/10">
             <Sparkles className="h-4 w-4 text-primary icon-glow" />
           </div>
@@ -145,7 +158,7 @@ export function DailyAyah() {
           </p>
         )}
         
-        <div className="flex items-center justify-between ml-[10px] mb-0 pb-[6px]">
+        <div className="flex items-center justify-between ms-[10px] mb-0 pb-[6px]">
           <p className="text-xs text-muted-foreground font-medium">
             {language === "ar" ? data.surahName : (SURAH_META[data.surah - 1]?.englishName ?? data.surahName)} · {t("ayah")} {language === "ar" ? toArabicNumerals(data.ayah) : data.ayah}
           </p>

@@ -151,7 +151,14 @@ export default function SurahReaderPage() {
   const editionName = (() => { const ed = TAFSIR_EDITIONS.find((e) => e.id === effectiveTafsirEdition); return language === "en" ? (ed?.nameEn ?? effectiveTafsirEdition) : (ed?.name ?? effectiveTafsirEdition); })();
   const displaySurahName = surahInfo
     ? (language === "ar" ? surahInfo.name : surahInfo.englishName)
-    : `${t("surah")} ${surahNumber}`;
+    : `${t("surah")} ${language === "ar" ? toArabicNumerals(surahNumber) : surahNumber}`;
+  // Tafsir editions are either Arabic (`ar.*`) or English. Direction +
+  // alignment must follow the *edition*, not the UI language, otherwise
+  // English tafsir reads right-to-left under Arabic UI and Arabic tafsir
+  // wraps strangely under English UI.
+  const tafsirIsArabic = effectiveTafsirEdition.startsWith("ar.");
+  const tafsirDir: "rtl" | "ltr" = tafsirIsArabic ? "rtl" : "ltr";
+  const tafsirAlignClass = tafsirIsArabic ? "text-right" : "text-left";
 
   const tafsirMap = useMemo(() => new Map(tafsirAyahs.map(a => [a.numberInSurah, a])), [tafsirAyahs]);
   const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
@@ -1034,7 +1041,7 @@ export default function SurahReaderPage() {
                             paddingBottom: "20px",
                           }}
                         >
-                          <div className="rounded-xl bg-card p-4 shadow-sm border border-border">
+                          <div className="rounded-xl bg-card p-4 shadow-sm border border-border" dir={tafsirDir}>
                             <div className="mb-2 flex items-center gap-2">
                               <span className="flex h-6 w-6 rotate-45 items-center justify-center rounded-sm bg-primary/10">
                                 <span className="-rotate-45 text-[0.625rem] font-bold text-primary">
@@ -1044,7 +1051,7 @@ export default function SurahReaderPage() {
                               <span className="text-xs text-muted-foreground">{t("ayah")} {language === "ar" ? toArabicNumerals(tafsirItem.numberInSurah) : tafsirItem.numberInSurah}</span>
                             </div>
                             <p
-                              className="font-arabic text-foreground/90 leading-[2.2]"
+                              className={cn(tafsirIsArabic ? "font-arabic" : "", "text-foreground/90 leading-[2.2]", tafsirAlignClass)}
                               style={{ fontSize: 17 }}>
                               <HighlightText text={tafsirItem.text} highlight={tafsirSearch.trim()} />
                             </p>

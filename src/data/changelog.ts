@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.1";
+export const APP_VERSION = "3.7.0";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,32 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.7.0",
+    date: "2026-04-19",
+    ar: {
+      improvements: [
+        "بطاقات الصفحة الرئيسية تعرض الآن دعوة لطيفة لبدء وردك أو سلسلتك أو إضافة علامة بدلاً من الرقم صفر الفارغ",
+        "أيقونة شريط التنقل السفلي تضيء الآن في وضع النوم وصفحة الحفظ وأدوات المطورين",
+        "صفحة قراءة السورة تعرض اسم السورة بأرقام عربية عند الحاجة، ويظهر التفسير بالاتجاه الصحيح حسب لغته",
+        "وضع النوم وصفحة اختبار التلاوة وصفحة الإعدادات أصبحت تستخدم الأرقام والرمز العربي للنسبة المئوية (٪)",
+        "نسّقنا المسافات في بطاقة آية اليوم وشريط الصوت لتظهر متوازنة بالعربية والإنجليزية، مع هيكل تحميل مطابق لحجم البطاقة الفعلي",
+        "رسائل التنبيه الخاصة بحفظ الملاحظة وتحميل السورة أصبحت تظهر بلغة التطبيق المختارة دائماً",
+        "زر التثبيت لم يعد يظهر على أجهزة الكمبيوتر أو داخل تطبيقات فيسبوك وإنستغرام وتويتر وتيك توك",
+      ],
+    },
+    en: {
+      improvements: [
+        "Empty home cards now show a friendly nudge to start your wird, build a streak, or add a bookmark instead of a bare 0",
+        "The bottom tab bar now lights up the right icon for Sleep Mode, the Hifz screen, and developer tools",
+        "The Surah reader shows the surah name in Arabic-Indic digits when needed, and tafsir text now reads in its own language direction",
+        "Sleep Mode, the recitation test, and Settings now use Arabic-Indic digits and the Arabic percent symbol (٪) when in Arabic",
+        "Tightened spacing on the Daily Ayah card and the audio player so layouts look balanced in both languages, with a loading skeleton that matches the real card",
+        "Note-saved and Surah-download messages now follow your selected language everywhere",
+        "The install prompt no longer shows on desktop browsers or inside in-app browsers like Facebook, Instagram, Twitter, and TikTok",
+      ],
+    },
+  },
   {
     version: "3.6.1",
     date: "2026-04-19",

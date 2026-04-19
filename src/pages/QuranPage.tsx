@@ -175,12 +175,30 @@ export default function QuranPage() {
       </div>
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-2xl bg-primary/5 p-3 text-center">
-          <p className="text-lg font-bold text-primary">{language === "ar" ? toArabicNumerals(todayCount) : todayCount}</p>
-          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "ورد اليوم" : "Today’s wird"}</p>
+          {todayCount > 0 ? (
+            <>
+              <p className="text-lg font-bold text-primary">{language === "ar" ? toArabicNumerals(todayCount) : todayCount}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "ورد اليوم" : "Today’s wird"}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-base font-bold text-primary leading-tight">{t("home_empty_wird_cta")}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "ورد اليوم" : "Today’s wird"}</p>
+            </>
+          )}
         </div>
         <div className="rounded-2xl bg-card p-3 text-center border border-border/50">
-          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(streak) : streak}</p>
-          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "أيام متتالية" : "Streak days"}</p>
+          {streak > 0 ? (
+            <>
+              <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(streak) : streak}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "أيام متتالية" : "Streak days"}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-base font-bold text-foreground leading-tight">{t("home_empty_streak_cta")}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "أيام متتالية" : "Streak days"}</p>
+            </>
+          )}
         </div>
         <button
           type="button"
@@ -188,8 +206,17 @@ export default function QuranPage() {
           data-testid="quran-home-bookmarks-stat"
           className="rounded-2xl bg-card p-3 text-center border border-border/50 hover:border-primary/30 hover:bg-muted/40 transition-colors"
         >
-          <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(bookmarks.length) : bookmarks.length}</p>
-          <p className="text-[11px] text-muted-foreground">{language === "ar" ? "آيات محفوظة" : "Bookmarked ayat"}</p>
+          {bookmarks.length > 0 ? (
+            <>
+              <p className="text-lg font-bold text-foreground">{language === "ar" ? toArabicNumerals(bookmarks.length) : bookmarks.length}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "آيات محفوظة" : "Bookmarked ayat"}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-base font-bold text-foreground leading-tight">{t("home_empty_bookmarks_cta")}</p>
+              <p className="text-[11px] text-muted-foreground">{language === "ar" ? "آيات محفوظة" : "Bookmarked ayat"}</p>
+            </>
+          )}
         </button>
       </div>
     </motion.div>
@@ -329,7 +356,12 @@ export default function QuranPage() {
               <h3 className="text-lg font-serif font-bold text-foreground mb-1">{t(card.titleKey)}</h3>
               <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold leading-tight">{t(card.subtitleKey)}</p>
             </div>
-            <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-40 transition-opacity"><ChevronRight className="h-4 w-4 text-primary" /></div>
+            <div className={cn(
+              "absolute bottom-4 opacity-60 group-hover:opacity-100 transition-opacity",
+              isRTL ? "left-4" : "right-4"
+            )}>
+              {isRTL ? <ArrowRight className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4 text-primary" />}
+            </div>
           </motion.button>
         ))}
       </div>

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Menu, MoreVertical, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
+import { detectBrowser, getInstallInstructions, isDesktopDevice, isInAppWebview } from "@/lib/browser-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
@@ -66,6 +66,12 @@ export default function InstallBanner() {
     if (!installPromptEnabled) { setShow(false); return; }
     if (isInstalled()) return;
     if (isSnoozed()) return;
+    // Suppress on contexts where install can't actually happen: regular
+    // desktop browsers (no value-add for the user) and in-app browsers
+    // that strip `beforeinstallprompt` and Add-to-Home-Screen entirely
+    // (Facebook, Instagram, Twitter, TikTok, etc.).
+    if (isDesktopDevice()) return;
+    if (isInAppWebview()) return;
 
     const sessionCount = recordSession();
     const eligible = sessionCount >= MIN_SESSIONS;

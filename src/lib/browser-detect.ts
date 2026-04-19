@@ -25,6 +25,35 @@ export function detectBrowser(): BrowserType {
   return "generic";
 }
 
+/**
+ * True when the current device looks like a traditional desktop —
+ * no mobile UA token and no touch input. The PWA install banner is
+ * meaningless here so we suppress it entirely.
+ */
+export function isDesktopDevice(): boolean {
+  if (typeof navigator === "undefined" || typeof window === "undefined") return false;
+  const ua = navigator.userAgent;
+  const mobileUA = /Android|iPhone|iPad|iPod|Mobile|Tablet|IEMobile|Opera Mini/i.test(ua);
+  const hasTouch =
+    typeof navigator.maxTouchPoints === "number" && navigator.maxTouchPoints > 0;
+  const coarsePointer = typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
+  return !mobileUA && !hasTouch && !coarsePointer;
+}
+
+/**
+ * True when the page is running inside an in-app browser of a major
+ * social platform (Facebook, Instagram, Twitter/X, LinkedIn, Snapchat,
+ * TikTok, Pinterest). These webviews can't actually install the PWA
+ * so the banner just confuses the user.
+ */
+export function isInAppWebview(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /FBAN|FBAV|FB_IAB|Instagram|Twitter|TwitterAndroid|LinkedInApp|Snapchat|musical_ly|TikTok|Pinterest|Line\//i
+    .test(ua);
+}
+
 export function getIOSVersion(): IOSVersionParts | null {
   const ua = navigator.userAgent;
   if (!/iPad|iPhone|iPod/i.test(ua)) return null;

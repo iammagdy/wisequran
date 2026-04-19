@@ -110,26 +110,18 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
         tafsirId,
       });
       if (!verified) {
-        throw new Error(
-          language === "en"
-            ? "Surah did not fully save offline"
-            : "لم يكتمل حفظ السورة بالكامل",
-        );
+        throw new Error(t("download_did_not_complete"));
       }
       setCached(true);
-      toast.success(
-        language === "en"
-          ? `Saved offline (${formatBytes(result.totalBytes)})`
-          : `تم الحفظ بدون اتصال (${formatBytes(result.totalBytes)})`,
-      );
+      toast.success(`${t("download_saved_offline")} (${formatBytes(result.totalBytes)})`);
     } catch (e) {
       // AbortError is the user's own cancel — show a quieter toast and
       // skip the generic "failed" message. Partial IDB rows are
       // already cleaned up inside the orchestrator.
       if (e instanceof Error && e.name === "AbortError") {
-        toast(language === "en" ? "Download cancelled" : "تم إلغاء التحميل");
+        toast(t("download_cancelled"));
       } else {
-        toast.error(language === "en" ? (e instanceof Error ? e.message : "Download failed") : (e instanceof Error ? e.message : "فشل التحميل"));
+        toast.error(e instanceof Error ? e.message : t("download_failed_generic"));
       }
     } finally {
       dlAbortRef.current = null;
@@ -313,8 +305,8 @@ export default function SurahBottomBar({ surahNumber, surahName, ayahs }: Props)
                   <button
                     type="button"
                     onClick={handleCancelDownload}
-                    aria-label={language === "ar" ? "إلغاء التحميل" : "Cancel download"}
-                    className="ml-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={t("cancel_download_aria")}
+                    className="ms-1 rounded-full p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="h-3 w-3" />
                   </button>

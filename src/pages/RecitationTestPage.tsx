@@ -764,7 +764,7 @@ export default function RecitationTestPage() {
                                   "text-sm font-bold tabular-nums",
                                   rec.score >= 85 ? "text-primary" : rec.score >= 60 ? "text-accent" : "text-destructive"
                                 )}>
-                                  {language === "ar" ? toArabicNumerals(rec.score) : rec.score}%
+                                  {language === "ar" ? `${toArabicNumerals(rec.score)}٪` : `${rec.score}%`}
                                 </span>
                               </div>
                             );
@@ -873,7 +873,7 @@ export default function RecitationTestPage() {
                               )}>
                                 {isSkipped
                                   ? (language === "ar" ? "تخطي" : "Skipped")
-                                  : `${language === "ar" ? toArabicNumerals(state.score) : state.score}%`}
+                                  : `${language === "ar" ? `${toArabicNumerals(state.score)}٪` : `${state.score}%`}`}
                               </span>
                             </div>
                             {!isSkipped && <WordDiffRow wordDiffs={state.wordDiffs} />}

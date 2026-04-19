@@ -1707,7 +1707,7 @@ export default function SettingsPage() {
                       {language === "ar" ? "مستوى صوت الأذان" : "Adhan Volume"}
                     </p>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {language === "ar" ? toArabicNumerals(String(adhanSettings.adhanVolume)) : adhanSettings.adhanVolume}%
+                      {language === "ar" ? `${toArabicNumerals(String(adhanSettings.adhanVolume))}٪` : `${adhanSettings.adhanVolume}%`}
                     </span>
                   </div>
                   <Slider
@@ -1862,7 +1862,7 @@ export default function SettingsPage() {
                     {language === "ar" ? "مستوى صوت التذكيرات" : "Reminder Chime Volume"}
                   </p>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {language === "ar" ? toArabicNumerals(String(adhanSettings.reminderVolume)) : adhanSettings.reminderVolume}%
+                    {language === "ar" ? `${toArabicNumerals(String(adhanSettings.reminderVolume))}٪` : `${adhanSettings.reminderVolume}%`}
                   </span>
                 </div>
                 <Slider
@@ -2091,7 +2091,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    {t("downloads_downloading")} {language === "en" ? `${downloadProgress}%` : toArabicNumerals(`${downloadProgress}%`)}
+                    {t("downloads_downloading")} {language === "en" ? `${downloadProgress}%` : `${toArabicNumerals(String(downloadProgress))}٪`}
                   </p>
                 </div> :
 
@@ -2150,7 +2150,7 @@ export default function SettingsPage() {
 
                   </div>
                   <p className="text-center text-xs text-muted-foreground">
-                    {t("downloads_downloading_audio")} {language === "en" ? `${audioDownloadProgress}%` : toArabicNumerals(`${audioDownloadProgress}%`)}
+                    {t("downloads_downloading_audio")} {language === "en" ? `${audioDownloadProgress}%` : `${toArabicNumerals(String(audioDownloadProgress))}٪`}
                   </p>
                 </div> :
               verifying ?

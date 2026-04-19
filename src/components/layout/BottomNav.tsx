@@ -122,7 +122,17 @@ export default function BottomNav() {
       <div className="glass-card rounded-[2rem] px-2 py-2 overflow-hidden border border-white/10 shadow-2xl">
         <div className="flex items-center justify-around" style={{ height: 'calc(var(--nav-height) * 0.85)' }}>
           {basePaths.map(({ path, key, label }) => {
-            const isActive = path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+            // Utility routes (`/devkit`, `/sleep`, `/hifz`) aren't first-class
+            // tabs but they belong to a parent — light up the closest tab so
+            // the dock never looks "homeless". `/sleep` and `/hifz` flow out
+            // of the Quran home; `/devkit` lives under Settings.
+            const pathname = location.pathname;
+            const isActive =
+              path === "/"
+                ? pathname === "/" || pathname.startsWith("/sleep") || pathname.startsWith("/hifz")
+                : path === "/settings"
+                  ? pathname.startsWith("/settings") || pathname.startsWith("/devkit")
+                  : pathname.startsWith(path);
             const IconComponent = BASE_ICON_MAP[path as keyof typeof BASE_ICON_MAP];
             return (
               <NavLink
