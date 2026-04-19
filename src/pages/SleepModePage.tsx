@@ -21,7 +21,7 @@ type SettingsPanel = "timer" | "reciter" | "surah" | "volume" | null;
 export default function SleepModePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [activePanel, setActivePanel] = useState<SettingsPanel>(null);
   const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem("wise-sleep-welcome-seen"));
 
