@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.6.4";
+export const APP_VERSION = "3.6.1";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -15,60 +15,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
-    version: "3.6.4",
+    version: "3.6.1",
     date: "2026-04-19",
     ar: {
       fixes: [
-        "إصلاح السبب الجذري للشاشة البيضاء في الإنتاج: عميل Supabase كان يفشل عند الإقلاع عندما لا تكون متغيّرات البيئة معرّفة وقت البناء (تستبدلها Vite بسلسلة فارغة بدلاً من undefined، فتجاوز الاحتياط ?? وأطلق خطأ \"supabaseUrl is required\")",
+        "إصلاح الشاشة البيضاء التي كانت تظهر أحياناً عند فتح التطبيق — التطبيق الآن يفتح مباشرةً على الصفحة الرئيسية كما يجب",
+        "تعمل جميع الصفحات بشكل سليم: القراءة، الحفظ، الأذكار، الصلوات، القبلة، رمضان، الإعدادات، ومشغّل الصوت",
+        "فتح روابط التطبيق مباشرةً من المتصفح أصبح يعمل بدون أي خطأ",
       ],
     },
     en: {
       fixes: [
-        "Root-cause fix for production blank screen: the Supabase client was crashing at module init when env vars were missing at build time (Vite substitutes them as empty strings, not undefined, which bypassed the ?? fallback and threw \"supabaseUrl is required\")",
-      ],
-    },
-  },
-  {
-    version: "3.6.3",
-    date: "2026-04-17",
-    ar: {
-      fixes: [
-        "إصلاح شامل لحالات توقّف التطبيق التي كانت تظهر كشاشة بيضاء في الإعدادات، الحفظ، الأذكار، رمضان، القبلة، اختبار التلاوة، ومشغّل الصوت",
-      ],
-    },
-    en: {
-      fixes: [
-        "Comprehensive fix for blank-screen crashes that could appear on Settings, Hifz, Azkar, Ramadan, Qibla, recitation test, and the audio player",
-      ],
-    },
-  },
-  {
-    version: "3.6.2",
-    date: "2026-04-17",
-    ar: {
-      fixes: [
-        "إصلاح مشاكل كانت تُسبّب توقّف بعض الشاشات عند فتحها (تسجيل الدخول، وضع النوم، وقارئ السورة)",
-        "إصلاح فتح روابط التطبيق مباشرة من المتصفح (مثل /devkit و/sleep و/signin) بدون الحاجة للمرور بالصفحة الرئيسية",
-      ],
-    },
-    en: {
-      fixes: [
-        "Fixed crashes on the sign-in, sleep mode, and surah reader pages caused by missing icon imports",
-        "Fixed direct URL access to internal pages (/devkit, /sleep, /signin, etc.) — no more 404 from refresh or shared links",
-      ],
-    },
-  },
-  {
-    version: "3.6.1",
-    date: "2026-04-17",
-    ar: {
-      fixes: [
-        "إصلاح مشكلة كانت تُظهر شاشة بيضاء فارغة عند فتح التطبيق لأول مرة من المتصفح",
-      ],
-    },
-    en: {
-      fixes: [
-        "Fixed a blank white screen that appeared on the very first visit from a fresh browser",
+        "Fixed the blank white screen that sometimes appeared when opening the app — it now goes straight to the home page as it should",
+        "All pages work smoothly again: reading, hifz, azkar, prayers, qibla, Ramadan, settings, and the audio player",
+        "Opening app links directly from the browser now works without any errors",
       ],
     },
   },
