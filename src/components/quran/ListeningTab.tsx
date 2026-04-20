@@ -69,6 +69,8 @@ export default function ListeningTab({ surahNumber, surahName, ayahs, translatio
   // Keep currentAyahInSurah in ref for stale closure use in onAyahEnded
   currentAyahInSurahRef.current = currentAyahInSurah;
 
+  const translationMap = useMemo(() => new Map(translationAyahs.map(a => [a.numberInSurah, a])), [translationAyahs]);
+
   const currentReciter = getReciterById(reciterId);
 
   // ⚡ Bolt: Optimize translation lookups from O(N*M) to O(N) during render.
