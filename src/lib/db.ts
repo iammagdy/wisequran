@@ -302,6 +302,35 @@ export async function getAllAudioEntries() {
   return db.getAll("audio");
 }
 
+/**
+ * Returns the full Map<reciterId, Set<surahNumber>> of downloaded audio
+ * using a key-only scan. Avoids loading any blob/ArrayBuffer payloads
+ * into memory — safe to call repeatedly on mobile during long bulk
+ * downloads or storage UIs.
+ */
+export async function getDownloadedAudioMap(): Promise<Map<string, Set<number>>> {
+  const db = await getDB();
+  const allKeys = (await db.getAllKeys("audio")) as string[];
+  const grouped = new Map<string, Set<number>>();
+  for (const key of allKeys) {
+    // Audio keys are written as `${reciterId}-${surahNumber}` and the
+    // surah number is always a pure integer (1..114). Split on the
+    // LAST dash so reciter IDs that themselves contain dashes
+    // (e.g. "ar.husary-mujawwad") are reconstructed correctly.
+    const lastDash = key.lastIndexOf("-");
+    if (lastDash <= 0) continue;
+    const surahPart = key.slice(lastDash + 1);
+    if (!/^\d+$/.test(surahPart)) continue;
+    const surahNumber = parseInt(surahPart, 10);
+    if (Number.isNaN(surahNumber)) continue;
+    const reciterId = key.slice(0, lastDash);
+    const set = grouped.get(reciterId) ?? new Set<number>();
+    set.add(surahNumber);
+    grouped.set(reciterId, set);
+  }
+  return grouped;
+}
+
 export async function clearAllAudio() {
   const db = await getDB();
   await db.clear("audio");
