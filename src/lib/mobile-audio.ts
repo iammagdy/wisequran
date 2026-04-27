@@ -104,6 +104,18 @@ class MobileAudioManager {
       const normalizedSrc = normalizeSource(src);
       const currentSrc = audio.currentSrc || audio.src;
       if (currentSrc !== normalizedSrc) {
+        // iOS Safari quirk: leaving `crossOrigin="anonymous"` set when
+        // loading a `blob:` URL has been observed to occasionally flag
+        // the resource as cross-origin (it's not — blobs are
+        // same-origin), which can break decode on standalone PWAs.
+        // Clear the attribute for blob: sources and restore it for
+        // http(s): network sources where CORS *is* relevant.
+        const isBlob = normalizedSrc.startsWith("blob:");
+        if (isBlob) {
+          if (audio.crossOrigin !== null) audio.crossOrigin = null;
+        } else {
+          if (audio.crossOrigin !== "anonymous") audio.crossOrigin = "anonymous";
+        }
         audio.src = normalizedSrc;
         if (forceLoad) audio.load();
       }
