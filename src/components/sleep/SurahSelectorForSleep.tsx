@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Search, ChevronDown, Check, Download, Loader2, WifiOff } from "lucide-react";
 import { SURAH_META } from "@/data/surah-meta";
 import { downloadSurahAudio } from "@/lib/quran-audio";
-import { requestPersistentStorageOnce } from "@/lib/storage-persist";
+import { requestPersistentStorageWithToast } from "@/lib/storage-persist";
 import { toast } from "sonner";
 
 const SLEEP_SURAHS = [2, 3, 18, 36, 55, 56, 67, 73, 76, 78, 112, 113, 114];
@@ -88,8 +88,14 @@ export function SurahSelectorForSleep({
     }
 
     // Pin storage on first ever offline download so iOS won't evict it
-    // after 7 days of inactivity.
-    void requestPersistentStorageOnce();
+    // after 7 days of inactivity. The toast variant surfaces the
+    // outcome to iOS users exactly once so they understand whether
+    // their downloads are protected (or that they need to install the
+    // PWA to the Home Screen).
+    void requestPersistentStorageWithToast(language, {
+      success: (msg) => toast.success(msg),
+      info: (msg) => toast.info(msg),
+    });
 
     const ctrl = new AbortController();
     setDownloading((prev) => {

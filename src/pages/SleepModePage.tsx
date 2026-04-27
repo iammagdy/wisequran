@@ -15,7 +15,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTime, toArabicNumerals } from "@/lib/utils";
 import { downloadSurahAudio } from "@/lib/quran-audio";
 import { getAllAudioEntries } from "@/lib/db";
-import { requestPersistentStorageOnce } from "@/lib/storage-persist";
+import { requestPersistentStorageWithToast } from "@/lib/storage-persist";
 
 const TIMER_PRESETS = [10, 15, 20, 30, 45, 60];
 
@@ -108,7 +108,10 @@ export default function SleepModePage() {
       toast.error(language === "ar" ? "لا يوجد اتصال بالإنترنت" : "No internet connection");
       return;
     }
-    void requestPersistentStorageOnce();
+    void requestPersistentStorageWithToast(language, {
+      success: (msg) => toast.success(msg),
+      info: (msg) => toast.info(msg),
+    });
 
     const ctrl = new AbortController();
     bulkAbortRef.current = ctrl;
@@ -273,19 +276,52 @@ export default function SleepModePage() {
               <ChevronDown className="h-5 w-5" />
             </button>
 
-            <button
-              onClick={togglePlay}
-              disabled={isLoading}
-              className="w-16 h-16 rounded-full border-2 border-amber-400/50 bg-amber-400/15 hover:bg-amber-400/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 rounded-full border-2 border-amber-300/60 border-t-transparent animate-spin" />
-              ) : isPlaying ? (
-                <Pause className="h-6 w-6 text-amber-200" />
-              ) : (
-                <Play className="h-6 w-6 text-amber-200 translate-x-0.5" />
-              )}
-            </button>
+            {(() => {
+              // Proactive offline gating: when the device is offline AND the
+              // currently-selected (reciter, surah) is not in IndexedDB,
+              // playing would just hit the silent-failure path and surface
+              // the empty-state below. Replace play with a primary CTA that
+              // jumps the user straight into the surah picker — every pill
+              // there carries an inline ✓ / download badge so they can pick
+              // a downloaded one or enable downloads.
+              const isSelectedDownloaded = downloadedForSelectedReciter.has(prefs.surahNumber);
+              const mustPickDownloaded = !isOnline && !isSelectedDownloaded && !isPlaying;
+              if (mustPickDownloaded) {
+                return (
+                  <button
+                    onClick={() => setActivePanel("surah")}
+                    data-testid="sleep-pick-downloaded-cta"
+                    aria-label={
+                      language === "ar"
+                        ? "اختر سورة محفوظة"
+                        : "Pick a downloaded surah"
+                    }
+                    className="h-16 px-5 rounded-full border-2 border-amber-400/60 bg-amber-400/20 hover:bg-amber-400/30 flex items-center gap-2 transition-all active:scale-95 text-amber-100 text-sm font-medium"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>
+                      {language === "ar" ? "اختر سورة محفوظة" : "Pick a downloaded surah"}
+                    </span>
+                  </button>
+                );
+              }
+              return (
+                <button
+                  onClick={togglePlay}
+                  disabled={isLoading}
+                  data-testid="sleep-play-button"
+                  className="w-16 h-16 rounded-full border-2 border-amber-400/50 bg-amber-400/15 hover:bg-amber-400/25 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <div className="w-5 h-5 rounded-full border-2 border-amber-300/60 border-t-transparent animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="h-6 w-6 text-amber-200" />
+                  ) : (
+                    <Play className="h-6 w-6 text-amber-200 translate-x-0.5" />
+                  )}
+                </button>
+              );
+            })()}
 
             <button
               onClick={() => setPrefs({ surahNumber: Math.min(114, prefs.surahNumber + 1) })}

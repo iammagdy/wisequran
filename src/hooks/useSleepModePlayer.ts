@@ -243,10 +243,17 @@ export function useSleepModePlayer() {
         // play() already called stopAll() before incrementing the token,
         // and any subsequent .play() it issues owns the channel from this
         // point on. Stopping here would race-kill the newer playback.
-        // We only need to revoke our own blob URL (we set blobUrlRef
-        // above) so it doesn't leak; ownership of the audio element
-        // belongs to whoever holds the current token.
-        cleanupBlobUrl();
+        //
+        // We must also NOT touch blobUrlRef.current via cleanupBlobUrl():
+        // by the time this stale branch runs, the newer play()'s own
+        // stopAll() has already wiped our reference, and that newer
+        // play() may have since reassigned blobUrlRef.current to ITS new
+        // blob URL. Instead, revoke the local `source.url` directly
+        // (the URL we ourselves created via createObjectURL), so we leak
+        // nothing and we don't risk revoking the in-use newer URL.
+        if (source.cached) {
+          URL.revokeObjectURL(source.url);
+        }
         return;
       }
 
