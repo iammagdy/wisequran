@@ -91,6 +91,35 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Recent fixes
 
+### v3.9.0 — Fully-offline Sleep Mode (2026-04-27)
+
+Sleep Mode previously always streamed audio over the network. With the PWA
+installed to the Home Screen on iOS, an unstable connection (Wi-Fi handoff,
+airplane mode at bedtime, etc.) would silently break playback.
+
+`useSleepModePlayer.play()` now goes through `resolveAudioSource(reciterId,
+surahNumber)` (in `src/lib/quran-audio.ts`), exactly like Listening mode does:
+- Cached IDB blob → `URL.createObjectURL` → fully offline playback. The blob
+  URL is tracked in `blobUrlRef` and revoked on stop or track change to avoid
+  leaks.
+- Network URL when online but uncached. After a successful play we fire
+  `cachePlayingAudio(...)` in the background so the next session is offline.
+- `null` (offline AND uncached) → the hook surfaces a new `isOfflineUncached`
+  flag instead of throwing; `SleepModePage` renders a friendly empty-state
+  ("This surah isn't downloaded yet") rather than a generic audio error.
+
+`SurahSelectorForSleep` now takes `reciterId`, `downloadedSurahs: Set<number>`,
+and `onAfterDownload`. Each surah pill shows a trailing badge — ✓ when cached,
+download icon when not, spinner during fetch (tap-to-cancel via
+`AbortController`). `SleepModePage` adds a per-reciter "n/114" counter and a
+bulk "Download whole Quran for this reciter" button with progress and cancel,
+backed by a serial loop over `downloadSurahAudio(...)`.
+
+`src/lib/storage-persist.ts` exposes `requestPersistentStorageOnce()`, called
+on the first per-surah or bulk download from Sleep Mode. It calls
+`navigator.storage.persist()` exactly once per device (gated by a localStorage
+flag) so iOS won't evict the IDB recitations after 7 days of inactivity.
+
 ### v3.8.1 — iOS Sleep Mode (2026-04-27)
 
 Sleep Mode silently failed on iPhone (especially when the PWA was installed to

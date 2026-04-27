@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, X, Volume2, Clock, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
+import { Play, Pause, X, Volume2, Clock, ChevronDown, ChevronUp, AlertCircle, Download, Check, Loader2, WifiOff } from "lucide-react";
+import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import { MoonAnimation } from "@/components/sleep/MoonAnimation";
 import { StarField } from "@/components/sleep/StarField";
@@ -12,6 +13,9 @@ import { RECITERS } from "@/lib/reciters";
 import { SURAH_META } from "@/data/surah-meta";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTime, toArabicNumerals } from "@/lib/utils";
+import { downloadSurahAudio } from "@/lib/quran-audio";
+import { getAllAudioEntries } from "@/lib/db";
+import { requestPersistentStorageOnce } from "@/lib/storage-persist";
 
 const TIMER_PRESETS = [10, 15, 20, 30, 45, 60];
 
@@ -31,6 +35,7 @@ export default function SleepModePage() {
     isPlaying,
     isLoading,
     hasError,
+    isOfflineUncached,
     remainingSeconds,
     audioCurrentTime,
     audioDuration,
@@ -38,11 +43,120 @@ export default function SleepModePage() {
     stop,
   } = useSleepModePlayer();
 
+  // Per-reciter set of surah numbers that already live in IndexedDB.
+  // Drives the "saved offline" check marks in the surah picker and the
+  // "X / 114 downloaded" counter in the reciter panel.
+  const [downloadedByReciter, setDownloadedByReciter] = useState<Map<string, Set<number>>>(new Map());
+  const [bulkProgress, setBulkProgress] = useState<{ reciterId: string; done: number; total: number } | null>(null);
+  const bulkAbortRef = useRef<AbortController | null>(null);
+  const [isOnline, setIsOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
+
+  const refreshDownloads = useCallback(async () => {
+    const entries = await getAllAudioEntries();
+    const grouped = new Map<string, Set<number>>();
+    for (const e of entries) {
+      const set = grouped.get(e.reciterId) ?? new Set<number>();
+      set.add(e.surahNumber);
+      grouped.set(e.reciterId, set);
+    }
+    setDownloadedByReciter(grouped);
+  }, []);
+
+  useEffect(() => {
+    void refreshDownloads();
+  }, [refreshDownloads]);
+
+  // Unmount cleanup: abort any in-flight bulk download when the user
+  // navigates away from Sleep Mode. Without this, the serial 114-surah
+  // loop would keep running in the background and resolve into stale
+  // toast/state updates after the page is gone.
+  useEffect(() => {
+    return () => {
+      bulkAbortRef.current?.abort();
+      bulkAbortRef.current = null;
+    };
+  }, []);
+
+  // Track online/offline so the empty-state and bulk-download UI react to
+  // the user re-connecting without requiring a manual refresh.
+  useEffect(() => {
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
   useEffect(() => {
     const state = location.state as { surahNumber?: number; reciterId?: string } | null;
     if (state?.surahNumber) setPrefs({ surahNumber: state.surahNumber });
     if (state?.reciterId) setPrefs({ reciterId: state.reciterId });
   }, []);
+
+  const downloadedForSelectedReciter = downloadedByReciter.get(prefs.reciterId) ?? new Set<number>();
+
+  const handleBulkDownload = useCallback(async (targetReciterId: string) => {
+    if (bulkProgress) {
+      // Toggle-cancel a download already in flight.
+      bulkAbortRef.current?.abort();
+      return;
+    }
+    if (!isOnline) {
+      toast.error(language === "ar" ? "لا يوجد اتصال بالإنترنت" : "No internet connection");
+      return;
+    }
+    void requestPersistentStorageOnce();
+
+    const ctrl = new AbortController();
+    bulkAbortRef.current = ctrl;
+    const cached = downloadedByReciter.get(targetReciterId) ?? new Set<number>();
+    const remaining = SURAH_META.filter((s) => !cached.has(s.number)).map((s) => s.number);
+    const total = SURAH_META.length;
+    setBulkProgress({ reciterId: targetReciterId, done: total - remaining.length, total });
+
+    let failed = 0;
+    try {
+      for (const surahNumber of remaining) {
+        if (ctrl.signal.aborted) throw new DOMException("Aborted", "AbortError");
+        try {
+          await downloadSurahAudio(targetReciterId, surahNumber, undefined, ctrl.signal);
+        } catch (err) {
+          if (err instanceof Error && err.name === "AbortError") throw err;
+          failed += 1;
+        }
+        await refreshDownloads();
+        setBulkProgress((prev) =>
+          prev && prev.reciterId === targetReciterId ? { ...prev, done: prev.done + 1 } : prev,
+        );
+      }
+      if (failed > 0) {
+        toast.warning(
+          language === "ar"
+            ? `اكتمل التنزيل، لكن ${toArabicNumerals(failed)} سورة فشلت`
+            : `Downloads finished — ${failed} surah(s) failed`,
+        );
+      } else {
+        toast.success(
+          language === "ar"
+            ? "تم تحميل القرآن كاملاً للاستخدام بدون اتصال"
+            : "Whole Quran saved offline for Sleep Mode",
+        );
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        toast.info(language === "ar" ? "تم إلغاء التنزيل الجماعي" : "Bulk download cancelled");
+      } else {
+        toast.error(language === "ar" ? "حدث خطأ أثناء التنزيل" : "Download error");
+      }
+    } finally {
+      bulkAbortRef.current = null;
+      setBulkProgress(null);
+      await refreshDownloads();
+    }
+  }, [bulkProgress, downloadedByReciter, isOnline, language, refreshDownloads]);
 
   const dismissWelcome = () => {
     localStorage.setItem("wise-sleep-welcome-seen", "1");
@@ -118,7 +232,7 @@ export default function SleepModePage() {
             </motion.div>
           )}
 
-          {hasError && (
+          {hasError && !isOfflineUncached && (
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -126,6 +240,25 @@ export default function SleepModePage() {
             >
               <AlertCircle className="h-4 w-4 shrink-0" />
               {language === "ar" ? "تعذّر تحميل الصوت. تحقق من اتصالك." : "Could not load audio. Check your connection."}
+            </motion.div>
+          )}
+
+          {isOfflineUncached && (
+            <motion.div
+              data-testid="sleep-offline-empty-state"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-2 bg-amber-500/10 border border-amber-400/20 rounded-2xl px-4 py-3 text-sm text-amber-200/90 max-w-xs"
+            >
+              <div className="flex items-center gap-2 font-medium">
+                <WifiOff className="h-4 w-4 shrink-0" />
+                {language === "ar" ? "هذه السورة غير محفوظة بعد" : "This surah isn't downloaded yet"}
+              </div>
+              <p className="text-xs text-amber-100/60 text-center leading-relaxed">
+                {language === "ar"
+                  ? "أنت بدون إنترنت الآن. اختر سورة محفوظة بعلامة ✓ أو نزّلها عند توفر الاتصال."
+                  : "You're offline. Pick a surah marked ✓ or download this one once you're back online."}
+              </p>
             </motion.div>
           )}
         </div>
@@ -246,6 +379,9 @@ export default function SleepModePage() {
                         selected={prefs.surahNumber}
                         language={language}
                         onChange={(n) => setPrefs({ surahNumber: n })}
+                        reciterId={prefs.reciterId}
+                        downloadedSurahs={downloadedForSelectedReciter}
+                        onAfterDownload={() => void refreshDownloads()}
                       />
                     </div>
                   )}
@@ -256,21 +392,106 @@ export default function SleepModePage() {
                         {language === "ar" ? "القارئ" : "Reciter"}
                       </p>
                       <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto">
-                        {sleepReciters.map((r) => (
-                          <button
-                            key={r.id}
-                            onClick={() => setPrefs({ reciterId: r.id })}
-                            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-start border transition-all ${
-                              prefs.reciterId === r.id
-                                ? "bg-amber-400/15 border-amber-400/35 text-amber-100"
-                                : "bg-white/4 border-white/8 text-white/60 hover:bg-white/8"
-                            }`}
-                          >
-                            <div className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${prefs.reciterId === r.id ? "bg-amber-400 border-amber-400" : "border-white/20"}`} />
-                            <span>{language === "ar" ? r.name : r.nameEn}</span>
-                          </button>
-                        ))}
+                        {sleepReciters.map((r) => {
+                          const cachedCount = downloadedByReciter.get(r.id)?.size ?? 0;
+                          return (
+                            <button
+                              key={r.id}
+                              onClick={() => setPrefs({ reciterId: r.id })}
+                              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-start border transition-all ${
+                                prefs.reciterId === r.id
+                                  ? "bg-amber-400/15 border-amber-400/35 text-amber-100"
+                                  : "bg-white/4 border-white/8 text-white/60 hover:bg-white/8"
+                              }`}
+                            >
+                              <div className={`h-3.5 w-3.5 rounded-full border-2 shrink-0 ${prefs.reciterId === r.id ? "bg-amber-400 border-amber-400" : "border-white/20"}`} />
+                              <span className="flex-1 min-w-0 truncate">{language === "ar" ? r.name : r.nameEn}</span>
+                              {cachedCount > 0 && (
+                                <span
+                                  className="ms-auto inline-flex items-center gap-0.5 rounded-full bg-emerald-400/15 text-emerald-300 px-2 py-0.5 text-[10px] font-semibold tabular-nums"
+                                  title={language === "ar" ? "سور محفوظة" : "Saved surahs"}
+                                >
+                                  <Check className="h-2.5 w-2.5" />
+                                  {language === "ar" ? toArabicNumerals(cachedCount) : cachedCount}
+                                  /{language === "ar" ? toArabicNumerals(114) : 114}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
                       </div>
+
+                      {/* Bulk download for the selected reciter — keeps Sleep Mode
+                          fully self-contained without requiring a trip to the
+                          Offline Center. */}
+                      {(() => {
+                        const cached = downloadedForSelectedReciter.size;
+                        const total = SURAH_META.length;
+                        const isAllDone = cached >= total;
+                        const isThisReciterBusy = bulkProgress?.reciterId === prefs.reciterId;
+                        const pct = bulkProgress
+                          ? Math.round((bulkProgress.done / bulkProgress.total) * 100)
+                          : Math.round((cached / total) * 100);
+                        return (
+                          <div className="mt-3 rounded-xl bg-white/5 border border-white/10 p-3 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-white/60">
+                                {language === "ar" ? "محفوظ بدون اتصال" : "Saved offline"}
+                              </span>
+                              <span className="text-amber-200/80 tabular-nums">
+                                {language === "ar"
+                                  ? `${toArabicNumerals(cached)} / ${toArabicNumerals(total)}`
+                                  : `${cached} / ${total}`}
+                              </span>
+                            </div>
+                            <div className="h-1 w-full rounded-full bg-white/10 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-amber-400/70 transition-all"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                            <button
+                              data-testid="sleep-bulk-download-button"
+                              onClick={() => void handleBulkDownload(prefs.reciterId)}
+                              disabled={isAllDone || (!!bulkProgress && !isThisReciterBusy) || (!isOnline && !isThisReciterBusy)}
+                              className={`w-full flex items-center justify-center gap-2 rounded-xl text-xs font-medium px-3 py-2 border transition-all ${
+                                isThisReciterBusy
+                                  ? "bg-amber-400/20 border-amber-400/40 text-amber-100"
+                                  : isAllDone
+                                    ? "bg-emerald-400/15 border-emerald-400/30 text-emerald-200 cursor-default"
+                                    : "bg-amber-400/10 border-amber-400/30 text-amber-200 hover:bg-amber-400/20 disabled:opacity-50"
+                              }`}
+                            >
+                              {isThisReciterBusy ? (
+                                <>
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  {language === "ar"
+                                    ? `جارٍ التحميل ${toArabicNumerals(bulkProgress!.done)}/${toArabicNumerals(bulkProgress!.total)} — اضغط للإلغاء`
+                                    : `Downloading ${bulkProgress!.done}/${bulkProgress!.total} — tap to cancel`}
+                                </>
+                              ) : isAllDone ? (
+                                <>
+                                  <Check className="h-3.5 w-3.5" />
+                                  {language === "ar" ? "كل السور محفوظة" : "All surahs saved"}
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-3.5 w-3.5" />
+                                  {language === "ar" ? "تنزيل كل القرآن لهذا القارئ" : "Download whole Quran for this reciter"}
+                                </>
+                              )}
+                            </button>
+                            {!isOnline && !isThisReciterBusy && !isAllDone && (
+                              <p className="flex items-center gap-1 text-[10px] text-amber-200/60">
+                                <WifiOff className="h-3 w-3" />
+                                {language === "ar"
+                                  ? "أنت بدون إنترنت — التنزيل غير متاح الآن"
+                                  : "You're offline — downloads unavailable"}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

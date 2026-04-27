@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { getReciterAudioUrl } from "@/lib/reciters";
+import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeviceId } from "@/hooks/useDeviceId";
@@ -47,6 +47,11 @@ export function useSleepModePlayer() {
   const [isLoading, setIsLoading] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState(prefs.timerMinutes * 60);
   const [hasError, setHasError] = useState(false);
+  // True when navigator.onLine is false AND the requested surah/reciter pair
+  // is not in IDB. Surfaced to the page so it can show an actionable
+  // "you're offline and this surah isn't downloaded" empty state instead of
+  // a generic playback error.
+  const [isOfflineUncached, setIsOfflineUncached] = useState(false);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
 
@@ -62,6 +67,10 @@ export function useSleepModePlayer() {
   // different prefs) where an older play()'s post-await continuation could
   // otherwise mutate state and start a stale playback after a newer action.
   const playTokenRef = useRef(0);
+  // Holds the object URL when we're playing from a cached IDB blob, so we
+  // can revoke it on stop / track change. Network URLs are stored as null
+  // (nothing to revoke).
+  const blobUrlRef = useRef<string | null>(null);
 
   const setPrefs = useCallback((updates: Partial<SleepModePrefs>) => {
     setPrefsState((prev) => {
@@ -84,6 +93,13 @@ export function useSleepModePlayer() {
     audio.onwaiting = null;
   }, []);
 
+  const cleanupBlobUrl = useCallback(() => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, []);
+
   const stopAll = useCallback(() => {
     // Invalidate any in-flight play() continuation so it cannot mutate state
     // or start playback after we stop.
@@ -95,6 +111,7 @@ export function useSleepModePlayer() {
       // Only touch the shared audio element if Sleep Mode actually used it.
       mobileAudioManager.stop(SLEEP_CHANNEL, true);
     }
+    cleanupBlobUrl();
     quranAudioRef.current = null;
     hasStartedRef.current = false;
     isPlayingRef.current = false;
@@ -102,7 +119,7 @@ export function useSleepModePlayer() {
     setIsLoading(false);
     setAudioCurrentTime(0);
     setAudioDuration(0);
-  }, [detachAudioListeners]);
+  }, [detachAudioListeners, cleanupBlobUrl]);
 
   const saveSession = useCallback(async (completed: boolean) => {
     if (!sessionIdRef.current) return;
@@ -151,6 +168,7 @@ export function useSleepModePlayer() {
     const isStale = () => playTokenRef.current !== myToken;
 
     setHasError(false);
+    setIsOfflineUncached(false);
     setIsLoading(true);
 
     const currentPrefs = overridePrefs ?? (await new Promise<SleepModePrefs>((res) => {
@@ -176,8 +194,29 @@ export function useSleepModePlayer() {
       // These can run after the gesture; the element is already activated.
       await primePromise;
       if (isStale()) return;
-      const url = await getReciterAudioUrl(currentPrefs.reciterId, currentPrefs.surahNumber);
-      if (isStale()) return;
+
+      // Resolve the audio source: if the surah is downloaded for this
+      // reciter, this returns a blob: URL backed by IndexedDB and Sleep
+      // Mode plays fully offline. Otherwise it returns the network URL
+      // (when online) or null (when offline AND uncached).
+      const source = await resolveAudioSource(currentPrefs.reciterId, currentPrefs.surahNumber);
+      if (isStale()) {
+        // We were superseded while resolving; revoke any blob URL we
+        // were about to use so it doesn't leak.
+        if (source?.cached) URL.revokeObjectURL(source.url);
+        return;
+      }
+      if (!source) {
+        // Offline and not cached. Surface a structured empty-state to
+        // the page rather than a generic playback failure.
+        setIsOfflineUncached(true);
+        stopAll();
+        return;
+      }
+      if (source.cached) {
+        // Track for revocation on stop / next track.
+        blobUrlRef.current = source.url;
+      }
 
       // Re-attach fresh listeners after prime (prime restores src, but we want
       // to drive the timer/loader UI off the real reciter audio element).
@@ -192,20 +231,34 @@ export function useSleepModePlayer() {
 
       // mobileAudioManager.play sets the src, runs audio.load(), and calls
       // .play() — with a single retry-after-load fallback if the first call
-      // is rejected (which iOS occasionally does on cold start).
-      await mobileAudioManager.play(SLEEP_CHANNEL, url, {
+      // is rejected (which iOS occasionally does on cold start). Works
+      // identically for blob: and https: URLs on iOS Safari / standalone.
+      await mobileAudioManager.play(SLEEP_CHANNEL, source.url, {
         forceLoad: true,
         volume: currentPrefs.quranVolume / 100,
       });
       if (isStale()) {
-        // A newer action superseded us after we already started playback —
-        // stop this stray audio so it doesn't leak.
-        mobileAudioManager.stop(SLEEP_CHANNEL, true);
+        // A newer action superseded us. The "sleep" channel is shared, so
+        // we MUST NOT call mobileAudioManager.stop() here — the newer
+        // play() already called stopAll() before incrementing the token,
+        // and any subsequent .play() it issues owns the channel from this
+        // point on. Stopping here would race-kill the newer playback.
+        // We only need to revoke our own blob URL (we set blobUrlRef
+        // above) so it doesn't leak; ownership of the audio element
+        // belongs to whoever holds the current token.
+        cleanupBlobUrl();
         return;
       }
 
       isPlayingRef.current = true;
       setIsPlaying(true);
+
+      // Background-cache the surah after a successful network play, so the
+      // next Sleep session for this reciter+surah will work offline. No-op
+      // if it's already cached (we'd be on the blob: URL branch above).
+      if (!source.cached && navigator.onLine) {
+        cachePlayingAudio(currentPrefs.reciterId, currentPrefs.surahNumber, source.url).catch(() => {});
+      }
 
       await startSession(currentPrefs);
       if (isStale()) return;
@@ -317,6 +370,7 @@ export function useSleepModePlayer() {
     isPlaying,
     isLoading,
     hasError,
+    isOfflineUncached,
     remainingSeconds,
     audioCurrentTime,
     audioDuration,
