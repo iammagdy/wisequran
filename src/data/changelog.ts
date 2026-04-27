@@ -1,4 +1,4 @@
-export const APP_VERSION = "3.8.0";
+export const APP_VERSION = "3.9.1";
 
 export interface ChangelogCategory {
   features?: string[];
@@ -14,6 +14,70 @@ export interface ChangelogEntry {
 }
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "3.9.1",
+    date: "2026-04-27",
+    ar: {
+      improvements: [
+        "تم إزالة تسجيل الدخول وإنشاء الحساب بالكامل من التطبيق. يبقى التطبيق محلياً على جهازك بالكامل، دون أي حسابات أو مزامنة سحابية.",
+        "إعدادات الحساب وأزرار الدخول/الخروج تمت إزالتها من شاشة الإعدادات.",
+      ],
+    },
+    en: {
+      improvements: [
+        "Sign-in and sign-up have been removed entirely. The app is now fully on-device — no accounts, no cloud sync.",
+        "The Account section and Sign In / Sign Out buttons have been removed from Settings.",
+      ],
+    },
+  },
+  {
+    version: "3.9.0",
+    date: "2026-04-27",
+    ar: {
+      features: [
+        "وضع النوم أصبح يعمل بدون إنترنت بالكامل: السور المحفوظة في جهازك تُشغَّل مباشرة من التخزين المحلي، حتى في الطائرة أو في وضع الطيران، ودون أي استهلاك للبيانات.",
+        "زر «تحميل كل القرآن لهذا القارئ» داخل وضع النوم — تنزّل المصحف كاملاً بصوت قارئك المفضّل بضغطة واحدة، مع شريط تقدّم وإمكانية الإلغاء في أي لحظة.",
+        "تظهر الآن علامة ✓ صغيرة بجانب كل سورة محفوظة بدون اتصال داخل قائمة سور وضع النوم، وزر تنزيل سريع لكل سورة على حدة.",
+      ],
+      improvements: [
+        "بطاقة القارئ تعرض الآن عدّاد «س / ١١٤» يبيّن كم سورة تم حفظها لكل قارئ، حتى تعرف من بين القرّاء جاهزٌ للاستخدام بدون إنترنت.",
+        "عند تشغيل سورة لأوّل مرة على الإنترنت، يحفظها التطبيق تلقائياً في الخلفية ليجدها وضع النوم في المرة التالية بدون تحميل جديد.",
+        "عند أوّل تنزيل لوضع النوم، نطلب من النظام تثبيت التخزين الدائم (خصوصاً مهم على آيفون) حتى لا تُحذف ملفاتك بعد ٧ أيام من عدم الاستخدام.",
+      ],
+      fixes: [
+        "إذا كنت بدون اتصال وحاولت تشغيل سورة غير محفوظة، تظهر الآن رسالة واضحة وودودة بدلاً من خطأ غامض في تحميل الصوت.",
+      ],
+    },
+    en: {
+      features: [
+        "Sleep Mode now works fully offline: any surah you've downloaded plays straight from on-device storage, even in airplane mode and with zero data usage.",
+        "New “Download whole Quran for this reciter” button inside Sleep Mode — fetches all 114 surahs in your preferred reciter's voice with one tap, with a live progress bar and one-tap cancel.",
+        "Each surah in the Sleep Mode picker now shows a small ✓ when it's saved offline, plus a tiny per-surah download button so you can pin individual surahs without leaving the screen.",
+      ],
+      improvements: [
+        "The reciter list now shows a “n / 114” counter on each reciter so you can see at a glance which voices are ready to play without internet.",
+        "When you play a surah online for the first time, the app quietly caches it in the background so the next Sleep session uses the local copy with no re-download.",
+        "On your first Sleep-Mode download we ask the OS to mark the storage as persistent — important on iPhone so your files aren't wiped after 7 days of inactivity.",
+      ],
+      fixes: [
+        "If you go to play a surah while offline and it isn't downloaded yet, you now see a clear, friendly “not downloaded” message instead of a confusing audio error.",
+      ],
+    },
+  },
+  {
+    version: "3.8.1",
+    date: "2026-04-27",
+    ar: {
+      fixes: [
+        "تم إصلاح عدم عمل وضع النوم على أجهزة آيفون (خصوصاً عند تثبيت التطبيق على الشاشة الرئيسية): أصبح يستخدم نفس مسار الصوت الآمن المستعمل في وضع الاستماع، مع تهيئة عناصر iOS الضرورية (playsinline، وفك القفل الصامت داخل لمسة المستخدم).",
+      ],
+    },
+    en: {
+      fixes: [
+        "Fixed Sleep Mode not working on iPhone (especially when the app is installed to the Home Screen): it now goes through the same iOS-safe audio pipeline as Listening, with the required playsinline attributes and a silent unlock that completes inside the user gesture.",
+      ],
+    },
+  },
   {
     version: "3.8.0",
     date: "2026-04-19",
