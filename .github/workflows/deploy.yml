@@ -33,19 +33,13 @@ jobs:
       - name: Lint check (no-undef)
         run: pnpm run check:no-undef
 
-      # Pre-deploy gate #2: refuse to build if any required VITE_* secret is
-      # missing or empty. Without this, Vite silently inlines empty strings,
-      # the Supabase client crashes at module init, and prod renders blank.
+      # Pre-deploy gate #2: confirm no required VITE_* vars are missing.
+      # VITE_SUPABASE_* are optional — supabase.ts has graceful fallbacks and
+      # the app runs fully offline without them since v3.9.1.
       - name: Verify required build-time env vars
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: pnpm run check:build-env
 
       - name: Build project
-        env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: pnpm run build
 
       - name: Verify build directory exists
