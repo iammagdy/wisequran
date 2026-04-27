@@ -11,6 +11,7 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 - **State:** TanStack Query + React Context + IndexedDB (offline-first)
 - **Virtualization:** @tanstack/react-virtual (useWindowVirtualizer for Surah Reader ayah list)
 - **Backend/Cloud Sync:** Supabase (optional, app works without it)
+- **Database:** Replit PostgreSQL (all Supabase migrations have been applied)
 - **PWA:** Vite PWA Plugin + Workbox
 
 ## Project Structure
@@ -23,7 +24,7 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
   - `pages/` — Route-level view components
   - `data/` — Static data (surah-meta, azkar-data)
 - `public/` — Static assets, icons, audio files
-- `supabase/` — Edge Functions and SQL migrations
+- `supabase/` — Edge Functions and SQL migrations (applied to Replit PostgreSQL)
 - `dist/` — Production build output
 
 ## Key Features
@@ -76,7 +77,14 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Environment Variables
 
-- `VITE_SUPABASE_URL` — Supabase project URL. Required for CI/deploy builds
-  (the `check:build-env` gate blocks deploys when missing). Local dev still
-  runs without it, but sign-in and sync will be disabled.
-- `VITE_SUPABASE_ANON_KEY` — Supabase anonymous key. Same requirement as above.
+- `VITE_SUPABASE_URL` — Supabase project URL (stored as Replit Secret). Required for sign-in and cloud sync.
+- `VITE_SUPABASE_ANON_KEY` — Supabase anonymous key (stored as Replit Secret). Required for sign-in and cloud sync.
+- `DATABASE_URL`, `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE` — Replit PostgreSQL credentials (auto-managed). All Supabase schema migrations have been applied to this database.
+
+## Replit Migration Notes
+
+- Migrated from Replit Agent to Replit environment.
+- `esbuild` added as an explicit dependency (required by Vite in this environment).
+- All Supabase SQL migrations applied to Replit PostgreSQL (`DATABASE_URL`).
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` stored as Replit Secrets so Supabase auth/sync works.
+- Workflow: `Start application` runs `pnpm run dev` on port 5000.
