@@ -12,6 +12,16 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
+import { getAllAudioEntries, getAllDownloadedSurahs, OFFLINE_CHANGED_EVENT } from "@/lib/db";
+import {
+  hasConfiguredSleepMode,
+  loadSleepModePrefs,
+  SLEEP_PREFS_CHANGED_EVENT,
+  type SleepModePrefs,
+} from "@/hooks/useSleepModePlayer";
+import { getReciterById } from "@/lib/reciters";
+
+const TOTAL_SURAHS = 114;
 
 type HomeView = "home" | "surahs" | "surahs_listening";
 type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes" | "tools";
@@ -57,6 +67,79 @@ export default function QuranPage() {
   const { streak } = useStreak();
   const { t, language, isRTL } = useLanguage();
   const { location } = useLocation();
+
+  // ── Offline library + Sleep Mode summaries for the home tools tiles ────
+  // These power the "X / 114 surahs" + "Y audio" badge on the Offline
+  // Library tile and the "{timer}m · {reciter}" / "tap to set up" label
+  // on the Sleep Mode tile. Counts/prefs refresh reactively when the
+  // matching event fires (download finish, sleep prefs save, etc.) so
+  // the home stays the canonical source of truth without forcing a
+  // navigation into the Offline Center / Sleep Mode page.
+  const [offlineSurahCount, setOfflineSurahCount] = useState(0);
+  const [offlineAudioCount, setOfflineAudioCount] = useState(0);
+  const [sleepPrefs, setSleepPrefs] = useState<SleepModePrefs>(() => loadSleepModePrefs());
+  const [sleepConfigured, setSleepConfigured] = useState<boolean>(() => hasConfiguredSleepMode());
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const [surahs, audio] = await Promise.all([
+          getAllDownloadedSurahs(),
+          getAllAudioEntries(),
+        ]);
+        if (cancelled) return;
+        setOfflineSurahCount(surahs.length);
+        setOfflineAudioCount(audio.length);
+      } catch {
+        // Best-effort — leave counts at last-known good values rather
+        // than zeroing them out on a transient IDB error.
+      }
+    };
+    void refresh();
+    const onOfflineChange = () => { void refresh(); };
+    window.addEventListener(OFFLINE_CHANGED_EVENT, onOfflineChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(OFFLINE_CHANGED_EVENT, onOfflineChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onPrefsChange = () => {
+      setSleepPrefs(loadSleepModePrefs());
+      setSleepConfigured(hasConfiguredSleepMode());
+    };
+    window.addEventListener(SLEEP_PREFS_CHANGED_EVENT, onPrefsChange);
+    return () => window.removeEventListener(SLEEP_PREFS_CHANGED_EVENT, onPrefsChange);
+  }, []);
+
+  const sleepReciterName = (() => {
+    const reciter = getReciterById(sleepPrefs.reciterId);
+    return language === "ar" ? reciter.name : reciter.nameEn;
+  })();
+
+  const sleepTileLabel = sleepConfigured
+    ? language === "ar"
+      ? `${toArabicNumerals(sleepPrefs.timerMinutes)} د · ${sleepReciterName}`
+      : `${sleepPrefs.timerMinutes}m · ${sleepReciterName}`
+    : language === "ar"
+      ? "اضغط للإعداد"
+      : "Tap to set up";
+
+  const offlineTileLabel = (() => {
+    if (offlineSurahCount === 0 && offlineAudioCount === 0) {
+      return language === "ar" ? "لم يتم التنزيل بعد" : "Nothing downloaded yet";
+    }
+    if (language === "ar") {
+      const surahsPart = `${toArabicNumerals(offlineSurahCount)} / ${toArabicNumerals(TOTAL_SURAHS)} سورة`;
+      const audioPart = offlineAudioCount > 0 ? ` · ${toArabicNumerals(offlineAudioCount)} صوت` : "";
+      return `${surahsPart}${audioPart}`;
+    }
+    const surahsPart = `${offlineSurahCount} / ${TOTAL_SURAHS} surahs`;
+    const audioPart = offlineAudioCount > 0 ? ` · ${offlineAudioCount} audio` : "";
+    return `${surahsPart}${audioPart}`;
+  })();
 
   const progress = Math.min((todayCount / goal) * 100, 100);
 
@@ -375,8 +458,11 @@ export default function QuranPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "وضع النوم" : "Sleep Mode"}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {language === "ar" ? "تلاوة هادئة قبل النوم" : "Calm recitation timer"}
+              <p
+                className="text-[11px] text-muted-foreground truncate"
+                data-testid="quran-home-tool-sleep-status"
+              >
+                {sleepTileLabel}
               </p>
             </div>
           </motion.button>
@@ -391,8 +477,11 @@ export default function QuranPage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "المكتبة بدون إنترنت" : "Offline Library"}</p>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {language === "ar" ? "نزّل وتحقّق من المحتوى" : "See & manage downloads"}
+              <p
+                className="text-[11px] text-muted-foreground truncate"
+                data-testid="quran-home-tool-offline-status"
+              >
+                {offlineTileLabel}
               </p>
             </div>
           </motion.button>

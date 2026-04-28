@@ -21,7 +21,15 @@ const PREFS_KEYS = {
   quranVolume: "wise-sleep-mode-quran-volume",
 } as const;
 
-function loadPrefs(): SleepModePrefs {
+/**
+ * Broadcast that the user's Sleep Mode preferences changed (reciter,
+ * surah, timer, or volume). Listened to by the home Sleep Mode tile so
+ * its label ("30m · Alafasy") refreshes without a reload after the
+ * user adjusts settings on the Sleep page.
+ */
+export const SLEEP_PREFS_CHANGED_EVENT = "wise-sleep-prefs-changed";
+
+function readPrefs(): SleepModePrefs {
   return {
     reciterId: localStorage.getItem(PREFS_KEYS.reciter) ?? "alafasy",
     surahNumber: Number(localStorage.getItem(PREFS_KEYS.surah) ?? 36),
@@ -30,11 +38,45 @@ function loadPrefs(): SleepModePrefs {
   };
 }
 
+function loadPrefs(): SleepModePrefs {
+  return readPrefs();
+}
+
+/**
+ * Public read accessor for the persisted Sleep Mode prefs. Safe to
+ * call outside the hook (e.g. from the home tile) without instantiating
+ * the player.
+ */
+export function loadSleepModePrefs(): SleepModePrefs {
+  return readPrefs();
+}
+
+/**
+ * True when the user has saved at least one Sleep Mode pref. Used by
+ * the home tile to decide between the "tap to set up" empty state
+ * and the "{timer}m · {reciter}" summary.
+ */
+export function hasConfiguredSleepMode(): boolean {
+  return (
+    localStorage.getItem(PREFS_KEYS.reciter) !== null ||
+    localStorage.getItem(PREFS_KEYS.timer) !== null ||
+    localStorage.getItem(PREFS_KEYS.surah) !== null ||
+    localStorage.getItem(PREFS_KEYS.quranVolume) !== null
+  );
+}
+
 function savePrefs(prefs: SleepModePrefs) {
   localStorage.setItem(PREFS_KEYS.reciter, prefs.reciterId);
   localStorage.setItem(PREFS_KEYS.surah, String(prefs.surahNumber));
   localStorage.setItem(PREFS_KEYS.timer, String(prefs.timerMinutes));
   localStorage.setItem(PREFS_KEYS.quranVolume, String(prefs.quranVolume));
+  if (typeof window !== "undefined") {
+    try {
+      window.dispatchEvent(new CustomEvent(SLEEP_PREFS_CHANGED_EVENT, { detail: prefs }));
+    } catch {
+      /* ignore — best-effort notification */
+    }
+  }
 }
 
 const FADE_OUT_START_SECS = 180;
