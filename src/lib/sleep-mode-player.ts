@@ -194,6 +194,9 @@ function createSleepModePlayer() {
       navigator.mediaSession.setActionHandler("play", null);
       navigator.mediaSession.setActionHandler("pause", null);
       navigator.mediaSession.setActionHandler("stop", null);
+      navigator.mediaSession.setActionHandler("seekto", null);
+      navigator.mediaSession.setActionHandler("seekforward", null);
+      navigator.mediaSession.setActionHandler("seekbackward", null);
     } catch {
       /* ignore */
     }
@@ -318,9 +321,12 @@ function createSleepModePlayer() {
       }, () => {});
   }
 
-  function startFadeOut(currentQuranVol: number) {
+  function startFadeOut(currentQuranVol: number, fadeDurationSecs: number = FADE_OUT_START_SECS) {
     let qVol = currentQuranVol / 100;
-    const steps = FADE_OUT_START_SECS / 2;
+    // Scale the step count to the time we actually have left so a
+    // user who scrubbed into the middle of the fade window still
+    // ends at silence right when the timer hits zero.
+    const steps = Math.max(1, Math.floor(fadeDurationSecs / 2));
     const qDecrement = qVol / steps;
 
     fadeInterval = setInterval(() => {
@@ -330,6 +336,70 @@ function createSleepModePlayer() {
         if (fadeInterval) clearInterval(fadeInterval);
       }
     }, 2000);
+  }
+
+  // Apply a new "remaining seconds" value coming from the OS lock-screen
+  // scrubber (seekto / seekforward / seekbackward). Keeps the on-screen
+  // countdown, the global session store, and the OS progress bar all in
+  // sync, restarts the per-second tick from the new offset, and re-arms
+  // (or tears down) the volume fade-out depending on whether we landed
+  // inside the final fade window.
+  function adjustTimer(newRemainingSecs: number) {
+    // Only meaningful while a session is active. Without an audio
+    // element there's nothing to seek against.
+    if (!audio) return;
+
+    const totalSecs = snapshot.prefs.timerMinutes * 60;
+    const clampedRemaining = Math.max(0, Math.min(newRemainingSecs, totalSecs));
+    const newElapsed = totalSecs - clampedRemaining;
+    const wasPlaying = snapshot.isPlaying;
+
+    setSnapshot({ remainingSeconds: clampedRemaining });
+    setSleepSessionState({ remainingSeconds: clampedRemaining });
+    updateMediaPositionState(totalSecs, newElapsed, wasPlaying);
+
+    // Tear down any in-flight fade — it was scheduled against the old
+    // remaining time, so its decrement curve no longer matches reality.
+    // We restore the user's chosen volume so subsequent tick logic can
+    // re-arm a fresh fade against the adjusted remaining time.
+    if (fadeInterval) {
+      clearInterval(fadeInterval);
+      fadeInterval = null;
+    }
+    if (audio) {
+      audio.volume = snapshot.prefs.quranVolume / 100;
+    }
+
+    // User dragged the scrubber to the end — finish the session as if
+    // the timer had naturally elapsed.
+    if (clampedRemaining <= 0) {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      saveSession(true);
+      stopAll();
+      return;
+    }
+
+    // Restart the per-second tick from the new elapsed offset so future
+    // ticks stay aligned with the adjusted countdown. While paused there
+    // is no running interval to reset (pause() already cleared it).
+    if (wasPlaying) {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      startTimerInterval(totalSecs, newElapsed, snapshot.prefs);
+      // If we landed inside the fade window, re-arm the fade scaled to
+      // the time we actually have left. startTimerInterval only triggers
+      // a fade when remaining ticks down through exactly
+      // FADE_OUT_START_SECS, which won't happen if the user seeks past
+      // that boundary in one jump.
+      if (clampedRemaining <= FADE_OUT_START_SECS) {
+        startFadeOut(snapshot.prefs.quranVolume, clampedRemaining);
+      }
+    }
   }
 
   function startTimerInterval(totalSecs: number, initialElapsed: number, currentPrefs: SleepModePrefs) {
@@ -510,6 +580,33 @@ function createSleepModePlayer() {
             saveSession(false);
             stopAll();
           });
+          // Lock-screen / Control Center scrubber. iOS and Android
+          // both expose this once we publish a positionState; without
+          // a handler the bar is read-only and the user can see "20m
+          // left" but not change it.
+          //
+          // We treat the published track as Sleep timer length, so the
+          // scrubber's "position" maps to elapsed seconds and the new
+          // remaining time is (total - seekTime).
+          navigator.mediaSession.setActionHandler("seekto", (details) => {
+            if (details.seekTime === undefined || details.seekTime === null) return;
+            const totalSecsNow = snapshot.prefs.timerMinutes * 60;
+            const newElapsed = Math.max(0, Math.min(details.seekTime, totalSecsNow));
+            adjustTimer(totalSecsNow - newElapsed);
+          });
+          // OS "skip forward" buttons (Android Chrome notification, some
+          // iOS car/headphone integrations). seekOffset is the OS's
+          // suggested jump; we fall back to 15s so the buttons still do
+          // something useful when it isn't provided. "Forward" advances
+          // playback position, which means LESS time left on the timer.
+          navigator.mediaSession.setActionHandler("seekforward", (details) => {
+            const offset = details.seekOffset ?? 15;
+            adjustTimer(snapshot.remainingSeconds - offset);
+          });
+          navigator.mediaSession.setActionHandler("seekbackward", (details) => {
+            const offset = details.seekOffset ?? 15;
+            adjustTimer(snapshot.remainingSeconds + offset);
+          });
         } catch {
           /* ignore */
         }
@@ -580,6 +677,20 @@ function createSleepModePlayer() {
     // extrapolating the bar before the next timer tick lands.
     updateMediaPositionState(totalSecs, elapsed, true);
     startTimerInterval(totalSecs, elapsed, currentPrefs);
+    // If the user scrubbed into the fade window while paused, we
+    // didn't arm the fade in adjustTimer() (gated on `wasPlaying`).
+    // startTimerInterval() also won't kick fade in because it only
+    // triggers at the exact moment remaining ticks down through
+    // FADE_OUT_START_SECS — which won't happen if we resume already
+    // inside the window. Catch that case here so the audio still
+    // fades to silence by the time the timer hits zero.
+    if (snapshot.remainingSeconds > 0 && snapshot.remainingSeconds <= FADE_OUT_START_SECS) {
+      if (fadeInterval) {
+        clearInterval(fadeInterval);
+        fadeInterval = null;
+      }
+      startFadeOut(currentPrefs.quranVolume, snapshot.remainingSeconds);
+    }
   }
 
   async function togglePlay() {
