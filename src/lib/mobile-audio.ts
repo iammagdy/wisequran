@@ -103,6 +103,15 @@ class MobileAudioManager {
   }
 
   async play(channel: ManagedAudioChannel, src?: string, options: PlayOptions = {}) {
+    // Centralized iOS audio-session bootstrap. Every play() call goes
+    // through this method, so any non-preview channel (sleep, quran,
+    // adhan, friday, …) gets the iOS 17+ "playback" category set —
+    // which is what keeps audio alive through the silent switch and
+    // the screen-off lock state in standalone PWAs. Idempotent and
+    // a no-op everywhere else.
+    if (channel !== "preview") {
+      configurePlaybackAudioSession();
+    }
     const audio = this.getAudio(channel);
     const { forceLoad = true, resetTime = false, retryDelayMs = 220, volume } = options;
 
