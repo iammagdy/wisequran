@@ -30,6 +30,28 @@ const PREFS_KEYS = {
  */
 export const SLEEP_PREFS_CHANGED_EVENT = "wise-sleep-prefs-changed";
 
+/**
+ * Compute the user's "adjusted total session length" in seconds based
+ * on a single lock-screen seek event. Modeled as
+ * "elapsed time before this seek" + "the remaining time the user just
+ * chose", so the result reflects the user's intent at the moment they
+ * scrubbed (e.g. picking 30m then immediately scrubbing to 8m left
+ * yields 480s; letting 5m elapse first yields 900s).
+ *
+ * Exported as a pure function so the analytics math can be unit-tested
+ * without standing up the whole player + audio stack.
+ */
+export function computeAdjustedTimerSeconds(
+  totalSecs: number,
+  previousRemainingSecs: number,
+  newRemainingSecs: number,
+): number {
+  const clampedNewRemaining = Math.max(0, Math.min(newRemainingSecs, totalSecs));
+  const clampedPreviousRemaining = Math.max(0, Math.min(previousRemainingSecs, totalSecs));
+  const previousElapsed = totalSecs - clampedPreviousRemaining;
+  return previousElapsed + clampedNewRemaining;
+}
+
 function readPrefs(): SleepModePrefs {
   return {
     reciterId: localStorage.getItem(PREFS_KEYS.reciter) ?? "alafasy",
@@ -121,6 +143,16 @@ function createSleepModePlayer() {
   let fadeInterval: ReturnType<typeof setInterval> | null = null;
   let sessionId: string | null = null;
   let hasStarted = false;
+  // Most recent user-adjusted total session length (seconds) coming from
+  // the OS lock-screen scrubber. Null until the user actually scrubs —
+  // analytics readers fall back to `timer_minutes * 60` in that case.
+  let adjustedTimerSeconds: number | null = null;
+  // Coalesced timer for persisting `adjustedTimerSeconds` to supabase.
+  // The lock-screen scrubber can fire many times in rapid succession
+  // (every drag tick), so we debounce the UPDATE to avoid hammering the
+  // network — only the latest value matters.
+  let adjustedTimerWriteTimer: ReturnType<typeof setTimeout> | null = null;
+  const ADJUSTED_TIMER_WRITE_DEBOUNCE_MS = 500;
   // Monotonically increasing token. Each play() call captures a token; any
   // async continuation that finds the global token has moved on bails out.
   // This protects against rapid play -> stop -> play (or play -> play with
@@ -263,6 +295,11 @@ function createSleepModePlayer() {
       clearInterval(fadeInterval);
       fadeInterval = null;
     }
+    if (adjustedTimerWriteTimer) {
+      clearTimeout(adjustedTimerWriteTimer);
+      adjustedTimerWriteTimer = null;
+    }
+    adjustedTimerSeconds = null;
     detachAudioListeners(audio);
     if (hasStarted) {
       // Only touch the shared audio element if Sleep Mode actually used it.
@@ -287,14 +324,54 @@ function createSleepModePlayer() {
     if (!sessionId) return;
     const id = sessionId;
     sessionId = null;
+    // The completion update naturally subsumes any pending debounced
+    // adjustment write — fold the latest adjusted value into this same
+    // UPDATE and cancel the deferred one so we don't issue two writes
+    // for the same row.
+    if (adjustedTimerWriteTimer) {
+      clearTimeout(adjustedTimerWriteTimer);
+      adjustedTimerWriteTimer = null;
+    }
+    const update: {
+      completed: boolean;
+      ended_at: string;
+      adjusted_timer_seconds?: number;
+    } = { completed, ended_at: new Date().toISOString() };
+    if (adjustedTimerSeconds !== null) {
+      update.adjusted_timer_seconds = adjustedTimerSeconds;
+    }
     // Fire-and-forget. We never want a Supabase write to block the
     // playback teardown — and Sleep Mode is mostly used while signed
     // out, so the row may not exist anyway.
     void supabase
       .from("sleep_mode_sessions")
-      .update({ completed, ended_at: new Date().toISOString() })
+      .update(update)
       .eq("id", id)
       .then(() => {}, () => {});
+  }
+
+  // Persist the latest user-adjusted total session length to supabase.
+  // Coalesced via debounce so a fast-moving lock-screen scrub only
+  // results in one UPDATE per quiet period. Reads `sessionId` and
+  // `adjustedTimerSeconds` at fire time so a session-row id that
+  // resolves *after* the first scrub can still be written, and so a
+  // stopAll() that ran in between (which nulls both) cleanly aborts.
+  function scheduleAdjustedTimerWrite() {
+    if (adjustedTimerWriteTimer) {
+      clearTimeout(adjustedTimerWriteTimer);
+      adjustedTimerWriteTimer = null;
+    }
+    adjustedTimerWriteTimer = setTimeout(() => {
+      adjustedTimerWriteTimer = null;
+      const id = sessionId;
+      const value = adjustedTimerSeconds;
+      if (!id || value === null) return;
+      void supabase
+        .from("sleep_mode_sessions")
+        .update({ adjusted_timer_seconds: value })
+        .eq("id", id)
+        .then(() => {}, () => {});
+    }, ADJUSTED_TIMER_WRITE_DEBOUNCE_MS);
   }
 
   function startSession(currentPrefs: SleepModePrefs) {
@@ -354,9 +431,25 @@ function createSleepModePlayer() {
     const newElapsed = totalSecs - clampedRemaining;
     const wasPlaying = snapshot.isPlaying;
 
+    // Capture the remaining time *before* this seek lands so we can
+    // model the user's adjusted intent below. After setSnapshot() runs,
+    // `snapshot.remainingSeconds` reflects the new (post-seek) value
+    // and the math would always collapse back to `totalSecs`.
+    const previousRemaining = snapshot.remainingSeconds;
+
     setSnapshot({ remainingSeconds: clampedRemaining });
     setSleepSessionState({ remainingSeconds: clampedRemaining });
     updateMediaPositionState(totalSecs, newElapsed, wasPlaying);
+
+    // Record the user-adjusted total session length for analytics —
+    // see computeAdjustedTimerSeconds() for the model. Persisted via
+    // a debounced write so a fast scrub only produces one UPDATE.
+    adjustedTimerSeconds = computeAdjustedTimerSeconds(
+      totalSecs,
+      previousRemaining,
+      clampedRemaining,
+    );
+    scheduleAdjustedTimerWrite();
 
     // Tear down any in-flight fade — it was scheduled against the old
     // remaining time, so its decrement curve no longer matches reality.
