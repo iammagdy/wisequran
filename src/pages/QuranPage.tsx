@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, Download } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, Download, Play, Pause } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import SurahOfflineButton from "@/components/quran/SurahOfflineButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -20,6 +20,7 @@ import {
   type SleepModePrefs,
 } from "@/hooks/useSleepModePlayer";
 import { useSleepSession } from "@/lib/sleep-session-store";
+import { sleepModePlayer } from "@/lib/sleep-mode-player";
 import { getReciterById } from "@/lib/reciters";
 
 const TOTAL_SURAHS = 114;
@@ -474,13 +475,32 @@ export default function QuranPage() {
           {language === "ar" ? "أدوات سريعة" : "Quick tools"}
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <motion.button
+          {/*
+            Sleep Mode tile. Rendered as a div+role="button" (rather than a
+            real <button>) because we host an inline play/pause control
+            inside it when a session is active — nesting a real <button>
+            inside another <button> is invalid HTML and breaks
+            accessibility tooling. The outer click still navigates to
+            the full Sleep page; the inner control toggles
+            pause/resume in place via stopPropagation, so the user can
+            silence playback without leaving the home screen.
+          */}
+          <motion.div
             whileTap={{ scale: 0.97 }}
+            role="button"
+            tabIndex={0}
             onClick={() => navigate("/sleep")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/sleep");
+              }
+            }}
+            aria-label={language === "ar" ? "وضع النوم" : "Sleep Mode"}
             data-testid="quran-home-tool-sleep"
             data-sleep-active={sleepIsActive ? "true" : "false"}
             className={cn(
-              "flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border text-start transition-colors",
+              "flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border text-start transition-colors cursor-pointer",
               sleepIsActive
                 ? "border-indigo-400/50 hover:border-indigo-400/70"
                 : "border-white/10 hover:border-primary/30",
@@ -516,7 +536,40 @@ export default function QuranPage() {
                 {sleepTileLabel}
               </p>
             </div>
-          </motion.button>
+            {sleepIsActive && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  // Keep the tap local — the parent tile would otherwise
+                  // navigate the user away to the Sleep page.
+                  e.stopPropagation();
+                  void sleepModePlayer.togglePlay();
+                }}
+                onKeyDown={(e) => {
+                  // Stop the parent's Enter/Space navigation handler
+                  // from also firing when the user activates this
+                  // inner control with the keyboard.
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                  }
+                }}
+                aria-label={
+                  sleepSession.status === "playing"
+                    ? (language === "ar" ? "إيقاف مؤقت" : "Pause Sleep Mode")
+                    : (language === "ar" ? "استئناف" : "Resume Sleep Mode")
+                }
+                data-testid="quran-home-tool-sleep-toggle"
+                data-sleep-toggle-state={sleepSession.status}
+                className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-500 dark:text-indigo-200 hover:bg-indigo-500/25 active:scale-95 transition"
+              >
+                {sleepSession.status === "playing" ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </button>
+            )}
+          </motion.div>
           <motion.button
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/offline")}
