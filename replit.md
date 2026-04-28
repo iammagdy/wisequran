@@ -91,6 +91,28 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Recent fixes
 
+### v3.9.3 — Live Sleep Mode status on the home tile (2026-04-28)
+
+The home Sleep Mode tile now reflects an in-progress session in real time.
+Architecture change:
+
+- The Sleep Mode player has been lifted out of `useSleepModePlayer` (per-mount
+  React hook) into a module-level singleton at `src/lib/sleep-mode-player.ts`.
+  The singleton owns the audio element, countdown timer, fade interval,
+  Media Session handlers, and the supabase session row — so audio + timer
+  survive page navigation and re-entering `SleepModePage` picks back up the
+  same active session instead of starting fresh.
+- A new lightweight observable store at `src/lib/sleep-session-store.ts`
+  publishes `{ status: "idle" | "playing" | "paused", remainingSeconds, ... }`.
+  `useSleepSession()` is a `useSyncExternalStore` hook the home page consumes.
+- `useSleepModePlayer` is now a thin React subscription that just re-exposes
+  the singleton's snapshot + actions (and feeds it the auth user/deviceId via
+  `setAuthContext` so the supabase insert keeps attributing correctly).
+- `QuranPage.tsx` reads `useSleepSession()` and renders "playing · Nm left"
+  / "paused · Nm left" on the Sleep tile, with an indigo accent and a
+  pulsing ring around the icon while playing. Falls back to the existing
+  "{timer}m · {reciter}" / "Tap to set up" labels when idle.
+
 ### v3.9.2 — iOS PWA reliability: Sleep Mode + first-run offline (2026-04-28)
 
 Three closely-related iOS-PWA reports addressed in one pass:

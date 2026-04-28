@@ -19,6 +19,7 @@ import {
   SLEEP_PREFS_CHANGED_EVENT,
   type SleepModePrefs,
 } from "@/hooks/useSleepModePlayer";
+import { useSleepSession } from "@/lib/sleep-session-store";
 import { getReciterById } from "@/lib/reciters";
 
 const TOTAL_SURAHS = 114;
@@ -119,13 +120,39 @@ export default function QuranPage() {
     return language === "ar" ? reciter.name : reciter.nameEn;
   })();
 
-  const sleepTileLabel = sleepConfigured
-    ? language === "ar"
-      ? `${toArabicNumerals(sleepPrefs.timerMinutes)} د · ${sleepReciterName}`
-      : `${sleepPrefs.timerMinutes}m · ${sleepReciterName}`
-    : language === "ar"
-      ? "اضغط للإعداد"
-      : "Tap to set up";
+  // Live session state from the module-level Sleep Mode player. When a
+  // session is active the tile reflects "playing · Nm left" /
+  // "paused · Nm left" instead of the static saved-prefs label, so the
+  // home stays a true status surface.
+  const sleepSession = useSleepSession();
+  const sleepIsActive = sleepSession.status !== "idle";
+
+  const sleepTileLabel = (() => {
+    if (sleepIsActive) {
+      // Round-up minutes so a session ending in the next 30s still
+      // surfaces "1m left" instead of "0m left" right before it stops.
+      const minutesLeft = Math.max(0, Math.ceil(sleepSession.remainingSeconds / 60));
+      const secondsLeft = Math.max(0, sleepSession.remainingSeconds);
+      const isPlaying = sleepSession.status === "playing";
+      if (language === "ar") {
+        const statusWord = isPlaying ? "تشغيل" : "إيقاف مؤقت";
+        const remainingWord =
+          minutesLeft > 0
+            ? `متبقي ${toArabicNumerals(minutesLeft)} د`
+            : `متبقي ${toArabicNumerals(secondsLeft)} ث`;
+        return `${statusWord} · ${remainingWord}`;
+      }
+      const statusWord = isPlaying ? "playing" : "paused";
+      const remainingPart = minutesLeft > 0 ? `${minutesLeft}m left` : `${secondsLeft}s left`;
+      return `${statusWord} · ${remainingPart}`;
+    }
+    if (sleepConfigured) {
+      return language === "ar"
+        ? `${toArabicNumerals(sleepPrefs.timerMinutes)} د · ${sleepReciterName}`
+        : `${sleepPrefs.timerMinutes}m · ${sleepReciterName}`;
+    }
+    return language === "ar" ? "اضغط للإعداد" : "Tap to set up";
+  })();
 
   const offlineTileLabel = (() => {
     if (offlineSurahCount === 0 && offlineAudioCount === 0) {
@@ -451,15 +478,39 @@ export default function QuranPage() {
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/sleep")}
             data-testid="quran-home-tool-sleep"
-            className="flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border border-white/10 text-start hover:border-primary/30 transition-colors"
+            data-sleep-active={sleepIsActive ? "true" : "false"}
+            className={cn(
+              "flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border text-start transition-colors",
+              sleepIsActive
+                ? "border-indigo-400/50 hover:border-indigo-400/70"
+                : "border-white/10 hover:border-primary/30",
+            )}
           >
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 dark:text-indigo-300">
+            <div
+              className={cn(
+                "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-colors",
+                sleepIsActive
+                  ? "bg-indigo-500/20 border-indigo-400/50 text-indigo-500 dark:text-indigo-200"
+                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-500 dark:text-indigo-300",
+              )}
+            >
               <BedDouble className="h-5 w-5" />
+              {sleepIsActive && sleepSession.status === "playing" && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 rounded-2xl border border-indigo-400/40 animate-ping"
+                />
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "وضع النوم" : "Sleep Mode"}</p>
               <p
-                className="text-[11px] text-muted-foreground truncate"
+                className={cn(
+                  "text-[11px] truncate",
+                  sleepIsActive
+                    ? "text-indigo-500 dark:text-indigo-300 font-medium"
+                    : "text-muted-foreground",
+                )}
                 data-testid="quran-home-tool-sleep-status"
               >
                 {sleepTileLabel}
