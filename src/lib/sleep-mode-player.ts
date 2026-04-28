@@ -197,6 +197,48 @@ function createSleepModePlayer() {
     } catch {
       /* ignore */
     }
+    clearMediaPositionState();
+  }
+
+  // Push the live countdown into the OS media controls. iOS Control
+  // Center / lock screen and Android Chrome notification render this
+  // as a progress bar that ticks down in real time, giving the user a
+  // visible "N minutes left" without needing to open the PWA.
+  //
+  // We model the Sleep timer as a track of length `totalSecs` and pass
+  // `elapsedSecs` as the current position — this maps cleanly onto the
+  // existing media UI metaphor (elapsed on the left, remaining on the
+  // right). When `playing` is true we report playbackRate: 1 so the OS
+  // can extrapolate sub-second progress between our 1Hz updates;
+  // playbackRate: 0 freezes the bar on pause.
+  function updateMediaPositionState(
+    totalSecs: number,
+    elapsedSecs: number,
+    playing: boolean,
+  ) {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator.mediaSession.setPositionState !== "function") return;
+    if (!Number.isFinite(totalSecs) || totalSecs <= 0) return;
+    const clampedElapsed = Math.max(0, Math.min(elapsedSecs, totalSecs));
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: totalSecs,
+        position: clampedElapsed,
+        playbackRate: playing ? 1 : 0,
+      });
+    } catch {
+      /* ignore — Safari throws on invalid values; bail rather than crash playback */
+    }
+  }
+
+  function clearMediaPositionState() {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    if (typeof navigator.mediaSession.setPositionState !== "function") return;
+    try {
+      navigator.mediaSession.setPositionState();
+    } catch {
+      /* ignore */
+    }
   }
 
   function cleanupBlobUrl() {
@@ -297,6 +339,9 @@ function createSleepModePlayer() {
       const remaining = totalSecs - elapsed;
       setSnapshot({ remainingSeconds: remaining });
       setSleepSessionState({ remainingSeconds: Math.max(0, remaining) });
+      // Cap at totalSecs so the OS progress bar doesn't overshoot in the
+      // tick where we're about to call stopAll().
+      updateMediaPositionState(totalSecs, Math.min(elapsed, totalSecs), true);
 
       if (remaining === FADE_OUT_START_SECS) {
         startFadeOut(currentPrefs.quranVolume);
@@ -450,6 +495,9 @@ function createSleepModePlayer() {
       // standalone PWA — this is the single biggest cause of "Sleep
       // Mode plays for 5 seconds then stops" reports.
       updateMediaSession(currentPrefs, true);
+      // Seed the lock-screen progress bar at 0 so it appears
+      // immediately, before the first 1-second timer tick fires.
+      updateMediaPositionState(totalSecs, 0, true);
       if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
         try {
           navigator.mediaSession.setActionHandler("play", () => {
@@ -504,6 +552,11 @@ function createSleepModePlayer() {
         /* ignore */
       }
     }
+    // Freeze the lock-screen progress bar at the paused position
+    // (playbackRate: 0) so it stops ticking until the user resumes.
+    const totalSecsAtPause = snapshot.prefs.timerMinutes * 60;
+    const elapsedAtPause = totalSecsAtPause - snapshot.remainingSeconds;
+    updateMediaPositionState(totalSecsAtPause, elapsedAtPause, false);
   }
 
   async function resume() {
@@ -523,6 +576,9 @@ function createSleepModePlayer() {
     const currentPrefs = snapshot.prefs;
     const totalSecs = currentPrefs.timerMinutes * 60;
     const elapsed = totalSecs - snapshot.remainingSeconds;
+    // Refresh positionState with playbackRate: 1 so the OS resumes
+    // extrapolating the bar before the next timer tick lands.
+    updateMediaPositionState(totalSecs, elapsed, true);
     startTimerInterval(totalSecs, elapsed, currentPrefs);
   }
 
