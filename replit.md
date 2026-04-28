@@ -91,6 +91,67 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Recent fixes
 
+### v3.9.2 — iOS PWA reliability: Sleep Mode + first-run offline (2026-04-28)
+
+Three closely-related iOS-PWA reports addressed in one pass:
+
+1. **Sleep Mode now actually plays on iOS standalone PWAs.**
+   - `src/lib/mobile-audio.ts` — stopped unconditionally setting
+     `crossOrigin = "anonymous"` on the shared audio element. Many of
+     our remote audio CDNs (mp3quran, quranicaudio) don't return CORS
+     headers, so that attribute caused silent decode failures. Default
+     is now no crossOrigin (correct for blob: + cross-origin), and we
+     promote to `"anonymous"` only for same-origin sources.
+   - `src/lib/mobile-audio.ts` — added `configurePlaybackAudioSession()`
+     which sets `navigator.audioSession.type = "playback"` (iOS 17+)
+     so the hardware silent switch no longer mutes Sleep Mode and the
+     OS keeps the session alive in the background.
+   - `src/hooks/useSleepModePlayer.ts` — populated
+     `navigator.mediaSession.metadata` (surah, reciter, app-icon
+     artwork) and registered play/pause/stop action handlers so the
+     iOS lock-screen controls light up. Without these, iOS suspends
+     web audio after a few seconds of screen-off in standalone mode.
+     The handlers dispatch through a `playbackControlsRef` that's
+     kept in sync via `useEffect`, breaking the otherwise circular
+     reference between `play` / `pause` / `resume`.
+   - `src/hooks/useSleepModePlayer.ts` — `startSession` and
+     `saveSession` are now fire-and-forget so a slow Supabase round-
+     trip can no longer gate playback. Added `audio.onerror` /
+     `audio.onended` cleanup paths.
+
+2. **Discoverability for downloads + Sleep Mode.**
+   - `src/pages/QuranPage.tsx` — added a new dashboard section
+     `"tools"` rendering a 2x2 of Sleep Mode + Offline Library tiles.
+     Integrates with the existing reorder/hide UI via
+     `DEFAULT_DASHBOARD_ORDER` and `sectionLabels`. The order
+     normalizer was rewritten to **append** any newly-shipped section
+     IDs missing from a user's persisted `wise-home-dashboard-order`,
+     so existing installs see the new tiles without resetting their
+     layout.
+
+3. **PWA boots offline on first run after install.**
+   - `vite.config.ts` — removed
+     `**/assets/*Page-*.js` and `**/assets/charts-vendor-*.js` from
+     `globIgnores`, raised `maximumFileSizeToCacheInBytes` to 5 MB.
+     All lazy route chunks now precache during SW install.
+   - `src/sw.ts` — added a `CacheFirst` runtime route for
+     `/assets/*.js` and `/assets/*.css` as a safety net for any chunk
+     that wasn't in the precache (CacheFirst is safe because Vite
+     hashes the filenames — a new chunk version is a different URL).
+   - `src/lib/lazy-with-retry.ts` (new) — `lazyWithRetry(factory, name)`
+     wraps `React.lazy`, retries the import once after 400 ms, then
+     does a one-shot `window.location.reload()` (gated on
+     `navigator.onLine` and a per-chunk `sessionStorage` flag) to
+     pick up a new SW manifest.
+   - `src/components/ErrorBoundary.tsx` — detects `ChunkLoadError` via
+     `isLazyChunkError`, attempts a single online-gated reload, and
+     surfaces an offline-aware Arabic fallback ("هذا الجزء لم يُحفظ
+     بعد") instead of a stack trace.
+   - `src/App.tsx` — replaced `prefetchTopTabs` (5 routes) with
+     `prefetchAllRoutes` (every lazy page) on `requestIdleCallback`
+     after splash, so all chunks reach the precache during the very
+     first online run.
+
 ### v3.9.1 — Sign-in / sign-up removed (2026-04-27)
 
 The app used to support optional Supabase email/password sign-in for cross-

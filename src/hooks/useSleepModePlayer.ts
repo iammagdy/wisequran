@@ -3,7 +3,9 @@ import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeviceId } from "@/hooks/useDeviceId";
-import { mobileAudioManager } from "@/lib/mobile-audio";
+import { mobileAudioManager, configurePlaybackAudioSession } from "@/lib/mobile-audio";
+import { getReciterById } from "@/lib/reciters";
+import { SURAH_META } from "@/data/surah-meta";
 
 export interface SleepModePrefs {
   reciterId: string;
@@ -71,6 +73,11 @@ export function useSleepModePlayer() {
   // can revoke it on stop / track change. Network URLs are stored as null
   // (nothing to revoke).
   const blobUrlRef = useRef<string | null>(null);
+  // Late-bound dispatch table for OS Media Session action handlers
+  // registered inside play(). Using a ref breaks the otherwise
+  // unavoidable circular reference with pause()/resume() (which are
+  // declared after play() so they can call back into the same state).
+  const playbackControlsRef = useRef<{ pause: () => void; resume: () => Promise<void> } | null>(null);
 
   const setPrefs = useCallback((updates: Partial<SleepModePrefs>) => {
     setPrefsState((prev) => {
@@ -91,6 +98,46 @@ export function useSleepModePlayer() {
     audio.onloadedmetadata = null;
     audio.onplaying = null;
     audio.onwaiting = null;
+    audio.onerror = null;
+    audio.onended = null;
+  }, []);
+
+  // Wire (or unwire) the OS Media Session controls. iOS standalone
+  // PWAs aggressively suspend background playback unless they see a
+  // populated MediaMetadata + at least one valid action handler — once
+  // we set those, the lock-screen controls light up and audio keeps
+  // playing through screen-off and the silent switch.
+  const updateMediaSession = useCallback((currentPrefs: SleepModePrefs, playing: boolean) => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    const reciter = getReciterById(currentPrefs.reciterId);
+    const surah = SURAH_META.find((s) => s.number === currentPrefs.surahNumber);
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: surah ? surah.name : `Surah ${currentPrefs.surahNumber}`,
+        artist: reciter.name,
+        album: "Wise Quran — Sleep Mode",
+        artwork: [
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
+      });
+      navigator.mediaSession.playbackState = playing ? "playing" : "paused";
+    } catch {
+      /* ignore — older browsers don't support every artwork field */
+    }
+  }, []);
+
+  const clearMediaSession = useCallback(() => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("stop", null);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const cleanupBlobUrl = useCallback(() => {
@@ -112,6 +159,7 @@ export function useSleepModePlayer() {
       mobileAudioManager.stop(SLEEP_CHANNEL, true);
     }
     cleanupBlobUrl();
+    clearMediaSession();
     quranAudioRef.current = null;
     hasStartedRef.current = false;
     isPlayingRef.current = false;
@@ -119,18 +167,27 @@ export function useSleepModePlayer() {
     setIsLoading(false);
     setAudioCurrentTime(0);
     setAudioDuration(0);
-  }, [detachAudioListeners, cleanupBlobUrl]);
+  }, [detachAudioListeners, cleanupBlobUrl, clearMediaSession]);
 
-  const saveSession = useCallback(async (completed: boolean) => {
+  const saveSession = useCallback((completed: boolean) => {
     if (!sessionIdRef.current) return;
-    await supabase
+    // Fire-and-forget. We never want a Supabase write to block the
+    // playback teardown — and Sleep Mode is mostly used while signed
+    // out, so the row may not exist anyway.
+    void supabase
       .from("sleep_mode_sessions")
       .update({ completed, ended_at: new Date().toISOString() })
-      .eq("id", sessionIdRef.current);
+      .eq("id", sessionIdRef.current)
+      .then(() => {}, () => {});
   }, []);
 
-  const startSession = useCallback(async (currentPrefs: SleepModePrefs) => {
-    const { data } = await supabase
+  const startSession = useCallback((currentPrefs: SleepModePrefs) => {
+    // Fire-and-forget so the playback critical path is NOT gated on a
+    // Supabase round-trip (which on iOS standalone PWAs frequently
+    // stalls under network handoff between Wi-Fi and cellular). The
+    // session row is purely analytical — playback must start whether
+    // or not the insert ever succeeds.
+    void supabase
       .from("sleep_mode_sessions")
       .insert({
         user_id: user?.id ?? null,
@@ -142,8 +199,10 @@ export function useSleepModePlayer() {
         completed: false,
       })
       .select("id")
-      .maybeSingle();
-    if (data?.id) sessionIdRef.current = data.id;
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.id) sessionIdRef.current = data.id;
+      }, () => {});
   }, [user, deviceId]);
 
   const startFadeOut = useCallback((currentQuranVol: number) => {
@@ -170,6 +229,14 @@ export function useSleepModePlayer() {
     setHasError(false);
     setIsOfflineUncached(false);
     setIsLoading(true);
+
+    // iOS 17+: declare this as a "playback" audio session so the
+    // hardware silent switch does not mute Sleep Mode and the OS
+    // keeps the audio alive in the background. Must run inside the
+    // user-gesture tick that originated this play(), which it does
+    // because togglePlay() calls play() directly from the click
+    // handler.
+    configurePlaybackAudioSession();
 
     const currentPrefs = overridePrefs ?? (await new Promise<SleepModePrefs>((res) => {
       setPrefsState((p) => { res(p); return p; });
@@ -225,6 +292,25 @@ export function useSleepModePlayer() {
       audio.onloadedmetadata = () => setAudioDuration(audio.duration);
       audio.onplaying = () => setIsLoading(false);
       audio.onwaiting = () => setIsLoading(true);
+      audio.onerror = () => {
+        if (isStale()) return;
+        setHasError(true);
+        setIsLoading(false);
+        stopAll();
+      };
+      audio.onended = () => {
+        // Surah ended naturally before the timer ran out — stop and
+        // let the user pick another. (Looping is intentionally not
+        // forced; the timer-driven fade-out is the user-visible
+        // "the session is done" signal.)
+        if (isStale()) return;
+        if (timerIntervalRef.current) {
+          clearInterval(timerIntervalRef.current);
+          timerIntervalRef.current = null;
+        }
+        saveSession(true);
+        stopAll();
+      };
 
       const totalSecs = currentPrefs.timerMinutes * 60;
       setRemainingSeconds(totalSecs);
@@ -260,6 +346,33 @@ export function useSleepModePlayer() {
       isPlayingRef.current = true;
       setIsPlaying(true);
 
+      // OS lock-screen / Control Center: title, artist, artwork +
+      // play/pause/stop handlers. Without these, iOS silently
+      // suspends the audio after a few seconds of screen-off in a
+      // standalone PWA — this is the single biggest cause of "Sleep
+      // Mode plays for 5 seconds then stops" reports.
+      //
+      // We dispatch through `playbackControlsRef` (assigned just below
+      // the pause/resume declarations) so this runs cleanly without
+      // forward-reference issues.
+      updateMediaSession(currentPrefs, true);
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        try {
+          navigator.mediaSession.setActionHandler("play", () => {
+            void playbackControlsRef.current?.resume();
+          });
+          navigator.mediaSession.setActionHandler("pause", () => {
+            playbackControlsRef.current?.pause();
+          });
+          navigator.mediaSession.setActionHandler("stop", () => {
+            saveSession(false);
+            stopAll();
+          });
+        } catch {
+          /* ignore */
+        }
+      }
+
       // Background-cache the surah after a successful network play, so the
       // next Sleep session for this reciter+surah will work offline. No-op
       // if it's already cached (we'd be on the blob: URL branch above).
@@ -267,8 +380,8 @@ export function useSleepModePlayer() {
         cachePlayingAudio(currentPrefs.reciterId, currentPrefs.surahNumber, source.url).catch(() => {});
       }
 
-      await startSession(currentPrefs);
-      if (isStale()) return;
+      // Fire-and-forget — see startSession() for why we don't await.
+      startSession(currentPrefs);
 
       let elapsed = 0;
       timerIntervalRef.current = setInterval(() => {
@@ -292,7 +405,7 @@ export function useSleepModePlayer() {
       setIsLoading(false);
       stopAll();
     }
-  }, [stopAll, startSession, startFadeOut, saveSession, detachAudioListeners]);
+  }, [stopAll, startSession, startFadeOut, saveSession, detachAudioListeners, updateMediaSession]);
 
   const pause = useCallback(() => {
     quranAudioRef.current?.pause();
@@ -300,6 +413,9 @@ export function useSleepModePlayer() {
     if (fadeIntervalRef.current) { clearInterval(fadeIntervalRef.current); fadeIntervalRef.current = null; }
     isPlayingRef.current = false;
     setIsPlaying(false);
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "paused"; } catch { /* ignore */ }
+    }
   }, []);
 
   const resume = useCallback(async () => {
@@ -308,6 +424,9 @@ export function useSleepModePlayer() {
     await mobileAudioManager.play(SLEEP_CHANNEL).catch(() => {});
     isPlayingRef.current = true;
     setIsPlaying(true);
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "playing"; } catch { /* ignore */ }
+    }
 
     setPrefsState((currentPrefs) => {
       let elapsed = currentPrefs.timerMinutes * 60 - remainingSeconds;
@@ -330,6 +449,13 @@ export function useSleepModePlayer() {
       return currentPrefs;
     });
   }, [remainingSeconds, startFadeOut, saveSession, stopAll]);
+
+  // Keep the ref pointing at the latest stable identities so any
+  // already-registered Media Session action handler always dispatches
+  // to the current pause/resume implementation.
+  useEffect(() => {
+    playbackControlsRef.current = { pause, resume };
+  }, [pause, resume]);
 
   const togglePlay = useCallback(async () => {
     if (isLoading) return;

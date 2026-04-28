@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import SurahOfflineButton from "@/components/quran/SurahOfflineButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -14,7 +14,7 @@ import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
 
 type HomeView = "home" | "surahs" | "surahs_listening";
-type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes";
+type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes" | "tools";
 
 const DEFAULT_DASHBOARD_ORDER: DashboardSectionId[] = [
   "next-prayer",
@@ -22,6 +22,7 @@ const DEFAULT_DASHBOARD_ORDER: DashboardSectionId[] = [
   "quick-resume",
   "activity",
   "modes",
+  "tools",
 ];
 
 
@@ -65,6 +66,7 @@ export default function QuranPage() {
     "quick-resume": language === "ar" ? "بطاقات المتابعة" : "Quick resume cards",
     activity: language === "ar" ? "ملخص النشاط" : "Activity summary",
     modes: language === "ar" ? "أوضاع القرآن" : "Quran modes",
+    tools: language === "ar" ? "أدوات إضافية" : "Quick tools",
   };
 
   // Dynamic greeting logic
@@ -147,9 +149,30 @@ export default function QuranPage() {
     onClick: () => void;
   }>;
 
-  const normalizedDashboardOrder = DEFAULT_DASHBOARD_ORDER.filter((id) => dashboardOrder.includes(id)).concat(
-    dashboardOrder.filter((id, index, arr) => DEFAULT_DASHBOARD_ORDER.includes(id) && arr.indexOf(id) === index && !DEFAULT_DASHBOARD_ORDER.filter((baseId) => dashboardOrder.includes(baseId)).includes(id))
-  );
+  // Migrate persisted dashboard order: keep the user's chosen positions
+  // for sections they've reordered, drop any unknown IDs (defensive
+  // against stale localStorage from old builds), and append every
+  // DEFAULT section that's missing — this is what surfaces newly
+  // shipped sections (e.g. "tools") to existing installs without
+  // forcing the user to manually reset their order.
+  const normalizedDashboardOrder = (() => {
+    const known = new Set<DashboardSectionId>(DEFAULT_DASHBOARD_ORDER);
+    const seen = new Set<DashboardSectionId>();
+    const result: DashboardSectionId[] = [];
+    for (const id of dashboardOrder) {
+      if (known.has(id) && !seen.has(id)) {
+        result.push(id);
+        seen.add(id);
+      }
+    }
+    for (const id of DEFAULT_DASHBOARD_ORDER) {
+      if (!seen.has(id)) {
+        result.push(id);
+        seen.add(id);
+      }
+    }
+    return result;
+  })();
 
   const moveDashboardSection = (sectionId: DashboardSectionId, direction: "up" | "down") => {
     setDashboardOrder((prev) => {
@@ -335,6 +358,47 @@ export default function QuranPage() {
       </div>
     ) : null,
     activity: activitySummary,
+    tools: (
+      <div className="mt-4 mb-2" dir={isRTL ? "rtl" : "ltr"} data-testid="quran-home-tools-grid">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-3">
+          {language === "ar" ? "أدوات سريعة" : "Quick tools"}
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/sleep")}
+            data-testid="quran-home-tool-sleep"
+            className="flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border border-white/10 text-start hover:border-primary/30 transition-colors"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 dark:text-indigo-300">
+              <BedDouble className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "وضع النوم" : "Sleep Mode"}</p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {language === "ar" ? "تلاوة هادئة قبل النوم" : "Calm recitation timer"}
+              </p>
+            </div>
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/offline")}
+            data-testid="quran-home-tool-offline"
+            className="flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border border-white/10 text-start hover:border-primary/30 transition-colors"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300">
+              <Download className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "المكتبة بدون إنترنت" : "Offline Library"}</p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {language === "ar" ? "نزّل وتحقّق من المحتوى" : "See & manage downloads"}
+              </p>
+            </div>
+          </motion.button>
+        </div>
+      </div>
+    ),
     modes: (
       <div className="grid grid-cols-2 gap-4 mt-2" dir={isRTL ? "rtl" : "ltr"} data-testid="quran-home-mode-grid">
         {modeCards.map((card, i) => (

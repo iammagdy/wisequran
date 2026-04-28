@@ -33,7 +33,18 @@ class MobileAudioManager {
 
     const audio = new Audio();
     audio.preload = "auto";
-    audio.crossOrigin = "anonymous";
+    // IMPORTANT: do NOT set crossOrigin by default. Many of the audio
+    // CDNs we play from (mp3quran.net mirrors, download.quranicaudio.com,
+    // some reciter buckets) do not return permissive CORS headers; with
+    // `crossOrigin="anonymous"` set, the browser refuses to decode their
+    // bytes and Sleep Mode silently fails on iOS standalone PWAs.
+    // We only need CORS-tainted access when reading the decoded waveform
+    // (we never do that here), so the default — same-origin / no CORS —
+    // is the correct one. The play() path below promotes to "anonymous"
+    // for sources that explicitly need it (the precached app-served
+    // adhan files), and explicitly clears it back to null for blob:
+    // URLs from IDB.
+    audio.crossOrigin = null;
     audio.playsInline = true;
     audio.setAttribute("playsinline", "");
     audio.setAttribute("webkit-playsinline", "");
@@ -104,17 +115,20 @@ class MobileAudioManager {
       const normalizedSrc = normalizeSource(src);
       const currentSrc = audio.currentSrc || audio.src;
       if (currentSrc !== normalizedSrc) {
-        // iOS Safari quirk: leaving `crossOrigin="anonymous"` set when
-        // loading a `blob:` URL has been observed to occasionally flag
-        // the resource as cross-origin (it's not — blobs are
-        // same-origin), which can break decode on standalone PWAs.
-        // Clear the attribute for blob: sources and restore it for
-        // http(s): network sources where CORS *is* relevant.
+        // Default to NO crossOrigin (covers blob: from IDB AND remote
+        // CDNs that don't send CORS headers — the common case). We
+        // never read the decoded waveform, so a "tainted" stream is
+        // fine. Only flip on `anonymous` when the source is on our own
+        // origin (where CORS is irrelevant but having it set is safe
+        // and lets the SW share its cached response across tabs).
         const isBlob = normalizedSrc.startsWith("blob:");
-        if (isBlob) {
-          if (audio.crossOrigin !== null) audio.crossOrigin = null;
-        } else {
-          if (audio.crossOrigin !== "anonymous") audio.crossOrigin = "anonymous";
+        const isSameOrigin =
+          typeof window !== "undefined" &&
+          (normalizedSrc.startsWith(window.location.origin) || normalizedSrc.startsWith("/"));
+        const desiredCrossOrigin: "anonymous" | null =
+          isBlob || !isSameOrigin ? null : "anonymous";
+        if (audio.crossOrigin !== desiredCrossOrigin) {
+          audio.crossOrigin = desiredCrossOrigin;
         }
         audio.src = normalizedSrc;
         if (forceLoad) audio.load();
@@ -181,3 +195,34 @@ class MobileAudioManager {
 }
 
 export const mobileAudioManager = new MobileAudioManager();
+
+// ─── iOS playback session bootstrap ──────────────────────────────────────────
+//
+// iOS 17+ exposes `navigator.audioSession.type`, which controls how the
+// system mixes the page's audio with other apps and — critically —
+// whether the silent-mode hardware switch silences playback.
+//
+// "playback" is the right category for "user explicitly chose to listen
+// to recitation" (Quran reader, Sleep Mode, adhan): plays through the
+// silent switch, ducks other audio, keeps playing when the app goes to
+// the background.
+//
+// The setter throws on older iOS (and is undefined on every other
+// browser), so we guard the access. Idempotent — safe to call multiple
+// times.
+let audioSessionConfigured = false;
+
+export function configurePlaybackAudioSession(): void {
+  if (audioSessionConfigured) return;
+  if (typeof navigator === "undefined") return;
+  const session = (navigator as Navigator & {
+    audioSession?: { type?: string };
+  }).audioSession;
+  if (!session) return;
+  try {
+    session.type = "playback";
+    audioSessionConfigured = true;
+  } catch {
+    /* ignore — setter not supported on this iOS version */
+  }
+}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -14,35 +14,54 @@ import ChangelogModal from "@/components/ChangelogModal";
 import UpdateNotification from "@/components/UpdateNotification";
 import SplashScreen from "@/components/SplashScreen";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { lazyWithRetry } from "@/lib/lazy-with-retry";
 import { usePostUpdateChangelog } from "@/hooks/usePostUpdateChangelog";
 
-const prefetchTopTabs = () => {
-  import("@/pages/QuranPage");
-  import("@/pages/PrayerPage");
-  import("@/pages/AzkarPage");
-  import("@/pages/TasbeehPage");
-  // Settings is accessed frequently but is a large chunk — prefetch while idle
-  import("@/pages/SettingsPage");
+// Eagerly resolve EVERY lazy route while the app is idle, so the
+// service worker has a chance to populate its runtime cache and the
+// PWA is fully usable on the very next offline launch (iOS standalone
+// PWAs in particular are commonly opened offline as their first run
+// after install). Each import is awaited best-effort; failures are
+// silent because the app still works without the prefetch.
+const prefetchAllRoutes = () => {
+  void import("@/pages/QuranPage").catch(() => {});
+  void import("@/pages/PrayerPage").catch(() => {});
+  void import("@/pages/AzkarPage").catch(() => {});
+  void import("@/pages/TasbeehPage").catch(() => {});
+  void import("@/pages/SettingsPage").catch(() => {});
+  void import("@/pages/SurahReaderPage").catch(() => {});
+  void import("@/pages/SafariDiagnosticsPage").catch(() => {});
+  void import("@/pages/StatsPage").catch(() => {});
+  void import("@/pages/HifzPage").catch(() => {});
+  void import("@/pages/RecitationTestPage").catch(() => {});
+  void import("@/pages/QiblaPage").catch(() => {});
+  void import("@/pages/OfflineCenterPage").catch(() => {});
+  void import("@/pages/FridayModePage").catch(() => {});
+  void import("@/pages/RamadanPage").catch(() => {});
+  void import("@/pages/NotFound").catch(() => {});
+  void import("@/pages/SleepModePage").catch(() => {});
+  void import("@/pages/DevKitPage").catch(() => {});
+  void import("@/pages/BookmarksPage").catch(() => {});
 };
 
-const QuranPage = lazy(() => import("@/pages/QuranPage"));
-const SurahReaderPage = lazy(() => import("@/pages/SurahReaderPage"));
-const AzkarPage = lazy(() => import("@/pages/AzkarPage"));
-const PrayerPage = lazy(() => import("@/pages/PrayerPage"));
-const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
-const SafariDiagnosticsPage = lazy(() => import("@/pages/SafariDiagnosticsPage"));
-const TasbeehPage = lazy(() => import("@/pages/TasbeehPage"));
-const StatsPage = lazy(() => import("@/pages/StatsPage"));
-const HifzPage = lazy(() => import("@/pages/HifzPage"));
-const RecitationTestPage = lazy(() => import("@/pages/RecitationTestPage"));
-const QiblaPage = lazy(() => import("@/pages/QiblaPage"));
-const OfflineCenterPage = lazy(() => import("@/pages/OfflineCenterPage"));
-const FridayModePage = lazy(() => import("@/pages/FridayModePage"));
-const RamadanPage = lazy(() => import("@/pages/RamadanPage"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const SleepModePage = lazy(() => import("@/pages/SleepModePage"));
-const DevKitPage = lazy(() => import("@/pages/DevKitPage"));
-const BookmarksPage = lazy(() => import("@/pages/BookmarksPage"));
+const QuranPage = lazyWithRetry(() => import("@/pages/QuranPage"), "QuranPage");
+const SurahReaderPage = lazyWithRetry(() => import("@/pages/SurahReaderPage"), "SurahReaderPage");
+const AzkarPage = lazyWithRetry(() => import("@/pages/AzkarPage"), "AzkarPage");
+const PrayerPage = lazyWithRetry(() => import("@/pages/PrayerPage"), "PrayerPage");
+const SettingsPage = lazyWithRetry(() => import("@/pages/SettingsPage"), "SettingsPage");
+const SafariDiagnosticsPage = lazyWithRetry(() => import("@/pages/SafariDiagnosticsPage"), "SafariDiagnosticsPage");
+const TasbeehPage = lazyWithRetry(() => import("@/pages/TasbeehPage"), "TasbeehPage");
+const StatsPage = lazyWithRetry(() => import("@/pages/StatsPage"), "StatsPage");
+const HifzPage = lazyWithRetry(() => import("@/pages/HifzPage"), "HifzPage");
+const RecitationTestPage = lazyWithRetry(() => import("@/pages/RecitationTestPage"), "RecitationTestPage");
+const QiblaPage = lazyWithRetry(() => import("@/pages/QiblaPage"), "QiblaPage");
+const OfflineCenterPage = lazyWithRetry(() => import("@/pages/OfflineCenterPage"), "OfflineCenterPage");
+const FridayModePage = lazyWithRetry(() => import("@/pages/FridayModePage"), "FridayModePage");
+const RamadanPage = lazyWithRetry(() => import("@/pages/RamadanPage"), "RamadanPage");
+const NotFound = lazyWithRetry(() => import("@/pages/NotFound"), "NotFound");
+const SleepModePage = lazyWithRetry(() => import("@/pages/SleepModePage"), "SleepModePage");
+const DevKitPage = lazyWithRetry(() => import("@/pages/DevKitPage"), "DevKitPage");
+const BookmarksPage = lazyWithRetry(() => import("@/pages/BookmarksPage"), "BookmarksPage");
 import { usePrayerNotifications } from "@/hooks/usePrayerNotifications";
 import { useAzkarNotifications } from "@/hooks/useAzkarNotifications";
 import { useAdhan } from "@/hooks/useAdhan";
@@ -136,9 +155,9 @@ const App = () => {
     let idleId: number | undefined;
     const timerId = setTimeout(() => {
       if (typeof window.requestIdleCallback === "function") {
-        idleId = window.requestIdleCallback(prefetchTopTabs);
+        idleId = window.requestIdleCallback(prefetchAllRoutes);
       } else {
-        prefetchTopTabs();
+        prefetchAllRoutes();
       }
     }, PREFETCH_DELAY_MS);
     return () => {
