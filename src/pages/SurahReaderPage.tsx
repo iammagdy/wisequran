@@ -197,6 +197,10 @@ export default function SurahReaderPage() {
     then(([ayahData, surahList]) => {
       if (controller.signal.aborted) return;
       setAyahs(ayahData);
+      // Tag the freshly-set ayahs with the surah they belong to so the
+      // scroll-to-target-ayah effect can distinguish them from stale data
+      // left over from the previous surah.
+      ayahsForSurahRef.current = surahNumber;
       const info = surahList.find((s) => s.number === surahNumber) || null;
       setSurahInfo(info);
       setLastRead({
@@ -241,9 +245,19 @@ export default function SurahReaderPage() {
 
   const targetAyahHandledRef = useRef<string | null>(null);
   const ayahElementsRef = useRef<Map<number, HTMLDivElement>>(new Map());
+  // Tracks which surah the current `ayahs` array belongs to. Set inside
+  // the fetching effect after `setAyahs(...)`. The scroll effect uses
+  // this to avoid acting on stale ayahs from the previous surah during
+  // the brief window after the URL changes but before `setLoading(true)`
+  // has propagated through React's render cycle.
+  const ayahsForSurahRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (loading || ayahs.length === 0 || !targetAyah) return;
+    // Bail if `ayahs` is stale (still from the previous surah). The
+    // fetching effect will re-trigger this once the new surah's data
+    // lands and `ayahsForSurahRef` is updated.
+    if (ayahsForSurahRef.current !== surahNumber) return;
     // Key the guard by surah+ayah so navigating between surahs with the
     // same ?ayah=N still triggers the scroll.
     const handledKey = `${surahNumber}:${targetAyah}`;
