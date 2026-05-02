@@ -158,6 +158,46 @@ describe("audioDebugLog (gated by URL / localStorage / dev)", () => {
 
     setAudioDebugEnabled(false);
   });
+
+  // The "no silent black hole" invariant: every `play:enter` must be
+  // followed by a terminal event (`firstPlayResolved`, `retryResolved`,
+  // `firstPlayRejected`+`retryRejected`, or a thrown rejection). If a
+  // future refactor drops the catch-and-log on either retry path, this
+  // test catches the regression — that's exactly the failure shape the
+  // user is seeing on iPhone today.
+  it("preserves the failure-mode invariant: rejection is observable, not swallowed", async () => {
+    const { setAudioDebugEnabled, getAudioDebugEntries, clearAudioDebugEntries } =
+      await import("../audio-debug-log");
+    setAudioDebugEnabled(true);
+    clearAudioDebugEntries();
+
+    const failingAudio = createAudioInstance();
+    failingAudio.play = vi.fn(() => Promise.reject(new Error("NotAllowedError")));
+    vi.stubGlobal("Audio", vi.fn(() => failingAudio));
+    const { mobileAudioManager } = await import("../mobile-audio");
+
+    let caught: unknown = null;
+    try {
+      await mobileAudioManager.play("preview", "https://example.test/song.mp3", {
+        retryDelayMs: 0,
+      });
+    } catch (err) {
+      caught = err;
+    }
+
+    // Invariant 1: failure is propagated to the caller (no silent swallow).
+    expect(caught).toBeInstanceOf(Error);
+
+    // Invariant 2: the audio-debug log has BOTH the entry event and a
+    // terminal rejection event. If either side is missing, the trace
+    // becomes ambiguous and the diagnostic loses its value.
+    const steps = getAudioDebugEntries().map((e) => e.step);
+    expect(steps).toContain("mobileAudioManager.play:enter");
+    expect(steps).toContain("mobileAudioManager.play:firstPlayRejected");
+    expect(steps).toContain("mobileAudioManager.play:retryRejected");
+
+    setAudioDebugEnabled(false);
+  });
 });
 
 describe("configurePlaybackAudioSession", () => {

@@ -129,6 +129,17 @@ opt-in in-app diagnostic logger:
   every `audio.src = …` so the log captures `networkState`,
   `readyState`, `MediaError.code` etc. — the missing piece for
   disambiguating SW-interception vs CDN failure vs decoder error.
+- **React subscribe-bridge instrumentation** in `useSleepModePlayer`:
+  when the gate is on, the hook wraps `sleepModePlayer.subscribe` so
+  every React subscribe / listener fire / unsubscribe is logged with
+  the post-fire snapshot. This disambiguates "singleton silently
+  failed to notify React" from "React got the notification but didn't
+  re-render".
+- **Invariant regression test.** `mobileAudioManager.play()` rejection
+  is asserted to reach the caller AND emit `play:firstPlayRejected`
+  + `play:retryRejected` in the trace — guards against a future
+  refactor accidentally restoring the silent-swallow shape that the
+  iPhone repro is suspected to be hitting today.
 
 To use on iPhone: open the app at `/sleep?debug=audio` (or run
 `localStorage.audioDebug = "1"` in Safari Web Inspector once), tap
