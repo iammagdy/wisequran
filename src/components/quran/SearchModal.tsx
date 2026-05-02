@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ChevronUp, ChevronDown } from "lucide-react";
 import { HighlightText } from "@/components/HighlightText";
@@ -40,16 +40,18 @@ export function SearchModal({ open, onClose, ayahs, surahNumber, translationAyah
   const [history, setHistory] = useState<string[]>(getHistory);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const translationMap = useMemo(() => new Map(translationAyahs.map((a) => [a.numberInSurah, a])), [translationAyahs]);
+
   const matches: Match[] = query.trim().length < 1
     ? []
     : ayahs.filter((ayah) => {
         const text = stripBismillah(ayah.text, surahNumber, ayah.numberInSurah);
         if (text.includes(query)) return true;
-        const trans = translationAyahs.find((t) => t.numberInSurah === ayah.numberInSurah);
+        const trans = translationMap.get(ayah.numberInSurah);
         return trans?.text?.toLowerCase().includes(query.toLowerCase()) ?? false;
       }).map((ayah) => ({
         ayah,
-        translation: translationAyahs.find((t) => t.numberInSurah === ayah.numberInSurah),
+        translation: translationMap.get(ayah.numberInSurah),
       }));
 
   useEffect(() => {
