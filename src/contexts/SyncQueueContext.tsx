@@ -10,6 +10,7 @@ export function SyncQueueProvider({ children }: { children: ReactNode }) {
   return <SyncQueueContext.Provider value={value}>{children}</SyncQueueContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context hook co-exports with provider
 export function useSyncQueueContext(): SyncQueueContextType {
   const ctx = useContext(SyncQueueContext);
   if (!ctx) throw new Error("useSyncQueueContext must be used within SyncQueueProvider");

@@ -71,7 +71,6 @@ export function useDailyWird() {
     // Convert global ayah index to surah/ayah
     let count = 0;
     let startSurah = 1, startAyah = 1, endSurah = 1, endAyah = 1;
-    let foundStart = false;
 
     for (const s of SURAH_META) {
       for (let a = 1; a <= s.numberOfAyahs; a++) {

@@ -70,6 +70,8 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 
 The audio playback chain (Sleep Mode + Quran reader + Supabase fire-and-forget writes) is instrumented through `src/lib/audio-debug-log.ts`. The buffer is **always-on** in production, capped at 200 entries; the console-mirror + floating debug pill are gated behind dev / `?debug=audio` / `localStorage.audioDebug=1`. Settings → About has a “Diagnostics” disclosure that reads the buffer regardless of the gate, so a user reporting "tap Play, nothing happened" can copy the trace without flipping any flag first. Implementation: `src/components/settings/DiagnosticsSection.tsx`.
 
+The same module also re-exports a generalized `wiseLogger` surface (`wiseLogger.log` / `.isEnabled` / `.setEnabled` / `.getEntries` / `.clear` / `.subscribe`) for new callsites — the original `audioDebugLog` / `isAudioDebugEnabled` / `setAudioDebugEnabled` exports remain in place for back-compat. Both surfaces share the same ring buffer, gating, and listener set; pick whichever name reads better at the callsite.
+
 ## Testing
 
 - `pnpm test` — unit & integration tests via Vitest (jsdom).

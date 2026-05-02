@@ -248,3 +248,24 @@ export function subscribeAudioDebug(listener: () => void): () => void {
     listeners.delete(listener);
   };
 }
+
+/**
+ * `wiseLogger` — generalized logger surface.
+ *
+ * Same ring buffer, same gating, same listeners as the audio-debug API
+ * above. The aliases exist because this logger has been promoted from
+ * a Sleep-Mode-only audio diagnostic into the project-wide structured
+ * logger used by every fragile path (Supabase fire-and-forget writes,
+ * SW lifecycle, scheduler, etc.). New callsites should prefer
+ * `wiseLogger.log(step, payload, error)`; the existing `audioDebugLog`
+ * / `isAudioDebugEnabled` / `setAudioDebugEnabled` exports remain for
+ * back-compat and continue to work unchanged.
+ */
+export const wiseLogger = {
+  log: audioDebugLog,
+  isEnabled: isAudioDebugEnabled,
+  setEnabled: setAudioDebugEnabled,
+  getEntries: getAudioDebugEntries,
+  clear: clearAudioDebugEntries,
+  subscribe: subscribeAudioDebug,
+} as const;

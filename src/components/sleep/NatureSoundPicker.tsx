@@ -10,6 +10,7 @@ interface NatureSoundOption {
   url: string;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- data table colocated with picker UI; splitting would just create busywork
 export const NATURE_SOUNDS: NatureSoundOption[] = [
   { id: "none", labelAr: "بدون صوت", labelEn: "None", icon: "🔇", url: "" },
   { id: "rain", labelAr: "مطر", labelEn: "Rain", icon: "🌧️", url: "https://assets.mixkit.co/active_storage/sfx/212/212-preview.mp3" },

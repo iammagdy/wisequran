@@ -145,6 +145,19 @@ export async function fetchAudioFromUrl(
     return blob.type ? blob : new Blob([blob], { type: blobType });
   } catch (e) {
     clearTimeout(timeoutId);
+    audioDebugLog(
+      "quran-audio.fetchAudioBlob:error",
+      () => {
+        // Strip query string before slicing so signed-URL tokens
+        // (?token=…, ?Signature=…, ?X-Amz-Signature=…) never leak
+        // into the diagnostics ring buffer even if a CDN starts
+        // emitting them in the future.
+        if (typeof url !== "string") return { urlPreview: "<non-string>" };
+        const stripped = url.split("?")[0] ?? url;
+        return { urlPreview: stripped.slice(0, 60) };
+      },
+      e,
+    );
     throw e;
   } finally {
     externalSignal?.removeEventListener("abort", onExternalAbort);
@@ -327,6 +340,11 @@ async function streamAudioToIdb(
         await saveAudio(reciterId, surahNumber, blob);
         bytesSinceFlush = 0;
       } catch (e: unknown) {
+        audioDebugLog(
+          "quran-audio.downloadSurahAudio:flushFailed",
+          { reciterId, surahNumber, bytesSinceFlush },
+          e,
+        );
         if (e instanceof Error && e.name === "QuotaExceededError") {
           throw new Error("تم تجاوز حد التخزين المسموح. يرجى حذف بعض الملفات");
         }

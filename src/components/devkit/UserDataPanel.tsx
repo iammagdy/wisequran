@@ -100,6 +100,7 @@ function GroupSection({ group }: { group: Group }) {
     load();
     const id = setInterval(load, 5000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `load` is a stable closure over `group`; running once at mount is intentional
   }, []);
 
   const resetGroup = () => {

@@ -6,7 +6,7 @@ import { ArchiveRestore, ArchiveX, ArrowLeft, ArrowRight, Bell, BellOff, BookMar
 import { exportBackup, downloadBackupFile, parseBackupFile, restoreBackup, estimateBackupSize, exportBackupBinary, downloadBackupBlob, restoreBackupFromFile, type BackupSizeEstimate } from "@/lib/backup";
 import { clearAllLocalBookmarks } from "@/lib/bookmarks";
 import { ADHAN_VOICES, REMINDER_SOUNDS, ADHAN_STORAGE_KEY, DEFAULT_ADHAN_SETTINGS, TAKBIR_URL, buildAzanSourceList, type AdhanSettings } from "@/lib/adhan-settings";
-import { detectBrowser, getInstallInstructions } from "@/lib/browser-detect";
+import { detectBrowser } from "@/lib/browser-detect";
 import { CALCULATION_METHODS, type CalculationMethod } from "@/lib/prayer-times";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -410,6 +410,7 @@ export default function SettingsPage() {
     audio.preload = "auto";
 
     audio.load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is only used for the toast message; restarting preview audio when the language identity flips would interrupt playback mid-track
   }, [previewingReciter, stopPreview]);
 
   // Cleanup on unmount
@@ -444,12 +445,15 @@ export default function SettingsPage() {
   }, []);
 
   // PWA Install
-  // BeforeInstallPromptEvent isn't in lib.dom.d.ts; mirror only the shape we touch.
-  type BeforeInstallPromptEvent = Event & {
-    prompt: () => Promise<void>;
-    userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-  };
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  // The actual one-tap install path (deferredPrompt capture →
+  // deferredPrompt.prompt()) is owned by InstallBanner.tsx and the
+  // global beforeinstallprompt capture in src/main.tsx — Settings
+  // intentionally does NOT re-implement it here. Settings only tracks
+  // `isInstalled` so it can swap its instructional copy between
+  // "install the PWA" and "you've already installed". Do not
+  // reintroduce a second deferredPrompt state machine on this page;
+  // it would race with InstallBanner's capture and cause the install
+  // button there to silently no-op.
   const [isInstalled, setIsInstalled] = useState(false);
   // navigator.standalone is iOS Safari-only.
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
@@ -459,9 +463,11 @@ export default function SettingsPage() {
       setIsInstalled(true);
       return;
     }
+    // Suppress the browser's default install banner here; the actual
+    // install button + deferredPrompt.prompt() invocation lives in
+    // InstallBanner.tsx (see comment block above).
     const handler = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     const installedHandler = () => setIsInstalled(true);
     window.addEventListener('beforeinstallprompt', handler);
@@ -471,16 +477,6 @@ export default function SettingsPage() {
       window.removeEventListener('appinstalled', installedHandler);
     };
   }, [isStandalone]);
-
-  const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
-    }
-    setDeferredPrompt(null);
-  };
 
   useEffect(() => {
     loadDBModule().then(({ getAllDownloadedSurahs, getAllDownloadedAudio }) => {

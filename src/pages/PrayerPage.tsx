@@ -160,7 +160,7 @@ export default function PrayerPage() {
       out[p.id] = getPrayerStreak(prayerLog, p.id as PrayerId);
     }
     return out;
-    // todayLogKey changes daily and prayerLog mutates on toggle — both trigger recompute
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- todayLogKey is read inside getPrayerStreak; we want the recompute when the local-day key flips at midnight even though the linter can't see it
   }, [prayerLog, todayLogKey]);
 
   const progress = todayData.completed.length / PRAYERS.length * 100;

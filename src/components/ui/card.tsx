@@ -68,5 +68,5 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardFooter.displayName = "CardFooter";
 
-// eslint-disable-next-line react-refresh/only-export-components -- shadcn convention: variant helper co-exports with component
+// eslint-disable-next-line react-refresh/only-export-components -- shadcn convention: variant helpers co-export with component
 export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, cardVariants };

@@ -34,7 +34,7 @@ function getStrengthColor(level: number): string {
 export default function HifzPage() {
   const { t, language, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const { getStatus, cycleStatus, setStatus, stats } = useHifz();
+  const { getStatus, setStatus, stats } = useHifz();
   const review = useHifzReview();
   const streak = useHifzStreak();
   const goal = useHifzGoal();

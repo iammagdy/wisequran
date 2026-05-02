@@ -33,6 +33,7 @@ export default function SurahRangeSelector({ surahNumber, ayahFrom, ayahTo, onSu
 
   useEffect(() => {
     onRangeChange(1, Math.min(10, totalAyahs));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only re-runs when surah changes; including `totalAyahs`/`onRangeChange` would clobber user-edited ranges
   }, [surahNumber]);
 
   const handleFrom = (val: number) => {

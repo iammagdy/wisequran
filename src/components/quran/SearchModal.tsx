@@ -64,11 +64,23 @@ export function SearchModal({ open, onClose, ayahs, surahNumber, translationAyah
     setMatchIndex(0);
   }, [query]);
 
+  // Derive the selected ayah number explicitly so the scroll effect
+  // re-fires whenever the *target ayah* changes — including the
+  // diagnostic edge case where the user replaces the query, the new
+  // result count happens to equal the old one, and matchIndex stays
+  // at 0 (so the previous `[matchIndex, matches.length]` deps would
+  // never re-trigger and the reader would stay parked on the previous
+  // surah's first match). `onScrollToAyah` comes from a useCallback
+  // in SurahReaderPage so adding it as a dep is identity-stable and
+  // doesn't loop the effect.
+  const selectedAyahNumber =
+    matches.length > 0 ? matches[matchIndex]?.ayah.numberInSurah ?? null : null;
+
   useEffect(() => {
-    if (matches.length > 0) {
-      onScrollToAyah(matches[matchIndex].ayah.numberInSurah);
+    if (selectedAyahNumber != null) {
+      onScrollToAyah(selectedAyahNumber);
     }
-  }, [matchIndex, matches.length]);
+  }, [selectedAyahNumber, onScrollToAyah]);
 
   const handleSearch = useCallback((term: string) => {
     if (term.trim()) {

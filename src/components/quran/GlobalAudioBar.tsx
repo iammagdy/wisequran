@@ -40,7 +40,7 @@ export default function GlobalAudioBar() {
   const { currentTime, duration } = useAudioPlayerTime();
 
   const [showNowPlaying, setShowNowPlaying] = useState(false);
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
 
   if (!surahNumber) return null;
 

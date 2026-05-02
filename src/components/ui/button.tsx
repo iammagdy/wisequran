@@ -46,5 +46,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-// eslint-disable-next-line react-refresh/only-export-components -- shadcn convention: variant helper co-exports with component
+// eslint-disable-next-line react-refresh/only-export-components -- shadcn convention: variant helpers co-export with component
 export { Button, buttonVariants };

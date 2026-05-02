@@ -51,6 +51,7 @@ export default function IftarCountdown() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `t` is read inside notification text only; restarting the interval each time it identity-shifts would cause UI jank
   }, [location, language]);
 
   useEffect(() => {

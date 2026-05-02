@@ -297,6 +297,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     setStatus("listening");
 
     createAndStartRecognition();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- destroyRecognition is a stable ref-only closure; including it would needlessly re-create the start callback
   }, [isSupported, createAndStartRecognition]);
 
   const stop = useCallback(() => {
@@ -320,6 +321,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     setTranscript("");
     setInterimTranscript("");
     setError(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- destroyRecognition is a stable ref-only closure; intentionally omitted to keep reset stable
   }, []);
 
   useEffect(() => {
