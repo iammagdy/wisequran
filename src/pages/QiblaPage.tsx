@@ -135,13 +135,22 @@ export default function QiblaPage() {
     const supportsAbsolute = "ondeviceorientationabsolute" in window;
 
     if (supportsAbsolute) {
-      window.addEventListener("deviceorientationabsolute" as keyof WindowEventMap, handleOrientation as EventListener, true);
+      // `deviceorientationabsolute` is an Android-only, non-standard event,
+      // so it isn't in lib.dom's WindowEventMap. We feed it the same
+      // DeviceOrientationEvent handler the standard event uses. Using
+      // @ts-expect-error here (rather than `as keyof WindowEventMap` /
+      // `as EventListener`) keeps us out of `check:no-undef`'s way —
+      // those names are TS-only types ESLint can't resolve as runtime
+      // globals.
+      // @ts-expect-error - non-standard Android event, not in WindowEventMap
+      window.addEventListener("deviceorientationabsolute", handleOrientation, true);
     }
     window.addEventListener("deviceorientation", handleOrientation, true);
 
     return () => {
       if (supportsAbsolute) {
-        window.removeEventListener("deviceorientationabsolute" as keyof WindowEventMap, handleOrientation as EventListener, true);
+        // @ts-expect-error - non-standard Android event, not in WindowEventMap
+        window.removeEventListener("deviceorientationabsolute", handleOrientation, true);
       }
       window.removeEventListener("deviceorientation", handleOrientation, true);
       if (rafId.current) cancelAnimationFrame(rafId.current);
