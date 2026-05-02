@@ -19,20 +19,20 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-05-02",
     ar: {
       improvements: [
-        "تحسينات أداء كبيرة: تقسيم حزم المكتبات حسب الاستخدام، وتأجيل تحميل الرسوم البيانية إلى صفحة الإحصائيات فقط، مما يجعل فتح التطبيق أسرع.",
-        "لوحة تشخيص جديدة داخل الإعدادات لمساعدتنا في تتبّع أي مشكلة في تشغيل الصوت بدقة.",
+        "التطبيق صار يفتح أسرع — يحمّل أوّلاً ما تحتاجه فقط، ويترك صفحة الإحصائيات تتحمّل عند فتحها.",
+        "أضفنا قسماً جديداً في الإعدادات اسمه «فحص الصوت» — إذا واجهت أي مشكلة في التشغيل، يساعدنا على معرفة السبب بسرعة.",
       ],
       fixes: [
-        "ثبات أعلى لمشغّل الصوت في وضع النوم والقارئ، مع تسجيل تفصيلي لأي خطأ يحدث في الخلفية.",
+        "مشغّل الصوت أصبح أكثر ثباتاً في وضع النوم وفي قراءة السور، حتى لو كان التطبيق يعمل في الخلفية.",
       ],
     },
     en: {
       improvements: [
-        "Major performance improvements: vendor code is now split by domain and chart code is loaded only on the Stats page, making app startup noticeably faster.",
-        "New Diagnostics panel in Settings to help us trace any audio playback issue precisely.",
+        "The app starts up faster — it now loads only what you need first, and waits to load the Stats screen until you open it.",
+        "Added a new “Sound Check” section in Settings — if you ever run into a playback issue, it helps us figure out what happened quickly.",
       ],
       fixes: [
-        "Higher stability for the audio player in Sleep Mode and the Quran reader, with detailed logging of any background errors.",
+        "The audio player is steadier in Sleep Mode and while reading, even when the app is running in the background.",
       ],
     },
   },
@@ -91,12 +91,12 @@ export const changelog: ChangelogEntry[] = [
     date: "2026-04-27",
     ar: {
       fixes: [
-        "تم إصلاح عدم عمل وضع النوم على أجهزة آيفون (خصوصاً عند تثبيت التطبيق على الشاشة الرئيسية): أصبح يستخدم نفس مسار الصوت الآمن المستعمل في وضع الاستماع، مع تهيئة عناصر iOS الضرورية (playsinline، وفك القفل الصامت داخل لمسة المستخدم).",
+        "تم إصلاح وضع النوم على آيفون (خصوصاً عند تثبيت التطبيق على الشاشة الرئيسية): يعمل الآن بنفس موثوقية وضع الاستماع — تضغط زر التشغيل ويبدأ الصوت فوراً.",
       ],
     },
     en: {
       fixes: [
-        "Fixed Sleep Mode not working on iPhone (especially when the app is installed to the Home Screen): it now goes through the same iOS-safe audio pipeline as Listening, with the required playsinline attributes and a silent unlock that completes inside the user gesture.",
+        "Fixed Sleep Mode on iPhone (especially when the app is installed to your Home Screen): it now plays as reliably as Listening — tap play and the audio starts right away.",
       ],
     },
   },
