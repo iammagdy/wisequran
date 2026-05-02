@@ -46,6 +46,17 @@ export interface AudioDebugEntry {
 const entries: AudioDebugEntry[] = [];
 const listeners = new Set<() => void>();
 let nextId = 1;
+// Cached snapshot for `useSyncExternalStore`. React requires the
+// snapshot getter to return a STABLE reference between calls when
+// nothing has changed; otherwise it concludes the store keeps changing
+// and re-renders forever (Maximum update depth exceeded). We rebuild
+// this snapshot only when the buffer actually mutates.
+let cachedSnapshot: readonly AudioDebugEntry[] = [];
+
+function invalidateSnapshot(): void {
+  cachedSnapshot = entries.slice();
+  for (const listener of listeners) listener();
+}
 
 function readUrlFlag(): boolean {
   if (typeof window === "undefined") return false;
@@ -102,7 +113,7 @@ export function __resetAudioDebugForTests(): void {
   enabled = readDevFlag() || readUrlFlag() || readLocalStorageFlag();
   entries.length = 0;
   nextId = 1;
-  for (const listener of listeners) listener();
+  invalidateSnapshot();
 }
 
 /**
@@ -124,6 +135,8 @@ export function setAudioDebugEnabled(value: boolean): void {
   }
   for (const listener of listeners) listener();
 }
+// Note: setAudioDebugEnabled doesn't change the entries buffer, so
+// it notifies listeners directly without rebuilding the snapshot.
 
 function nowMs(): number {
   if (typeof performance !== "undefined" && typeof performance.now === "function") {
@@ -194,6 +207,7 @@ export function audioDebugLog(
   if (entries.length > MAX_ENTRIES) {
     entries.splice(0, entries.length - MAX_ENTRIES);
   }
+  cachedSnapshot = entries.slice();
   // Mirror to console.info only when the noisy gate is on. Production
   // users without `?debug=audio` / `audioDebug=1` see a clean console
   // even though their buffer is being populated for later inspection.
@@ -214,17 +228,18 @@ export function audioDebugLog(
 }
 
 /**
- * Snapshot of the current ring buffer. Returns a defensive copy so
- * React consumers using useSyncExternalStore can rely on referential
- * identity (we hand them a new array only when entries actually change).
+ * Snapshot of the current ring buffer. Returns the SAME array reference
+ * across calls until the buffer mutates — a hard requirement for
+ * `useSyncExternalStore` (a new reference each call would loop React
+ * forever with "Maximum update depth exceeded").
  */
 export function getAudioDebugEntries(): readonly AudioDebugEntry[] {
-  return entries.slice();
+  return cachedSnapshot;
 }
 
 export function clearAudioDebugEntries(): void {
   entries.length = 0;
-  for (const listener of listeners) listener();
+  invalidateSnapshot();
 }
 
 export function subscribeAudioDebug(listener: () => void): () => void {
