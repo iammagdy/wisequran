@@ -5,7 +5,10 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist"] },
+  // `.local/**` holds Replit-provided skill templates and task plan
+  // files that are not part of the application source. Linting them
+  // produced ~30 spurious errors that drowned out real `src/` issues.
+  { ignores: ["dist", ".local/**"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
