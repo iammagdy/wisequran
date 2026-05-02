@@ -386,7 +386,10 @@ function createSleepModePlayer() {
       .from("sleep_mode_sessions")
       .update(update)
       .eq("id", id)
-      .then(() => {}, () => {});
+      .then(
+        () => {},
+        (err) => audioDebugLog("sleepModePlayer.saveSession:error", { id, completed }, err),
+      );
   }
 
   // Persist the latest user-adjusted total session length to supabase.
@@ -409,7 +412,10 @@ function createSleepModePlayer() {
         .from("sleep_mode_sessions")
         .update({ adjusted_timer_seconds: value })
         .eq("id", id)
-        .then(() => {}, () => {});
+        .then(
+          () => {},
+          (err) => audioDebugLog("sleepModePlayer.scheduleAdjustedTimerWrite:error", { id, value }, err),
+        );
     }, ADJUSTED_TIMER_WRITE_DEBOUNCE_MS);
   }
 
@@ -432,9 +438,19 @@ function createSleepModePlayer() {
       })
       .select("id")
       .maybeSingle()
-      .then(({ data }) => {
-        if (data?.id) sessionId = data.id;
-      }, () => {});
+      .then(
+        ({ data }) => {
+          if (data?.id) sessionId = data.id;
+        },
+        (err) => audioDebugLog(
+          "sleepModePlayer.startSession:error",
+          () => ({
+            reciterId: currentPrefs.reciterId,
+            surahNumber: currentPrefs.surahNumber,
+          }),
+          err,
+        ),
+      );
   }
 
   function startFadeOut(currentQuranVol: number, fadeDurationSecs: number = FADE_OUT_START_SECS) {

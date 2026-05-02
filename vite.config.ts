@@ -75,6 +75,19 @@ export default defineConfig(({ mode }) => ({
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
 
+          // React core + router. Pulled out of the generic vendor chunk
+          // so the home critical path doesn't ship the rest of the
+          // ecosystem just to render the splash + tab bar. Stable
+          // chunk name → SW precache manifest stays deterministic.
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("/react-router") ||
+            id.includes("/scheduler/")
+          ) {
+            return "react-vendor";
+          }
+
           if (id.includes("framer-motion")) {
             return "motion-vendor";
           }

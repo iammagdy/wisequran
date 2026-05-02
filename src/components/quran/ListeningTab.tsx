@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Loader2, Pause, Play, RefreshCcw, Repeat1, RotateCcw, SkipBack, SkipForward, Timer, Volume2, X } from "lucide-react";
-import { useAudioPlayerState, useAudioPlayerAyah } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerAyah } from "@/hooks/useAudioPlayer";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { RECITERS, DEFAULT_RECITER, getReciterById } from "@/lib/reciters";
 import { cn, toArabicNumerals, stripBismillah } from "@/lib/utils";

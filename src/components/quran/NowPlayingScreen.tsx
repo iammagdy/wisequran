@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Copy, Loader2, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/hooks/useAudioPlayer";
 import { getReciterById } from "@/lib/reciters";
 import { toArabicNumerals, cn } from "@/lib/utils";
 import { fetchSurahAyahs, type Ayah } from "@/lib/quran-api";

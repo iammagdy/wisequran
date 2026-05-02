@@ -39,11 +39,24 @@ A modern, feature-rich, offline-first Progressive Web App (PWA) for reading the 
 
 ## Performance Notes
 
-- **SettingsPage chunk** is prefetched during idle time after app startup (alongside main tabs)
+- **Code splitting:**
+  - Route-level: every top-level page is `React.lazy`-loaded (Home/Quran/Sleep/Stats/Settings/etc.) so the home critical path ships only the splash, AppShell, and tab bar.
+  - Vendor chunks (vite.config.ts `manualChunks`): `react-vendor` (react/react-dom/react-router/scheduler), `motion-vendor` (framer-motion), `ui-vendor` (Radix + cmdk + vaul), `data-vendor` (Supabase + TanStack + idb), `charts-vendor` (recharts + d3-*), `vendor` (everything else). Stable names so the SW precache manifest stays deterministic across builds.
+  - **Recharts is lazy-loaded inside StatsPage** (`src/components/stats/WeeklyChartLazy.tsx`) — `charts-vendor` only arrives when the user opens `/stats`.
+- **SettingsPage chunk** is prefetched during idle time after app startup (alongside main tabs).
 - **Audio byte tracking**: `db.ts` maintains `wise-audio-bytes-total` in localStorage (updated by `saveAudio`/`deleteAudio`/`clearAllAudio`). `getStorageStats()` reads this O(1) instead of loading all audio ArrayBuffers from IDB.
 - **`getAllDownloadedAudio()`** uses key-only IDB scan (`getAllKeys`) to avoid loading ArrayBuffers.
-- **AudioPlayerContext** is split into 3 separate contexts to minimize re-renders; `timeupdate` is suppressed when the page is hidden.
+- **AudioPlayerContext** is split into 3 separate contexts (state / time / ayah) to minimize re-renders; `timeupdate` is suppressed when the page is hidden. The 3 context objects + the four `useAudioPlayer*` hooks live in `src/hooks/useAudioPlayer.ts` so the `.tsx` provider file exports only React components — without that split Vite Fast Refresh would full-reload on every save during development and tank in-progress audio state.
 - **Developer control panel** at `/devkit` (PIN: "devkit") — session-locked, standalone route outside AppShell.
+
+## Diagnostics
+
+The audio playback chain (Sleep Mode + Quran reader + Supabase fire-and-forget writes) is instrumented through `src/lib/audio-debug-log.ts`. The buffer is **always-on** in production, capped at 200 entries; the console-mirror + floating debug pill are gated behind dev / `?debug=audio` / `localStorage.audioDebug=1`. Settings → About has a “Diagnostics” disclosure that reads the buffer regardless of the gate, so a user reporting "tap Play, nothing happened" can copy the trace without flipping any flag first. Implementation: `src/components/settings/DiagnosticsSection.tsx`.
+
+## Testing
+
+- `pnpm test` — unit & integration tests via Vitest (jsdom).
+- `pnpm test:e2e` — Playwright E2E suite (`./e2e/`). Specs cover the Sleep Mode play path and the Quran reader Surah-1 render. Runs against the local Vite dev server (port 5000) on Desktop Chromium + iPhone 14 Mobile Safari profiles.
 
 ## Development
 

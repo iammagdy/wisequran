@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAudioPlayerState, useAudioPlayerTime, useAudioPlayerAyah } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime, useAudioPlayerAyah } from "@/hooks/useAudioPlayer";
 import { getAllAudioEntries, audioByteLength } from "@/lib/db";
 import { DK, formatBytes } from "./devkit-utils";
 

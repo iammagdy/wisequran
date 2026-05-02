@@ -1,6 +1,7 @@
 import { saveAudio, getAudio, deleteAudio, checkStorageQuota, getAllAudioEntries, audioByteLength, audioToBlob } from "./db";
 import { getReciterAudioUrls, getReciterAudioUrl } from "./reciters";
 import { logger } from "./logger";
+import { audioDebugLog } from "./audio-debug-log";
 
 const MIN_AUDIO_SIZE = 10_240; // 10KB minimum
 const MAGIC_PROBE_SIZE = 50;
@@ -371,8 +372,15 @@ export async function cachePlayingAudio(
 
     await saveAudio(reciterId, surahNumber, blob);
     logger.debug(`[auto-cache] cached surah ${surahNumber} (${formatBytes(blob.size)})`);
-  } catch {
-    // Silent fail — caching is best-effort
+  } catch (err) {
+    // Silent fail — caching is best-effort, but record the failure so
+    // a class of "audio plays but never caches for offline" reports
+    // shows up in the diagnostics buffer.
+    audioDebugLog(
+      "quran-audio.cachePlayingAudio:error",
+      { reciterId, surahNumber },
+      err,
+    );
   }
 }
 

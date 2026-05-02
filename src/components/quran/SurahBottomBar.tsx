@@ -5,7 +5,7 @@ import { downloadSurahForOffline, isSurahFullyOffline, formatBytes } from "@/lib
 import { DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { toast } from "sonner";
 import { cn, toArabicNumerals, formatTime } from "@/lib/utils";
-import { useAudioPlayerState, useAudioPlayerTime } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState, useAudioPlayerTime } from "@/hooks/useAudioPlayer";
 import { getReciterById } from "@/lib/reciters";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocalStorage } from "@/hooks/useLocalStorage";

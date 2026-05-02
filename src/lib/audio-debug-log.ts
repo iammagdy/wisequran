@@ -1,25 +1,35 @@
 /**
- * Audio diagnostic ring buffer.
+ * Wise general diagnostic ring buffer (formerly audio-only).
  *
- * Captures structured events from the iOS-fragile audio playback chain
- * (Sleep Mode + the shared mobile audio manager) so we can debug
- * "tapped Play, nothing visibly happened" reports from real devices
- * without needing a Mac + cable + Safari Web Inspector.
+ * Promoted from the Sleep-Mode-only diagnose-and-fix logger to a
+ * production-always-on, capped ring buffer that captures structured
+ * events from every fragile path: the audio playback chain, the
+ * Supabase fire-and-forget writes, the SW lifecycle, and any catch
+ * block that would otherwise silently swallow an error. Keyed off
+ * the same `audio-debug` flag for backwards compatibility.
  *
- * Gating:
- *   - On in dev (`import.meta.env.DEV`).
- *   - On in any build when the URL contains `?debug=audio`.
- *   - On in any build when `localStorage.audioDebug === "1"` (so the user
- *     can persist the flag across PWA launches without losing the URL
- *     when relaunching from the home-screen icon).
+ * Two-axis gating:
  *
- * When OFF: every push() is a tight no-op (one boolean check, no
- * allocations, no DOM, no console).
+ *   1. CAPTURE — always on in every environment. Every `audioDebugLog`
+ *      call appends to the 200-entry ring buffer. This is what makes
+ *      future user-reported issues come with real evidence: the user
+ *      flips the in-app Diagnostics panel open and copies the buffer.
+ *      Cost is bounded — 200 entries with thunk-resolved payloads, all
+ *      callsites are on cold paths (state transitions, errors, lifecycle
+ *      events; never per-tick).
  *
- * When ON: events are appended to a 200-entry ring buffer AND mirrored
- * to `console.info` with an `[audio-debug]` prefix so Safari Web
- * Inspector also picks them up. Listeners (e.g. the in-app debug panel)
- * are notified on every push.
+ *   2. CONSOLE MIRROR + DEBUG PANEL VISIBILITY — gated by:
+ *        - dev (`import.meta.env.DEV`),
+ *        - URL `?debug=audio`,
+ *        - `localStorage.audioDebug === "1"`.
+ *      When this gate is OFF (production user without the flag), no
+ *      `console.info` noise lands in the JS console, and the floating
+ *      pill on Sleep Mode stays hidden. When it's ON, events also
+ *      mirror to `console.info` with an `[audio-debug]` prefix so
+ *      Safari Web Inspector picks them up, and the pill is visible.
+ *
+ * The Settings → Diagnostics page reads the buffer regardless of the
+ * gate — that's the point of always-on capture.
  */
 
 const MAX_ENTRIES = 200;
@@ -64,12 +74,20 @@ function readDevFlag(): boolean {
   }
 }
 
-// Captured once at module init so the per-push hot path stays a single
+// `enabled` controls the CONSOLE MIRROR + the floating debug pill —
+// NOT the capture itself. Capture is always on (see module docstring).
+// Captured once at module init so the per-push gate stays a single
 // boolean read. The user can flip the flag at runtime via the panel's
 // "Enable persistent debug" button — that calls setEnabled() below to
 // update this in place.
 let enabled = readDevFlag() || readUrlFlag() || readLocalStorageFlag();
 
+/**
+ * True when the noisy bits — `console.info` mirroring and the floating
+ * Sleep-Mode debug pill — are active. Use this for "should the panel
+ * pill be visible?" decisions; it does NOT mean "should we capture?",
+ * since capture is always on.
+ */
 export function isAudioDebugEnabled(): boolean {
   return enabled;
 }
@@ -142,20 +160,26 @@ type PayloadInput =
   | undefined;
 
 /**
- * Append a structured event. NO-OP when debug is off — safe to scatter
- * everywhere in the audio path without measurable production cost.
+ * Append a structured event to the ring buffer. Always-on — every call
+ * captures, regardless of the URL/localStorage/DEV gate. The `enabled`
+ * gate only controls whether the entry also mirrors to `console.info`.
  *
  * Pass a thunk for `payload` when the payload requires non-trivial
  * computation (string slicing, property reads on hot objects, etc.) —
- * that way the hot path stays a single boolean check when the gate is
- * off. Eager objects are fine for cheap literals like `{ channel }`.
+ * the thunk runs once per call regardless of the gate. Eager objects
+ * are fine for cheap literals like `{ channel }`.
+ *
+ * Cost guidance: this is intended for cold paths (state transitions,
+ * errors, lifecycle events). Do NOT call from per-tick code (e.g.
+ * timeupdate handlers) — even at always-on, 4Hz × 200 entries would
+ * still flood the buffer in seconds and crowd out the diagnostically
+ * useful entries.
  */
 export function audioDebugLog(
   step: string,
   payload?: PayloadInput,
   error?: unknown,
 ): void {
-  if (!enabled) return;
   const resolvedPayload =
     typeof payload === "function" ? safeResolvePayload(payload) : payload;
   const entry: AudioDebugEntry = {
@@ -170,18 +194,21 @@ export function audioDebugLog(
   if (entries.length > MAX_ENTRIES) {
     entries.splice(0, entries.length - MAX_ENTRIES);
   }
-  // Mirror to console.info so Safari Web Inspector / Chrome DevTools
-  // also see it without needing the in-app panel.
-  try {
-    if (entry.error) {
-      console.info(`[audio-debug] ${step}`, resolvedPayload ?? {}, entry.error);
-    } else if (resolvedPayload) {
-      console.info(`[audio-debug] ${step}`, resolvedPayload);
-    } else {
-      console.info(`[audio-debug] ${step}`);
+  // Mirror to console.info only when the noisy gate is on. Production
+  // users without `?debug=audio` / `audioDebug=1` see a clean console
+  // even though their buffer is being populated for later inspection.
+  if (enabled) {
+    try {
+      if (entry.error) {
+        console.info(`[audio-debug] ${step}`, resolvedPayload ?? {}, entry.error);
+      } else if (resolvedPayload) {
+        console.info(`[audio-debug] ${step}`, resolvedPayload);
+      } else {
+        console.info(`[audio-debug] ${step}`);
+      }
+    } catch {
+      /* console may be unavailable in some sandboxes */
     }
-  } catch {
-    /* console may be unavailable in some sandboxes */
   }
   for (const listener of listeners) listener();
 }

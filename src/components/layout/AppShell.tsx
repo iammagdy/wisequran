@@ -6,7 +6,7 @@ import OfflineBanner from "./OfflineBanner";
 import PageTransition from "./PageTransition";
 import GlobalAudioBar from "@/components/quran/GlobalAudioBar";
 import { AchievementUnlockNotification } from "@/components/AchievementsSheet";
-import { useAudioPlayerState } from "@/contexts/AudioPlayerContext";
+import { useAudioPlayerState } from "@/hooks/useAudioPlayer";
 import { useTheme } from "@/hooks/useTheme";
 
 interface Props {

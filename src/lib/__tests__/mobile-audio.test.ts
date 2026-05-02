@@ -81,41 +81,45 @@ describe("mobileAudioManager.prime() / stop() interplay", () => {
   });
 });
 
-describe("audioDebugLog (gated by URL / localStorage / dev)", () => {
+describe("audioDebugLog (always-on capture; console gated)", () => {
   beforeEach(() => {
     vi.resetModules();
   });
 
-  it("is a no-op when the gate is off and a working sink when enabled", async () => {
+  it("captures into the ring buffer regardless of the console gate, and silences console.info when disabled", async () => {
     const { audioDebugLog, getAudioDebugEntries, clearAudioDebugEntries, setAudioDebugEnabled } =
       await import("../audio-debug-log");
 
-    // Vitest runs with `import.meta.env.DEV === true`, so the module
-    // initializes with the gate ON. Explicitly disable it for the
-    // first half of this assertion.
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => {});
+
+    // Gate OFF: capture still happens (always-on), but console stays clean.
     setAudioDebugEnabled(false);
     clearAudioDebugEntries();
-    audioDebugLog("test.disabled.event", { foo: 1 });
-    expect(getAudioDebugEntries()).toHaveLength(0);
+    audioDebugLog("test.captureWhenDisabled", { foo: 1 });
+    expect(getAudioDebugEntries()).toHaveLength(1);
+    expect(getAudioDebugEntries()[0].step).toBe("test.captureWhenDisabled");
+    expect(getAudioDebugEntries()[0].payload).toEqual({ foo: 1 });
+    expect(infoSpy).not.toHaveBeenCalled();
 
+    // Gate ON: capture continues AND console.info mirror fires.
     setAudioDebugEnabled(true);
-    audioDebugLog("test.enabled.event", { foo: 2 });
-    audioDebugLog("test.enabled.error", undefined, new Error("boom"));
+    clearAudioDebugEntries();
+    audioDebugLog("test.captureWhenEnabled", { foo: 2 });
+    audioDebugLog("test.errorEntry", undefined, new Error("boom"));
 
     const entries = getAudioDebugEntries();
     expect(entries).toHaveLength(2);
-    expect(entries[0].step).toBe("test.enabled.event");
-    expect(entries[0].payload).toEqual({ foo: 2 });
-    expect(entries[1].step).toBe("test.enabled.error");
     expect(entries[1].error?.message).toBe("boom");
+    expect(infoSpy).toHaveBeenCalled();
 
     clearAudioDebugEntries();
     expect(getAudioDebugEntries()).toHaveLength(0);
 
+    infoSpy.mockRestore();
     setAudioDebugEnabled(false);
   });
 
-  it("supports lazy thunk payloads (zero allocation on the OFF path)", async () => {
+  it("invokes thunk payloads on every call (always-on capture pays the resolution cost)", async () => {
     const { audioDebugLog, getAudioDebugEntries, clearAudioDebugEntries, setAudioDebugEnabled } =
       await import("../audio-debug-log");
     setAudioDebugEnabled(false);
@@ -127,14 +131,15 @@ describe("audioDebugLog (gated by URL / localStorage / dev)", () => {
       return { computed: "expensive" };
     };
 
-    audioDebugLog("test.thunk.off", buildPayload);
-    expect(thunkInvocations).toBe(0); // OFF path must not invoke the thunk
-    expect(getAudioDebugEntries()).toHaveLength(0);
+    // Gate OFF — thunk still resolves because the entry is still being captured.
+    audioDebugLog("test.thunk.captured", buildPayload);
+    expect(thunkInvocations).toBe(1);
+    expect(getAudioDebugEntries()).toHaveLength(1);
+    expect(getAudioDebugEntries()[0].payload).toEqual({ computed: "expensive" });
 
     setAudioDebugEnabled(true);
-    audioDebugLog("test.thunk.on", buildPayload);
-    expect(thunkInvocations).toBe(1);
-    expect(getAudioDebugEntries()[0].payload).toEqual({ computed: "expensive" });
+    audioDebugLog("test.thunk.mirrored", buildPayload);
+    expect(thunkInvocations).toBe(2);
 
     setAudioDebugEnabled(false);
   });

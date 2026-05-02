@@ -9,7 +9,9 @@ import { useHifzReview } from "@/hooks/useHifzReview";
 import { useHifzGoal } from "@/hooks/useHifzStreak";
 import { useRecitationHistory } from "@/hooks/useRecitationHistory";
 import { StatCard } from "@/components/stats/StatCard";
-import { WeeklyChart } from "@/components/stats/WeeklyChart";
+// Lazy boundary keeps Recharts out of the home/Quran/Sleep critical
+// path — see src/components/stats/WeeklyChartLazy.tsx for the wrapper.
+import { WeeklyChart } from "@/components/stats/WeeklyChartLazy";
 import { StreakCalendar } from "@/components/stats/StreakCalendar";
 import { AchievementsSheet } from "@/components/AchievementsSheet";
 import { Progress } from "@/components/ui/progress";

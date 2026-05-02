@@ -24,6 +24,7 @@ import { TAFSIR_EDITIONS, DEFAULT_TAFSIR } from "@/data/tafsir-editions";
 import { TRANSLATION_EDITIONS, DEFAULT_TRANSLATION } from "@/data/translation-editions";
 import { toast } from "sonner";
 import { getMergedChangelog, getEffectiveVersion } from "@/lib/changelog-overrides";
+import { DiagnosticsSection } from "@/components/settings/DiagnosticsSection";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useServiceWorkerUpdate } from "@/hooks/useServiceWorkerUpdate";
 import { mobileAudioManager } from "@/lib/mobile-audio";
@@ -2547,6 +2548,12 @@ export default function SettingsPage() {
               <Sparkles className="h-3.5 w-3.5" />
               {t("whats_new_button")}
             </Button>
+
+            {/* Diagnostics — always reachable. Reads the always-on
+             * audio-debug-log ring buffer regardless of whether the
+             * console-mirror gate is enabled. See
+             * src/components/settings/DiagnosticsSection.tsx. */}
+            <DiagnosticsSection />
 
             {/* Check for Updates */}
             <Button

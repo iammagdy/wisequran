@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { resolveAudioSource, cachePlayingAudio } from "@/lib/quran-audio";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { DEFAULT_RECITER, getReciterById, getReciterAyahAudioUrl, getReciterAudioUrls } from "@/lib/reciters";
@@ -7,77 +7,21 @@ import { SURAH_META } from "@/data/surah-meta";
 import { toast } from "sonner";
 import type { Ayah } from "@/lib/quran-api";
 import { mobileAudioManager } from "@/lib/mobile-audio";
+import { audioDebugLog } from "@/lib/audio-debug-log";
+import {
+  AudioPlayerStateContext,
+  AudioPlayerTimeContext,
+  AudioPlayerAyahContext,
+  type AudioPlayerStableState,
+  type AudioPlayerVolatileState,
+  type AudioPlayerStateContextType,
+} from "@/hooks/useAudioPlayer";
 
-interface AudioPlayerStableState {
-  surahNumber: number | null;
-  surahName: string;
-  playing: boolean;
-  loading: boolean;
-  offline: boolean;
-  playingReciterId: string;
-  currentAyahNumber: number | null;
-  isAyahMode: boolean;
-  currentAyahIndex: number;
-  totalAyahs: number;
-}
-
-interface AudioPlayerVolatileState {
-  currentTime: number;
-  duration: number;
-  currentAyahInSurah: number | null;
-}
-
-interface AudioPlayerActions {
-  reciterId: string;
-  play: (surahNumber: number, surahName: string, ayahs?: Ayah[], reciterIdOverride?: string) => void;
-  togglePlayPause: () => Promise<void>;
-  seek: (time: number) => void;
-  seekToAyah: (ayahNumber: number) => void;
-  stop: () => void;
-  setPlaybackRate: (rate: number) => void;
-  setOnAyahEnded: (cb: (() => void) | null) => void;
-  playNextSurah: () => Promise<void>;
-  playPreviousSurah: () => Promise<void>;
-  hasPrev: boolean;
-  hasNext: boolean;
-}
-
-type AudioPlayerStateContextType = AudioPlayerStableState & AudioPlayerActions;
-type AudioPlayerTimeContextType = AudioPlayerVolatileState;
-type AudioPlayerContextType = AudioPlayerStateContextType & AudioPlayerTimeContextType;
-
-const AudioPlayerStateContext = createContext<AudioPlayerStateContextType | null>(null);
-const AudioPlayerTimeContext = createContext<AudioPlayerTimeContextType>({
-  currentTime: 0,
-  duration: 0,
-  currentAyahInSurah: null,
-});
-// Separate ayah-only context so components that only need currentAyahInSurah
-// (e.g. SurahReaderPage, ListeningTab) are NOT re-rendered on every 250ms
-// timeupdate tick. This context updates only when the ayah number changes.
-const AudioPlayerAyahContext = createContext<{ currentAyahInSurah: number | null }>({
-  currentAyahInSurah: null,
-});
-
-export function useAudioPlayerState() {
-  const ctx = useContext(AudioPlayerStateContext);
-  if (!ctx) throw new Error("useAudioPlayerState must be used within AudioPlayerProvider");
-  return ctx;
-}
-
-export function useAudioPlayerTime() {
-  return useContext(AudioPlayerTimeContext);
-}
-
-export function useAudioPlayerAyah() {
-  return useContext(AudioPlayerAyahContext);
-}
-
-export function useAudioPlayer(): AudioPlayerContextType {
-  const state = useAudioPlayerState();
-  const time = useAudioPlayerTime();
-  return { ...state, ...time };
-}
+// NOTE: hooks (useAudioPlayer / useAudioPlayerState / etc.) are NOT
+// re-exported from this file. Co-locating non-component exports with a
+// React component breaks Vite Fast Refresh ("export is incompatible")
+// — every save would full-reload and tank in-progress audio state.
+// Consumers must import hooks from `@/hooks/useAudioPlayer` directly.
 
 const INITIAL_STABLE: AudioPlayerStableState = {
   surahNumber: null,
@@ -329,7 +273,17 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
           primaryUrl = qfData.audioUrl;
           setStableState((s) => ({ ...s, totalAyahs: qfData.timestamps.length }));
         }
-      } catch {/* fallback */}
+      } catch (err) {
+        // Falls back to the cached/CDN URL list below — but record the
+        // failure so a recurring "Quran reader skips Quran Foundation"
+        // shows up in the diagnostics ring buffer instead of being
+        // invisible.
+        audioDebugLog(
+          "AudioPlayerContext.fetchChapterRecitation:error",
+          { reciterId: currentReciterId, surahNumber },
+          err,
+        );
+      }
 
       if (!primaryUrl) {
         const cached = await resolveAudioSource(currentReciterId, surahNumber);
@@ -374,9 +328,20 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
           currentUrlRef.current = orderedUrls[0];
           await mobileAudioManager.play("quran", orderedUrls[0], { forceLoad: true });
           if (!blobUrlRef.current) {
-            cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch(() => {});
+            cachePlayingAudio(currentReciterId, surahNumber, orderedUrls[0]).catch((err) => {
+              audioDebugLog(
+                "AudioPlayerContext.cachePlayingAudio:error",
+                { reciterId: currentReciterId, surahNumber },
+                err,
+              );
+            });
           }
         } catch (error) {
+          audioDebugLog(
+            "AudioPlayerContext.play:rejected",
+            { reciterId: currentReciterId, surahNumber, urlPreview: orderedUrls[0]?.slice(0, 60) },
+            error,
+          );
           setStableState((s) => ({ ...s, loading: false }));
         }
       }
