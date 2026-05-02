@@ -1,7 +1,7 @@
 {
   "name": "wisequran",
   "private": true,
-  "version": "3.9.1",
+  "version": "3.9.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -89,6 +89,9 @@
     "workbox-strategies": "^7.4.0",
     "workbox-window": "^7.4.0",
     "zod": "^3.25.76"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@swc/core", "esbuild", "sharp"]
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

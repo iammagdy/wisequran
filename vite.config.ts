@@ -32,18 +32,25 @@ export default defineConfig(({ mode }) => ({
       injectRegister: "auto",
       includeAssets: ["favicon.ico", "favicon.png", "favicon-16x16.png", "icons/*.png", "placeholder.svg"],
       injectManifest: {
-        // Same precache budget as before: app shell + entry/vendor
-        // chunks. Audio stays out of precache (it's persisted into
-        // IDB by `src/lib/quran-audio.ts`); install-guide screenshots
-        // and lazy route chunks are fetched on demand.
+        // App shell + entry/vendor chunks AND lazy route chunks must
+        // all live in the precache so the PWA boots offline on the
+        // very first launch after install (iOS Safari frequently
+        // serves the standalone PWA as its first run, with no warm
+        // network round-trip available). Anything that's not in the
+        // precache is still served from the runtime SWR/CacheFirst
+        // routes registered in `src/sw.ts` — but those caches don't
+        // exist on a cold install, so the precache is the only thing
+        // that guarantees first-run offline.
+        //
+        // Audio stays out of precache (persisted into IDB by
+        // `src/lib/quran-audio.ts`) and install-guide screenshots
+        // stay out (cosmetic, large).
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         globIgnores: [
           "**/audio/**",
           "**/screenshots/**",
-          "**/assets/*Page-*.js",
-          "**/assets/charts-vendor-*.js",
         ],
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: false,
       devOptions: {

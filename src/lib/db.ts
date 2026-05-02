@@ -76,6 +76,23 @@ const DB_NAME = "wise-quran-db";
 const DB_VERSION = 8;
 
 /**
+ * Broadcast that the on-device offline library changed (surah text or
+ * audio added/removed). Surfaces to listeners like the home Offline
+ * Library tile so its counters update without a reload. Fire-and-
+ * forget; never throws and never blocks the IDB write that triggered it.
+ */
+export const OFFLINE_CHANGED_EVENT = "wise-offline-changed";
+
+function notifyOfflineChange(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new CustomEvent(OFFLINE_CHANGED_EVENT));
+  } catch {
+    /* ignore — best-effort notification */
+  }
+}
+
+/**
  * Returns the byte size of an audio payload, regardless of whether it is
  * still a legacy ArrayBuffer (v7) or a Blob (v8+). All call sites that
  * need a size should go through this helper rather than touching
@@ -219,6 +236,7 @@ export async function getDB() {
 export async function saveSurah(number: number, ayahs: any[]) {
   const db = await getDB();
   await db.put("surahs", { number, ayahs });
+  notifyOfflineChange();
 }
 
 export async function getSurah(number: number) {
@@ -235,6 +253,7 @@ export async function getAllDownloadedSurahs(): Promise<number[]> {
 export async function deleteSurah(number: number) {
   const db = await getDB();
   await db.delete("surahs", number);
+  notifyOfflineChange();
 }
 
 // ── Audio byte tracking ────────────────────────────────────────────────────
@@ -268,6 +287,7 @@ export async function saveAudio(reciterId: string, surahNumber: number, data: Bl
   if (existing) subtractTrackedAudioBytes(audioByteLength(existing.data));
   await db.put("audio", { id: key, reciterId, surahNumber, data: blob });
   addTrackedAudioBytes(blob.size);
+  notifyOfflineChange();
 }
 
 export async function getAudio(reciterId: string, surahNumber: number) {
@@ -281,6 +301,7 @@ export async function deleteAudio(reciterId: string, surahNumber: number) {
   const existing = await db.get("audio", key);
   if (existing) subtractTrackedAudioBytes(audioByteLength(existing.data));
   await db.delete("audio", key);
+  notifyOfflineChange();
 }
 
 /**
@@ -335,6 +356,7 @@ export async function clearAllAudio() {
   const db = await getDB();
   await db.clear("audio");
   resetTrackedAudioBytes();
+  notifyOfflineChange();
 }
 
 /**
@@ -359,11 +381,13 @@ export async function clearAllData() {
   await db.clear("azkar");
   await db.clear("audio");
   resetTrackedAudioBytes();
+  notifyOfflineChange();
 }
 
 export async function clearSurahsStore() {
   const db = await getDB();
   await db.clear("surahs");
+  notifyOfflineChange();
 }
 
 export async function clearAzkarStore() {

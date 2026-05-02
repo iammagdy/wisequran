@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { BookOpen, Headphones, GraduationCap, Mic, ArrowRight, ChevronRight, Bookmark, Star, Search, X, BedDouble, Clock, GripVertical, Eye, EyeOff, ChevronUp, ChevronDown, Download, Play, Pause } from "lucide-react";
 import { fetchSurahList, type SurahMeta } from "@/lib/quran-api";
 import SurahOfflineButton from "@/components/quran/SurahOfflineButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -12,9 +12,21 @@ import { cn, toArabicNumerals } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { calculatePrayerTimes } from "@/lib/prayer-times";
 import { useLocation } from "@/hooks/useLocation";
+import { getAllAudioEntries, getAllDownloadedSurahs, OFFLINE_CHANGED_EVENT } from "@/lib/db";
+import {
+  hasConfiguredSleepMode,
+  loadSleepModePrefs,
+  SLEEP_PREFS_CHANGED_EVENT,
+  type SleepModePrefs,
+} from "@/hooks/useSleepModePlayer";
+import { useSleepSession } from "@/lib/sleep-session-store";
+import { sleepModePlayer } from "@/lib/sleep-mode-player";
+import { getReciterById } from "@/lib/reciters";
+
+const TOTAL_SURAHS = 114;
 
 type HomeView = "home" | "surahs" | "surahs_listening";
-type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes";
+type DashboardSectionId = "next-prayer" | "featured-resume" | "quick-resume" | "activity" | "modes" | "tools";
 
 const DEFAULT_DASHBOARD_ORDER: DashboardSectionId[] = [
   "next-prayer",
@@ -22,6 +34,7 @@ const DEFAULT_DASHBOARD_ORDER: DashboardSectionId[] = [
   "quick-resume",
   "activity",
   "modes",
+  "tools",
 ];
 
 
@@ -57,6 +70,105 @@ export default function QuranPage() {
   const { t, language, isRTL } = useLanguage();
   const { location } = useLocation();
 
+  // ── Offline library + Sleep Mode summaries for the home tools tiles ────
+  // These power the "X / 114 surahs" + "Y audio" badge on the Offline
+  // Library tile and the "{timer}m · {reciter}" / "tap to set up" label
+  // on the Sleep Mode tile. Counts/prefs refresh reactively when the
+  // matching event fires (download finish, sleep prefs save, etc.) so
+  // the home stays the canonical source of truth without forcing a
+  // navigation into the Offline Center / Sleep Mode page.
+  const [offlineSurahCount, setOfflineSurahCount] = useState(0);
+  const [offlineAudioCount, setOfflineAudioCount] = useState(0);
+  const [sleepPrefs, setSleepPrefs] = useState<SleepModePrefs>(() => loadSleepModePrefs());
+  const [sleepConfigured, setSleepConfigured] = useState<boolean>(() => hasConfiguredSleepMode());
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const [surahs, audio] = await Promise.all([
+          getAllDownloadedSurahs(),
+          getAllAudioEntries(),
+        ]);
+        if (cancelled) return;
+        setOfflineSurahCount(surahs.length);
+        setOfflineAudioCount(audio.length);
+      } catch {
+        // Best-effort — leave counts at last-known good values rather
+        // than zeroing them out on a transient IDB error.
+      }
+    };
+    void refresh();
+    const onOfflineChange = () => { void refresh(); };
+    window.addEventListener(OFFLINE_CHANGED_EVENT, onOfflineChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(OFFLINE_CHANGED_EVENT, onOfflineChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onPrefsChange = () => {
+      setSleepPrefs(loadSleepModePrefs());
+      setSleepConfigured(hasConfiguredSleepMode());
+    };
+    window.addEventListener(SLEEP_PREFS_CHANGED_EVENT, onPrefsChange);
+    return () => window.removeEventListener(SLEEP_PREFS_CHANGED_EVENT, onPrefsChange);
+  }, []);
+
+  const sleepReciterName = (() => {
+    const reciter = getReciterById(sleepPrefs.reciterId);
+    return language === "ar" ? reciter.name : reciter.nameEn;
+  })();
+
+  // Live session state from the module-level Sleep Mode player. When a
+  // session is active the tile reflects "playing · Nm left" /
+  // "paused · Nm left" instead of the static saved-prefs label, so the
+  // home stays a true status surface.
+  const sleepSession = useSleepSession();
+  const sleepIsActive = sleepSession.status !== "idle";
+
+  const sleepTileLabel = (() => {
+    if (sleepIsActive) {
+      // Round-up minutes so a session ending in the next 30s still
+      // surfaces "1m left" instead of "0m left" right before it stops.
+      const minutesLeft = Math.max(0, Math.ceil(sleepSession.remainingSeconds / 60));
+      const secondsLeft = Math.max(0, sleepSession.remainingSeconds);
+      const isPlaying = sleepSession.status === "playing";
+      if (language === "ar") {
+        const statusWord = isPlaying ? "تشغيل" : "إيقاف مؤقت";
+        const remainingWord =
+          minutesLeft > 0
+            ? `متبقي ${toArabicNumerals(minutesLeft)} د`
+            : `متبقي ${toArabicNumerals(secondsLeft)} ث`;
+        return `${statusWord} · ${remainingWord}`;
+      }
+      const statusWord = isPlaying ? "playing" : "paused";
+      const remainingPart = minutesLeft > 0 ? `${minutesLeft}m left` : `${secondsLeft}s left`;
+      return `${statusWord} · ${remainingPart}`;
+    }
+    if (sleepConfigured) {
+      return language === "ar"
+        ? `${toArabicNumerals(sleepPrefs.timerMinutes)} د · ${sleepReciterName}`
+        : `${sleepPrefs.timerMinutes}m · ${sleepReciterName}`;
+    }
+    return language === "ar" ? "اضغط للإعداد" : "Tap to set up";
+  })();
+
+  const offlineTileLabel = (() => {
+    if (offlineSurahCount === 0 && offlineAudioCount === 0) {
+      return language === "ar" ? "لم يتم التنزيل بعد" : "Nothing downloaded yet";
+    }
+    if (language === "ar") {
+      const surahsPart = `${toArabicNumerals(offlineSurahCount)} / ${toArabicNumerals(TOTAL_SURAHS)} سورة`;
+      const audioPart = offlineAudioCount > 0 ? ` · ${toArabicNumerals(offlineAudioCount)} صوت` : "";
+      return `${surahsPart}${audioPart}`;
+    }
+    const surahsPart = `${offlineSurahCount} / ${TOTAL_SURAHS} surahs`;
+    const audioPart = offlineAudioCount > 0 ? ` · ${offlineAudioCount} audio` : "";
+    return `${surahsPart}${audioPart}`;
+  })();
+
   const progress = Math.min((todayCount / goal) * 100, 100);
 
   const sectionLabels: Record<DashboardSectionId, string> = {
@@ -65,6 +177,7 @@ export default function QuranPage() {
     "quick-resume": language === "ar" ? "بطاقات المتابعة" : "Quick resume cards",
     activity: language === "ar" ? "ملخص النشاط" : "Activity summary",
     modes: language === "ar" ? "أوضاع القرآن" : "Quran modes",
+    tools: language === "ar" ? "أدوات إضافية" : "Quick tools",
   };
 
   // Dynamic greeting logic
@@ -147,9 +260,30 @@ export default function QuranPage() {
     onClick: () => void;
   }>;
 
-  const normalizedDashboardOrder = DEFAULT_DASHBOARD_ORDER.filter((id) => dashboardOrder.includes(id)).concat(
-    dashboardOrder.filter((id, index, arr) => DEFAULT_DASHBOARD_ORDER.includes(id) && arr.indexOf(id) === index && !DEFAULT_DASHBOARD_ORDER.filter((baseId) => dashboardOrder.includes(baseId)).includes(id))
-  );
+  // Migrate persisted dashboard order: keep the user's chosen positions
+  // for sections they've reordered, drop any unknown IDs (defensive
+  // against stale localStorage from old builds), and append every
+  // DEFAULT section that's missing — this is what surfaces newly
+  // shipped sections (e.g. "tools") to existing installs without
+  // forcing the user to manually reset their order.
+  const normalizedDashboardOrder = (() => {
+    const known = new Set<DashboardSectionId>(DEFAULT_DASHBOARD_ORDER);
+    const seen = new Set<DashboardSectionId>();
+    const result: DashboardSectionId[] = [];
+    for (const id of dashboardOrder) {
+      if (known.has(id) && !seen.has(id)) {
+        result.push(id);
+        seen.add(id);
+      }
+    }
+    for (const id of DEFAULT_DASHBOARD_ORDER) {
+      if (!seen.has(id)) {
+        result.push(id);
+        seen.add(id);
+      }
+    }
+    return result;
+  })();
 
   const moveDashboardSection = (sectionId: DashboardSectionId, direction: "up" | "down") => {
     setDashboardOrder((prev) => {
@@ -335,6 +469,129 @@ export default function QuranPage() {
       </div>
     ) : null,
     activity: activitySummary,
+    tools: (
+      <div className="mt-4 mb-2" dir={isRTL ? "rtl" : "ltr"} data-testid="quran-home-tools-grid">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/70 mb-3">
+          {language === "ar" ? "أدوات سريعة" : "Quick tools"}
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          {/*
+            Sleep Mode tile. Rendered as a div+role="button" (rather than a
+            real <button>) because we host an inline play/pause control
+            inside it when a session is active — nesting a real <button>
+            inside another <button> is invalid HTML and breaks
+            accessibility tooling. The outer click still navigates to
+            the full Sleep page; the inner control toggles
+            pause/resume in place via stopPropagation, so the user can
+            silence playback without leaving the home screen.
+          */}
+          <motion.div
+            whileTap={{ scale: 0.97 }}
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate("/sleep")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate("/sleep");
+              }
+            }}
+            aria-label={language === "ar" ? "وضع النوم" : "Sleep Mode"}
+            data-testid="quran-home-tool-sleep"
+            data-sleep-active={sleepIsActive ? "true" : "false"}
+            className={cn(
+              "flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border text-start transition-colors cursor-pointer",
+              sleepIsActive
+                ? "border-indigo-400/50 hover:border-indigo-400/70"
+                : "border-white/10 hover:border-primary/30",
+            )}
+          >
+            <div
+              className={cn(
+                "relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border transition-colors",
+                sleepIsActive
+                  ? "bg-indigo-500/20 border-indigo-400/50 text-indigo-500 dark:text-indigo-200"
+                  : "bg-indigo-500/10 border-indigo-500/20 text-indigo-500 dark:text-indigo-300",
+              )}
+            >
+              <BedDouble className="h-5 w-5" />
+              {sleepIsActive && sleepSession.status === "playing" && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 rounded-2xl border border-indigo-400/40 animate-ping"
+                />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "وضع النوم" : "Sleep Mode"}</p>
+              <p
+                className={cn(
+                  "text-[11px] truncate",
+                  sleepIsActive
+                    ? "text-indigo-500 dark:text-indigo-300 font-medium"
+                    : "text-muted-foreground",
+                )}
+                data-testid="quran-home-tool-sleep-status"
+              >
+                {sleepTileLabel}
+              </p>
+            </div>
+            {sleepIsActive && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  // Keep the tap local — the parent tile would otherwise
+                  // navigate the user away to the Sleep page.
+                  e.stopPropagation();
+                  void sleepModePlayer.togglePlay();
+                }}
+                onKeyDown={(e) => {
+                  // Stop the parent's Enter/Space navigation handler
+                  // from also firing when the user activates this
+                  // inner control with the keyboard.
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                  }
+                }}
+                aria-label={
+                  sleepSession.status === "playing"
+                    ? (language === "ar" ? "إيقاف مؤقت" : "Pause Sleep Mode")
+                    : (language === "ar" ? "استئناف" : "Resume Sleep Mode")
+                }
+                data-testid="quran-home-tool-sleep-toggle"
+                data-sleep-toggle-state={sleepSession.status}
+                className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/15 border border-indigo-400/30 text-indigo-500 dark:text-indigo-200 hover:bg-indigo-500/25 active:scale-95 transition"
+              >
+                {sleepSession.status === "playing" ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </button>
+            )}
+          </motion.div>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate("/offline")}
+            data-testid="quran-home-tool-offline"
+            className="flex items-center gap-3 rounded-2xl glass-card p-4 shadow-soft border border-white/10 text-start hover:border-primary/30 transition-colors"
+          >
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-300">
+              <Download className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold text-foreground truncate">{language === "ar" ? "المكتبة بدون إنترنت" : "Offline Library"}</p>
+              <p
+                className="text-[11px] text-muted-foreground truncate"
+                data-testid="quran-home-tool-offline-status"
+              >
+                {offlineTileLabel}
+              </p>
+            </div>
+          </motion.button>
+        </div>
+      </div>
+    ),
     modes: (
       <div className="grid grid-cols-2 gap-4 mt-2" dir={isRTL ? "rtl" : "ltr"} data-testid="quran-home-mode-grid">
         {modeCards.map((card, i) => (
