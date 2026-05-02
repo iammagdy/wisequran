@@ -1,7 +1,26 @@
 name: Deploy to Hostinger
 
 on:
+  # Auto-deploy on every push to main. Pure-docs/CI/agent-state commits
+  # are filtered out so they don't burn a deploy cycle.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.local/**'
+      - '.github/workflows/ci.yml'
+      - 'docs/**'
+  # Keep manual trigger available as a fallback (e.g. to redeploy the
+  # current commit after a transient SFTP timeout).
   workflow_dispatch:
+
+# Never run two deploys against the same SFTP target at the same time.
+# `cancel-in-progress: false` means an in-flight upload is allowed to
+# finish — newer pushes queue behind it instead of being killed mid-
+# transfer.
+concurrency:
+  group: deploy-hostinger
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
