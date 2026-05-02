@@ -7,6 +7,7 @@ import {
   setSleepSessionState,
   resetSleepSessionState,
 } from "@/lib/sleep-session-store";
+import { audioDebugLog } from "@/lib/audio-debug-log";
 
 export interface SleepModePrefs {
   reciterId: string;
@@ -173,7 +174,30 @@ function createSleepModePlayer() {
   };
 
   function setSnapshot(updates: Partial<SleepPlayerSnapshot>) {
+    // Only log meaningful state transitions (not every audioCurrentTime
+    // tick, which would flood the buffer at 4Hz). isPlaying / isLoading
+    // / hasError / isOfflineUncached / remainingSeconds-on-reset cover
+    // the diagnostically-relevant transitions for the "tap Play does
+    // nothing" report.
+    const interestingKeys = [
+      "isPlaying",
+      "isLoading",
+      "hasError",
+      "isOfflineUncached",
+    ] as const;
+    const interesting: Record<string, unknown> = {};
+    for (const key of interestingKeys) {
+      if (key in updates && updates[key] !== snapshot[key]) {
+        interesting[key] = updates[key];
+      }
+    }
     snapshot = { ...snapshot, ...updates };
+    if (Object.keys(interesting).length > 0) {
+      audioDebugLog("sleepModePlayer.setSnapshot", () => ({
+        changed: interesting,
+        listenerCount: listeners.size,
+      }));
+    }
     for (const listener of listeners) listener();
   }
 
@@ -292,6 +316,13 @@ function createSleepModePlayer() {
   }
 
   function stopAll() {
+    audioDebugLog("sleepModePlayer.stopAll:enter", {
+      hasStarted,
+      hasAudio: Boolean(audio),
+      isPlaying: snapshot.isPlaying,
+      isLoading: snapshot.isLoading,
+      playToken,
+    });
     // Invalidate any in-flight play() continuation so it cannot mutate state
     // or start playback after we stop.
     playToken += 1;
@@ -530,6 +561,14 @@ function createSleepModePlayer() {
   }
 
   async function play(overridePrefs?: SleepModePrefs) {
+    audioDebugLog("sleepModePlayer.play:enter", () => ({
+      reciterId: (overridePrefs ?? snapshot.prefs).reciterId,
+      surahNumber: (overridePrefs ?? snapshot.prefs).surahNumber,
+      timerMinutes: (overridePrefs ?? snapshot.prefs).timerMinutes,
+      online: typeof navigator !== "undefined" ? navigator.onLine : "unknown",
+      visibility:
+        typeof document !== "undefined" ? document.visibilityState : "unknown",
+    }));
     // stopAll() bumps playToken. Capture the new token AFTER, so this
     // play() invocation has its own identity for staleness checks below.
     stopAll();
@@ -566,20 +605,31 @@ function createSleepModePlayer() {
     try {
       // These can run after the gesture; the element is already activated.
       await primePromise;
-      if (isStale()) return;
+      if (isStale()) {
+        audioDebugLog("sleepModePlayer.play:stale", { stage: "afterPrime", myToken, current: playToken });
+        return;
+      }
 
       // Resolve the audio source: if the surah is downloaded for this
       // reciter, this returns a blob: URL backed by IndexedDB and Sleep
       // Mode plays fully offline. Otherwise it returns the network URL
       // (when online) or null (when offline AND uncached).
+      audioDebugLog("sleepModePlayer.play:resolveAudioSource:start");
       const source = await resolveAudioSource(currentPrefs.reciterId, currentPrefs.surahNumber);
+      audioDebugLog("sleepModePlayer.play:resolveAudioSource:result", () => ({
+        hasSource: Boolean(source),
+        cached: source?.cached,
+        srcPreview: source ? source.url.slice(0, 60) : "",
+      }));
       if (isStale()) {
+        audioDebugLog("sleepModePlayer.play:stale", { stage: "afterResolve", myToken, current: playToken });
         // We were superseded while resolving; revoke any blob URL we
         // were about to use so it doesn't leak.
         if (source?.cached) URL.revokeObjectURL(source.url);
         return;
       }
       if (!source) {
+        audioDebugLog("sleepModePlayer.play:offlineUncached");
         // Offline and not cached. Surface a structured empty-state to
         // the page rather than a generic playback failure.
         setSnapshot({ isOfflineUncached: true });
@@ -624,11 +674,14 @@ function createSleepModePlayer() {
       // .play() — with a single retry-after-load fallback if the first call
       // is rejected (which iOS occasionally does on cold start). Works
       // identically for blob: and https: URLs on iOS Safari / standalone.
+      audioDebugLog("sleepModePlayer.play:invokeMobilePlay");
       await mobileAudioManager.play(SLEEP_CHANNEL, source.url, {
         forceLoad: true,
         volume: currentPrefs.quranVolume / 100,
       });
+      audioDebugLog("sleepModePlayer.play:mobilePlayResolved");
       if (isStale()) {
+        audioDebugLog("sleepModePlayer.play:stale", { stage: "afterMobilePlay", myToken, current: playToken });
         // A newer action superseded us. The "sleep" channel is shared, so
         // we MUST NOT call mobileAudioManager.stop() here — the newer
         // play() already called stopAll() before incrementing the token,
@@ -724,8 +777,17 @@ function createSleepModePlayer() {
       startSession(currentPrefs);
 
       startTimerInterval(totalSecs, 0, currentPrefs);
-    } catch {
-      if (isStale()) return;
+      audioDebugLog("sleepModePlayer.play:success");
+    } catch (err) {
+      if (isStale()) {
+        audioDebugLog(
+          "sleepModePlayer.play:catch:stale",
+          { myToken, current: playToken },
+          err,
+        );
+        return;
+      }
+      audioDebugLog("sleepModePlayer.play:catch:error", undefined, err);
       setSnapshot({ hasError: true, isLoading: false });
       stopAll();
     }
@@ -758,9 +820,15 @@ function createSleepModePlayer() {
   }
 
   async function resume() {
-    if (!audio) return;
+    if (!audio) {
+      audioDebugLog("sleepModePlayer.resume:short-circuit", { reason: "noAudio" });
+      return;
+    }
+    audioDebugLog("sleepModePlayer.resume:enter");
     // Resume on the same activated element — no src swap, so iOS allows it.
-    await mobileAudioManager.play(SLEEP_CHANNEL).catch(() => {});
+    await mobileAudioManager.play(SLEEP_CHANNEL).catch((err) => {
+      audioDebugLog("sleepModePlayer.resume:mobilePlayError", undefined, err);
+    });
     setSnapshot({ isPlaying: true });
     setSleepSessionState({ status: "playing" });
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
@@ -795,12 +863,30 @@ function createSleepModePlayer() {
   }
 
   async function togglePlay() {
-    if (snapshot.isLoading) return;
+    audioDebugLog("sleepModePlayer.togglePlay:enter", () => ({
+      isLoading: snapshot.isLoading,
+      isPlaying: snapshot.isPlaying,
+      hasAudio: Boolean(audio),
+      prefs: {
+        reciterId: snapshot.prefs.reciterId,
+        surahNumber: snapshot.prefs.surahNumber,
+        timerMinutes: snapshot.prefs.timerMinutes,
+      },
+    }));
+    if (snapshot.isLoading) {
+      audioDebugLog("sleepModePlayer.togglePlay:short-circuit", {
+        reason: "isLoading",
+      });
+      return;
+    }
     if (!snapshot.isPlaying && !audio) {
+      audioDebugLog("sleepModePlayer.togglePlay:branch", { branch: "play" });
       await play(snapshot.prefs);
     } else if (snapshot.isPlaying) {
+      audioDebugLog("sleepModePlayer.togglePlay:branch", { branch: "pause" });
       pause();
     } else {
+      audioDebugLog("sleepModePlayer.togglePlay:branch", { branch: "resume" });
       await resume();
     }
   }

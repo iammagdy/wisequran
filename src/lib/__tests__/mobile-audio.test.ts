@@ -81,6 +81,85 @@ describe("mobileAudioManager.prime() / stop() interplay", () => {
   });
 });
 
+describe("audioDebugLog (gated by URL / localStorage / dev)", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("is a no-op when the gate is off and a working sink when enabled", async () => {
+    const { audioDebugLog, getAudioDebugEntries, clearAudioDebugEntries, setAudioDebugEnabled } =
+      await import("../audio-debug-log");
+
+    // Vitest runs with `import.meta.env.DEV === true`, so the module
+    // initializes with the gate ON. Explicitly disable it for the
+    // first half of this assertion.
+    setAudioDebugEnabled(false);
+    clearAudioDebugEntries();
+    audioDebugLog("test.disabled.event", { foo: 1 });
+    expect(getAudioDebugEntries()).toHaveLength(0);
+
+    setAudioDebugEnabled(true);
+    audioDebugLog("test.enabled.event", { foo: 2 });
+    audioDebugLog("test.enabled.error", undefined, new Error("boom"));
+
+    const entries = getAudioDebugEntries();
+    expect(entries).toHaveLength(2);
+    expect(entries[0].step).toBe("test.enabled.event");
+    expect(entries[0].payload).toEqual({ foo: 2 });
+    expect(entries[1].step).toBe("test.enabled.error");
+    expect(entries[1].error?.message).toBe("boom");
+
+    clearAudioDebugEntries();
+    expect(getAudioDebugEntries()).toHaveLength(0);
+
+    setAudioDebugEnabled(false);
+  });
+
+  it("supports lazy thunk payloads (zero allocation on the OFF path)", async () => {
+    const { audioDebugLog, getAudioDebugEntries, clearAudioDebugEntries, setAudioDebugEnabled } =
+      await import("../audio-debug-log");
+    setAudioDebugEnabled(false);
+    clearAudioDebugEntries();
+
+    let thunkInvocations = 0;
+    const buildPayload = () => {
+      thunkInvocations += 1;
+      return { computed: "expensive" };
+    };
+
+    audioDebugLog("test.thunk.off", buildPayload);
+    expect(thunkInvocations).toBe(0); // OFF path must not invoke the thunk
+    expect(getAudioDebugEntries()).toHaveLength(0);
+
+    setAudioDebugEnabled(true);
+    audioDebugLog("test.thunk.on", buildPayload);
+    expect(thunkInvocations).toBe(1);
+    expect(getAudioDebugEntries()[0].payload).toEqual({ computed: "expensive" });
+
+    setAudioDebugEnabled(false);
+  });
+
+  it("instruments mobileAudioManager.play() with enter / resolved events when enabled", async () => {
+    const { setAudioDebugEnabled, getAudioDebugEntries, clearAudioDebugEntries } =
+      await import("../audio-debug-log");
+    setAudioDebugEnabled(true);
+    clearAudioDebugEntries();
+
+    const audioStub = createAudioInstance();
+    vi.stubGlobal("Audio", vi.fn(() => audioStub));
+    const { mobileAudioManager } = await import("../mobile-audio");
+
+    await mobileAudioManager.play("preview", "https://example.test/song.mp3");
+
+    const steps = getAudioDebugEntries().map((e) => e.step);
+    expect(steps).toContain("mobileAudioManager.play:enter");
+    expect(steps).toContain("mobileAudioManager.play:srcAssigned");
+    expect(steps).toContain("mobileAudioManager.play:firstPlayResolved");
+
+    setAudioDebugEnabled(false);
+  });
+});
+
 describe("configurePlaybackAudioSession", () => {
   beforeEach(() => {
     vi.resetModules();

@@ -91,6 +91,49 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Recent fixes
 
+### v3.9.5 — Sleep Mode iOS in-app diagnostic logger (2026-05-02)
+
+The previous v3.9.4 fixes did not resolve the user-reported "tap Play
+does nothing visible" symptom on iPhone, which means the failure is in
+a code path we cannot infer from the source alone. To debug it without
+needing a Mac + cable + Safari Web Inspector, this release adds an
+opt-in in-app diagnostic logger:
+
+- **`src/lib/audio-debug-log.ts`** — 200-entry ring buffer plus a
+  `console.info("[audio-debug] …")` mirror. Gated by
+  `import.meta.env.DEV`, the URL param `?debug=audio`, or
+  `localStorage.audioDebug = "1"`. When the gate is off, every
+  `audioDebugLog()` call is a single boolean check (no allocations,
+  no DOM, no console).
+- **Instrumentation** added to every catch / early-return / async
+  boundary in `mobile-audio.ts` (`prime`, `play`, `stop`,
+  `configurePlaybackAudioSession`), `sleep-mode-player.ts`
+  (`togglePlay`, `play`, `stopAll`, `resume`, `setSnapshot` for
+  isPlaying/isLoading/hasError transitions), and
+  `useGlobalAudioBootstrap.ts` (first-interaction prime).
+- **`src/components/sleep/AudioDebugPanel.tsx`** — fixed-position pill
+  rendered on `SleepModePage` whenever the gate is on. Tap to open a
+  full-screen modal with the live timeline, environment summary
+  (UA / standalone / online / SW state / bundle), Copy log,
+  Clear, and Disable & close.
+- **Regression tests** in `src/lib/__tests__/mobile-audio.test.ts`
+  cover the gate behavior, the lazy-thunk OFF path (zero allocation
+  when disabled), and confirm `mobileAudioManager.play()` now emits
+  the expected diagnostic events.
+- **Lazy thunk payloads.** `audioDebugLog(step, () => payload)` is
+  supported so hot-path call sites that build computed payloads
+  (string slicing, property reads) stay genuinely free when the gate
+  is off.
+- **Audio element fetch diagnostics.** `attachAudioFetchDiagnostics()`
+  binds one-shot `error` / `stalled` / `canplay` listeners after
+  every `audio.src = …` so the log captures `networkState`,
+  `readyState`, `MediaError.code` etc. — the missing piece for
+  disambiguating SW-interception vs CDN failure vs decoder error.
+
+To use on iPhone: open the app at `/sleep?debug=audio` (or run
+`localStorage.audioDebug = "1"` in Safari Web Inspector once), tap
+Play, then tap the `audio · N` pill in the bottom-right and Copy.
+
 ### v3.9.4 — iOS Sleep Mode root causes (2026-05-02)
 
 Three independent bugs in the audio stack were causing Sleep Mode to fail

@@ -1,3 +1,5 @@
+import { audioDebugLog, isAudioDebugEnabled } from "@/lib/audio-debug-log";
+
 export const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq//OEAAOAAAAAIAAAAAQAAAADxIAAAeAAAAAAyIQUAAwEEAAAB1wQAAAAG5uP//xQo4BwwMAAECAR/f7//////9/4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAACAAH//OEAAiBQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAAyBwAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA//OEAFAAQAIAAAQAAAABAAIAB4gAAB4AAAAB0QgUAAQIEAAEB1wQAAABW5+///xRgwBAAIAAACAR/f///////4h7/8///Q2P//+T7f///+i//T//4iK5b4AAAAAAAAIAA==";
 
 export type ManagedAudioChannel = "quran" | "alarm" | "preview" | "ambient" | "sleep";
@@ -54,7 +56,13 @@ class MobileAudioManager {
 
   async prime(channel: ManagedAudioChannel): Promise<HTMLAudioElement> {
     const audio = this.getAudio(channel);
-    if (this.primedChannels.has(channel)) return audio;
+    if (this.primedChannels.has(channel)) {
+      audioDebugLog("mobileAudioManager.prime:short-circuit", {
+        channel,
+        reason: "already-primed",
+      });
+      return audio;
+    }
 
     const previousSrc = audio.currentSrc || audio.src;
     const previousTime = audio.currentTime || 0;
@@ -62,6 +70,13 @@ class MobileAudioManager {
     const previousVolume = audio.volume;
     const wasPaused = audio.paused;
 
+    audioDebugLog("mobileAudioManager.prime:start", () => ({
+      channel,
+      previousSrc: previousSrc ? previousSrc.slice(0, 60) : "",
+      wasPaused,
+    }));
+
+    let primeError: unknown;
     try {
       audio.muted = true;
       audio.volume = 0;
@@ -71,8 +86,15 @@ class MobileAudioManager {
       audio.pause();
       audio.currentTime = 0;
       this.primedChannels.add(channel);
-    } catch {
+      audioDebugLog("mobileAudioManager.prime:success", { channel });
+    } catch (err) {
       // Best effort only — some browsers still mark the document as interacted.
+      primeError = err;
+      audioDebugLog(
+        "mobileAudioManager.prime:error",
+        { channel },
+        err,
+      );
     } finally {
       audio.muted = previousMuted;
       audio.volume = previousVolume;
@@ -87,9 +109,17 @@ class MobileAudioManager {
             // Ignore restore failures.
           }
         }
+        audioDebugLog("mobileAudioManager.prime:finally:restoreSrc", () => ({
+          channel,
+          restoredSrc: previousSrc.slice(0, 60),
+        }));
       } else {
         audio.removeAttribute("src");
         audio.load();
+        audioDebugLog("mobileAudioManager.prime:finally:clearSrc", {
+          channel,
+          hadPrimeError: Boolean(primeError),
+        });
       }
     }
 
@@ -103,6 +133,12 @@ class MobileAudioManager {
   }
 
   async play(channel: ManagedAudioChannel, src?: string, options: PlayOptions = {}) {
+    audioDebugLog("mobileAudioManager.play:enter", () => ({
+      channel,
+      hasSrc: Boolean(src),
+      srcPreview: src ? src.slice(0, 60) : "",
+      primed: this.primedChannels.has(channel),
+    }));
     // Centralized iOS audio-session bootstrap. Every play() call goes
     // through this method, so any non-preview channel (sleep, quran,
     // adhan, friday, …) gets the iOS 17+ "playback" category set —
@@ -141,6 +177,15 @@ class MobileAudioManager {
         }
         audio.src = normalizedSrc;
         if (forceLoad) audio.load();
+        audioDebugLog("mobileAudioManager.play:srcAssigned", () => ({
+          channel,
+          isBlob,
+          isSameOrigin,
+          crossOrigin: desiredCrossOrigin,
+        }));
+        attachAudioFetchDiagnostics(audio, channel);
+      } else {
+        audioDebugLog("mobileAudioManager.play:srcUnchanged", { channel });
       }
     }
 
@@ -154,13 +199,29 @@ class MobileAudioManager {
 
     try {
       await audio.play();
+      audioDebugLog("mobileAudioManager.play:firstPlayResolved", { channel });
       return audio;
     } catch (error) {
+      audioDebugLog(
+        "mobileAudioManager.play:firstPlayRejected",
+        { channel, hasSrc: Boolean(src), retryDelayMs },
+        error,
+      );
       if (src) {
         await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
         audio.load();
-        await audio.play();
-        return audio;
+        try {
+          await audio.play();
+          audioDebugLog("mobileAudioManager.play:retryResolved", { channel });
+          return audio;
+        } catch (retryError) {
+          audioDebugLog(
+            "mobileAudioManager.play:retryRejected",
+            { channel },
+            retryError,
+          );
+          throw retryError;
+        }
       }
       throw error;
     }
@@ -183,7 +244,10 @@ class MobileAudioManager {
 
   stop(channel: ManagedAudioChannel, resetSource = false) {
     const audio = this.channels.get(channel);
-    if (!audio) return;
+    if (!audio) {
+      audioDebugLog("mobileAudioManager.stop:noAudio", { channel, resetSource });
+      return;
+    }
 
     audio.pause();
     try {
@@ -204,6 +268,9 @@ class MobileAudioManager {
       // Mode (and the main Quran reader) work across stop → play
       // cycles on iOS standalone PWAs.
       this.primedChannels.delete(channel);
+      audioDebugLog("mobileAudioManager.stop:resetSource", { channel });
+    } else {
+      audioDebugLog("mobileAudioManager.stop:pauseOnly", { channel });
     }
   }
 
@@ -213,6 +280,51 @@ class MobileAudioManager {
 }
 
 export const mobileAudioManager = new MobileAudioManager();
+
+// ─── Audio element fetch diagnostics ─────────────────────────────────────────
+//
+// One-shot listeners attached after every `audio.src = …` assignment so
+// the in-app debug log captures the network/decoder lifecycle of the
+// underlying media fetch. This is what disambiguates "the SW intercepted
+// and corrupted the response" from "the CDN 404'd" from "iOS killed the
+// element". `{ once: true }` keeps the GC profile flat — the next
+// srcAssigned re-attaches a fresh set.
+function attachAudioFetchDiagnostics(
+  audio: HTMLAudioElement,
+  channel: ManagedAudioChannel,
+): void {
+  if (!isAudioDebugEnabled()) return;
+  if (typeof audio.addEventListener !== "function") return;
+  const onError = () => {
+    const mediaErr = audio.error;
+    audioDebugLog("mobileAudioManager.audio:error", () => ({
+      channel,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+      currentSrc: audio.currentSrc ? audio.currentSrc.slice(0, 80) : "",
+      code: mediaErr?.code,
+      message: mediaErr?.message,
+    }));
+  };
+  const onStalled = () => {
+    audioDebugLog("mobileAudioManager.audio:stalled", () => ({
+      channel,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+    }));
+  };
+  const onCanPlay = () => {
+    audioDebugLog("mobileAudioManager.audio:canplay", () => ({
+      channel,
+      networkState: audio.networkState,
+      readyState: audio.readyState,
+      duration: Number.isFinite(audio.duration) ? audio.duration : -1,
+    }));
+  };
+  audio.addEventListener("error", onError, { once: true });
+  audio.addEventListener("stalled", onStalled, { once: true });
+  audio.addEventListener("canplay", onCanPlay, { once: true });
+}
 
 // ─── iOS playback session bootstrap ──────────────────────────────────────────
 //
@@ -240,10 +352,15 @@ export function configurePlaybackAudioSession(): void {
   const session = (navigator as Navigator & {
     audioSession?: { type?: string };
   }).audioSession;
-  if (!session) return;
+  if (!session) {
+    audioDebugLog("configurePlaybackAudioSession:unsupported");
+    return;
+  }
   try {
     session.type = "playback";
-  } catch {
+    audioDebugLog("configurePlaybackAudioSession:set", { type: "playback" });
+  } catch (err) {
+    audioDebugLog("configurePlaybackAudioSession:error", undefined, err);
     /* ignore — setter not supported on this iOS version */
   }
 }

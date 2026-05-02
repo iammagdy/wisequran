@@ -9,6 +9,8 @@ import { StarField } from "@/components/sleep/StarField";
 import { CircularTimer } from "@/components/sleep/CircularTimer";
 import { SurahSelectorForSleep } from "@/components/sleep/SurahSelectorForSleep";
 import { useSleepModePlayer } from "@/hooks/useSleepModePlayer";
+import { AudioDebugPanel } from "@/components/sleep/AudioDebugPanel";
+import { audioDebugLog, isAudioDebugEnabled } from "@/lib/audio-debug-log";
 import { RECITERS } from "@/lib/reciters";
 import { SURAH_META } from "@/data/surah-meta";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -84,6 +86,42 @@ export default function SleepModePage() {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
     };
+  }, []);
+
+  // Diagnostic mount snapshot. Logs the SW state + bundle version so
+  // the in-app debug panel surfaces "are we even running the new code"
+  // up-front. NO-OP when the audio-debug flag is off (the call itself
+  // short-circuits inside audioDebugLog).
+  useEffect(() => {
+    if (!isAudioDebugEnabled()) return;
+    const nav = navigator as Navigator & { standalone?: boolean };
+    audioDebugLog("SleepModePage:mount", () => ({
+      ua: nav.userAgent,
+      standalone:
+        Boolean(nav.standalone) ||
+        window.matchMedia?.("(display-mode: standalone)").matches === true,
+      online: nav.onLine,
+      visibility: document.visibilityState,
+      bundle: (import.meta.env?.VITE_APP_VERSION as string | undefined) ?? "unknown",
+      swController: navigator.serviceWorker?.controller?.scriptURL ?? "none",
+      swState: navigator.serviceWorker?.controller?.state ?? "none",
+    }));
+
+    if (navigator.serviceWorker?.getRegistration) {
+      void navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) {
+          audioDebugLog("SleepModePage:mount:swRegistration", { reg: "none" });
+          return;
+        }
+        audioDebugLog("SleepModePage:mount:swRegistration", () => ({
+          scope: reg.scope,
+          activeScript: reg.active?.scriptURL ?? "none",
+          activeState: reg.active?.state ?? "none",
+          waitingScript: reg.waiting?.scriptURL ?? "none",
+          installingScript: reg.installing?.scriptURL ?? "none",
+        }));
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -622,6 +660,8 @@ export default function SleepModePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AudioDebugPanel />
     </div>
   );
 }
