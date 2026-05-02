@@ -243,23 +243,31 @@ function createSleepModePlayer() {
   // We model the Sleep timer as a track of length `totalSecs` and pass
   // `elapsedSecs` as the current position — this maps cleanly onto the
   // existing media UI metaphor (elapsed on the left, remaining on the
-  // right). When `playing` is true we report playbackRate: 1 so the OS
-  // can extrapolate sub-second progress between our 1Hz updates;
-  // playbackRate: 0 freezes the bar on pause.
+  // right). We always report playbackRate: 1 — Safari throws TypeError
+  // on playbackRate: 0, which silently breaks the lock-screen progress
+  // bar. Pause is communicated via navigator.mediaSession.playbackState
+  // ("paused" / "playing") and via NOT calling this function during the
+  // paused interval; the OS stops extrapolating once playbackState is
+  // "paused" regardless of the most recent playbackRate.
   function updateMediaPositionState(
     totalSecs: number,
     elapsedSecs: number,
-    playing: boolean,
+    _playing: boolean,
   ) {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     if (typeof navigator.mediaSession.setPositionState !== "function") return;
     if (!Number.isFinite(totalSecs) || totalSecs <= 0) return;
     const clampedElapsed = Math.max(0, Math.min(elapsedSecs, totalSecs));
     try {
+      // playbackRate must be > 0. Safari throws TypeError on 0, which
+      // (a) silently breaks the lock-screen progress bar and
+      // (b) contributes to iOS deciding the media session is malformed
+      // and suspending it. Play/pause state is communicated separately
+      // via navigator.mediaSession.playbackState — keep playbackRate at 1.
       navigator.mediaSession.setPositionState({
         duration: totalSecs,
         position: clampedElapsed,
-        playbackRate: playing ? 1 : 0,
+        playbackRate: 1,
       });
     } catch {
       /* ignore — Safari throws on invalid values; bail rather than crash playback */

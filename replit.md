@@ -91,6 +91,46 @@ Run all three locally with `pnpm run predeploy`.
 
 ## Recent fixes
 
+### v3.9.4 — iOS Sleep Mode root causes (2026-05-02)
+
+Three independent bugs in the audio stack were causing Sleep Mode to fail
+on iOS Safari and the standalone PWA. Fixed in one coordinated pass so
+partial fixes don't mask each other:
+
+1. **`mobile-audio.ts` — `stop(channel, true)` now clears `primedChannels`.**
+   `audio.removeAttribute("src") + audio.load()` deactivates the iOS
+   user-activation on the audio element, but the channel was still marked
+   primed, so the next `prime()` short-circuited and the next `.play()` ran
+   outside the user gesture and got rejected by iOS with `NotAllowedError`.
+   The fix unblocks every stop → play cycle on iOS standalone PWAs and also
+   benefits the main Quran reader (`AudioPlayerContext`) and the reciter-
+   preview channels which use the same pattern.
+
+2. **`mobile-audio.ts` — `configurePlaybackAudioSession()` no longer latches.**
+   iOS resets the session category to `"auto"` after audio interruptions
+   (incoming calls, Siri, system memory pressure), so the previous
+   "already configured" module-level flag turned the helper into a permanent
+   no-op and subsequent Sleep Mode sessions played under the wrong category
+   (then got muted by the silent switch). Re-applying `session.type =
+   "playback"` on every play is cheap and correct.
+
+3. **`sleep-mode-player.ts` — always pass `playbackRate: 1` to
+   `setPositionState`.** Safari throws `TypeError` on `playbackRate: 0`,
+   which silently broke the lock-screen progress bar and contributed to iOS
+   suspending the media session. Pause is communicated via
+   `mediaSession.playbackState = "paused"` instead.
+
+Regression tests added: `src/lib/__tests__/mobile-audio.test.ts` covers the
+prime-after-stop and per-call audio-session re-application.
+
+A fourth potential fix (switching the `quran-audio.ts` download fetches to
+`mode: "no-cors"`) was investigated and rejected — empirical testing
+confirmed the existing `mode: "cors"` works for both download.quranicaudio.com
+and mp3quran.net mirrors, and `no-cors` would silently break downloads
+because opaque responses have `body: null` and `blob()` returns an empty
+Blob per the Fetch spec. A `NOTE` was added to `fetchAudioFromUrl`
+documenting why we keep `cors`.
+
 ### v3.9.3 — Live Sleep Mode status on the home tile (2026-04-28)
 
 The home Sleep Mode tile now reflects an in-progress session in real time.

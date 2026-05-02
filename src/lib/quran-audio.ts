@@ -66,6 +66,14 @@ export async function resolveAudioSource(
  * in heap.
  *
  * Progress is reported when `Content-Length` is present.
+ *
+ * NOTE: We intentionally use `mode: "cors"` here, even though some of
+ * the CDNs we play from look like they might not support CORS. They
+ * actually all do — empirically tested in v3.9.4 — so we get the full
+ * streaming/progress/Content-Type benefits. `mode: "no-cors"` would
+ * give us an opaque response whose `body` is null and whose `blob()`
+ * returns an empty Blob (per the Fetch spec), which silently breaks
+ * downloads.
  */
 export async function fetchAudioFromUrl(
   url: string,

@@ -195,6 +195,15 @@ class MobileAudioManager {
     if (resetSource) {
       audio.removeAttribute("src");
       audio.load();
+      // Clearing src + load() deactivates the iOS user-activation on
+      // this <audio> element. The next .play() call must therefore be
+      // re-primed inside a fresh user gesture or iOS will reject it
+      // with NotAllowedError. Drop the channel from primedChannels so
+      // the next prime() call actually runs the silent-MP3 unlock
+      // again instead of short-circuiting. This is what makes Sleep
+      // Mode (and the main Quran reader) work across stop → play
+      // cycles on iOS standalone PWAs.
+      this.primedChannels.delete(channel);
     }
   }
 
@@ -219,10 +228,14 @@ export const mobileAudioManager = new MobileAudioManager();
 // The setter throws on older iOS (and is undefined on every other
 // browser), so we guard the access. Idempotent — safe to call multiple
 // times.
-let audioSessionConfigured = false;
-
+//
+// IMPORTANT: do NOT cache a "already configured" flag. iOS resets the
+// session category back to "auto" after audio interruptions (incoming
+// call, Siri, system memory pressure). If we latched after the first
+// success, subsequent Sleep Mode sessions would play under the wrong
+// category and get muted by the silent switch. Re-applying on every
+// play() is cheap and correct.
 export function configurePlaybackAudioSession(): void {
-  if (audioSessionConfigured) return;
   if (typeof navigator === "undefined") return;
   const session = (navigator as Navigator & {
     audioSession?: { type?: string };
@@ -230,7 +243,6 @@ export function configurePlaybackAudioSession(): void {
   if (!session) return;
   try {
     session.type = "playback";
-    audioSessionConfigured = true;
   } catch {
     /* ignore — setter not supported on this iOS version */
   }
