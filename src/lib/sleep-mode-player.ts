@@ -722,8 +722,19 @@ function createSleepModePlayer() {
     if (source) {
       audioDebugLog("sleepModePlayer.play:fastPath", { cached: source.cached });
       if (source.cached) blobUrl = source.url;
+      // v3.9.8 — three iOS-standalone-PWA fixes on the play() call:
+      //   - forceLoad:false: the implicit load triggered by setting
+      //     audio.src is enough; calling audio.load() explicitly between
+      //     src= and play() invalidates the gesture-activation grant on
+      //     iOS standalone PWAs and the play() rejects with no audible
+      //     output.
+      //   - noRetry:true: the 220ms-delayed retry runs OUTSIDE the
+      //     gesture and on iOS standalone returns a promise that may
+      //     never settle — the UI hangs forever on isLoading=true.
+      //     Surfacing the first error lets the catch below set hasError.
       fastPlayPromise = mobileAudioManager.play(SLEEP_CHANNEL, source.url, {
-        forceLoad: true,
+        forceLoad: false,
+        noRetry: true,
         volume: currentPrefs.quranVolume / 100,
       });
     }
@@ -738,12 +749,12 @@ function createSleepModePlayer() {
         // still run the original prime + resolve flow so playback can
         // recover, but iOS standalone PWAs may show a brief delay here.
         audioDebugLog("sleepModePlayer.play:slowPath");
-        const primePromise = mobileAudioManager.prime(SLEEP_CHANNEL);
-        await primePromise;
-        if (isStale()) {
-          audioDebugLog("sleepModePlayer.play:stale", { stage: "afterPrime", myToken, current: playToken });
-          return;
-        }
+        // v3.9.8: skip prime() entirely. The silent-MP3 prime burns the
+        // user-gesture activation on a no-op (silent, muted, paused
+        // immediately) — the real .play() that follows then runs on a
+        // dead gesture and iOS standalone rejects it with no audible
+        // output. We rely on the real source's .play() itself to
+        // activate the element on iOS, same as the fast path.
 
         // Resolve the audio source: if the surah is downloaded for this
         // reciter, this returns a blob: URL backed by IndexedDB and Sleep
@@ -783,7 +794,10 @@ function createSleepModePlayer() {
       detachAudioListeners(localAudio);
       localAudio.ontimeupdate = () => setSnapshot({ audioCurrentTime: localAudio.currentTime });
       localAudio.onloadedmetadata = () => setSnapshot({ audioDuration: localAudio.duration });
-      localAudio.onplaying = () => setSnapshot({ isLoading: false });
+      localAudio.onplaying = () => {
+        audioDebugLog("sleepModePlayer.play:started");
+        setSnapshot({ isLoading: false });
+      };
       localAudio.onwaiting = () => setSnapshot({ isLoading: true });
       localAudio.onerror = () => {
         if (isStale()) return;
@@ -811,14 +825,26 @@ function createSleepModePlayer() {
       // inside the gesture above; we only need to await its eventual
       // settlement here. On the slow path we issue it now.
       audioDebugLog("sleepModePlayer.play:invokeMobilePlay", { fastPath: Boolean(fastPlayPromise) });
-      if (fastPlayPromise) {
-        await fastPlayPromise;
-      } else {
-        await mobileAudioManager.play(SLEEP_CHANNEL, source.url, {
-          forceLoad: true,
-          volume: currentPrefs.quranVolume / 100,
-        });
-      }
+      // v3.9.8: hard timeout (5s) around the play promise. iOS
+      // standalone PWAs occasionally return a play() promise that
+      // never settles — the previous code awaited it forever and the
+      // UI was stuck on isLoading=true with no audible output. The
+      // timeout guarantees the catch below runs and surfaces hasError
+      // so the user sees a real failure state instead of silence.
+      const playPromise = fastPlayPromise ?? mobileAudioManager.play(SLEEP_CHANNEL, source.url, {
+        forceLoad: false,
+        noRetry: true,
+        volume: currentPrefs.quranVolume / 100,
+      });
+      await Promise.race([
+        playPromise,
+        new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("sleepModePlayer: audio.play() did not settle within 5s")),
+            5000,
+          ),
+        ),
+      ]);
       audioDebugLog("sleepModePlayer.play:mobilePlayResolved");
       if (isStale()) {
         audioDebugLog("sleepModePlayer.play:stale", { stage: "afterMobilePlay", myToken, current: playToken });
@@ -1116,3 +1142,14 @@ function createSleepModePlayer() {
 }
 
 export const sleepModePlayer = createSleepModePlayer();
+
+// v3.9.8: kick the preload off at module-load time, not just on hook
+// mount. The fast path inside play() can only fire when the audio
+// source is already resolved when the user taps Play — on cold-launch
+// of a standalone PWA the user can tap Play before the React tree has
+// mounted SleepModePage's useEffect, in which case the slow path
+// runs, the gesture is wasted on awaits, and iOS standalone rejects
+// the eventual real .play() with no audible output. Module load
+// happens as soon as the lazy chunk is requested by the route, which
+// is meaningfully earlier than the page's first useEffect.
+sleepModePlayer.ensurePreloaded();

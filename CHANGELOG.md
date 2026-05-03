@@ -2,6 +2,18 @@
 
 All notable changes to WiseQuran will be documented in this file.
 
+## [3.9.8] - 2026-05-03
+
+Another fix for the iPhone Sleep Mode "tap Play, hear silence" bug. The
+previous attempt didn't land for everyone. This release combines three
+defensive changes on the iOS standalone playback path: it stops calling
+the implicit reload between picking the audio file and starting it (which
+was invalidating the tap on some iPhones), it stops the silent retry that
+could leave the screen stuck on a loading spinner forever, and it starts
+preparing the audio earlier so the very first tap on a fresh launch
+catches the fast path. If anything still goes wrong, the screen now shows
+a real error state instead of an endless spinner.
+
 ## [3.9.7] - 2026-05-03
 
 Sleep Mode now starts on the very first tap on iPhone. The countdown ring
