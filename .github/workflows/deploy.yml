@@ -83,5 +83,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT }}
           source: "dist/*"
-          target: "domains/thewise.cloud/public_html/quran"
+          target: "public_html/quran"
           strip_components: 1
