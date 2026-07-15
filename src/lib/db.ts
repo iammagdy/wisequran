@@ -126,106 +126,108 @@ let dbPromise: ReturnType<typeof openDB<WiseQuranDB>> | null = null;
 
 export const V6_BOOKMARKS_BACKUP_LS_KEY = "wise-bookmarks-v6-backup";
 
-function openDatabase() {
-  return openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
-    // NOTE: `idb` awaits the returned promise while keeping the upgrade
-    // transaction open, so we can safely read the old `bookmarks` store
-    // before deleting it. This is what makes the v6→v7 migration lossless.
-    async upgrade(db, oldVersion, _newVersion, transaction) {
-      if (!db.objectStoreNames.contains("surahs")) {
-        db.createObjectStore("surahs", { keyPath: "number" });
+// v7 -> v8: rewrite legacy ArrayBuffer audio rows as Blobs. Done post-open
+// to avoid holding versionchange upgrade transaction open, which causes
+// auto-commit and transaction inactive errors in many browsers.
+async function migrateAudioV7ToV8(db: any): Promise<void> {
+  try {
+    const tx = db.transaction("audio", "readwrite");
+    const store = tx.objectStore("audio");
+    let cursor = await store.openCursor();
+    while (cursor) {
+      const row = cursor.value;
+      if (row?.data && !(row.data instanceof Blob)) {
+        await cursor.update({
+          ...row,
+          data: new Blob([row.data], { type: "audio/mpeg" }),
+        });
       }
-      if (!db.objectStoreNames.contains("azkar")) {
-        db.createObjectStore("azkar", { keyPath: "category" });
-      }
-      if (db.objectStoreNames.contains("audio") && oldVersion < 3) {
-        db.deleteObjectStore("audio");
-      }
-      if (!db.objectStoreNames.contains("audio")) {
-        db.createObjectStore("audio", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("tafsir")) {
-        db.createObjectStore("tafsir", { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains("syncQueue")) {
-        db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
-      }
-      // v6 → v7: reshape bookmarks to be owner-scoped. Copy the FULL v6
-      // rows (surah, ayah, ayahText, note, timestamps, …) into
-      // localStorage first; only delete the old store after the copy
-      // succeeds. The post-boot migration in `bookmarks.ts` rehydrates
-      // these rows under the current anonymous owner.
-      if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
-        // Copy-then-delete: we must have the rows durably in LS
-        // before we drop the v6 store. If reading the old rows fails
-        // we throw to abort the whole upgrade transaction, which
-        // leaves the DB at v6 so the next app load can retry the
-        // migration without any data loss in between.
-        const oldStore = transaction.objectStore("bookmarks");
-        let rows: Array<Record<string, unknown>> = [];
-        try {
-          rows = (await oldStore.getAll()) as Array<Record<string, unknown>>;
-        } catch (err) {
-          try {
-            localStorage.setItem("wise-bookmarks-v6-migration-error", String(Date.now()));
-          } catch {
-            /* ignore */
-          }
-          // Abort the upgrade — any stores we created earlier in this
-          // callback are rolled back together with us. The user keeps
-          // their v6 bookmarks intact and we try again next session.
-          throw err;
-        }
-        if (rows.length > 0) {
-          try {
-            localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
-          } catch (err) {
-            // Persisting to LS failed (quota?) — same story, abort.
-            try {
-              localStorage.setItem("wise-bookmarks-v6-migration-error", String(Date.now()));
-            } catch {
-              /* ignore */
-            }
-            throw err;
-          }
-        }
-        db.deleteObjectStore("bookmarks");
-        try {
-          localStorage.removeItem("wise-bookmarks-migrated-v1");
-        } catch {
-          /* ignore */
-        }
-      }
-      if (!db.objectStoreNames.contains("bookmarks")) {
-        const bookmarksStore = db.createObjectStore("bookmarks", { keyPath: "id" });
-        bookmarksStore.createIndex("by-updated", "updatedAt");
-        bookmarksStore.createIndex("by-owner", "ownerKey");
-      }
-      // v7 → v8: rewrite legacy ArrayBuffer audio rows as Blobs so Phase
-      // B's streaming download path is consistent with what's already
-      // stored. We do this lazily by reading and rewriting each row in
-      // the upgrade transaction. If a row is already a Blob (from a
-      // future-rolled-back DB) we leave it alone. Bytes are NOT copied
-      // by `new Blob([buf])` — the browser keeps a reference.
-      if (oldVersion < 8 && db.objectStoreNames.contains("audio")) {
-        const store = transaction.objectStore("audio");
-        for await (const cursor of store.iterate()) {
-          const row = cursor.value as { id: string; reciterId: string; surahNumber: number; data: Blob | ArrayBuffer };
-          if (row?.data && !(row.data instanceof Blob)) {
-            await cursor.update({
-              ...row,
-              data: new Blob([row.data], { type: "audio/mpeg" }),
-            });
-          }
-        }
-      }
-    },
-  });
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+  } catch (err) {
+    if (typeof console !== "undefined") {
+      console.error("[db] post-open audio migration (v7 -> v8) failed:", err);
+    }
+  }
 }
 
 export async function getDB() {
   if (!dbPromise) {
-    dbPromise = openDatabase().catch((err) => {
+    dbPromise = (async () => {
+      // Step A: Pre-upgrade bookmarks backup (v6 -> v7)
+      // We must read v6 bookmarks before upgrading the schema, but we cannot
+      // call async methods inside the versionchange transaction without yielding
+      // the event loop and letting the browser auto-commit the transaction.
+      // Therefore, we open the DB at its current version first to safely read data.
+      try {
+        const tempDB = await openDB(DB_NAME);
+        const currentVersion = tempDB.version;
+        if (currentVersion > 0 && currentVersion < 7) {
+          if (tempDB.objectStoreNames.contains("bookmarks")) {
+            const rows = await tempDB.getAll("bookmarks");
+            if (rows && rows.length > 0) {
+              localStorage.setItem(V6_BOOKMARKS_BACKUP_LS_KEY, JSON.stringify(rows));
+            }
+          }
+        }
+        tempDB.close();
+      } catch (err) {
+        if (typeof console !== "undefined") {
+          console.warn("[db] pre-upgrade backup failed:", err);
+        }
+      }
+
+      // Step B: Open the DB and perform synchronous schema updates
+      let detectedOldVersion = 0;
+      const db = await openDB<WiseQuranDB>(DB_NAME, DB_VERSION, {
+        upgrade(db, oldVersion, _newVersion, transaction) {
+          detectedOldVersion = oldVersion;
+          
+          if (!db.objectStoreNames.contains("surahs")) {
+            db.createObjectStore("surahs", { keyPath: "number" });
+          }
+          if (!db.objectStoreNames.contains("azkar")) {
+            db.createObjectStore("azkar", { keyPath: "category" });
+          }
+          if (db.objectStoreNames.contains("audio") && oldVersion < 3) {
+            db.deleteObjectStore("audio");
+          }
+          if (!db.objectStoreNames.contains("audio")) {
+            db.createObjectStore("audio", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("tafsir")) {
+            db.createObjectStore("tafsir", { keyPath: "id" });
+          }
+          if (!db.objectStoreNames.contains("syncQueue")) {
+            db.createObjectStore("syncQueue", { keyPath: "id", autoIncrement: true });
+          }
+          if (db.objectStoreNames.contains("bookmarks") && oldVersion < 7) {
+            db.deleteObjectStore("bookmarks");
+            try {
+              localStorage.removeItem("wise-bookmarks-migrated-v1");
+            } catch {
+              /* ignore */
+            }
+          }
+          if (!db.objectStoreNames.contains("bookmarks")) {
+            const bookmarksStore = db.createObjectStore("bookmarks", { keyPath: "id" });
+            bookmarksStore.createIndex("by-updated", "updatedAt");
+            bookmarksStore.createIndex("by-owner", "ownerKey");
+          }
+        },
+      });
+
+      // Step C: Run post-open async migrations (v7 -> v8 audio)
+      if (detectedOldVersion > 0 && detectedOldVersion < 8) {
+        if (db.objectStoreNames.contains("audio")) {
+          // Fire-and-forget background migration
+          void migrateAudioV7ToV8(db);
+        }
+      }
+
+      return db;
+    })().catch((err) => {
       dbPromise = null;
       throw err;
     });
