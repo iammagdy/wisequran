@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { registerReminderPeriodicSync } from "@/hooks/useFridayReminders";
 import { initWebVitals } from "@/lib/vitals";
+import { initAnalytics } from "@/lib/analytics";
 import App from "./App.tsx";
 import { logger } from "./lib/logger";
 
@@ -68,5 +69,6 @@ void registerReminderPeriodicSync();
 // every session reports real-user perf numbers to the logger and,
 // when signed in, to the Supabase `web_vitals` table for SQL slicing.
 initWebVitals();
+void initAnalytics();
 
 createRoot(document.getElementById("root")!).render(<App />);

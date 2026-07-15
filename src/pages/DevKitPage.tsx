@@ -11,6 +11,7 @@ import NotificationsPanel from "@/components/devkit/NotificationsPanel";
 import ChangelogEditorPanel from "@/components/devkit/ChangelogEditorPanel";
 import FeatureFlagsPanel from "@/components/devkit/FeatureFlagsPanel";
 import BackupPanel from "@/components/devkit/BackupPanel";
+import VisitorsPanel from "@/components/devkit/VisitorsPanel";
 import { DK } from "@/components/devkit/devkit-utils";
 import { getSyncQueueCount } from "@/lib/db";
 import { APP_VERSION } from "@/data/changelog";
@@ -23,6 +24,7 @@ const ADMIN_EMAIL = "Magdy.saber@outlook.com";
 type PanelKey =
   | "status"
   | "vitals"
+  | "visitors"
   | "localstorage"
   | "indexeddb"
   | "syncqueue"
@@ -44,6 +46,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { key: "status",        label: "App Status",       icon: "◉",  desc: "Runtime environment, network & service worker state" },
   { key: "vitals",        label: "Web Vitals",       icon: "📊", desc: "Real-user LCP, CLS, INP and TTFB for the current session" },
+  { key: "visitors",      label: "Visitors",         icon: "👥", desc: "Anonymous visitor session logs, organization lookup, and utilization metrics" },
   { key: "localstorage",  label: "LocalStorage",     icon: "🗄", desc: "Browse and live-edit wise-* keys" },
   { key: "indexeddb",     label: "IndexedDB",        icon: "💾", desc: "IDB stores, audio cache, byte usage" },
   { key: "syncqueue",     label: "Sync Queue",       icon: "⇅",  desc: "Pending server sync operations" },
@@ -57,7 +60,7 @@ const NAV: NavItem[] = [
 ];
 
 const SECTIONS: { label: string; keys: PanelKey[] }[] = [
-  { label: "Monitoring", keys: ["status", "vitals"] },
+  { label: "Monitoring", keys: ["status", "vitals", "visitors"] },
   { label: "Data",       keys: ["localstorage", "indexeddb", "syncqueue"] },
   { label: "Controls",   keys: ["controls", "userdata", "audio", "notifications"] },
   { label: "Content",    keys: ["changelog", "featureflags", "backup"] },
@@ -375,6 +378,7 @@ function Panel({ id }: { id: PanelKey }) {
   switch (id) {
     case "status":        return <AppStatusPanel />;
     case "vitals":        return <VitalsPanel />;
+    case "visitors":      return <VisitorsPanel />;
     case "localstorage":  return <LocalStoragePanel />;
     case "indexeddb":     return <IndexedDBPanel />;
     case "syncqueue":     return <SyncQueuePanel />;
